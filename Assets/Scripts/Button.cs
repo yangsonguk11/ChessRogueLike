@@ -10,10 +10,18 @@ public class Button : MonoBehaviour
     [SerializeField] GameObject piece;
     GameObject board;
     Vector2 location;
+    Vector3 piecelocation;
+    public Vector3 Piecelocation
+    {
+        get { return piecelocation; }
+    }
+
     private void Start()
     {
         selected = false;
         defaultScale = transform.localScale;
+        piecelocation = transform.localPosition;
+        piecelocation.y = 0.6f;
     }
 
     public void Init(int x, int y, GameObject _board)
@@ -53,8 +61,10 @@ public class Button : MonoBehaviour
     public void SetPiece(GameObject obj)
     {
         piece = obj;
-        piece.transform.position = transform.position;
+        piece.transform.position = piecelocation;
+        piece.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
         piece.transform.parent = gameObject.transform;
+       
     }
     
     public void RemovePiece()
