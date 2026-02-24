@@ -133,6 +133,9 @@ public class Board : MonoBehaviour
     }
     void ShowMovableButtons()
     {
+        GameObject p = GetButtonScript(selectedButton).GetPiece();
+        if (p == null)
+            return;
         Vector2 org = selectedButton;
 
         for(int i = (int)org.x - 1; i <= org.x + 1; i++)
