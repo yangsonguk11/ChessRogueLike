@@ -55,8 +55,11 @@ public class Board : MonoBehaviour
             return;
         if (selectedButton.x < 0 || selectedButton.y < 0)
         {
-            selectedButton = pos;
-            GetButtonScript(pos).SelectedTrue();
+            if (GetButtonScript(pos).IsSelectable())
+            {
+                selectedButton = pos;
+                GetButtonScript(pos).SelectedTrue();
+            }
         }
         else if (selectedButton == pos)
         {
@@ -64,7 +67,9 @@ public class Board : MonoBehaviour
             GetButtonScript(pos).SelectedFalse();
         }
         else
-            MovePiece(selectedButton, pos);
+        {
+                MovePiece(selectedButton, pos);
+        }
 
         Debug.Log("selected" + selectedButton);
         Debug.Log("pos" + pos);

@@ -41,7 +41,6 @@ public class Button : MonoBehaviour
     public void MouseDown()
     {
         board.GetComponent<Board>().ButtonClicked(location);
-        
     }
 
 
@@ -56,12 +55,18 @@ public class Button : MonoBehaviour
         piece.transform.position = piecelocation;
         piece.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
         piece.transform.parent = gameObject.transform;
-       
     }
     
     public void RemovePiece()
     {
         piece = null;
+    }
+
+    public bool IsSelectable()
+    {
+        if (piece != null)
+            return true;
+        return false;
     }
     public void SelectedFalse()
     {
@@ -74,14 +79,8 @@ public class Button : MonoBehaviour
         ScaleHover();
     }
 
-    public void RangeOn()
-    {
-        RangeObj.SetActive(true);
-    }
-    public void RangeOff()
-    {
-        RangeObj.SetActive(false);
-    }
+    public void RangeOn(){RangeObj.SetActive(true); }
+    public void RangeOff(){  RangeObj.SetActive(false); }
     IEnumerator ScaleTo(Vector3 target)
     {
         while (Vector3.Distance(transform.localScale, target) > 0.01f)
