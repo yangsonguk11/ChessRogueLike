@@ -8,6 +8,7 @@ public class Button : MonoBehaviour
     float speed = 10f;
     bool selected;
     [SerializeField] GameObject piece;
+    [SerializeField] GameObject RangeObj;
     GameObject board;
     Vector2 location;
     Vector3 piecelocation;
@@ -43,15 +44,6 @@ public class Button : MonoBehaviour
         
     }
 
-    IEnumerator ScaleTo(Vector3 target)
-    {
-        while (Vector3.Distance(transform.localScale, target) > 0.01f)
-        {
-            transform.localScale = Vector3.Lerp(transform.localScale, target, Time.deltaTime * speed);
-            yield return null;
-        }
-        transform.localScale = target;
-    }
 
     public GameObject GetPiece()
     {
@@ -80,6 +72,24 @@ public class Button : MonoBehaviour
     {
         selected = true;
         ScaleHover();
+    }
+
+    public void RangeOn()
+    {
+        RangeObj.SetActive(true);
+    }
+    public void RangeOff()
+    {
+        RangeObj.SetActive(false);
+    }
+    IEnumerator ScaleTo(Vector3 target)
+    {
+        while (Vector3.Distance(transform.localScale, target) > 0.01f)
+        {
+            transform.localScale = Vector3.Lerp(transform.localScale, target, Time.deltaTime * speed);
+            yield return null;
+        }
+        transform.localScale = target;
     }
     void ScaleDefault()
     {

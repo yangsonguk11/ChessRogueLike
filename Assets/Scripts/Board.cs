@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -8,13 +9,22 @@ public class Board : MonoBehaviour
     [SerializeField] GameObject[,] Buttons;
     [SerializeField] GameObject[] Pieces;
 
+    event Action OnButtonSelected;
+    event Action OnButtonUnSelected;
     [Header("보드 크기")]
     [Min(1)] public int N; //가로
     [Min(1)] public int M; //세로
-    public Vector2 selectedButton;
+    Vector2 _selectedButton;
+    Vector2 selectedButton
+    {
+        get { return _selectedButton; }
+        set { _selectedButton = value; if (isSelectedButtonActive()) OnButtonSelected.Invoke(); else OnButtonUnSelected.Invoke(); }
+    }
     bool coroutineworking;
     private void Start()
     {
+        OnButtonSelected += ShowMovableButtons;
+        OnButtonUnSelected += HideMovableButtons;
         coroutineworking = false;
         InitBoard();
     }
@@ -24,7 +34,6 @@ public class Board : MonoBehaviour
         Background.transform.localScale = new Vector3(N, M, 1);
         Buttons = new GameObject[N, M];
         Vector3 pos = new Vector3(0,0,0);
-        selectedButton = new Vector2(-1, -1);
         for(int x = 0; x < N; x++)
         {
             for(int y = 0; y < M; y++)
@@ -36,6 +45,7 @@ public class Board : MonoBehaviour
                 Buttons[x, y] = obj;
             }
         }
+        ClearSelectedButton();
         GetButtonScript(new Vector2(2, 2)).SetPiece(Instantiate(Pieces[0]));
     }
 
@@ -50,7 +60,7 @@ public class Board : MonoBehaviour
         }
         else if (selectedButton == pos)
         {
-            selectedButton = new Vector2(-1, -1);
+            ClearSelectedButton();
             GetButtonScript(pos).SelectedFalse();
         }
         else
@@ -75,7 +85,7 @@ public class Board : MonoBehaviour
             StartCoroutine(PieceMoveCor(button1script, button2script, 1f));
         }
 
-        selectedButton = new Vector2(-1, -1);
+        ClearSelectedButton();
         button1script.SelectedFalse();
         button2script.SelectedFalse();
     }
@@ -107,5 +117,45 @@ public class Board : MonoBehaviour
     Button GetButtonScript(Vector2 pos)
     {
         return Buttons[(int)pos.x, (int)pos.y].GetComponent<Button>();
+    }
+
+    void ClearSelectedButton()
+    {
+        selectedButton = new Vector2(-1, -1);
+    }
+
+    bool isSelectedButtonActive()
+    {
+        if (selectedButton.x < 0 || selectedButton.y < 0)
+            return false;
+        else
+            return true;
+    }
+    void ShowMovableButtons()
+    {
+        Vector2 org = selectedButton;
+
+        for(int i = (int)org.x - 1; i <= org.x + 1; i++)
+        {
+            if (i < 0 || i >= N)
+                continue;
+            for(int j = (int)org.y - 1; j <= org.y + 1; j++)
+            {
+                if (j < 0 || j >= M)
+                    continue;
+                GetButtonScript(new Vector2(i, j)).RangeOn();
+            }
+        }
+    }
+    void HideMovableButtons()
+    {
+
+        for (int i = 0; i < N; i++)
+        {
+            for (int j = 0; j < M; j++)
+            {
+                GetButtonScript(new Vector2(i, j)).RangeOff();
+            }
+        }
     }
 }
