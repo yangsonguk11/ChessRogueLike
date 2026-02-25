@@ -22,7 +22,9 @@ public class RangeInfoSO : ScriptableObject
             for(int j = 0; j < 7; j++)
             {
                 if (rows[i].columns[j])
-                    temp.Add(new Vector2(i-3, j-3));
+                {
+                    temp.Add(new Vector2(i - 3, j - 3));
+                }
             }
         }
         return temp;

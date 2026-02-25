@@ -13,8 +13,8 @@ public class Board : MonoBehaviour
     event Action OnButtonSelected;
     event Action OnButtonUnSelected;
     [Header("보드 크기")]
-    [Min(1)] public int N; //가로
-    [Min(1)] public int M; //세로
+    [Min(1)] public int N; //세로
+    [Min(1)] public int M; //가로
     Vector2 _selectedButton;
     Vector2 selectedButton
     {
@@ -74,8 +74,6 @@ public class Board : MonoBehaviour
                 MovePiece(selectedButton, pos);
         }
 
-        Debug.Log("selected" + selectedButton);
-        Debug.Log("pos" + pos);
     }
 
     void MovePiece(Vector2 pos1, Vector2 pos2)
@@ -103,6 +101,8 @@ public class Board : MonoBehaviour
         Vector3 pos1 = Button1.Piecelocation;
         Vector3 pos2 = Button2.Piecelocation;
         GameObject piece = Button1.GetPiece();
+        Debug.Log(pos2-pos1);
+        piece.transform.rotation = Quaternion.LookRotation(pos1 - pos2);
         float time = 0f;
 
         while(time < moveDuration)
@@ -153,6 +153,8 @@ public class Board : MonoBehaviour
         foreach(Vector2 v in list)
         {
             Vector2 m = selectedButton + v;
+            Debug.Log(selectedButton);
+            Debug.Log(v);
             if (m.x < 0 || m.x >= N || m.y < 0 || m.y >= M)
                 continue;
             GetButtonScript(m).RangeOn();
