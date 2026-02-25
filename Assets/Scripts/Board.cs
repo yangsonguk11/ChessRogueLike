@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Board : MonoBehaviour
@@ -20,6 +21,7 @@ public class Board : MonoBehaviour
         get { return _selectedButton; }
         set { _selectedButton = value; if (isSelectedButtonActive()) OnButtonSelected.Invoke(); else OnButtonUnSelected.Invoke(); }
     }
+    List<Vector2> selectedButtonMovable = new List<Vector2>();
     bool coroutineworking;
     private void Start()
     {
@@ -68,6 +70,7 @@ public class Board : MonoBehaviour
         }
         else
         {
+            if(selectedButtonMovable.Contains(pos))
                 MovePiece(selectedButton, pos);
         }
 
@@ -139,10 +142,23 @@ public class Board : MonoBehaviour
     void ShowMovableButtons()
     {
         GameObject p = GetButtonScript(selectedButton).GetPiece();
+
         if (p == null)
             return;
-        Vector2 org = selectedButton;
 
+        Piece piece = GetButtonScript(selectedButton).GetPiece().GetComponent<Piece>();
+        List<Vector2> list = piece.GetMoveableButton();
+        selectedButtonMovable.Clear();
+
+        foreach(Vector2 v in list)
+        {
+            Vector2 m = selectedButton + v;
+            if (m.x < 0 || m.x >= N || m.y < 0 || m.y >= M)
+                continue;
+            GetButtonScript(m).RangeOn();
+            selectedButtonMovable.Add(m);
+        }
+        /*
         for(int i = (int)org.x - 1; i <= org.x + 1; i++)
         {
             if (i < 0 || i >= N)
@@ -154,16 +170,14 @@ public class Board : MonoBehaviour
                 GetButtonScript(new Vector2(i, j)).RangeOn();
             }
         }
+        */
     }
     void HideMovableButtons()
     {
-
-        for (int i = 0; i < N; i++)
+        foreach (Vector2 v in selectedButtonMovable)
         {
-            for (int j = 0; j < M; j++)
-            {
-                GetButtonScript(new Vector2(i, j)).RangeOff();
-            }
+            GetButtonScript(v).RangeOff();
         }
+
     }
 }

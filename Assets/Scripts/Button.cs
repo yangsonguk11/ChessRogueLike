@@ -44,10 +44,7 @@ public class Button : MonoBehaviour
     }
 
 
-    public GameObject GetPiece()
-    {
-        return piece;
-    }
+    public GameObject GetPiece() { return piece; }
 
     public void SetPiece(GameObject obj)
     {
@@ -79,7 +76,7 @@ public class Button : MonoBehaviour
         ScaleHover();
     }
 
-    public void RangeOn(){RangeObj.SetActive(true); }
+    public void RangeOn(){ RangeObj.SetActive(true); }
     public void RangeOff(){  RangeObj.SetActive(false); }
     IEnumerator ScaleTo(Vector3 target)
     {
