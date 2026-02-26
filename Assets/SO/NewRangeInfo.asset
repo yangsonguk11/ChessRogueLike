@@ -15,8 +15,8 @@ MonoBehaviour:
   rows:
   - columns: 00000000000000
   - columns: 00000000000000
-  - columns: 00000100000000
-  - columns: 00000100000000
-  - columns: 00000000000000
+  - columns: 00000101010000
+  - columns: 00000100010000
+  - columns: 00000101010000
   - columns: 00000000000000
   - columns: 00000000000000

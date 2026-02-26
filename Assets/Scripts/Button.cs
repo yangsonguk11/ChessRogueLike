@@ -9,6 +9,7 @@ public class Button : MonoBehaviour
     bool selected;
     [SerializeField] GameObject piece;
     [SerializeField] GameObject RangeObj;
+    [SerializeField] GameObject SelectedObj;
     GameObject board;
     Vector2 location;
     Vector3 piecelocation;
@@ -22,7 +23,6 @@ public class Button : MonoBehaviour
         selected = false;
         defaultScale = transform.localScale;
         piecelocation = transform.localPosition;
-        piecelocation.y = 0.6f;
     }
 
     public void Init(int x, int y, GameObject _board)
@@ -49,7 +49,7 @@ public class Button : MonoBehaviour
     public void SetPiece(GameObject obj)
     {
         piece = obj;
-        piece.transform.position = piecelocation;
+        piece.transform.position = transform.position;
         piece.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
         piece.transform.parent = gameObject.transform;
     }
@@ -91,10 +91,14 @@ public class Button : MonoBehaviour
     {
         StopAllCoroutines();
         StartCoroutine(ScaleTo(defaultScale));
+        SelectedObj.SetActive(false);
+        GetComponent<Outline>().OutlineWidth = 0f;
     }
     void ScaleHover()
     {
         StopAllCoroutines();
         StartCoroutine(ScaleTo(defaultScale * hoverScale));
+        SelectedObj.SetActive(true);
+        GetComponent<Outline>().OutlineWidth = 10f;
     }
 }
