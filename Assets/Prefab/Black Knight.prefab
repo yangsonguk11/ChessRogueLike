@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 3304258}
   - component: {fileID: 2374884}
   - component: {fileID: 6428222}
-  - component: {fileID: -4137376421322496020}
+  - component: {fileID: 7509183127124402034}
   m_Layer: 0
   m_Name: Black Knight
   m_TagString: Untagged
@@ -114,7 +114,7 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300000, guid: 639050e749c3ce444a196d84e803b067, type: 3}
---- !u!114 &-4137376421322496020
+--- !u!114 &7509183127124402034
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -123,7 +123,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 196802}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 878a7c46d4c8a3a45b559778562f96e5, type: 3}
+  m_Script: {fileID: 11500000, guid: 84543820acf85bd47b76b933317ebbab, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Piece
-  MoveableButton: {fileID: 11400000, guid: a6ea4878a6f501941adddaf86bb91bd7, type: 2}
+  m_EditorClassIdentifier: Assembly-CSharp::Rook
+  pieceInfo: {fileID: 11400000, guid: 9b16472a2e113a741a3e068e3f9f8357, type: 2}
+  hp: 0
+  colDamage: 0
+  teamID: 0

@@ -1,9 +1,20 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Piece : MonoBehaviour
+public abstract class Piece : MonoBehaviour
 {
-    [SerializeField] RangeInfoSO MoveableButton;
+    [SerializeField] PieceInfo pieceInfo;
 
-    public List<Vector2> GetMoveableButton() { return MoveableButton.GetAbleRange(); }
+    
+    public int hp;
+    public int colDamage;
+    public int teamID;
+    private void Awake()
+    {
+        hp = pieceInfo.MaxHp;
+        colDamage = pieceInfo.ColDamage;
+        teamID = pieceInfo.TeamID;
+    }
+
+    public List<Vector2> GetMoveableButton() { return pieceInfo.RangeInfoSO.GetAbleRange(); }
 }
