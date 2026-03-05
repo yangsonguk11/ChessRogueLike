@@ -92,13 +92,11 @@ public class Button : MonoBehaviour
         StopAllCoroutines();
         StartCoroutine(ScaleTo(defaultScale));
         SelectedObj.SetActive(false);
-        GetComponent<Outline>().OutlineWidth = 0f;
     }
     void ScaleHover()
     {
         StopAllCoroutines();
         StartCoroutine(ScaleTo(defaultScale * hoverScale));
         SelectedObj.SetActive(true);
-        GetComponent<Outline>().OutlineWidth = 10f;
     }
 }
