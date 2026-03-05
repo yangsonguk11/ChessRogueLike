@@ -49,6 +49,7 @@ public class Board : MonoBehaviour
         }
         ClearSelectedButton();
         GetButtonScript(new Vector2(2, 2)).SetPiece(Instantiate(Pieces[0]));
+        GetButtonScript(new Vector2(3, 3)).SetPiece(Instantiate(Pieces[0]));
     }
 
     public void ButtonClicked(Vector2 pos)
@@ -88,7 +89,14 @@ public class Board : MonoBehaviour
         }
         else
         {
-            StartCoroutine(PieceMoveCor(button1script, button2script, 1f));
+            if (button2script.GetPiece())
+            {
+                //MoveAttack(button1script.GetPiece().GetComponent<Piece>(), button2script.GetPiece().GetComponent<Piece>());
+            }
+            else 
+            {
+                StartCoroutine(PieceMoveCor(button1script, button2script, 1f));
+            }
         }
 
         ClearSelectedButton();
@@ -117,6 +125,12 @@ public class Board : MonoBehaviour
         Button2.SetPiece(Button1.GetPiece());
         Button1.RemovePiece();
         coroutineworking = false;
+    }
+
+    void MoveAttack(Piece pScript1, Piece pScript2)
+    {
+        int dmg = pScript2.colDamage;
+        
     }
     GameObject GetButton(Vector2 pos)
     {

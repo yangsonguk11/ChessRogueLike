@@ -17,4 +17,8 @@ public abstract class Piece : MonoBehaviour
     }
 
     public List<Vector2> GetMoveableButton() { return pieceInfo.RangeInfoSO.GetAbleRange(); }
+    public void GetDamage(int damage)
+    {
+        hp -= damage;
+    }
 }

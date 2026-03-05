@@ -27,7 +27,7 @@ public class Button : MonoBehaviour
 
     public void Init(int x, int y, GameObject _board)
     {
-        location.x = x; location.y = y; board = _board;
+        SetLocation(x, y); board = _board;
     }
     public void MouseEnter()
     {
@@ -44,7 +44,7 @@ public class Button : MonoBehaviour
     }
 
 
-    public GameObject GetPiece() { return piece; }
+    public GameObject GetPiece() { if (piece) return piece; else return null; }
 
     public void SetPiece(GameObject obj)
     {
@@ -86,6 +86,11 @@ public class Button : MonoBehaviour
             yield return null;
         }
         transform.localScale = target;
+    }
+
+    void SetLocation(int _x, int _y)
+    {
+        location.x = _x; location.y = _y;
     }
     void ScaleDefault()
     {
