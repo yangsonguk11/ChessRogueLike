@@ -92,6 +92,8 @@ public class Button : MonoBehaviour
     {
         location.x = _x; location.y = _y;
     }
+
+    public Vector2 GetLocation() {return location; } 
     void ScaleDefault()
     {
         StopAllCoroutines();

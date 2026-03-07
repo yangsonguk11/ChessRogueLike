@@ -21,7 +21,9 @@ public class Board : MonoBehaviour
         get { return _selectedButton; }
         set { _selectedButton = value; if (isSelectedButtonActive()) OnButtonSelected.Invoke(); else OnButtonUnSelected.Invoke(); }
     }
+
     List<Vector2> selectedButtonMovable = new List<Vector2>();
+    Queue<IEnumerator> motionQueue = new Queue<IEnumerator>();
     bool coroutineworking;
     private void Start()
     {
@@ -49,14 +51,14 @@ public class Board : MonoBehaviour
         }
         ClearSelectedButton();
         GetButtonScript(new Vector2(2, 2)).SetPiece(Instantiate(Pieces[0]));
-        GetButtonScript(new Vector2(3, 3)).SetPiece(Instantiate(Pieces[0]));
+        GetButtonScript(new Vector2(3, 3)).SetPiece(Instantiate(Pieces[1]));
     }
 
     public void ButtonClicked(Vector2 pos)
     {
         if (coroutineworking)
             return;
-        if (selectedButton.x < 0 || selectedButton.y < 0)
+        if (selectedButton.x < 0 || selectedButton.y < 0)   //선택된 칸이 비어있을 때
         {
             if (GetButtonScript(pos).IsSelectable())
             {
@@ -71,13 +73,14 @@ public class Board : MonoBehaviour
         }
         else
         {
-            if(selectedButtonMovable.Contains(pos))
+            if (GetButtonScript(selectedButton).GetPiece().GetComponent<Piece>().teamID == 1) { }   //적이 선택되었을 때
+            else if (selectedButtonMovable.Contains(pos))
                 MovePiece(selectedButton, pos);
         }
 
     }
 
-    void MovePiece(Vector2 pos1, Vector2 pos2)
+    void MovePiece(Vector2 pos1, Vector2 pos2)      //기물이 이동을 시도
     {
         GameObject button1 = GetButton(pos1);
         GameObject button2 = GetButton(pos2);
@@ -89,13 +92,17 @@ public class Board : MonoBehaviour
         }
         else
         {
-            if (button2script.GetPiece())
+            GameObject Piece1 = button1script.GetPiece();
+            GameObject Piece2 = button2script.GetPiece();
+            if (Piece2)
             {
-                //MoveAttack(button1script.GetPiece().GetComponent<Piece>(), button2script.GetPiece().GetComponent<Piece>());
+                if(Piece2.GetComponent<Piece>().teamID == 1)
+                    MoveAttack(button1script.GetPiece().GetComponent<Piece>(), button2script.GetPiece().GetComponent<Piece>(), button1script, button2script);
             }
             else 
             {
-                StartCoroutine(PieceMoveCor(button1script, button2script, 1f));
+                motionQueue.Enqueue(PieceMoveCor(button1script, button2script, 1f));
+                StartCoroutine(ProcessQueue());
             }
         }
 
@@ -103,13 +110,26 @@ public class Board : MonoBehaviour
         button1script.SelectedFalse();
         button2script.SelectedFalse();
     }
+    void MoveAttack(Piece pScript1, Piece pScript2, Button bScript1, Button bScript2)
+    {
+        int dmg = pScript1.colDamage;
+        int hpLeft = pScript2.GetDamage(dmg, AttackType.MoveAttack);
+        if (hpLeft <= 0)
+        {
+            motionQueue.Enqueue(pScript2.DeathCor());
+            motionQueue.Enqueue(PieceMoveCor(bScript1, bScript2, 1f));
+        }
+        else
+            motionQueue.Enqueue(MoveAdjacent(bScript1, bScript2, 1f));
+        StartCoroutine(ProcessQueue());
+    }
     IEnumerator PieceMoveCor(Button Button1, Button Button2, float moveDuration)
     {
-        coroutineworking = true;
         Vector3 pos1 = Button1.Piecelocation;
         Vector3 pos2 = Button2.Piecelocation;
         GameObject piece = Button1.GetPiece();
-        Debug.Log(pos2-pos1);
+        if (Button1 == Button2)
+            yield break;
         piece.transform.rotation = Quaternion.LookRotation(pos1 - pos2);
         float time = 0f;
 
@@ -124,13 +144,55 @@ public class Board : MonoBehaviour
         piece.transform.position = pos2;
         Button2.SetPiece(Button1.GetPiece());
         Button1.RemovePiece();
-        coroutineworking = false;
     }
 
-    void MoveAttack(Piece pScript1, Piece pScript2)
+    IEnumerator MoveAdjacent(Button Button1, Button Button2, float moveDuration)
     {
-        int dmg = pScript2.colDamage;
-        
+        Button newTargetButton;
+        Vector2 location1 = Button1.GetLocation();
+        Vector2 location2 = Button2.GetLocation();
+        Vector2 temp = location2 - location1;
+        if(Math.Abs(temp.x) == Math.Abs(temp.y))
+        {
+            if (temp.x < 0) temp.x = -1;
+            else if (temp.x > 0) temp.x = 1;
+
+            if (temp.y < 0) temp.y = -1;
+            else if (temp.y > 0) temp.y = 1;
+            newTargetButton = GetButtonScript(location2 - temp);
+        }
+        else if(Math.Abs(temp.x) > Math.Abs(temp.y))
+        {
+            if (temp.x < 0) temp.x = -1;
+            else if (temp.x > 0) temp.x = 1;
+
+            temp.y = 0;
+        }
+        else if (Math.Abs(temp.x) < Math.Abs(temp.y))
+        {
+            temp.x = 0;
+
+            if (temp.y < 0) temp.y = -1;
+            else if (temp.y > 0) temp.y = 1;
+        }
+        newTargetButton = GetButtonScript(location2 - temp);
+        yield return PieceMoveCor(Button1, newTargetButton, moveDuration);
+    }
+    private IEnumerator ProcessQueue()
+    {
+        coroutineworking = true;
+        Debug.Log(motionQueue.Count);
+        while (motionQueue.Count > 0)
+        {
+            // 큐에서 다음 연출을 꺼냄
+            IEnumerator nextAction = motionQueue.Dequeue();
+            Debug.Log(nextAction);
+
+            // 해당 연출이 끝날 때까지 대기
+            yield return StartCoroutine(nextAction);
+        }
+
+        coroutineworking = false;
     }
     GameObject GetButton(Vector2 pos)
     {
@@ -167,8 +229,6 @@ public class Board : MonoBehaviour
         foreach(Vector2 v in list)
         {
             Vector2 m = selectedButton + v;
-            Debug.Log(selectedButton);
-            Debug.Log(v);
             if (m.x < 0 || m.x >= N || m.y < 0 || m.y >= M)
                 continue;
             GetButtonScript(m).RangeOn();

@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RangeInfoSO
   rows:
   - columns: 00000000000000
-  - columns: 00000000000000
   - columns: 00000101010000
-  - columns: 00000100010000
   - columns: 00000101010000
-  - columns: 00000000000000
+  - columns: 00010100010100
+  - columns: 00000101010000
+  - columns: 00000101000000
   - columns: 00000000000000
