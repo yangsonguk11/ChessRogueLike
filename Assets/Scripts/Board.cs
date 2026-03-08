@@ -66,10 +66,10 @@ public class Board : MonoBehaviour
                 GetButtonScript(pos).SelectedTrue();
             }
         }
-        else if (selectedButton == pos)
+        else if (selectedButton == pos || !selectedButtonMovable.Contains(pos))
         {
+            GetButtonScript(selectedButton).SelectedFalse();
             ClearSelectedButton();
-            GetButtonScript(pos).SelectedFalse();
         }
         else
         {
