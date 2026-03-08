@@ -116,8 +116,9 @@ public class Board : MonoBehaviour
         int hpLeft = pScript2.GetDamage(dmg, AttackType.MoveAttack);
         if (hpLeft <= 0)
         {
+            motionQueue.Enqueue(MoveAdjacent(bScript1, bScript2, 1f));
             motionQueue.Enqueue(pScript2.DeathCor());
-            motionQueue.Enqueue(PieceMoveCor(bScript1, bScript2, 1f));
+            motionQueue.Enqueue(PieceMoveCor(GetButtonScript(GetAdjacentLocation(bScript1.GetLocation(), bScript2.GetLocation())), bScript2, 1f));
         }
         else
             motionQueue.Enqueue(MoveAdjacent(bScript1, bScript2, 1f));
@@ -152,16 +153,22 @@ public class Board : MonoBehaviour
         Vector2 location1 = Button1.GetLocation();
         Vector2 location2 = Button2.GetLocation();
         Vector2 temp = location2 - location1;
-        if(Math.Abs(temp.x) == Math.Abs(temp.y))
+        newTargetButton = GetButtonScript(GetAdjacentLocation(location1, location2));
+        yield return PieceMoveCor(Button1, newTargetButton, moveDuration);
+    }
+
+    Vector2 GetAdjacentLocation(Vector2 location1, Vector2 location2)
+    {
+        Vector2 temp = location2-location1;
+        if (Math.Abs(temp.x) == Math.Abs(temp.y))
         {
             if (temp.x < 0) temp.x = -1;
             else if (temp.x > 0) temp.x = 1;
 
             if (temp.y < 0) temp.y = -1;
             else if (temp.y > 0) temp.y = 1;
-            newTargetButton = GetButtonScript(location2 - temp);
         }
-        else if(Math.Abs(temp.x) > Math.Abs(temp.y))
+        else if (Math.Abs(temp.x) > Math.Abs(temp.y))
         {
             if (temp.x < 0) temp.x = -1;
             else if (temp.x > 0) temp.x = 1;
@@ -175,8 +182,7 @@ public class Board : MonoBehaviour
             if (temp.y < 0) temp.y = -1;
             else if (temp.y > 0) temp.y = 1;
         }
-        newTargetButton = GetButtonScript(location2 - temp);
-        yield return PieceMoveCor(Button1, newTargetButton, moveDuration);
+        return location2 - temp;
     }
     private IEnumerator ProcessQueue()
     {
