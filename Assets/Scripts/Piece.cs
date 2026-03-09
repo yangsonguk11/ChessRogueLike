@@ -5,7 +5,7 @@ using UnityEngine;
 public abstract class Piece : MonoBehaviour
 {
     [SerializeField] PieceInfo pieceInfo;
-
+    [SerializeField] PieceCanvas pieceCanvas;
     
     public int hp;
     public int colDamage;
@@ -22,6 +22,8 @@ public abstract class Piece : MonoBehaviour
     {
         hp -= damage;
 
+        if (pieceCanvas)
+            pieceCanvas.InvokeDamageText(damage);
         return hp;
 
     }
