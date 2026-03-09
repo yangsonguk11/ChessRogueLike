@@ -1,12 +1,11 @@
 using System.Collections;
 using UnityEngine;
 
-public class Button : MonoBehaviour
+public class Button : MonoBehaviour, ISelectable
 {
     Vector3 defaultScale;
     float hoverScale = 1.1f;
     float speed = 10f;
-    bool selected;
     [SerializeField] GameObject piece;
     [SerializeField] GameObject RangeObj;
     [SerializeField] GameObject SelectedObj;
@@ -17,6 +16,8 @@ public class Button : MonoBehaviour
     {
         get { return piecelocation; }
     }
+
+    public bool selected { get; set; }
 
     private void Start()
     {
@@ -78,6 +79,11 @@ public class Button : MonoBehaviour
 
     public void RangeOn(){ RangeObj.SetActive(true); }
     public void RangeOff(){  RangeObj.SetActive(false); }
+    public Vector2 GetLocation() { return location; }
+    void SetLocation(int _x, int _y)
+    {
+        location.x = _x; location.y = _y;
+    }
     IEnumerator ScaleTo(Vector3 target)
     {
         while (Vector3.Distance(transform.localScale, target) > 0.01f)
@@ -87,13 +93,6 @@ public class Button : MonoBehaviour
         }
         transform.localScale = target;
     }
-
-    void SetLocation(int _x, int _y)
-    {
-        location.x = _x; location.y = _y;
-    }
-
-    public Vector2 GetLocation() {return location; } 
     void ScaleDefault()
     {
         StopAllCoroutines();
