@@ -48,6 +48,7 @@ public abstract class Card : MonoBehaviour, ISelectable
     public void SelectedTrue()
     {
         selected = true;
+        transform.localRotation = Quaternion.Euler(0, 0, 0);
         ScaleHover();
     }
     Coroutine ScaleCor;
@@ -82,9 +83,9 @@ public abstract class Card : MonoBehaviour, ISelectable
     {
         if (!selected) ScaleDefault();
     }
-    public void MouseDown()
+    public void MouseDown(BaseEventData data)
     {
-        if (!selected) SelectedTrue();
+        if (!selected) { SelectedTrue(); MouseDrag(data); }
     }
     public void MouseUp()
     {
