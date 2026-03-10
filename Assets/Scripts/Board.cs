@@ -19,7 +19,7 @@ public class Board : MonoBehaviour
     Vector2 selectedButton
     {
         get { return _selectedButton; }
-        set { _selectedButton = value; if (isSelectedButtonActive()) OnButtonSelected.Invoke(); else OnButtonUnSelected.Invoke(); }
+        set { _selectedButton = value; if (isSelectedButtonActive()) OnButtonSelected?.Invoke(); else OnButtonUnSelected?.Invoke(); }
     }
 
     List<Vector2> selectedButtonMovable = new List<Vector2>();

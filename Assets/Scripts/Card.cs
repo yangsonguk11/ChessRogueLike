@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 enum CardType
 {
@@ -23,7 +25,13 @@ public abstract class Card : MonoBehaviour, ISelectable
     {
         defaultScale = transform.localScale;
     }
-    public bool selected { get; set; }
+
+    public event Action OnSelected;
+    public event Action OnUnSelected;
+
+    bool _selected;
+    public bool selected { get { return _selected; } set { _selected = value; if (_selected) OnSelected?.Invoke(); else OnUnSelected?.Invoke(); }}
+
 
     public abstract bool CanUse();
     public abstract void Execute();
@@ -64,5 +72,35 @@ public abstract class Card : MonoBehaviour, ISelectable
     {
         StopAllCoroutines();
         ScaleCor = StartCoroutine(ScaleTo(defaultScale * hoverScale));
+    }
+    public void MouseEnter()
+    {
+        ScaleHover();
+    }
+
+    public void MouseExit()
+    {
+        if (!selected) ScaleDefault();
+    }
+    public void MouseDown()
+    {
+        if (!selected) SelectedTrue();
+    }
+    public void MouseUp()
+    {
+        if (selected) SelectedFalse();
+    }
+
+    public void MouseDrag(BaseEventData data)
+    {
+        PointerEventData pointerData = (PointerEventData)data;
+
+        Vector2 screenPos = pointerData.position;
+
+        Vector2 delta = pointerData.delta;
+
+        Debug.Log($"마우스 위치: {screenPos}, 움직임 정도: {delta}");
+
+        this.transform.position = screenPos;
     }
 }

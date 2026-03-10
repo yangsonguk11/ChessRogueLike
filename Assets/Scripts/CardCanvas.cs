@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System;
 
 public class CardCanvas : MonoBehaviour
 {
@@ -8,7 +9,17 @@ public class CardCanvas : MonoBehaviour
     public float angleBetween = 10f;  // 카드 사이의 각도
     public float heightOffset = 100f; // 부채꼴의 높이 보정
 
-    [ContextMenu("Align Cards")] // 인스펙터 메뉴에서 바로 실행 가능
+    private void Awake()
+    {
+        foreach(RectTransform card in cards)
+        {
+            
+            Debug.Log("asdf");
+            //card.gameObject.GetComponent<Card>().OnSelected += AlignCards;
+            card.gameObject.GetComponent<Card>().OnUnSelected += AlignCards;
+        }
+    }
+    //[ContextMenu("Align Cards")] // 인스펙터 메뉴에서 바로 실행 가능
     public void AlignCards()
     {
         int count = cards.Count;

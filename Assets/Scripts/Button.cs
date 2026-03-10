@@ -17,7 +17,8 @@ public class Button : MonoBehaviour, ISelectable
         get { return piecelocation; }
     }
 
-    public bool selected { get; set; }
+    public bool _selected;
+    public bool selected { get { return _selected; } set { _selected = value; } }
 
     private void Start()
     {
