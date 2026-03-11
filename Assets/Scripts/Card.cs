@@ -55,6 +55,9 @@ public abstract class Card : MonoBehaviour, ISelectable
     Vector3 defaultScale;
     float hoverScale = 1.1f;
     float speed = 10f;
+
+    public GameObject cardCanvas;
+    public int handNumber;
     IEnumerator ScaleTo(Vector3 target)
     {
         while (Vector3.Distance(transform.localScale, target) > 0.01f)
@@ -85,7 +88,7 @@ public abstract class Card : MonoBehaviour, ISelectable
     }
     public void MouseDown(BaseEventData data)
     {
-        if (!selected) { SelectedTrue(); MouseDrag(data); }
+        if (!selected) { cardCanvas.GetComponent<CardCanvas>().CardSelected(handNumber); }
     }
     public void MouseUp()
     {
