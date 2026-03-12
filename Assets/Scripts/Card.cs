@@ -21,6 +21,7 @@ public abstract class Card : MonoBehaviour, ISelectable
     int Cost;
     CardType type;
     TargetType target;
+
     private void Awake()
     {
         defaultScale = transform.localScale;
@@ -51,6 +52,7 @@ public abstract class Card : MonoBehaviour, ISelectable
         transform.localRotation = Quaternion.Euler(0, 0, 0);
         ScaleHover();
     }
+
     Coroutine ScaleCor;
     Vector3 defaultScale;
     float hoverScale = 1.1f;
@@ -58,6 +60,7 @@ public abstract class Card : MonoBehaviour, ISelectable
 
     public GameObject cardCanvas;
     public int handNumber;
+
     IEnumerator ScaleTo(Vector3 target)
     {
         while (Vector3.Distance(transform.localScale, target) > 0.01f)
@@ -88,11 +91,20 @@ public abstract class Card : MonoBehaviour, ISelectable
     }
     public void MouseDown(BaseEventData data)
     {
-        if (!selected) { cardCanvas.GetComponent<CardCanvas>().CardSelected(handNumber); }
+        if (!selected) { cardCanvas.GetComponent<CardCanvas>().CardSelected(handNumber); gameObject.GetComponent<CanvasGroup>().blocksRaycasts = false; }
     }
-    public void MouseUp()
+    public void MouseUp(BaseEventData data)
     {
         if (selected) SelectedFalse();
+        gameObject.GetComponent<CanvasGroup>().blocksRaycasts = true;
+        PointerEventData pointerData = (PointerEventData)data;
+
+        Debug.Log(pointerData.pointerCurrentRaycast.gameObject);
+        foreach(GameObject obj in pointerData.hovered)
+        {
+            if(obj.name == "HandZone")
+                cardCanvas.GetComponent<CardCanvas>().UseCard(handNumber);
+        }
     }
 
     public void MouseDrag(BaseEventData data)
@@ -103,8 +115,11 @@ public abstract class Card : MonoBehaviour, ISelectable
 
         Vector2 delta = pointerData.delta;
 
-        Debug.Log($"마우스 위치: {screenPos}, 움직임 정도: {delta}");
-
         this.transform.position = screenPos;
+    }
+
+    public void UseCard()
+    {
+
     }
 }

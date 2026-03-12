@@ -5,28 +5,27 @@ using System;
 public class CardCanvas : MonoBehaviour
 {
     public List<RectTransform> cards = new List<RectTransform>(); // 손에 든 카드들
-    public float radius = 1000f;      // 원의 반지름 (클수록 완만함)
-    public float angleBetween = 10f;  // 카드 사이의 각도
-    public float heightOffset = 100f; // 부채꼴의 높이 보정
+    [SerializeField] float radius; // 원의 반지름 (클수록 완만함)
+    [SerializeField] float angleBetween;  // 카드 사이의 각도
+    [SerializeField] float heightOffset; // 부채꼴의 높이 보정
 
     private void Awake()
     {
         int i = 0;
-        foreach(RectTransform card in cards)
-        {
-            
-            Debug.Log("asdf");
-            //card.gameObject.GetComponent<Card>().OnSelected += AlignCards;
-            card.gameObject.GetComponent<Card>().OnUnSelected += AlignCards;
-            card.gameObject.GetComponent<Card>().handNumber = i++;
-            card.gameObject.GetComponent<Card>().cardCanvas = gameObject;
-        }
+        AlignCards();
     }
 
     public void CardSelected(int handNum)
     {
         cards[handNum].GetComponent<Card>().SelectedTrue();
         ExcludeAlignCards(cards[handNum].GetComponent<Card>().handNumber);
+    }
+
+    public void UseCard(int handnum)
+    {
+        Destroy(cards[handnum].gameObject);
+        cards.RemoveAt(handnum);
+        AlignCards();
     }
     //[ContextMenu("Align Cards")] // 인스펙터 메뉴에서 바로 실행 가능
     public void AlignCards()
@@ -53,6 +52,12 @@ public class CardCanvas : MonoBehaviour
             cards[i].SetSiblingIndex(i);
             cards[i].localPosition = new Vector3(x, y + heightOffset, 0);
             cards[i].localRotation = Quaternion.Euler(0, 0, -currentAngle);
+
+            Debug.Log("asdf");
+            cards[i].gameObject.GetComponent<Card>().OnUnSelected -= AlignCards;
+            cards[i].gameObject.GetComponent<Card>().OnUnSelected += AlignCards;
+            cards[i].gameObject.GetComponent<Card>().cardCanvas = gameObject;
+            cards[i].gameObject.GetComponent<Card>().handNumber = i;
         }
     }
     public void ExcludeAlignCards(int excludeCard = -1)
