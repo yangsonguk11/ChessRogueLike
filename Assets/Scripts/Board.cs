@@ -9,7 +9,7 @@ public class Board : MonoBehaviour
     [SerializeField] GameObject ButtonPrefab;
     [SerializeField] GameObject[,] Buttons;
     [SerializeField] GameObject[] Pieces;
-
+    [SerializeField] GameObject BoardUICanvas;
     event Action OnButtonSelected;
     event Action OnButtonUnSelected;
     [Header("보드 크기")]
@@ -27,8 +27,8 @@ public class Board : MonoBehaviour
     bool coroutineworking;
     private void Start()
     {
-        OnButtonSelected += ShowMovableButtons;
-        OnButtonUnSelected += HideMovableButtons;
+        OnButtonSelected += OnSelectBoard;
+        OnButtonUnSelected += OnUnSelectBoard;
         coroutineworking = false;
         InitBoard();
     }
@@ -221,14 +221,23 @@ public class Board : MonoBehaviour
         else
             return true;
     }
-    void ShowMovableButtons()
-    {
-        GameObject p = GetButtonScript(selectedButton).GetPiece();
 
+    void OnSelectBoard()
+    {
+        ShowMovableButtons(GetButtonScript(selectedButton).GetPiece());
+        ShowButtonInfo();
+    }
+    void OnUnSelectBoard()
+    {
+        HideMovableButtons();
+        HideButtonInfo();
+    }
+    void ShowMovableButtons(GameObject p)
+    {
         if (p == null)
             return;
 
-        Piece piece = GetButtonScript(selectedButton).GetPiece().GetComponent<Piece>();
+        Piece piece = p.GetComponent<Piece>();
         List<Vector2> list = piece.GetMoveableButton();
         selectedButtonMovable.Clear();
 
@@ -240,20 +249,8 @@ public class Board : MonoBehaviour
             GetButtonScript(m).RangeOn();
             selectedButtonMovable.Add(m);
         }
-        /*
-        for(int i = (int)org.x - 1; i <= org.x + 1; i++)
-        {
-            if (i < 0 || i >= N)
-                continue;
-            for(int j = (int)org.y - 1; j <= org.y + 1; j++)
-            {
-                if (j < 0 || j >= M)
-                    continue;
-                GetButtonScript(new Vector2(i, j)).RangeOn();
-            }
-        }
-        */
     }
+
     void HideMovableButtons()
     {
         foreach (Vector2 v in selectedButtonMovable)
@@ -261,5 +258,14 @@ public class Board : MonoBehaviour
             GetButtonScript(v).RangeOff();
         }
 
+    }
+    void ShowButtonInfo()
+    {
+        BoardUICanvas.SetActive(true);
+    }
+
+    void HideButtonInfo()
+    {
+        BoardUICanvas.SetActive(false);
     }
 }

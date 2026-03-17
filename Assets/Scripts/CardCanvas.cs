@@ -1,26 +1,35 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System;
+using UnityEngine.UI;
 
 public class CardCanvas : MonoBehaviour
 {
     public List<RectTransform> cards = new List<RectTransform>(); // 손에 든 카드들
+    [SerializeField] GameObject HandZone;
     [SerializeField] float radius; // 원의 반지름 (클수록 완만함)
     [SerializeField] float angleBetween;  // 카드 사이의 각도
     [SerializeField] float heightOffset; // 부채꼴의 높이 보정
-
+    
     private void Awake()
     {
         int i = 0;
         AlignCards();
+        HandZone.GetComponent<Image>().raycastTarget = false;
     }
 
     public void CardSelected(int handNum)
     {
         cards[handNum].GetComponent<Card>().SelectedTrue();
         ExcludeAlignCards(cards[handNum].GetComponent<Card>().handNumber);
+        HandZone.GetComponent<Image>().raycastTarget = true;
     }
 
+    public void CardUnSelected()
+    {
+        AlignCards();
+        HandZone.GetComponent<Image>().raycastTarget = false;
+    }
     public void UseCard(int handnum)
     {
         Destroy(cards[handnum].gameObject);
@@ -54,8 +63,8 @@ public class CardCanvas : MonoBehaviour
             cards[i].localRotation = Quaternion.Euler(0, 0, -currentAngle);
 
             Debug.Log("asdf");
-            cards[i].gameObject.GetComponent<Card>().OnUnSelected -= AlignCards;
-            cards[i].gameObject.GetComponent<Card>().OnUnSelected += AlignCards;
+            cards[i].gameObject.GetComponent<Card>().OnUnSelected -= CardUnSelected;
+            cards[i].gameObject.GetComponent<Card>().OnUnSelected += CardUnSelected;
             cards[i].gameObject.GetComponent<Card>().cardCanvas = gameObject;
             cards[i].gameObject.GetComponent<Card>().handNumber = i;
         }

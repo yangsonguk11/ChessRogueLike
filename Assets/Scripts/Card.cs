@@ -99,7 +99,6 @@ public abstract class Card : MonoBehaviour, ISelectable
         gameObject.GetComponent<CanvasGroup>().blocksRaycasts = true;
         PointerEventData pointerData = (PointerEventData)data;
 
-        Debug.Log(pointerData.pointerCurrentRaycast.gameObject);
         foreach(GameObject obj in pointerData.hovered)
         {
             if(obj.name == "HandZone")
