@@ -5,15 +5,16 @@ using UnityEngine.UI;
 
 public class CardCanvas : MonoBehaviour
 {
+    [SerializeField] Board board;
     public List<RectTransform> cards = new List<RectTransform>(); // 손에 든 카드들
     [SerializeField] GameObject HandZone;
+    [SerializeField] RectTransform CardNowUsingPos;
     [SerializeField] float radius; // 원의 반지름 (클수록 완만함)
     [SerializeField] float angleBetween;  // 카드 사이의 각도
     [SerializeField] float heightOffset; // 부채꼴의 높이 보정
     
     private void Awake()
     {
-        int i = 0;
         AlignCards();
         HandZone.GetComponent<Image>().raycastTarget = false;
     }
@@ -32,7 +33,10 @@ public class CardCanvas : MonoBehaviour
     }
     public void UseCard(int handnum)
     {
-        Destroy(cards[handnum].gameObject);
+        RectTransform card = cards[handnum];
+        board.UseCard(card.GetComponent<Card>());
+
+        card.localPosition = CardNowUsingPos.position;
         cards.RemoveAt(handnum);
         AlignCards();
     }

@@ -1728,6 +1728,10 @@ PrefabInstance:
       value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 188146230140724658, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
+      propertyPath: BoardUICanvas
+      value: 
+      objectReference: {fileID: 1856970875}
+    - target: {fileID: 188146230140724658, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
       propertyPath: Pieces.Array.size
       value: 2
       objectReference: {fileID: 0}

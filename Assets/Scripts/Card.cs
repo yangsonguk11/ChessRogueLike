@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -21,10 +22,12 @@ public abstract class Card : MonoBehaviour, ISelectable
     int Cost;
     CardType type;
     TargetType target;
+    public List<CardEffect> effects;
 
-    private void Awake()
+    public virtual void Awake()
     {
         defaultScale = transform.localScale;
+        effects = new List<CardEffect>();
     }
 
     public event Action OnSelected;
@@ -121,4 +124,10 @@ public abstract class Card : MonoBehaviour, ISelectable
     {
 
     }
+}
+public enum EffectType { Move, Damage, Buff, Heal }
+public class CardEffect
+{
+    public Board.BoardMode requiredMode; // 이 효과를 쓰기 위해 필요한 모드 (예: targeting)
+    public EffectType type;
 }

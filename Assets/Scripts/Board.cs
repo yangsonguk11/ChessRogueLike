@@ -24,12 +24,21 @@ public class Board : MonoBehaviour
 
     List<Vector2> selectedButtonMovable = new List<Vector2>();
     Queue<IEnumerator> motionQueue = new Queue<IEnumerator>();
-    bool coroutineworking;
+    bool queuecoroutineworking;
+
+    public enum BoardMode
+    {
+        Inspect,
+        command,
+        targeting
+    }
+
+    BoardMode boardmode;
     private void Start()
     {
         OnButtonSelected += OnSelectBoard;
         OnButtonUnSelected += OnUnSelectBoard;
-        coroutineworking = false;
+        queuecoroutineworking = false;
         InitBoard();
     }
 
@@ -56,30 +65,116 @@ public class Board : MonoBehaviour
 
     public void ButtonClicked(Vector2 pos)
     {
-        if (coroutineworking)
+
+        if (queuecoroutineworking)
             return;
-        if (selectedButton.x < 0 || selectedButton.y < 0)   //선택된 칸이 비어있을 때
+
+        //Inspect Mode
+        if (boardmode == BoardMode.Inspect)
         {
+            if (selectedButton.x >= 0 && selectedButton.y >= 0)   //이미 선택된 칸이 있을 때 
+            {
+                GetButtonScript(selectedButton).SelectedFalse();
+                ClearSelectedButton();
+            }
+
             if (GetButtonScript(pos).IsSelectable())
             {
                 selectedButton = pos;
                 GetButtonScript(pos).SelectedTrue();
             }
         }
-        else if (selectedButton == pos || !selectedButtonMovable.Contains(pos))
+        else if(boardmode == BoardMode.command)
         {
-            GetButtonScript(selectedButton).SelectedFalse();
-            ClearSelectedButton();
+            if (selectedButton.x < 0 || selectedButton.y < 0)   //이미 선택된 칸이 비어있을 때
+            {
+                if (GetButtonScript(pos).IsSelectable())
+                {
+                    selectedButton = pos;
+                    GetButtonScript(pos).SelectedTrue();
+                }
+            }
+            else if (selectedButton == pos || !selectedButtonMovable.Contains(pos))
+            {
+                GetButtonScript(selectedButton).SelectedFalse();
+                ClearSelectedButton();
+            }
+            else
+            {
+                if (GetButtonScript(selectedButton).GetPiece().GetComponent<Piece>().teamID == 1) { }   //적이 선택되었을 때
+                else if (selectedButtonMovable.Contains(pos))
+                {
+                    ExecuteEffect(pendingEffects.Dequeue(), pos);
+                    ProcessNextCardEffect();
+                }
+            }
         }
-        else
+        else if (boardmode == BoardMode.targeting)
         {
-            if (GetButtonScript(selectedButton).GetPiece().GetComponent<Piece>().teamID == 1) { }   //적이 선택되었을 때
-            else if (selectedButtonMovable.Contains(pos))
-                MovePiece(selectedButton, pos);
+
         }
 
     }
+    Queue<CardEffect> pendingEffects = new Queue<CardEffect>();
+    Card currentActiveCard; // 현재 사용 중인 카드 참조
 
+    public void UseCard(Card card)
+    {
+        currentActiveCard = card;
+        pendingEffects.Clear();
+
+        // 카드가 가진 효과들을 큐에 담음
+        foreach (var effect in card.effects)
+        {
+            pendingEffects.Enqueue(effect);
+        }
+
+        ProcessNextCardEffect();
+    }
+
+    void ProcessNextCardEffect()
+    {
+        if (pendingEffects.Count == 0)
+        {
+            FinishCardUsage();
+            return;
+        }
+        CardEffect nextEffect = pendingEffects.Peek(); // 다음에 실행할 효과 확인
+
+        // 1. 모드 전환
+        boardmode = nextEffect.requiredMode;
+
+        // 2. 만약 조준이 필요한 모드라면 여기서 중단 (유저 입력을 기다림)
+        if (boardmode == BoardMode.command)
+        {
+            
+        }
+        else if (boardmode == BoardMode.targeting)
+        {
+
+        }
+        else
+        {
+            ExecuteEffect(pendingEffects.Dequeue());
+            ProcessNextCardEffect(); // 다음 효과로 넘어감
+        }
+    }
+
+    void ExecuteEffect(CardEffect cardEffect, Vector2 targetPos = default)
+    {
+        switch (cardEffect.type)
+        {
+            case EffectType.Move:
+                // 기존 MovePiece 로직 연결
+                MovePiece(selectedButton, targetPos);
+                break;
+        }
+    }
+    void FinishCardUsage()
+    {
+        boardmode = BoardMode.Inspect;
+        ClearSelectedButton();
+    }
     void MovePiece(Vector2 pos1, Vector2 pos2)      //기물이 이동을 시도
     {
         GameObject button1 = GetButton(pos1);
@@ -186,7 +281,7 @@ public class Board : MonoBehaviour
     }
     private IEnumerator ProcessQueue()
     {
-        coroutineworking = true;
+        queuecoroutineworking = true;
         Debug.Log(motionQueue.Count);
         while (motionQueue.Count > 0)
         {
@@ -198,7 +293,7 @@ public class Board : MonoBehaviour
             yield return StartCoroutine(nextAction);
         }
 
-        coroutineworking = false;
+        queuecoroutineworking = false;
     }
     GameObject GetButton(Vector2 pos)
     {
