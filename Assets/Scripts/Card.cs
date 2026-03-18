@@ -28,6 +28,7 @@ public abstract class Card : MonoBehaviour, ISelectable
     {
         defaultScale = transform.localScale;
         effects = new List<CardEffect>();
+        cardCanvas = GameObject.Find("CardCanvas");
     }
 
     public event Action OnSelected;
@@ -126,4 +127,5 @@ public class CardEffect
 {
     public Board.BoardMode requiredMode; // 이 효과를 쓰기 위해 필요한 모드 (예: targeting)
     public EffectType type;
+    public int dmg;
 }

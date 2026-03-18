@@ -1,16 +1,16 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class BasicCard : Card
+public class AttackCard : Card
 {
     public override void Awake()
     {
         base.Awake();
-        Cost = 1;
-
+        Cost = 2;
         CardEffect cf = new CardEffect();
         cf.requiredMode = Board.BoardMode.command;
-        cf.type = EffectType.Move;
+        cf.type = EffectType.Damage;
+        cf.dmg = 3;
         effects.Add(cf);
     }
     public override bool CanUse()

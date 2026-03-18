@@ -168,6 +168,9 @@ public class Board : MonoBehaviour
                 // 기존 MovePiece 로직 연결
                 MovePiece(selectedButton, targetPos);
                 break;
+            case EffectType.Damage:
+                AttackPiece(selectedButton, targetPos, cardEffect.dmg);
+                break;
         }
     }
     void FinishCardUsage()
@@ -210,15 +213,53 @@ public class Board : MonoBehaviour
     {
         int dmg = pScript1.colDamage;
         int hpLeft = pScript2.GetDamage(dmg, AttackType.MoveAttack);
+        motionQueue.Enqueue(MoveAdjacent(bScript1, bScript2, 1f));
         if (hpLeft <= 0)
         {
-            motionQueue.Enqueue(MoveAdjacent(bScript1, bScript2, 1f));
             motionQueue.Enqueue(pScript2.DeathCor());
             motionQueue.Enqueue(PieceMoveCor(GetButtonScript(GetAdjacentLocation(bScript1.GetLocation(), bScript2.GetLocation())), bScript2, 1f));
         }
         else
-            motionQueue.Enqueue(MoveAdjacent(bScript1, bScript2, 1f));
         StartCoroutine(ProcessQueue());
+    }
+
+    void AttackPiece(Vector2 pos1, Vector2 pos2, int dmg)
+    {
+        GameObject button1 = GetButton(pos1);
+        GameObject button2 = GetButton(pos2);
+        Button button1script = button1.GetComponent<Button>();
+        Button button2script = button2.GetComponent<Button>();
+
+        if (button1script.GetPiece() == null)
+        {
+        }
+        else
+        {
+            GameObject Piece1 = button1script.GetPiece();
+            GameObject Piece2 = button2script.GetPiece();
+            if (Piece2)
+            {
+                Piece pScript1 = Piece1.GetComponent<Piece>();
+                Piece pScript2 = Piece2.GetComponent<Piece>();
+                int hpLeft = pScript2.GetDamage(dmg, AttackType.NormalAttack);
+
+                motionQueue.Enqueue(PieceAttackCor(button1script, button2script, 1f));
+                if (hpLeft <= 0)
+                    motionQueue.Enqueue(pScript2.DeathCor());
+            }
+        }
+        StartCoroutine(ProcessQueue());
+    }
+    IEnumerator PieceAttackCor(Button Button1, Button Button2, float moveDuration)
+    {
+        float time = 0f;
+        while (time < moveDuration)
+        {
+            time += Time.deltaTime;
+            float t = time / moveDuration;
+
+            yield return null;
+        }
     }
     IEnumerator PieceMoveCor(Button Button1, Button Button2, float moveDuration)
     {
