@@ -136,6 +136,7 @@ public class Board : MonoBehaviour
     {
         if (pendingEffects.Count == 0)
         {
+            Debug.Log("aaaa");
             FinishCardUsage();
             return;
         }
@@ -172,6 +173,7 @@ public class Board : MonoBehaviour
     }
     void FinishCardUsage()
     {
+        currentActiveCard.cardCanvas.GetComponent<CardCanvas>().FinishUseCard();
         boardmode = BoardMode.Inspect;
         ClearSelectedButton();
     }

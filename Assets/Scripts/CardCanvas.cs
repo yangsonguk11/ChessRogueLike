@@ -12,7 +12,8 @@ public class CardCanvas : MonoBehaviour
     [SerializeField] float radius; // 원의 반지름 (클수록 완만함)
     [SerializeField] float angleBetween;  // 카드 사이의 각도
     [SerializeField] float heightOffset; // 부채꼴의 높이 보정
-    
+
+    RectTransform nowusingCard;
     private void Awake()
     {
         AlignCards();
@@ -33,12 +34,20 @@ public class CardCanvas : MonoBehaviour
     }
     public void UseCard(int handnum)
     {
-        RectTransform card = cards[handnum];
-        board.UseCard(card.GetComponent<Card>());
-
-        card.localPosition = CardNowUsingPos.position;
+        if (nowusingCard)
+        {
+            cards.Add(nowusingCard);
+        }
+        nowusingCard = cards[handnum];
+        board.UseCard(nowusingCard.GetComponent<Card>());
+        nowusingCard.localPosition = CardNowUsingPos.position;
         cards.RemoveAt(handnum);
         AlignCards();
+    }
+
+    public void FinishUseCard()
+    {
+        Destroy(nowusingCard.gameObject);
     }
     //[ContextMenu("Align Cards")] // 인스펙터 메뉴에서 바로 실행 가능
     public void AlignCards()
