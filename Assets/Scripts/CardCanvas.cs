@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System;
 using UnityEngine.UI;
+using TMPro;
 
 public class CardCanvas : MonoBehaviour
 {
@@ -10,11 +11,14 @@ public class CardCanvas : MonoBehaviour
     List<RectTransform> Discardcards = new List<RectTransform>();
     [SerializeField] GameObject HandZone;
     [SerializeField] RectTransform CardNowUsingPos;
+    [SerializeField] TextMeshProUGUI CurrentEnergyText;
     [SerializeField] float radius; // 원의 반지름 (클수록 완만함)
     [SerializeField] float angleBetween;  // 카드 사이의 각도
     [SerializeField] float heightOffset; // 부채꼴의 높이 보정
 
-    public int currentenergy;
+    int _currentenergy;
+    public int currentenergy { get { return _currentenergy; } set { _currentenergy = value; UpdateCurrentEnergy(); } }
+
     RectTransform nowusingCard;
     private void Awake()
     {
@@ -58,6 +62,11 @@ public class CardCanvas : MonoBehaviour
         currentenergy -= nowusingCard.GetComponent<Card>().Cost;
         Destroy(nowusingCard.gameObject);
     }
+    private void UpdateCurrentEnergy()
+    {
+        CurrentEnergyText.text = string.Format("{0}/3", currentenergy);
+    }
+
     //[ContextMenu("Align Cards")] // 인스펙터 메뉴에서 바로 실행 가능
     public void AlignCards()
     {
@@ -84,7 +93,6 @@ public class CardCanvas : MonoBehaviour
             cards[i].localPosition = new Vector3(x, y + heightOffset, 0);
             cards[i].localRotation = Quaternion.Euler(0, 0, -currentAngle);
 
-            Debug.Log("asdf");
             cards[i].gameObject.GetComponent<Card>().OnUnSelected -= CardUnSelected;
             cards[i].gameObject.GetComponent<Card>().OnUnSelected += CardUnSelected;
             cards[i].gameObject.GetComponent<Card>().cardCanvas = gameObject;

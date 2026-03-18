@@ -136,7 +136,6 @@ public class Board : MonoBehaviour
     {
         if (pendingEffects.Count == 0)
         {
-            Debug.Log("aaaa");
             FinishCardUsage();
             return;
         }
@@ -284,12 +283,10 @@ public class Board : MonoBehaviour
     private IEnumerator ProcessQueue()
     {
         queuecoroutineworking = true;
-        Debug.Log(motionQueue.Count);
         while (motionQueue.Count > 0)
         {
             // 큐에서 다음 연출을 꺼냄
             IEnumerator nextAction = motionQueue.Dequeue();
-            Debug.Log(nextAction);
 
             // 해당 연출이 끝날 때까지 대기
             yield return StartCoroutine(nextAction);
