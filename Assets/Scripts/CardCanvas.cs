@@ -7,15 +7,18 @@ public class CardCanvas : MonoBehaviour
 {
     [SerializeField] Board board;
     public List<RectTransform> cards = new List<RectTransform>(); // 손에 든 카드들
+    List<RectTransform> Discardcards = new List<RectTransform>();
     [SerializeField] GameObject HandZone;
     [SerializeField] RectTransform CardNowUsingPos;
     [SerializeField] float radius; // 원의 반지름 (클수록 완만함)
     [SerializeField] float angleBetween;  // 카드 사이의 각도
     [SerializeField] float heightOffset; // 부채꼴의 높이 보정
 
+    public int currentenergy;
     RectTransform nowusingCard;
     private void Awake()
     {
+        currentenergy = 3;
         AlignCards();
         HandZone.GetComponent<Image>().raycastTarget = false;
     }
@@ -34,19 +37,25 @@ public class CardCanvas : MonoBehaviour
     }
     public void UseCard(int handnum)
     {
+        if (cards[handnum].GetComponent<Card>().Cost > currentenergy)
+            return;
         if (nowusingCard)
         {
             cards.Add(nowusingCard);
         }
         nowusingCard = cards[handnum];
         board.UseCard(nowusingCard.GetComponent<Card>());
-        nowusingCard.localPosition = CardNowUsingPos.position;
+
+        nowusingCard.position = CardNowUsingPos.position;
+        nowusingCard.localRotation = Quaternion.Euler(0, 0, 0);
         cards.RemoveAt(handnum);
         AlignCards();
     }
 
     public void FinishUseCard()
     {
+        Discardcards.Add(nowusingCard);
+        currentenergy -= nowusingCard.GetComponent<Card>().Cost;
         Destroy(nowusingCard.gameObject);
     }
     //[ContextMenu("Align Cards")] // 인스펙터 메뉴에서 바로 실행 가능

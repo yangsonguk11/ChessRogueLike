@@ -19,7 +19,7 @@ enum TargetType
 public abstract class Card : MonoBehaviour, ISelectable
 {
     string Name, Description;
-    int Cost;
+    public int Cost;
     CardType type;
     TargetType target;
     public List<CardEffect> effects;
@@ -120,10 +120,6 @@ public abstract class Card : MonoBehaviour, ISelectable
         this.transform.position = screenPos;
     }
 
-    public void UseCard()
-    {
-
-    }
 }
 public enum EffectType { Move, Damage, Buff, Heal }
 public class CardEffect

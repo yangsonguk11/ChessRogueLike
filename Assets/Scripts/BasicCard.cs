@@ -6,6 +6,7 @@ public class BasicCard : Card
     public override void Awake()
     {
         base.Awake();
+        Cost = 2;
         CardEffect cf = new CardEffect();
         cf.requiredMode = Board.BoardMode.command;
         cf.type = EffectType.Move;
