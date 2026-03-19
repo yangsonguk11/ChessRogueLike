@@ -8,9 +8,11 @@ public class CardCanvas : MonoBehaviour
 {
     [SerializeField] Board board;
     public List<RectTransform> cards = new List<RectTransform>(); // 손에 든 카드들
-    List<RectTransform> Discardcards = new List<RectTransform>();
+    public List<RectTransform> Discardcards = new List<RectTransform>();
+    public Queue<RectTransform> Deckcards = new Queue<RectTransform>();
     [SerializeField] GameObject HandZone;
     [SerializeField] RectTransform CardNowUsingPos;
+    [SerializeField] RectTransform DiscardZone;
     [SerializeField] TextMeshProUGUI CurrentEnergyText;
     [SerializeField] float radius; // 원의 반지름 (클수록 완만함)
     [SerializeField] float angleBetween;  // 카드 사이의 각도
@@ -18,11 +20,12 @@ public class CardCanvas : MonoBehaviour
 
     int _currentenergy;
     public int currentenergy { get { return _currentenergy; } set { _currentenergy = value; UpdateCurrentEnergy(); } }
-
+    public int maxenergy = 99;
     RectTransform nowusingCard;
+    public bool isCardEffecting;
     private void Awake()
     {
-        currentenergy = 3;
+        currentenergy = 99;
         AlignCards();
         HandZone.GetComponent<Image>().raycastTarget = false;
     }
@@ -39,9 +42,10 @@ public class CardCanvas : MonoBehaviour
         AlignCards();
         HandZone.GetComponent<Image>().raycastTarget = false;
     }
-    public void UseCard(int handnum)
+    public void UseCard(int handnum)        //손의 카드를 끌어서 놓아 사용할 때
     {
-        if (cards[handnum].GetComponent<Card>().Cost > currentenergy)
+        
+        if (cards[handnum].GetComponent<Card>().Cost > currentenergy || isCardEffecting || board.queuecoroutineworking)
             return;
         if (nowusingCard)
         {
@@ -56,15 +60,47 @@ public class CardCanvas : MonoBehaviour
         AlignCards();
     }
 
-    public void FinishUseCard()
+    public void FinishUseCard()             //손의 카드 사용 이후
     {
         Discardcards.Add(nowusingCard);
         currentenergy -= nowusingCard.GetComponent<Card>().Cost;
-        Destroy(nowusingCard.gameObject);
+        nowusingCard.position = DiscardZone.position;
+        nowusingCard = null;
+        isCardEffecting = false;
+        if (cards.Count <= 0)
+        {
+            DrawCard();
+            DrawCard();
+            DrawCard();
+            DrawCard();
+        }
     }
     private void UpdateCurrentEnergy()
     {
-        CurrentEnergyText.text = string.Format("{0}/3", currentenergy);
+        CurrentEnergyText.text = string.Format("{0}/{1}", currentenergy, maxenergy);
+    }
+
+    void DrawCard()                         //덱의 카드를 손으로 가져오기
+    {
+        if (Deckcards.Count == 0)
+        {
+            DiscardtoDeck();                
+            
+        }
+        if (Deckcards.Count != 0)
+        {
+            cards.Add(Deckcards.Dequeue());
+        }
+        AlignCards();
+    }
+
+    void DiscardtoDeck()
+    {
+        while (Discardcards.Count != 0)
+        {
+            Deckcards.Enqueue(Discardcards[0]);
+            Discardcards.RemoveAt(0);
+        }
     }
 
     //[ContextMenu("Align Cards")] // 인스펙터 메뉴에서 바로 실행 가능

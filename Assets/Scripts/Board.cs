@@ -24,7 +24,7 @@ public class Board : MonoBehaviour
 
     List<Vector2> selectedButtonMovable = new List<Vector2>();
     Queue<IEnumerator> motionQueue = new Queue<IEnumerator>();
-    bool queuecoroutineworking;
+    public bool queuecoroutineworking;
 
     public enum BoardMode
     {
@@ -60,6 +60,7 @@ public class Board : MonoBehaviour
         }
         ClearSelectedButton();
         GetButtonScript(new Vector2(2, 2)).SetPiece(Instantiate(Pieces[0]));
+        GetButtonScript(new Vector2(2, 4)).SetPiece(Instantiate(Pieces[0]));
         GetButtonScript(new Vector2(3, 3)).SetPiece(Instantiate(Pieces[1]));
     }
 
@@ -73,6 +74,11 @@ public class Board : MonoBehaviour
         if (boardmode == BoardMode.Inspect)
         {
             if (selectedButton.x >= 0 && selectedButton.y >= 0)   //이미 선택된 칸이 있을 때 
+            {
+                GetButtonScript(selectedButton).SelectedFalse();
+                ClearSelectedButton();
+            }
+            else if (selectedButton == pos || !selectedButtonMovable.Contains(pos))//자기자신 혹은 유효하지 않은 칸 눌러 취소
             {
                 GetButtonScript(selectedButton).SelectedFalse();
                 ClearSelectedButton();
@@ -94,7 +100,7 @@ public class Board : MonoBehaviour
                     GetButtonScript(pos).SelectedTrue();
                 }
             }
-            else if (selectedButton == pos || !selectedButtonMovable.Contains(pos))
+            else if (selectedButton == pos || !selectedButtonMovable.Contains(pos))//자기자신 혹은 유효하지 않은 칸 눌러 취소
             {
                 GetButtonScript(selectedButton).SelectedFalse();
                 ClearSelectedButton();
@@ -111,7 +117,28 @@ public class Board : MonoBehaviour
         }
         else if (boardmode == BoardMode.targeting)
         {
-
+            if (selectedButton.x < 0 || selectedButton.y < 0)   //이미 선택된 칸이 비어있을 때
+            {
+                if (GetButtonScript(pos).IsSelectable())
+                {
+                    selectedButton = pos;
+                    GetButtonScript(pos).SelectedTrue();
+                }
+            }
+            else if (selectedButton == pos || !selectedButtonMovable.Contains(pos)) //자기자신 혹은 유효하지 않은 칸 눌러 취소
+            {
+                GetButtonScript(selectedButton).SelectedFalse();
+                ClearSelectedButton();
+            }
+            else
+            {
+                if (GetButtonScript(selectedButton).GetPiece().GetComponent<Piece>().teamID == 1) { }   //적이 선택되었을 때
+                else if (selectedButtonMovable.Contains(pos))
+                {
+                    ExecuteEffect(pendingEffects.Dequeue(), pos);
+                    ProcessNextCardEffect();
+                }
+            }
         }
 
     }
@@ -162,10 +189,10 @@ public class Board : MonoBehaviour
 
     void ExecuteEffect(CardEffect cardEffect, Vector2 targetPos = default)
     {
+        currentActiveCard.cardCanvas.GetComponent<CardCanvas>().isCardEffecting = true;
         switch (cardEffect.type)
         {
             case EffectType.Move:
-                // 기존 MovePiece 로직 연결
                 MovePiece(selectedButton, targetPos);
                 break;
             case EffectType.Damage:
@@ -213,13 +240,13 @@ public class Board : MonoBehaviour
     {
         int dmg = pScript1.colDamage;
         int hpLeft = pScript2.GetDamage(dmg, AttackType.MoveAttack);
+        Debug.Log(hpLeft);
         motionQueue.Enqueue(MoveAdjacent(bScript1, bScript2, 1f));
         if (hpLeft <= 0)
         {
             motionQueue.Enqueue(pScript2.DeathCor());
             motionQueue.Enqueue(PieceMoveCor(GetButtonScript(GetAdjacentLocation(bScript1.GetLocation(), bScript2.GetLocation())), bScript2, 1f));
         }
-        else
         StartCoroutine(ProcessQueue());
     }
 

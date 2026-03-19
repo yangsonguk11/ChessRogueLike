@@ -33,7 +33,6 @@ public class PieceCanvas : MonoBehaviour
         float time = 0f;
 
         Vector3 v = new Vector3(0, moveSpeed, 0);
-        Debug.Log(moveSpeed);
         while (time < duration)
         {
             time += Time.deltaTime;
