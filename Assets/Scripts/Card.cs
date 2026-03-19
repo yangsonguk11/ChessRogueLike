@@ -112,6 +112,8 @@ public abstract class Card : MonoBehaviour, ISelectable
 
     public void MouseDrag(BaseEventData data)
     {
+        if (handNumber == -1)
+            return;
         PointerEventData pointerData = (PointerEventData)data;
 
         Vector2 screenPos = pointerData.position;
@@ -128,4 +130,5 @@ public class CardEffect
     public Board.BoardMode requiredMode; // 이 효과를 쓰기 위해 필요한 모드 (예: targeting)
     public EffectType type;
     public int dmg;
+    public RangeInfoSO effectRange;
 }

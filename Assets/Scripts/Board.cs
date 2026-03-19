@@ -19,7 +19,7 @@ public class Board : MonoBehaviour
     Vector2 selectedButton
     {
         get { return _selectedButton; }
-        set { _selectedButton = value; if (isSelectedButtonActive()) OnButtonSelected?.Invoke(); else OnButtonUnSelected?.Invoke(); }
+        set { _selectedButton = value; if (isSelectedButtonActive()) { OnButtonSelected?.Invoke(); ShowButtonInfo(); } else { OnButtonUnSelected?.Invoke(); HideButtonInfo(); } }
     }
 
     List<Vector2> selectedButtonMovable = new List<Vector2>();
@@ -70,77 +70,76 @@ public class Board : MonoBehaviour
         if (queuecoroutineworking)
             return;
 
-        //Inspect Mode
-        if (boardmode == BoardMode.Inspect)
+        switch (boardmode)
         {
-            if (selectedButton.x >= 0 && selectedButton.y >= 0)   //이미 선택된 칸이 있을 때 
-            {
-                GetButtonScript(selectedButton).SelectedFalse();
-                ClearSelectedButton();
-            }
-            else if (selectedButton == pos || !selectedButtonMovable.Contains(pos))//자기자신 혹은 유효하지 않은 칸 눌러 취소
-            {
-                GetButtonScript(selectedButton).SelectedFalse();
-                ClearSelectedButton();
-            }
+            case BoardMode.Inspect:
+                if (selectedButton == pos)   //자신 선택 시
+                {
+                    GetButtonScript(selectedButton).SelectedFalse();
+                    ClearSelectedButton();
+                    return;
+                }
+                if (selectedButton.x >= 0 && selectedButton.y >= 0)   //이미 선택된 칸이 있을 때 
+                {
+                    GetButtonScript(selectedButton).SelectedFalse();
+                    ClearSelectedButton();
+                }
 
-            if (GetButtonScript(pos).IsSelectable())
-            {
-                selectedButton = pos;
-                GetButtonScript(pos).SelectedTrue();
-            }
-        }
-        else if(boardmode == BoardMode.command)
-        {
-            if (selectedButton.x < 0 || selectedButton.y < 0)   //이미 선택된 칸이 비어있을 때
-            {
                 if (GetButtonScript(pos).IsSelectable())
                 {
                     selectedButton = pos;
                     GetButtonScript(pos).SelectedTrue();
                 }
-            }
-            else if (selectedButton == pos || !selectedButtonMovable.Contains(pos))//자기자신 혹은 유효하지 않은 칸 눌러 취소
-            {
-                GetButtonScript(selectedButton).SelectedFalse();
-                ClearSelectedButton();
-            }
-            else
-            {
-                if (GetButtonScript(selectedButton).GetPiece().GetComponent<Piece>().teamID == 1) { }   //적이 선택되었을 때
-                else if (selectedButtonMovable.Contains(pos))
+                break;
+            case BoardMode.command:
+                if (selectedButton.x < 0 || selectedButton.y < 0)   //이미 선택된 칸이 비어있을 때
                 {
-                    ExecuteEffect(pendingEffects.Dequeue(), pos);
-                    ProcessNextCardEffect();
+                    if (GetButtonScript(pos).IsSelectable())
+                    {
+                        selectedButton = pos;
+                        GetButtonScript(pos).SelectedTrue();
+                    }
                 }
-            }
+                else if (selectedButton == pos || !selectedButtonMovable.Contains(pos)) //자기자신 혹은 유효하지 않은 칸 눌러 취소
+                {
+                    GetButtonScript(selectedButton).SelectedFalse();
+                    ClearSelectedButton();
+                }
+                else
+                {
+                    if (GetButtonScript(selectedButton).GetPiece().GetComponent<Piece>().teamID == 1) { }   //적이 선택되었을 때
+                    else if (selectedButtonMovable.Contains(pos))
+                    {
+                        ExecuteEffect(pendingEffects.Dequeue(), pos);
+                        ProcessNextCardEffect();
+                    }
+                }
+                break;
+            case BoardMode.targeting:
+                if (selectedButton.x < 0 || selectedButton.y < 0)   //이미 선택된 칸이 비어있을 때
+                {
+                    if (GetButtonScript(pos).IsSelectable())
+                    {
+                        selectedButton = pos;
+                        GetButtonScript(pos).SelectedTrue();
+                    }
+                }
+                else if (selectedButton == pos || !selectedButtonMovable.Contains(pos)) //자기자신 혹은 유효하지 않은 칸 눌러 취소
+                {
+                    GetButtonScript(selectedButton).SelectedFalse();
+                    ClearSelectedButton();
+                }
+                else
+                {
+                    if (GetButtonScript(selectedButton).GetPiece().GetComponent<Piece>().teamID == 1) { }   //적이 선택되었을 때
+                    else if (selectedButtonMovable.Contains(pos))
+                    {
+                        ExecuteEffect(pendingEffects.Dequeue(), pos);
+                        ProcessNextCardEffect();
+                    }
+                }
+                break;
         }
-        else if (boardmode == BoardMode.targeting)
-        {
-            if (selectedButton.x < 0 || selectedButton.y < 0)   //이미 선택된 칸이 비어있을 때
-            {
-                if (GetButtonScript(pos).IsSelectable())
-                {
-                    selectedButton = pos;
-                    GetButtonScript(pos).SelectedTrue();
-                }
-            }
-            else if (selectedButton == pos || !selectedButtonMovable.Contains(pos)) //자기자신 혹은 유효하지 않은 칸 눌러 취소
-            {
-                GetButtonScript(selectedButton).SelectedFalse();
-                ClearSelectedButton();
-            }
-            else
-            {
-                if (GetButtonScript(selectedButton).GetPiece().GetComponent<Piece>().teamID == 1) { }   //적이 선택되었을 때
-                else if (selectedButtonMovable.Contains(pos))
-                {
-                    ExecuteEffect(pendingEffects.Dequeue(), pos);
-                    ProcessNextCardEffect();
-                }
-            }
-        }
-
     }
     Queue<CardEffect> pendingEffects = new Queue<CardEffect>();
     Card currentActiveCard; // 현재 사용 중인 카드 참조
@@ -386,7 +385,19 @@ public class Board : MonoBehaviour
 
     void OnSelectBoard()
     {
-        ShowMovableButtons(GetButtonScript(selectedButton).GetPiece());
+        List<Vector2> effectRange = null;
+        if (pendingEffects.Count > 0)
+        {
+            CardEffect currentEffect = pendingEffects.Peek();
+
+            // 2. 효과에 거리 정보(List<Vector2> 타입의 범위 데이터 등)가 있는지 확인
+            // CardEffect 클래스에 범위 리스트(예: actionRange)가 있다고 가정합니다.
+            if (currentEffect.effectRange != null)
+            {
+                effectRange = currentEffect.effectRange.GetAbleRange();
+            }
+        }
+        ShowMovableButtons(GetButtonScript(selectedButton).GetPiece(), effectRange);
         ShowButtonInfo();
     }
     void OnUnSelectBoard()
@@ -394,15 +405,19 @@ public class Board : MonoBehaviour
         HideMovableButtons();
         HideButtonInfo();
     }
-    void ShowMovableButtons(GameObject p)
+    void ShowMovableButtons(GameObject p, List<Vector2> effectableButton = default)
     {
         if (p == null)
             return;
 
         Piece piece = p.GetComponent<Piece>();
-        List<Vector2> list = piece.GetMoveableButton();
+        List<Vector2> list;
+        if (effectableButton == null)
+            list = piece.GetMoveableButton();
+        else
+            list = effectableButton;
         selectedButtonMovable.Clear();
-
+        
         foreach(Vector2 v in list)
         {
             Vector2 m = selectedButton + v;

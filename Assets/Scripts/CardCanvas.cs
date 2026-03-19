@@ -32,6 +32,8 @@ public class CardCanvas : MonoBehaviour
 
     public void CardSelected(int handNum)
     {
+        if (handNum == -1)
+            return;
         cards[handNum].GetComponent<Card>().SelectedTrue();
         ExcludeAlignCards(cards[handNum].GetComponent<Card>().handNumber);
         HandZone.GetComponent<Image>().raycastTarget = true;
@@ -44,7 +46,6 @@ public class CardCanvas : MonoBehaviour
     }
     public void UseCard(int handnum)        //손의 카드를 끌어서 놓아 사용할 때
     {
-        
         if (cards[handnum].GetComponent<Card>().Cost > currentenergy || isCardEffecting || board.queuecoroutineworking)
             return;
         if (nowusingCard)
@@ -52,6 +53,7 @@ public class CardCanvas : MonoBehaviour
             cards.Add(nowusingCard);
         }
         nowusingCard = cards[handnum];
+        nowusingCard.GetComponent<Card>().handNumber = -1;
         board.UseCard(nowusingCard.GetComponent<Card>());
 
         nowusingCard.position = CardNowUsingPos.position;

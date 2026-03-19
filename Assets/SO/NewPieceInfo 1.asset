@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PieceInfo
   _pieceName: "\uC801"
   _teamID: 1
-  _maxHp: 2
+  _maxHp: 10
   _colDamage: 5
-  _rangeInfoSO: {fileID: 11400000, guid: a6ea4878a6f501941adddaf86bb91bd7, type: 2}
+  _rangeInfoSO: {fileID: 11400000, guid: e798bd81c0425624ead1e05779a9c275, type: 2}
