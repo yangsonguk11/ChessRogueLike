@@ -10,6 +10,7 @@ public class Board : MonoBehaviour
     [SerializeField] GameObject[,] Buttons;
     [SerializeField] GameObject[] Pieces;
     [SerializeField] GameObject BoardUICanvas;
+    [SerializeField] TurnManager turnManager;
     event Action OnButtonSelected;
     event Action OnButtonUnSelected;
     [Header("보드 크기")]
@@ -67,21 +68,18 @@ public class Board : MonoBehaviour
     public void ButtonClicked(Vector2 pos)
     {
 
-        if (queuecoroutineworking)
-            return;
+        if (turnManager.currentState != TurnState.Player) return;
 
         switch (boardmode)
         {
             case BoardMode.Inspect:
                 if (selectedButton == pos)   //자신 선택 시
                 {
-                    GetButtonScript(selectedButton).SelectedFalse();
                     ClearSelectedButton();
                     return;
                 }
                 if (selectedButton.x >= 0 && selectedButton.y >= 0)   //이미 선택된 칸이 있을 때 
                 {
-                    GetButtonScript(selectedButton).SelectedFalse();
                     ClearSelectedButton();
                 }
 
@@ -102,7 +100,6 @@ public class Board : MonoBehaviour
                 }
                 else if (selectedButton == pos || !selectedButtonMovable.Contains(pos)) //자기자신 혹은 유효하지 않은 칸 눌러 취소
                 {
-                    GetButtonScript(selectedButton).SelectedFalse();
                     ClearSelectedButton();
                 }
                 else
@@ -126,7 +123,6 @@ public class Board : MonoBehaviour
                 }
                 else if (selectedButton == pos || !selectedButtonMovable.Contains(pos)) //자기자신 혹은 유효하지 않은 칸 눌러 취소
                 {
-                    GetButtonScript(selectedButton).SelectedFalse();
                     ClearSelectedButton();
                 }
                 else
@@ -350,6 +346,7 @@ public class Board : MonoBehaviour
     private IEnumerator ProcessQueue()
     {
         queuecoroutineworking = true;
+        turnManager.TurnStateProcessing();
         while (motionQueue.Count > 0)
         {
             // 큐에서 다음 연출을 꺼냄
@@ -360,6 +357,7 @@ public class Board : MonoBehaviour
         }
 
         queuecoroutineworking = false;
+        turnManager.RollbackStateProcessing();
     }
     GameObject GetButton(Vector2 pos)
     {
@@ -372,6 +370,8 @@ public class Board : MonoBehaviour
 
     void ClearSelectedButton()
     {
+        if(selectedButton.x != -1 && selectedButton.y != -1)
+            GetButtonScript(selectedButton).SelectedFalse();
         selectedButton = new Vector2(-1, -1);
     }
 
