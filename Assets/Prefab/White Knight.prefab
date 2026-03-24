@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 3368862}
   - component: {fileID: 2311140}
   - component: {fileID: 6426312}
-  - component: {fileID: 5405708670014392349}
+  - component: {fileID: 2211220569692418932}
   m_Layer: 0
   m_Name: White Knight
   m_TagString: Untagged
@@ -115,7 +115,7 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300000, guid: 69faab6ae9c00a848a82d036ac8c75d4, type: 3}
---- !u!114 &5405708670014392349
+--- !u!114 &2211220569692418932
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -124,9 +124,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 107724}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 84543820acf85bd47b76b933317ebbab, type: 3}
+  m_Script: {fileID: 11500000, guid: 2342992fd2fc88b4c8a99d70379f27dd, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Rook
+  m_EditorClassIdentifier: Assembly-CSharp::Enemy
   pieceInfo: {fileID: 11400000, guid: 65c68c9479f1f0c49b25b9c601062058, type: 2}
   pieceCanvas: {fileID: 6828917853103747858}
   hp: 0

@@ -10,7 +10,6 @@ public class Board : MonoBehaviour
     [SerializeField] GameObject[,] Buttons;
     [SerializeField] GameObject[] Pieces;
     [SerializeField] GameObject BoardUICanvas;
-    [SerializeField] TurnManager turnManager;
     event Action OnButtonSelected;
     event Action OnButtonUnSelected;
     [Header("보드 크기")]
@@ -68,7 +67,7 @@ public class Board : MonoBehaviour
     public void ButtonClicked(Vector2 pos)
     {
 
-        if (turnManager.currentState != TurnState.Player) return;
+        if (TurnManager.instance.currentState != TurnState.Player) return;
 
         switch (boardmode)
         {
@@ -346,7 +345,7 @@ public class Board : MonoBehaviour
     private IEnumerator ProcessQueue()
     {
         queuecoroutineworking = true;
-        turnManager.TurnStateProcessing();
+        TurnManager.instance.TurnStateProcessing();
         while (motionQueue.Count > 0)
         {
             // 큐에서 다음 연출을 꺼냄
@@ -357,7 +356,7 @@ public class Board : MonoBehaviour
         }
 
         queuecoroutineworking = false;
-        turnManager.RollbackStateProcessing();
+        TurnManager.instance.RollbackStateProcessing();
     }
     GameObject GetButton(Vector2 pos)
     {

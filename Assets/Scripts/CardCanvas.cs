@@ -46,7 +46,7 @@ public class CardCanvas : MonoBehaviour
     }
     public void UseCard(int handnum)        //손의 카드를 끌어서 놓아 사용할 때
     {
-        if (cards[handnum].GetComponent<Card>().Cost > currentenergy || isCardEffecting || board.queuecoroutineworking)
+        if (cards[handnum].GetComponent<Card>().Cost > currentenergy || isCardEffecting || TurnManager.instance.currentState != TurnState.Player)
             return;
         ClearnowusingCard();
         nowusingCard = cards[handnum];

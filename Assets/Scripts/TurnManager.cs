@@ -3,6 +3,7 @@ using UnityEngine;
 public enum TurnState { Player, Enemy, Processing }
 public class TurnManager : MonoBehaviour
 {
+    public static TurnManager instance;
     public TurnState currentState;// 현재 턴 상태
     public TurnState prevState;   // processing 직전의 턴 상태
     [SerializeField] Board board; // 보드 참조
@@ -10,6 +11,12 @@ public class TurnManager : MonoBehaviour
     void Start()
     {
         StartPlayerTurn();
+    }
+
+    private void Awake()
+    {
+        if (instance == null)
+            instance = this;
     }
 
     public void StartPlayerTurn()
