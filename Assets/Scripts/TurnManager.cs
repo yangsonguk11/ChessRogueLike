@@ -31,7 +31,7 @@ public class TurnManager : MonoBehaviour
         if (currentState != TurnState.Player) return;
 
         // 보드에 선택된 것들 해제
-        board.SendMessage("ClearSelectedButton");
+        board.SendMessage("TurnEnd");
 
         StartEnemyTurn();
     }
@@ -39,13 +39,18 @@ public class TurnManager : MonoBehaviour
     void StartEnemyTurn()
     {
         currentState = TurnState.Enemy;
+        board.SendMessage("PlayEnemyTurn");
         // 적 AI 로직 실행...
         Debug.Log("적 턴 시작");
 
+        
         // 예: 적 행동이 끝나면 다시 플레이어 턴으로
         // StartCoroutine(EnemyAILogic());
     }
-
+    public void EndEnemyTurn()
+    {
+        board.SendMessage("TurnEnd");
+    }
     public void TurnStateProcessing()
     {
         prevState = currentState;

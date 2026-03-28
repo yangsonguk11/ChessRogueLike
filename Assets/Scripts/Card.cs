@@ -16,6 +16,12 @@ enum TargetType
     Enemy,
     Ally,
 }
+
+public enum User
+{
+    Ally,
+    Enemy
+}
 public abstract class Card : MonoBehaviour, ISelectable
 {
     string Name, Description;
@@ -23,7 +29,7 @@ public abstract class Card : MonoBehaviour, ISelectable
     CardType type;
     TargetType target;
     public List<CardEffect> effects;
-
+    public User user;
     public virtual void Awake()
     {
         defaultScale = transform.localScale;

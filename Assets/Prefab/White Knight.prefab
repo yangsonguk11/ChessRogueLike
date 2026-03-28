@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 2311140}
   - component: {fileID: 6426312}
   - component: {fileID: 2211220569692418932}
+  - component: {fileID: 8838491715973263121}
   m_Layer: 0
   m_Name: White Knight
   m_TagString: Untagged
@@ -132,6 +133,24 @@ MonoBehaviour:
   hp: 0
   colDamage: 0
   teamID: 0
+  enemyCards:
+  - {fileID: 8838491715973263121}
+--- !u!114 &8838491715973263121
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 107724}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 551ffeb60fa588a4f8d319db9d2dd669, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BasicCard
+  Cost: 0
+  user: 1
+  cardCanvas: {fileID: 0}
+  handNumber: 0
 --- !u!1 &2736271924342697781
 GameObject:
   m_ObjectHideFlags: 0

@@ -6,6 +6,9 @@ using TMPro;
 
 public class CardCanvas : MonoBehaviour
 {
+    public static CardCanvas instance;
+
+
     [SerializeField] Board board;
     public List<RectTransform> cards = new List<RectTransform>(); // 손에 든 카드들
     public List<RectTransform> Discardcards = new List<RectTransform>();
@@ -25,6 +28,7 @@ public class CardCanvas : MonoBehaviour
     public bool isCardEffecting;
     private void Awake()
     {
+        if (instance == null) instance = this;
         currentenergy = 99;
         AlignCards();
         HandZone.GetComponent<Image>().raycastTarget = false;
@@ -46,6 +50,9 @@ public class CardCanvas : MonoBehaviour
     }
     public void UseCard(int handnum)        //손의 카드를 끌어서 놓아 사용할 때
     {
+        Debug.Log(cards[handnum].GetComponent<Card>().Cost > currentenergy);
+        Debug.Log(isCardEffecting);
+        Debug.Log(TurnManager.instance.currentState != TurnState.Player);
         if (cards[handnum].GetComponent<Card>().Cost > currentenergy || isCardEffecting || TurnManager.instance.currentState != TurnState.Player)
             return;
         ClearnowusingCard();
@@ -70,9 +77,13 @@ public class CardCanvas : MonoBehaviour
     }
     public void FinishUseCard()             //손의 카드 사용 이후
     {
-        Discardcards.Add(nowusingCard);
-        currentenergy -= nowusingCard.GetComponent<Card>().Cost;
-        nowusingCard.position = DiscardZone.position;
+        if (nowusingCard)
+        {
+            Discardcards.Add(nowusingCard);
+            currentenergy -= nowusingCard.GetComponent<Card>().Cost;
+            nowusingCard.position = DiscardZone.position;
+        }
+
         nowusingCard = null;
         isCardEffecting = false;
         if (cards.Count <= 0)

@@ -12,6 +12,8 @@ public class Board : MonoBehaviour
     [SerializeField] GameObject BoardUICanvas;
     event Action OnButtonSelected;
     event Action OnButtonUnSelected;
+
+    public List<Vector2> enemyPositions = new List<Vector2>();
     [Header("보드 크기")]
     [Min(1)] public int N; //세로
     [Min(1)] public int M; //가로
@@ -30,10 +32,11 @@ public class Board : MonoBehaviour
     {
         Inspect,
         command,
-        targeting
+        targeting,
+        enemy
     }
 
-    BoardMode boardmode;
+    public BoardMode boardmode;
     private void Start()
     {
         OnButtonSelected += OnSelectBoard;
@@ -61,7 +64,10 @@ public class Board : MonoBehaviour
         ClearSelectedButton();
         GetButtonScript(new Vector2(2, 2)).SetPiece(Instantiate(Pieces[0]));
         GetButtonScript(new Vector2(2, 4)).SetPiece(Instantiate(Pieces[0]));
-        GetButtonScript(new Vector2(3, 3)).SetPiece(Instantiate(Pieces[1]));
+        GetButtonScript(new Vector2(1, 4)).SetPiece(Instantiate(Pieces[1]));
+        GetButtonScript(new Vector2(1, 2)).SetPiece(Instantiate(Pieces[1]));
+        enemyPositions.Add(new Vector2(1, 4));
+        enemyPositions.Add(new Vector2(1, 2));
     }
 
     public void ButtonClicked(Vector2 pos)
@@ -139,7 +145,7 @@ public class Board : MonoBehaviour
     Queue<CardEffect> pendingEffects = new Queue<CardEffect>();
     Card currentActiveCard; // 현재 사용 중인 카드 참조
 
-    public void UseCard(Card card)
+    public void UseCard(Card card, Vector2 TargetPos = default)
     {
         currentActiveCard = card;
         pendingEffects.Clear();
@@ -150,10 +156,10 @@ public class Board : MonoBehaviour
             pendingEffects.Enqueue(effect);
         }
 
-        ProcessNextCardEffect();
+        ProcessNextCardEffect(TargetPos);
     }
 
-    void ProcessNextCardEffect()
+    void ProcessNextCardEffect(Vector2 TargetPos = default)
     {
         if (pendingEffects.Count == 0)
         {
@@ -165,6 +171,18 @@ public class Board : MonoBehaviour
         // 1. 모드 전환
         boardmode = nextEffect.requiredMode;
 
+        if (TurnManager.instance.currentState == TurnState.Enemy)
+        {
+            if(boardmode == BoardMode.command)
+            {
+                ExecuteEffect(pendingEffects.Dequeue(), TargetPos);
+                ProcessNextCardEffect();
+            }
+            return;
+        }
+
+
+        
         // 2. 만약 조준이 필요한 모드라면 여기서 중단 (유저 입력을 기다림)
         if (boardmode == BoardMode.command)
         {
@@ -194,11 +212,75 @@ public class Board : MonoBehaviour
                 break;
         }
     }
-    void FinishCardUsage()
+    void TurnEnd()
     {
-        currentActiveCard.cardCanvas.GetComponent<CardCanvas>().FinishUseCard();
+        FinishCardUsage();
+        ClearSelectedButton();
+    }
+    void ResetBoardAfterCardUse()
+    {
         boardmode = BoardMode.Inspect;
         ClearSelectedButton();
+        Debug.Log("Finished Card Use");
+    }
+    void FinishCardUsage()
+    {
+        CardCanvas.instance.FinishUseCard();
+        ResetBoardAfterCardUse();
+    }
+
+    void PlayEnemyTurn()
+    {
+        Debug.Log(enemyPositions[0]);
+        StartCoroutine(PlayEnemyTurnCoroutine());
+        /*
+        foreach (Vector2 pos in enemyPositions)
+        {
+            selectedButton = pos;
+
+            var (card, target) = GetButtonScript(pos).GetPiece().GetComponent<Enemy>().DecideCardAndTarget(this, pos);
+            if(card != null)
+            {
+                UseCard(card, target);
+            }
+        }
+        */
+    }
+    public IEnumerator PlayEnemyTurnCoroutine()
+    {
+        // 1. 적 목록을 복사해서 사용 (행동 중 위치가 바뀌어도 안전하게)
+        List<Vector2> currentEnemies = new List<Vector2>(enemyPositions);
+
+        int i = 0;
+        foreach (Vector2 pos in currentEnemies)
+        {
+            // 적 기물이 실제로 존재하는지 확인
+            Piece p = GetButtonScript(pos).GetPiece()?.GetComponent<Piece>();
+            if (p == null || p is not Enemy enemy) continue;
+
+            // 현재 행동 중인 적을 강조
+            selectedButton = pos;
+
+            // 2. 적 AI로부터 카드와 타겟을 결정받음
+            var (card, target) = enemy.DecideCardAndTarget(this, pos);
+
+            if (card != null)
+            {
+                // 3. 카드 사용 시작
+                UseCard(card, target);
+
+                // 4. [중요] 카드의 모든 효과와 애니메이션(motionQueue)이 끝날 때까지 대기
+                // pendingEffects가 비어있고, queuecoroutineworking이 false가 될 때까지 기다림
+                yield return new WaitUntil(() => pendingEffects.Count == 0 && !queuecoroutineworking);
+            }
+            // 한 적의 행동이 끝난 후 잠시 대기 (연출상 자연스러움)
+            yield return new WaitForSeconds(0.5f);
+            ClearSelectedButton();
+            i++;
+        }
+
+        // 5. 모든 적의 턴이 종료되면 플레이어 턴으로 전환
+        TurnManager.instance.StartPlayerTurn();
     }
     void MovePiece(Vector2 pos1, Vector2 pos2)      //기물이 이동을 시도
     {
@@ -206,7 +288,6 @@ public class Board : MonoBehaviour
         GameObject button2 = GetButton(pos2);
         Button button1script = button1.GetComponent<Button>();
         Button button2script = button2.GetComponent<Button>();
-
         if (button1script.GetPiece() == null)
         {
         }
@@ -216,7 +297,7 @@ public class Board : MonoBehaviour
             GameObject Piece2 = button2script.GetPiece();
             if (Piece2)
             {
-                if(Piece2.GetComponent<Piece>().teamID == 1)
+                if(Piece1.GetComponent<Piece>().teamID != Piece2.GetComponent<Piece>().teamID)
                     MoveAttack(button1script.GetPiece().GetComponent<Piece>(), button2script.GetPiece().GetComponent<Piece>(), button1script, button2script);
             }
             else 
@@ -303,6 +384,23 @@ public class Board : MonoBehaviour
         piece.transform.position = pos2;
         Button2.SetPiece(Button1.GetPiece());
         Button1.RemovePiece();
+        Piece pScript = piece.GetComponent<Piece>();
+        if (pScript != null && pScript.teamID == 1)
+        {
+            UpdateEnemyPositionList(Button1.GetLocation(), Button2.GetLocation());
+        }
+    }
+
+    private void UpdateEnemyPositionList(Vector2 pos1, Vector2 pos2)
+    {
+        int index = enemyPositions.IndexOf(pos1);
+
+        if (index != -1)
+        {
+            // 순서는 유지한 채 좌표 값만 변경
+            enemyPositions[index] = pos2;
+            Debug.Log($"[리스트 업데이트] 인덱스 {index}: {pos1} -> {pos2}");
+        }
     }
 
     IEnumerator MoveAdjacent(Button Button1, Button Button2, float moveDuration)

@@ -128,7 +128,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Rook
   pieceInfo: {fileID: 11400000, guid: 9b16472a2e113a741a3e068e3f9f8357, type: 2}
-  pieceCanvas: {fileID: 0}
+  pieceCanvas: {fileID: 3352859856568857834}
   hp: 0
   colDamage: 0
   teamID: 0
