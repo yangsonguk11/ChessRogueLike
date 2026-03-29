@@ -195,7 +195,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 903ae885a3f23a043a859ea7ab6a9d91, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AttackCard
+  effectRange:
+  - {fileID: 11400000, guid: e2de2f96fad3a88409c8e848edab8bb9, type: 2}
   Cost: 0
+  user: 0
   cardCanvas: {fileID: 0}
   handNumber: 0
-  effectRange: {fileID: 11400000, guid: e2de2f96fad3a88409c8e848edab8bb9, type: 2}

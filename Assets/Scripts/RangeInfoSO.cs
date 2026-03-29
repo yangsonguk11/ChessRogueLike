@@ -11,6 +11,7 @@ public class RangeInfo
 [CreateAssetMenu(fileName = "NewRangeInfo", menuName = "RangeInfo")]
 public class RangeInfoSO : ScriptableObject
 {
+
     // GridRow를 배열로 선언하여 2차원 구조 형성
     public RangeInfo[] rows = new RangeInfo[7];
 

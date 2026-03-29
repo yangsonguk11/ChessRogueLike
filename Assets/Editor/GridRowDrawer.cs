@@ -18,5 +18,6 @@ public class RangeInfoDrawer : PropertyDrawer
             EditorGUI.PropertyField(newPos, columns.GetArrayElementAtIndex(i), GUIContent.none);
             newPos.x += columnWidth;
         }
+
     }
 }

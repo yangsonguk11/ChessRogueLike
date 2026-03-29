@@ -145,7 +145,7 @@ public class Board : MonoBehaviour
     Queue<CardEffect> pendingEffects = new Queue<CardEffect>();
     Card currentActiveCard; // 현재 사용 중인 카드 참조
 
-    public void UseCard(Card card, Vector2 TargetPos = default)
+    public void UseCard(Card card)
     {
         currentActiveCard = card;
         pendingEffects.Clear();
@@ -156,10 +156,10 @@ public class Board : MonoBehaviour
             pendingEffects.Enqueue(effect);
         }
 
-        ProcessNextCardEffect(TargetPos);
+        ProcessNextCardEffect();
     }
 
-    void ProcessNextCardEffect(Vector2 TargetPos = default)
+    void ProcessNextCardEffect()
     {
         if (pendingEffects.Count == 0)
         {
@@ -168,21 +168,31 @@ public class Board : MonoBehaviour
         }
         CardEffect nextEffect = pendingEffects.Peek(); // 다음에 실행할 효과 확인
 
-        // 1. 모드 전환
-        boardmode = nextEffect.requiredMode;
-
-        if (TurnManager.instance.currentState == TurnState.Enemy)
+        if (currentActiveCard.user == User.Enemy)
         {
-            if(boardmode == BoardMode.command)
+            if (nextEffect.requiredMode == BoardMode.command)
             {
+                Vector2 TargetPos;
+                TargetPos = selectedButton;
+                if (nextEffect.targetlogic == TargetLogic.NearestEnemy)
+                {
+                    TargetPos = GetNearestPlayerPos(selectedButton);
+                    AddMovableButtons(GetButtonScript(selectedButton).GetPiece()?.GetComponent<Piece>().GetMoveableButton());
+                    if (!selectedButtonMovable.Contains(TargetPos))
+                        TargetPos = selectedButton;
+                }
+                else
+                    TargetPos = selectedButton;
                 ExecuteEffect(pendingEffects.Dequeue(), TargetPos);
                 ProcessNextCardEffect();
             }
             return;
         }
 
+        // 1. 모드 전환
+        boardmode = nextEffect.requiredMode;
 
-        
+
         // 2. 만약 조준이 필요한 모드라면 여기서 중단 (유저 입력을 기다림)
         if (boardmode == BoardMode.command)
         {
@@ -262,12 +272,12 @@ public class Board : MonoBehaviour
             selectedButton = pos;
 
             // 2. 적 AI로부터 카드와 타겟을 결정받음
-            var (card, target) = enemy.DecideCardAndTarget(this, pos);
+            Card card = enemy.GetNextMove();
 
             if (card != null)
             {
                 // 3. 카드 사용 시작
-                UseCard(card, target);
+                UseCard(card);
 
                 // 4. [중요] 카드의 모든 효과와 애니메이션(motionQueue)이 끝날 때까지 대기
                 // pendingEffects가 비어있고, queuecoroutineworking이 false가 될 때까지 기다림
@@ -282,6 +292,7 @@ public class Board : MonoBehaviour
         // 5. 모든 적의 턴이 종료되면 플레이어 턴으로 전환
         TurnManager.instance.StartPlayerTurn();
     }
+    
     void MovePiece(Vector2 pos1, Vector2 pos2)      //기물이 이동을 시도
     {
         GameObject button1 = GetButton(pos1);
@@ -402,7 +413,30 @@ public class Board : MonoBehaviour
             Debug.Log($"[리스트 업데이트] 인덱스 {index}: {pos1} -> {pos2}");
         }
     }
+    Vector2 GetNearestPlayerPos(Vector2 enemyPos)           //제일 가까운 플레이어 찾기
+    {
+        Vector2 nearest = enemyPos;
+        float minDistance = float.MaxValue;
 
+        for (int x = 0; x < N; x++)
+        {
+            for (int y = 0; y < M; y++)
+            {
+                Piece p = GetButtonScript(new Vector2(x, y)).GetPiece()?.GetComponent<Piece>();
+                if (p != null && p.teamID == 0)
+                { // 플레이어 팀
+                    float dist = Vector2.Distance(enemyPos, new Vector2(x, y));
+                    if (dist < minDistance)
+                    {
+                        minDistance = dist;
+                        nearest = new Vector2(x, y);
+                    }
+                }
+            }
+        }
+        Debug.Log(nearest);
+        return nearest;
+    }
     IEnumerator MoveAdjacent(Button Button1, Button Button2, float moveDuration)
     {
         Button newTargetButton;
@@ -513,16 +547,7 @@ public class Board : MonoBehaviour
             list = piece.GetMoveableButton();
         else
             list = effectableButton;
-        selectedButtonMovable.Clear();
-        
-        foreach(Vector2 v in list)
-        {
-            Vector2 m = selectedButton + v;
-            if (m.x < 0 || m.x >= N || m.y < 0 || m.y >= M)
-                continue;
-            GetButtonScript(m).RangeOn();
-            selectedButtonMovable.Add(m);
-        }
+        AddMovableButtons(list);
     }
 
     void HideMovableButtons()
@@ -532,6 +557,18 @@ public class Board : MonoBehaviour
             GetButtonScript(v).RangeOff();
         }
 
+    }
+    void AddMovableButtons(List<Vector2> list)
+    {
+        selectedButtonMovable.Clear();
+        foreach (Vector2 v in list)
+        {
+            Vector2 m = selectedButton + v;
+            if (m.x < 0 || m.x >= N || m.y < 0 || m.y >= M)
+                continue;
+            GetButtonScript(m).RangeOn();
+            selectedButtonMovable.Add(m);
+        }
     }
     void ShowButtonInfo()
     {

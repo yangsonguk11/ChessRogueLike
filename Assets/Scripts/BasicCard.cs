@@ -8,9 +8,7 @@ public class BasicCard : Card
         base.Awake();
         Cost = 1;
 
-        CardEffect cf = new CardEffect();
-        cf.requiredMode = Board.BoardMode.command;
-        cf.type = EffectType.Move;
+        CardEffect cf = new CardEffect(Board.BoardMode.command, EffectType.Move, 0, effectRange[0], TargetLogic.NearestEnemy);
         effects.Add(cf);
     }
     public override bool CanUse()

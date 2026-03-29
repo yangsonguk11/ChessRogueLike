@@ -22,8 +22,15 @@ public enum User
     Ally,
     Enemy
 }
+
+public enum TargetLogic
+{
+    NearestEnemy,
+    LowestHP
+}
 public abstract class Card : MonoBehaviour, ISelectable
 {
+    public List<RangeInfoSO> effectRange;
     string Name, Description;
     public int Cost;
     CardType type;
@@ -137,4 +144,10 @@ public class CardEffect
     public EffectType type;
     public int dmg;
     public RangeInfoSO effectRange;
+    public TargetLogic targetlogic;
+
+    public CardEffect(Board.BoardMode _requiredMode, EffectType _type, int _dmg, RangeInfoSO _effectRange, TargetLogic _targetlogic)
+    {
+        requiredMode = _requiredMode; type = _type; dmg = _dmg; effectRange = _effectRange; targetlogic = _targetlogic;
+    }
 }

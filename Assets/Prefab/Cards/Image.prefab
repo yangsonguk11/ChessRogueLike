@@ -90,6 +90,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 551ffeb60fa588a4f8d319db9d2dd669, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BasicCard
+  effectRange:
+  - {fileID: 11400000, guid: e798bd81c0425624ead1e05779a9c275, type: 2}
+  Cost: 0
+  user: 0
   cardCanvas: {fileID: 0}
   handNumber: 0
 --- !u!114 &8749563859263172920
