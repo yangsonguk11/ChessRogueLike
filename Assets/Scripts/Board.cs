@@ -30,9 +30,9 @@ public class Board : MonoBehaviour
 
     public enum BoardMode
     {
-        Inspect,
-        command,
-        targeting,
+        Inspect,            //사용 중인 카드가 없음, 플레이어가 보드를 관찰하는 상태
+        command,            //기물에게 명령, 범위 내에 목표한 적이 없으면 제일 가까운 범위에 사용
+        targeting,          //기물에게 명령, 범위 내에 목표한 적이 없으면 사용하지 않음
         enemy
     }
 
@@ -65,9 +65,9 @@ public class Board : MonoBehaviour
         GetButtonScript(new Vector2(2, 2)).SetPiece(Instantiate(Pieces[0]));
         GetButtonScript(new Vector2(2, 4)).SetPiece(Instantiate(Pieces[0]));
         GetButtonScript(new Vector2(1, 4)).SetPiece(Instantiate(Pieces[1]));
-        GetButtonScript(new Vector2(1, 2)).SetPiece(Instantiate(Pieces[1]));
+        //GetButtonScript(new Vector2(1, 2)).SetPiece(Instantiate(Pieces[1]));
         enemyPositions.Add(new Vector2(1, 4));
-        enemyPositions.Add(new Vector2(1, 2));
+        //enemyPositions.Add(new Vector2(1, 2));
     }
 
     public void ButtonClicked(Vector2 pos)
@@ -174,17 +174,42 @@ public class Board : MonoBehaviour
             {
                 Vector2 TargetPos;
                 TargetPos = selectedButton;
-                if (nextEffect.targetlogic == TargetLogic.NearestEnemy)
+
+                switch (nextEffect.targetlogic)
                 {
-                    TargetPos = GetNearestPlayerPos(selectedButton);
-                    AddMovableButtons(GetButtonScript(selectedButton).GetPiece()?.GetComponent<Piece>().GetMoveableButton());
-                    if (!selectedButtonMovable.Contains(TargetPos))
+                    case TargetLogic.NearestEnemy:
+                        TargetPos = GetNearestPlayerPos(selectedButton);
+                        AddMovableButtons(GetButtonScript(selectedButton).GetPiece()?.GetComponent<Piece>().GetMoveableButton());
+                        if (!selectedButtonMovable.Contains(TargetPos))
+                        {
+                            float minDistance = float.MaxValue;
+                            Vector2 bestPos = selectedButton; // 기본값은 제자리
+
+                            foreach (Vector2 movablePos in selectedButtonMovable)
+                            {
+                                float dist = Vector2.Distance(movablePos, TargetPos);
+                                if (dist < minDistance)
+                                {
+                                    minDistance = dist;
+                                    bestPos = movablePos;
+                                }
+                            }
+                            TargetPos = bestPos;
+                        }
+                        break;
+                    case TargetLogic.LowestHP:
+                        break;
+                    default:
                         TargetPos = selectedButton;
+                        break;
                 }
-                else
-                    TargetPos = selectedButton;
+
                 ExecuteEffect(pendingEffects.Dequeue(), TargetPos);
                 ProcessNextCardEffect();
+            }
+            else if(nextEffect.requiredMode == BoardMode.targeting)
+            {
+
             }
             return;
         }
@@ -241,7 +266,7 @@ public class Board : MonoBehaviour
 
     void PlayEnemyTurn()
     {
-        Debug.Log(enemyPositions[0]);
+        //Debug.Log(enemyPositions[0]);
         StartCoroutine(PlayEnemyTurnCoroutine());
         /*
         foreach (Vector2 pos in enemyPositions)
@@ -434,9 +459,9 @@ public class Board : MonoBehaviour
                 }
             }
         }
-        Debug.Log(nearest);
         return nearest;
     }
+
     IEnumerator MoveAdjacent(Button Button1, Button Button2, float moveDuration)
     {
         Button newTargetButton;
