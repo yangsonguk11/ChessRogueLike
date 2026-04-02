@@ -31,7 +31,7 @@ public enum TargetLogic
 public abstract class Card : MonoBehaviour, ISelectable
 {
     public List<RangeInfoSO> effectRange;
-    string Name, Description;
+    public string Name, Description;
     public int Cost;
     CardType type;
     TargetType target;
@@ -54,6 +54,10 @@ public abstract class Card : MonoBehaviour, ISelectable
     public abstract bool CanUse();
     public abstract void Execute();
 
+    public void Init()
+    {
+
+    }
     public bool IsSelectable()
     {
         return true;
@@ -145,7 +149,7 @@ public class CardEffect
     public int dmg;
     public RangeInfoSO effectRange;
     public TargetLogic targetlogic;
-
+    
     public CardEffect(Board.BoardMode _requiredMode, EffectType _type, int _dmg, RangeInfoSO _effectRange, TargetLogic _targetlogic)
     {
         requiredMode = _requiredMode; type = _type; dmg = _dmg; effectRange = _effectRange; targetlogic = _targetlogic;

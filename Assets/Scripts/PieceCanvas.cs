@@ -8,6 +8,7 @@ public class PieceCanvas : MonoBehaviour
     public float duration = 1.0f;           // 표시 시간
     [SerializeField] float moveSpeed;         // 위로 올라가는 속도
 
+    GameObject currentText;
     void Awake()
     {
     }
@@ -18,6 +19,16 @@ public class PieceCanvas : MonoBehaviour
         transform.LookAt(transform.position + Camera.main.transform.rotation * Vector3.forward,Camera.main.transform.rotation * Vector3.up);
     }
     
+    public void ShowActionText(string text)
+    {
+        Destroy(currentText);
+        Debug.Log(text);
+        GameObject textobj = Instantiate(DamageText, transform);
+        textobj.GetComponent<TextMeshProUGUI>().text = text;
+        textobj.transform.localPosition = new Vector3(0, 3f, 0);
+        currentText = textobj;
+
+    }
     public void InvokeDamageText(int dmg)
     {
         GameObject textobj = Instantiate(DamageText, transform);
@@ -26,7 +37,6 @@ public class PieceCanvas : MonoBehaviour
     IEnumerator DamageCoroutine(int dmg, GameObject textobj)
     {
         TextMeshProUGUI text = textobj.GetComponent<TextMeshProUGUI>();
-        Debug.Log("Qqqqqqq");
         text.text = dmg.ToString();
 
         Vector3 startPos = new Vector3(0, 2.0f, 0);

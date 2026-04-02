@@ -6,12 +6,12 @@ using UnityEngine;
 public abstract class Piece : MonoBehaviour
 {
     [SerializeField] PieceInfo pieceInfo;
-    [SerializeField] PieceCanvas pieceCanvas;
+    public PieceCanvas pieceCanvas;
     
     public int hp;
     public int colDamage;
     public int teamID;
-    private void Awake()
+    public virtual void Awake()
     {
         hp = pieceInfo.MaxHp;
         colDamage = pieceInfo.ColDamage;
@@ -23,13 +23,18 @@ public abstract class Piece : MonoBehaviour
     {
         hp -= damage;
 
-        if (pieceCanvas)
-            pieceCanvas.InvokeDamageText(damage);
         return hp;
 
     }
+    public virtual void ActionText()
+    {
 
-
+    }
+    public IEnumerator DamageText(int damage)
+    {
+        yield return new WaitForSeconds(1f);
+        pieceCanvas.InvokeDamageText(damage);
+    }
     public IEnumerator DeathCor()
     {
         yield return new WaitForSeconds(1f);

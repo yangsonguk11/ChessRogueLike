@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 6426312}
   - component: {fileID: 2211220569692418932}
   - component: {fileID: 54401725194517764}
+  - component: {fileID: 5766115866947927382}
   m_Layer: 0
   m_Name: White Knight
   m_TagString: Untagged
@@ -135,6 +136,7 @@ MonoBehaviour:
   teamID: 0
   enemyCards:
   - {fileID: 54401725194517764}
+  - {fileID: 5766115866947927382}
 --- !u!114 &54401725194517764
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -149,6 +151,28 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyMoveCard
   effectRange:
   - {fileID: 11400000, guid: e798bd81c0425624ead1e05779a9c275, type: 2}
+  Name: move
+  Description: 
+  Cost: 0
+  user: 1
+  cardCanvas: {fileID: 0}
+  handNumber: 0
+--- !u!114 &5766115866947927382
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 107724}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a913a6e213419e84aa94043e61347dc4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyAttackCard
+  effectRange:
+  - {fileID: 11400000, guid: e2de2f96fad3a88409c8e848edab8bb9, type: 2}
+  Name: Attack
+  Description: 
   Cost: 0
   user: 1
   cardCanvas: {fileID: 0}

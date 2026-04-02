@@ -37,7 +37,7 @@ public class Board : MonoBehaviour
     }
 
     public BoardMode boardmode;
-    private void Start()
+    private void Awake()
     {
         OnButtonSelected += OnSelectBoard;
         OnButtonUnSelected += OnUnSelectBoard;
@@ -67,6 +67,7 @@ public class Board : MonoBehaviour
         GetButtonScript(new Vector2(1, 4)).SetPiece(Instantiate(Pieces[1]));
         //GetButtonScript(new Vector2(1, 2)).SetPiece(Instantiate(Pieces[1]));
         enemyPositions.Add(new Vector2(1, 4));
+
         //enemyPositions.Add(new Vector2(1, 2));
     }
 
@@ -307,6 +308,9 @@ public class Board : MonoBehaviour
                 // 4. [중요] 카드의 모든 효과와 애니메이션(motionQueue)이 끝날 때까지 대기
                 // pendingEffects가 비어있고, queuecoroutineworking이 false가 될 때까지 기다림
                 yield return new WaitUntil(() => pendingEffects.Count == 0 && !queuecoroutineworking);
+
+                enemy.ChangeMove();
+                enemy.ActionText();
             }
             // 한 적의 행동이 끝난 후 잠시 대기 (연출상 자연스러움)
             yield return new WaitForSeconds(0.5f);
@@ -353,6 +357,7 @@ public class Board : MonoBehaviour
         int hpLeft = pScript2.GetDamage(dmg, AttackType.MoveAttack);
         Debug.Log(hpLeft);
         motionQueue.Enqueue(MoveAdjacent(bScript1, bScript2, 1f));
+        motionQueue.Enqueue(pScript2.DamageText(dmg));
         if (hpLeft <= 0)
         {
             motionQueue.Enqueue(pScript2.DeathCor());
