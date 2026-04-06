@@ -16,6 +16,16 @@ public class Enemy : Piece
         nextMove = enemyCards[0];
         ActionText();
     }
+
+    public override List<Vector2> GetMoveableButton() {
+        if (GetNextMove().effects[0].type == EffectType.Move)
+            return base.GetMoveableButton();
+        else
+        {
+            return GetNextMove().effects[0].effectRange.GetAbleRange();
+        }
+    }
+
     // 간단한 AI 로직: 타겟 선정 및 효과 반환
     public virtual Card GetNextMove()
     {
@@ -36,4 +46,6 @@ public class Enemy : Piece
         Debug.Log("asdf");
         pieceCanvas.ShowActionText(GetNextMove().Name);
     }
+
+   
 }

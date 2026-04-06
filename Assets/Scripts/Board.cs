@@ -179,23 +179,55 @@ public class Board : MonoBehaviour
                 switch (nextEffect.targetlogic)
                 {
                     case TargetLogic.NearestEnemy:
-                        TargetPos = GetNearestPlayerPos(selectedButton);
-                        AddMovableButtons(GetButtonScript(selectedButton).GetPiece()?.GetComponent<Piece>().GetMoveableButton());
-                        if (!selectedButtonMovable.Contains(TargetPos))
-                        {
-                            float minDistance = float.MaxValue;
-                            Vector2 bestPos = selectedButton; // 기본값은 제자리
+                        // 1. 현재 적 기물의 이동(공격) 가능한 범위 리스트를 가져와서 selectedButtonMovable에 채움
+                        List<Vector2> movableRange = GetButtonScript(selectedButton).GetPiece()?.GetComponent<Piece>().GetMoveableButton();
+                        AddMovableButtons(movableRange);
 
-                            foreach (Vector2 movablePos in selectedButtonMovable)
+                        float minDistance = float.MaxValue;
+                        Vector2 bestTargetPos = new Vector2(-1, -1); // 범위 내에 플레이어가 없을 경우를 대비
+
+                        // 2. 전체 보드를 순회하며 '공격 범위 내에 있는' 플레이어들을 확인
+                        foreach (Vector2 movablePos in selectedButtonMovable)
+                        {
+                            Piece p = GetButtonScript(movablePos).GetPiece()?.GetComponent<Piece>();
+
+                            // 해당 칸에 기물이 있고, 그 기물이 플레이어 팀(teamID == 0)인 경우
+                            if (p != null && p.teamID == 0)
                             {
-                                float dist = Vector2.Distance(movablePos, TargetPos);
+                                float dist = Vector2.Distance(selectedButton, movablePos);
                                 if (dist < minDistance)
                                 {
                                     minDistance = dist;
-                                    bestPos = movablePos;
+                                    bestTargetPos = movablePos;
                                 }
                             }
-                            TargetPos = bestPos;
+                        }
+
+                        // 3. 결과 처리
+                        if (bestTargetPos != new Vector2(-1, -1))
+                        {
+                            // 범위 안에 플레이어가 있다면 그중 가장 가까운 플레이어를 타겟으로 설정
+                            TargetPos = bestTargetPos;
+                        }
+                        else
+                        {
+                            // 범위 내에 플레이어가 한 명도 없다면, 
+                            // 기존처럼 맵 전체에서 가장 가까운 플레이어를 찾아 그 방향으로 이동만 시도
+                            Vector2 globalNearestPlayer = GetNearestPlayerPos(selectedButton);
+
+                            float minMoveDist = float.MaxValue;
+                            Vector2 bestMovePos = selectedButton;
+
+                            foreach (Vector2 movablePos in selectedButtonMovable)
+                            {
+                                float dist = Vector2.Distance(movablePos, globalNearestPlayer);
+                                if (dist < minMoveDist)
+                                {
+                                    minMoveDist = dist;
+                                    bestMovePos = movablePos;
+                                }
+                            }
+                            TargetPos = bestMovePos;
                         }
                         break;
                     case TargetLogic.LowestHP:
@@ -204,7 +236,7 @@ public class Board : MonoBehaviour
                         TargetPos = selectedButton;
                         break;
                 }
-
+                Debug.Log(TargetPos);
                 ExecuteEffect(pendingEffects.Dequeue(), TargetPos);
                 ProcessNextCardEffect();
             }
@@ -368,6 +400,7 @@ public class Board : MonoBehaviour
 
     void AttackPiece(Vector2 pos1, Vector2 pos2, int dmg)
     {
+        Debug.Log("asdf");
         GameObject button1 = GetButton(pos1);
         GameObject button2 = GetButton(pos2);
         Button button1script = button1.GetComponent<Button>();
@@ -387,6 +420,7 @@ public class Board : MonoBehaviour
                 int hpLeft = pScript2.GetDamage(dmg, AttackType.NormalAttack);
 
                 motionQueue.Enqueue(PieceAttackCor(button1script, button2script, 1f));
+                motionQueue.Enqueue(pScript2.DamageText(dmg));
                 if (hpLeft <= 0)
                     motionQueue.Enqueue(pScript2.DeathCor());
             }
@@ -395,14 +429,35 @@ public class Board : MonoBehaviour
     }
     IEnumerator PieceAttackCor(Button Button1, Button Button2, float moveDuration)
     {
+        Vector3 pos1 = Button1.Piecelocation;
+        Vector3 pos2 = Button2.Piecelocation;
+        GameObject piece = Button1.GetPiece();
+        if (Button1 == Button2)
+            yield break;
+        piece.transform.rotation = Quaternion.LookRotation(pos2 - pos1);
+
+
+        GameObject Piece1 = Button1.GetPiece();
         float time = 0f;
-        while (time < moveDuration)
+        Vector3 pRotation = Piece1.transform.rotation.eulerAngles;
+        Vector3 temp = pRotation + new Vector3(90, 0, 0);
+        while (time < moveDuration/2)
         {
+            Piece1.transform.rotation = Quaternion.Euler(Vector3.Lerp(pRotation, temp, time / moveDuration * 2));
             time += Time.deltaTime;
             float t = time / moveDuration;
 
             yield return null;
         }
+        while (time < moveDuration)
+        {
+            Piece1.transform.rotation = Quaternion.Euler(Vector3.Lerp(temp, pRotation, time / moveDuration * 2 - 1));
+            time += Time.deltaTime;
+            float t = time / moveDuration;
+
+            yield return null;
+        }
+        Piece1.transform.rotation = Quaternion.Euler(pRotation);
     }
     IEnumerator PieceMoveCor(Button Button1, Button Button2, float moveDuration)
     {

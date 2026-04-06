@@ -18,7 +18,7 @@ public abstract class Piece : MonoBehaviour
         teamID = pieceInfo.TeamID;
     }
 
-    public List<Vector2> GetMoveableButton() { return pieceInfo.RangeInfoSO.GetAbleRange(); }
+    public virtual List<Vector2> GetMoveableButton() { return pieceInfo.RangeInfoSO.GetAbleRange(); }
     public int GetDamage(int damage, AttackType type)
     {
         hp -= damage;
