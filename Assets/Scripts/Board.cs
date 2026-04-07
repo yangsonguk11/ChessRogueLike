@@ -21,7 +21,7 @@ public class Board : MonoBehaviour
     Vector2 selectedButton
     {
         get { return _selectedButton; }
-        set { _selectedButton = value; if (isSelectedButtonActive()) { OnButtonSelected?.Invoke(); ShowButtonInfo(); } else { OnButtonUnSelected?.Invoke(); HideButtonInfo(); } }
+        set { _selectedButton = value; if (isSelectedButtonActive()) { OnButtonSelected?.Invoke(); } else { OnButtonUnSelected?.Invoke(); } }
     }
 
     List<Vector2> selectedButtonMovable = new List<Vector2>();
@@ -389,6 +389,7 @@ public class Board : MonoBehaviour
         int hpLeft = pScript2.GetDamage(dmg, AttackType.MoveAttack);
         Debug.Log(hpLeft);
         motionQueue.Enqueue(MoveAdjacent(bScript1, bScript2, 1f));
+        //motionQueue.Enqueue(PieceAttackCor(bScript1, bScript2, 0.3f));
         motionQueue.Enqueue(pScript2.DamageText(dmg));
         if (hpLeft <= 0)
         {
@@ -431,6 +432,7 @@ public class Board : MonoBehaviour
     {
         Vector3 pos1 = Button1.Piecelocation;
         Vector3 pos2 = Button2.Piecelocation;
+        Debug.LogFormat("{0} {1}", pos1, pos2);
         GameObject piece = Button1.GetPiece();
         if (Button1 == Button2)
             yield break;
@@ -466,7 +468,7 @@ public class Board : MonoBehaviour
         GameObject piece = Button1.GetPiece();
         if (Button1 == Button2)
             yield break;
-        piece.transform.rotation = Quaternion.LookRotation(pos1 - pos2);
+        piece.transform.rotation = Quaternion.LookRotation(pos2 - pos1);
         float time = 0f;
 
         while(time < moveDuration)
@@ -614,7 +616,7 @@ public class Board : MonoBehaviour
             }
         }
         ShowMovableButtons(GetButtonScript(selectedButton).GetPiece(), effectRange);
-        ShowButtonInfo();
+        ShowButtonInfo(selectedButton);
     }
     void OnUnSelectBoard()
     {
@@ -655,9 +657,10 @@ public class Board : MonoBehaviour
             selectedButtonMovable.Add(m);
         }
     }
-    void ShowButtonInfo()
+    void ShowButtonInfo(Vector2 button)
     {
         BoardUICanvas.SetActive(true);
+        BoardUICanvas.GetComponent<BoardUICanvas>().UpdateButtonInfo(GetButtonScript(button));
     }
 
     void HideButtonInfo()

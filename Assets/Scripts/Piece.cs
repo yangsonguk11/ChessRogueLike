@@ -7,13 +7,17 @@ public abstract class Piece : MonoBehaviour
 {
     [SerializeField] PieceInfo pieceInfo;
     public PieceCanvas pieceCanvas;
-    
+
+    public new string name;
     public int hp;
+    public int maxhp;
     public int colDamage;
     public int teamID;
     public virtual void Awake()
     {
+        name = pieceInfo.PieceName;
         hp = pieceInfo.MaxHp;
+        maxhp = pieceInfo.MaxHp;
         colDamage = pieceInfo.ColDamage;
         teamID = pieceInfo.TeamID;
     }

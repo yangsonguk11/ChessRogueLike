@@ -122,7 +122,7 @@ public class CardCanvas : MonoBehaviour
         }
     }
 
-    //[ContextMenu("Align Cards")] // 인스펙터 메뉴에서 바로 실행 가능
+    [ContextMenu("Align Cards")] // 인스펙터 메뉴에서 바로 실행 가능
     public void AlignCards()
     {
         int count = cards.Count;

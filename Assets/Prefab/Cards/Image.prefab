@@ -38,7 +38,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 295, y: 315}
+  m_SizeDelta: {x: 500, y: 500}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8654070928178778172
 CanvasRenderer:
@@ -92,6 +92,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BasicCard
   effectRange:
   - {fileID: 11400000, guid: e798bd81c0425624ead1e05779a9c275, type: 2}
+  Name: 
+  Description: 
   Cost: 0
   user: 0
   cardCanvas: {fileID: 0}

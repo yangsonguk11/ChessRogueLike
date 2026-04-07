@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e4dbbf5546730bb49820b9d1b68e5d31, type: 3}
   m_Name: NewPieceInfo
   m_EditorClassIdentifier: Assembly-CSharp::PieceInfo
-  _pieceName: "\uB098\uC774\uD2B8"
+  _pieceName: knight
   _teamID: 0
   _maxHp: 10
   _colDamage: 2
