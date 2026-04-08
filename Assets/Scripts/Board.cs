@@ -115,6 +115,7 @@ public class Board : MonoBehaviour
                     {
                         ExecuteEffect(pendingEffects.Dequeue(), pos);
                         ProcessNextCardEffect();
+                        ProcessNextCardEffect();
                     }
                 }
                 break;
@@ -127,18 +128,14 @@ public class Board : MonoBehaviour
                         GetButtonScript(pos).SelectedTrue();
                     }
                 }
-                else if (selectedButton == pos || !selectedButtonMovable.Contains(pos)) //자기자신 혹은 유효하지 않은 칸 눌러 취소
+                else if (!selectedButtonMovable.Contains(pos)) //유효하지 않은 칸 눌러 취소
                 {
                     ClearSelectedButton();
                 }
                 else
                 {
-                    if (GetButtonScript(selectedButton).GetPiece().GetComponent<Piece>().teamID == 1) { }   //적이 선택되었을 때
-                    else if (selectedButtonMovable.Contains(pos))
-                    {
-                        ExecuteEffect(pendingEffects.Dequeue(), pos);
-                        ProcessNextCardEffect();
-                    }
+                    ExecuteEffect(pendingEffects.Dequeue(), pos);
+                    ProcessNextCardEffect();
                 }
                 break;
         }
@@ -169,13 +166,12 @@ public class Board : MonoBehaviour
         }
         CardEffect nextEffect = pendingEffects.Peek(); // 다음에 실행할 효과 확인
 
-        if (currentActiveCard.user == User.Enemy)
+        if (currentActiveCard.user == User.Enemy)      // 적이 카드를 사용할 때
         {
             if (nextEffect.requiredMode == BoardMode.command)
             {
                 Vector2 TargetPos;
                 TargetPos = selectedButton;
-
                 switch (nextEffect.targetlogic)
                 {
                     case TargetLogic.NearestEnemy:
@@ -232,11 +228,15 @@ public class Board : MonoBehaviour
                         break;
                     case TargetLogic.LowestHP:
                         break;
+                    case TargetLogic.self:
+                        Debug.Log("asdf");
+                        break;
                     default:
                         TargetPos = selectedButton;
                         break;
                 }
                 Debug.Log(TargetPos);
+
                 ExecuteEffect(pendingEffects.Dequeue(), TargetPos);
                 ProcessNextCardEffect();
             }
@@ -277,6 +277,9 @@ public class Board : MonoBehaviour
                 break;
             case EffectType.Damage:
                 AttackPiece(selectedButton, targetPos, cardEffect.dmg);
+                break;
+            case EffectType.Heal:
+                HealPiece(selectedButton, targetPos, cardEffect.dmg);
                 break;
         }
     }
@@ -353,17 +356,38 @@ public class Board : MonoBehaviour
         // 5. 모든 적의 턴이 종료되면 플레이어 턴으로 전환
         TurnManager.instance.StartPlayerTurn();
     }
-    
+    void HealPiece(Vector2 pos1, Vector2 pos2, int dmg)
+    {
+        GameObject button1 = GetButton(pos1);
+        GameObject button2 = GetButton(pos2);
+        Button button1script = button1.GetComponent<Button>();
+        Button button2script = button2.GetComponent<Button>();
+
+        if (button1script.GetPiece() != null)
+        {
+            GameObject Piece1 = button1script.GetPiece();
+            GameObject Piece2 = button2script.GetPiece();
+            if (Piece2)
+            {
+                Piece pScript1 = Piece1.GetComponent<Piece>();
+                Piece pScript2 = Piece2.GetComponent<Piece>();
+                int hpLeft = pScript2.GetHeal(dmg, AttackType.NormalAttack);
+
+                motionQueue.Enqueue(PieceHealCor(button1script, button2script, 1f));
+                motionQueue.Enqueue(pScript2.HealText(dmg));
+                if (hpLeft <= 0)
+                    motionQueue.Enqueue(pScript2.DeathCor());
+            }
+        }
+        StartCoroutine(ProcessQueue());
+    }
     void MovePiece(Vector2 pos1, Vector2 pos2)      //기물이 이동을 시도
     {
         GameObject button1 = GetButton(pos1);
         GameObject button2 = GetButton(pos2);
         Button button1script = button1.GetComponent<Button>();
         Button button2script = button2.GetComponent<Button>();
-        if (button1script.GetPiece() == null)
-        {
-        }
-        else
+        if (button1script.GetPiece() != null)
         {
             GameObject Piece1 = button1script.GetPiece();
             GameObject Piece2 = button2script.GetPiece();
@@ -401,16 +425,12 @@ public class Board : MonoBehaviour
 
     void AttackPiece(Vector2 pos1, Vector2 pos2, int dmg)
     {
-        Debug.Log("asdf");
         GameObject button1 = GetButton(pos1);
         GameObject button2 = GetButton(pos2);
         Button button1script = button1.GetComponent<Button>();
         Button button2script = button2.GetComponent<Button>();
 
-        if (button1script.GetPiece() == null)
-        {
-        }
-        else
+        if(button1script.GetPiece() != null)
         {
             GameObject Piece1 = button1script.GetPiece();
             GameObject Piece2 = button2script.GetPiece();
@@ -427,6 +447,10 @@ public class Board : MonoBehaviour
             }
         }
         StartCoroutine(ProcessQueue());
+    }
+    IEnumerator PieceHealCor(Button Button1, Button Button2, float moveDuration)
+    {
+        yield return new WaitForSeconds(moveDuration);
     }
     IEnumerator PieceAttackCor(Button Button1, Button Button2, float moveDuration)
     {

@@ -7,7 +7,7 @@ public class AttackCard : Card
     {
         base.Awake();
         Cost = 2;
-        CardEffect cf = new CardEffect(Board.BoardMode.command, EffectType.Damage, 3, effectRange[0], TargetLogic.LowestHP);
+        CardEffect cf = new CardEffect(Board.BoardMode.command, EffectType.Damage, 3, TargetLogic.LowestHP, effectRange[0]);
         effects.Add(cf);
     }
     public override bool CanUse()

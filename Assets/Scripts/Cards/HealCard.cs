@@ -1,15 +1,13 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 
-public class EnemyAttackCard : Card
+public class HealCard : Card
 {
-    
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public override void Awake()
     {
         base.Awake();
         Cost = 2;
-        CardEffect cf = new CardEffect(Board.BoardMode.command, EffectType.Damage, 3,TargetLogic.NearestEnemy, effectRange[0]);
+        CardEffect cf = new CardEffect(Board.BoardMode.targeting, EffectType.Heal, 1, TargetLogic.self, effectRange[0]);
         effects.Add(cf);
     }
     public override bool CanUse()

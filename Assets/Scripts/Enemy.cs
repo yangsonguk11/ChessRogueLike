@@ -43,7 +43,6 @@ public class Enemy : Piece
     }
     public override void ActionText()
     {
-        Debug.Log("asdf");
         pieceCanvas.ShowActionText(GetNextMove().Name);
     }
 

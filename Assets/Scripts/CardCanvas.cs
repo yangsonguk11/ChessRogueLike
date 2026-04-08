@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System;
+using System.Linq;
 using UnityEngine.UI;
 using TMPro;
 
@@ -117,6 +118,9 @@ public class CardCanvas : MonoBehaviour
     {
         while (Discardcards.Count != 0)
         {
+            var random = new System.Random();
+
+            Discardcards.OrderBy(x => random.Next());
             Deckcards.Enqueue(Discardcards[0]);
             Discardcards.RemoveAt(0);
         }

@@ -28,7 +28,13 @@ public abstract class Piece : MonoBehaviour
         hp -= damage;
 
         return hp;
-
+    }
+    public int GetHeal(int damage, AttackType type)
+    {
+        hp += damage;
+        if (hp > maxhp)
+            hp = maxhp;
+        return hp;
     }
     public virtual void ActionText()
     {
@@ -39,6 +45,13 @@ public abstract class Piece : MonoBehaviour
         yield return new WaitForSeconds(1f);
         pieceCanvas.InvokeDamageText(damage);
     }
+
+    public IEnumerator HealText(int damage)
+    {
+        yield return new WaitForSeconds(1f);
+        pieceCanvas.InvokeDamageText(damage);
+    }
+
     public IEnumerator DeathCor()
     {
         yield return new WaitForSeconds(1f);

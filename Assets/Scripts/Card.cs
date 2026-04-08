@@ -26,7 +26,8 @@ public enum User
 public enum TargetLogic
 {
     NearestEnemy,
-    LowestHP
+    LowestHP,
+    self
 }
 public abstract class Card : MonoBehaviour, ISelectable
 {
@@ -150,8 +151,8 @@ public class CardEffect
     public RangeInfoSO effectRange;
     public TargetLogic targetlogic;
     
-    public CardEffect(Board.BoardMode _requiredMode, EffectType _type, int _dmg, RangeInfoSO _effectRange, TargetLogic _targetlogic)
+    public CardEffect(Board.BoardMode _requiredMode, EffectType _type, int _dmg, TargetLogic _targetlogic, RangeInfoSO _effectRange = null)
     {
-        requiredMode = _requiredMode; type = _type; dmg = _dmg; effectRange = _effectRange; targetlogic = _targetlogic;
+        requiredMode = _requiredMode; type = _type; dmg = _dmg; targetlogic = _targetlogic; effectRange = _effectRange;
     }
 }

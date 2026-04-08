@@ -13,9 +13,9 @@ GameObject:
   - component: {fileID: 7811935117960234188}
   - component: {fileID: 8749563859263172920}
   - component: {fileID: 827117756608949290}
-  - component: {fileID: -9144840723792967426}
+  - component: {fileID: -3270643071861813075}
   m_Layer: 5
-  m_Name: MoveAndAttackCard
+  m_Name: Heal
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -68,7 +68,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 06d8e5249459ed14bbfec4c9c023a632, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 92c17c7bebf8c924b96ed61ea04e62db, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -95,8 +95,8 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: -9144840723792967426}
-          m_TargetAssemblyTypeName: MoveandAttackCard, Assembly-CSharp
+        - m_Target: {fileID: -3270643071861813075}
+          m_TargetAssemblyTypeName: HealCard, Assembly-CSharp
           m_MethodName: MouseEnter
           m_Mode: 1
           m_Arguments:
@@ -111,8 +111,8 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: -9144840723792967426}
-          m_TargetAssemblyTypeName: MoveandAttackCard, Assembly-CSharp
+        - m_Target: {fileID: -3270643071861813075}
+          m_TargetAssemblyTypeName: HealCard, Assembly-CSharp
           m_MethodName: MouseDown
           m_Mode: 0
           m_Arguments:
@@ -127,8 +127,8 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: -9144840723792967426}
-          m_TargetAssemblyTypeName: MoveandAttackCard, Assembly-CSharp
+        - m_Target: {fileID: -3270643071861813075}
+          m_TargetAssemblyTypeName: HealCard, Assembly-CSharp
           m_MethodName: MouseExit
           m_Mode: 1
           m_Arguments:
@@ -143,8 +143,8 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: -9144840723792967426}
-          m_TargetAssemblyTypeName: MoveandAttackCard, Assembly-CSharp
+        - m_Target: {fileID: -3270643071861813075}
+          m_TargetAssemblyTypeName: HealCard, Assembly-CSharp
           m_MethodName: MouseUp
           m_Mode: 0
           m_Arguments:
@@ -159,8 +159,8 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: -9144840723792967426}
-          m_TargetAssemblyTypeName: MoveandAttackCard, Assembly-CSharp
+        - m_Target: {fileID: -3270643071861813075}
+          m_TargetAssemblyTypeName: HealCard, Assembly-CSharp
           m_MethodName: MouseDrag
           m_Mode: 0
           m_Arguments:
@@ -183,7 +183,7 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!114 &-9144840723792967426
+--- !u!114 &-3270643071861813075
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -192,12 +192,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 8950236184682274632}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1701c985b58e7cf4eae3b376e9dd3835, type: 3}
+  m_Script: {fileID: 11500000, guid: 40f40bdc8dc89bc42ba0e62ac28f9351, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MoveandAttackCard
+  m_EditorClassIdentifier: Assembly-CSharp::HealCard
   effectRange:
-  - {fileID: 11400000, guid: e798bd81c0425624ead1e05779a9c275, type: 2}
-  - {fileID: 11400000, guid: e2de2f96fad3a88409c8e848edab8bb9, type: 2}
+  - {fileID: 11400000, guid: 23331c50bdeeb464d9460bc25f27fafd, type: 2}
   Name: 
   Description: 
   Cost: 0

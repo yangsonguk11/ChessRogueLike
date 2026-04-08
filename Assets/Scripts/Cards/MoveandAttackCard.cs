@@ -8,10 +8,10 @@ public class MoveandAttackCard : Card
         base.Awake();
         Cost = 2;
 
-        CardEffect cf = new CardEffect(Board.BoardMode.command, EffectType.Move, 0, effectRange[0], TargetLogic.NearestEnemy);
+        CardEffect cf = new CardEffect(Board.BoardMode.command, EffectType.Move, 0, TargetLogic.NearestEnemy, effectRange[0]);
         effects.Add(cf);
 
-        cf = new CardEffect(Board.BoardMode.command, EffectType.Damage, 3, effectRange[1], TargetLogic.LowestHP);
+        cf = new CardEffect(Board.BoardMode.command, EffectType.Damage, 3, TargetLogic.LowestHP, effectRange[1]);
         effects.Add(cf);
     }
     public override bool CanUse()
