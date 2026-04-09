@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 54401725194517764}
   - component: {fileID: 5766115866947927382}
   m_Layer: 0
-  m_Name: White Knight
+  m_Name: White Knight 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -137,8 +137,8 @@ MonoBehaviour:
   colDamage: 0
   teamID: 0
   enemyCards:
-  - {fileID: 54401725194517764}
   - {fileID: 5766115866947927382}
+  - {fileID: 54401725194517764}
 --- !u!114 &54401725194517764
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -24,13 +24,13 @@ public class CardCanvas : MonoBehaviour
 
     int _currentenergy;
     public int currentenergy { get { return _currentenergy; } set { _currentenergy = value; UpdateCurrentEnergy(); } }
-    public int maxenergy = 99;
+    public int maxenergy = 3;
     RectTransform nowusingCard;
     public bool isCardEffecting;
     private void Awake()
     {
         if (instance == null) instance = this;
-        currentenergy = 99;
+        currentenergy = 3;
         AlignCards();
         HandZone.GetComponent<Image>().raycastTarget = false;
     }
@@ -76,24 +76,48 @@ public class CardCanvas : MonoBehaviour
         nowusingCard = null;
         AlignCards();
     }
+
+    public void HandtoDiscardAll()
+    {
+        Debug.LogFormat("{0} 장", cards.Count);
+        while(cards.Count > 0)
+        {
+            HandtoDiscard(0);
+        }
+    }
+
+    public void HandtoDiscard(int num)
+    {
+        Debug.LogFormat("{0} {1}", cards.Count, num);
+        if (cards.Count <= num)
+            return;
+        HandtoDiscard(cards[num]);
+    }
+
+    public void HandtoDiscard(RectTransform card)
+    {
+        Discardcards.Add(card);
+        card.position = DiscardZone.position;
+        cards.Remove(card);
+    }
+    public void DrawTurnStartCards()
+    {
+        DrawCard();
+        DrawCard();
+        DrawCard();
+        DrawCard();
+        DrawCard();
+    }
     public void FinishUseCard()             //손의 카드 사용 이후
     {
         if (nowusingCard)
         {
-            Discardcards.Add(nowusingCard);
+            HandtoDiscard(nowusingCard);
             currentenergy -= nowusingCard.GetComponent<Card>().Cost;
-            nowusingCard.position = DiscardZone.position;
         }
 
         nowusingCard = null;
         isCardEffecting = false;
-        if (cards.Count <= 0)
-        {
-            DrawCard();
-            DrawCard();
-            DrawCard();
-            DrawCard();
-        }
     }
     private void UpdateCurrentEnergy()
     {
@@ -102,6 +126,7 @@ public class CardCanvas : MonoBehaviour
 
     void DrawCard()                         //덱의 카드를 손으로 가져오기
     {
+        Debug.Log("c");
         if (Deckcards.Count == 0)
         {
             DiscardtoDeck();                
@@ -116,16 +141,27 @@ public class CardCanvas : MonoBehaviour
 
     void DiscardtoDeck()
     {
-        while (Discardcards.Count != 0)
-        {
-            var random = new System.Random();
+        if (Discardcards.Count == 0) return;
 
-            Discardcards.OrderBy(x => random.Next());
-            Deckcards.Enqueue(Discardcards[0]);
-            Discardcards.RemoveAt(0);
+        var random = new System.Random();
+
+        // 1. LINQ를 사용하여 리스트를 무작위로 섞고 다시 리스트로 변환
+        var shuffledCards = Discardcards.OrderBy(x => random.Next()).ToList();
+
+        // 2. 섞인 카드들을 덱(Queue)에 순서대로 넣기
+        foreach (var card in shuffledCards)
+        {
+            Deckcards.Enqueue(card);
         }
+
+        // 3. 기존 버린 카드 리스트 비우기
+        Discardcards.Clear();
     }
 
+    public void GetMaxEnergy()
+    {
+        currentenergy = maxenergy;
+    }
     [ContextMenu("Align Cards")] // 인스펙터 메뉴에서 바로 실행 가능
     public void AlignCards()
     {

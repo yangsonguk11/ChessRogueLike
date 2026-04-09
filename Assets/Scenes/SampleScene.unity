@@ -2060,9 +2060,9 @@ MonoBehaviour:
   DiscardZone: {fileID: 1709148942}
   CurrentEnergyText: {fileID: 1084626605}
   radius: 1000
-  angleBetween: 5
-  heightOffset: -300
-  maxenergy: 0
+  angleBetween: 8
+  heightOffset: -400
+  maxenergy: 3
   isCardEffecting: 0
 --- !u!114 &1065319767
 MonoBehaviour:
@@ -3097,7 +3097,7 @@ PrefabInstance:
       objectReference: {fileID: 1856970875}
     - target: {fileID: 188146230140724658, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
       propertyPath: Pieces.Array.size
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 188146230140724658, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
       propertyPath: 'Pieces.Array.data[0]'
@@ -3107,6 +3107,10 @@ PrefabInstance:
       propertyPath: 'Pieces.Array.data[1]'
       value: 
       objectReference: {fileID: 107724, guid: 1bae5e056ac375b46a1158f8b09b1f7f, type: 3}
+    - target: {fileID: 188146230140724658, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
+      propertyPath: 'Pieces.Array.data[2]'
+      value: 
+      objectReference: {fileID: 107724, guid: a6c81ec23ba21934d8b9b426d6346406, type: 3}
     - target: {fileID: 1353525679512012312, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
       propertyPath: m_Name
       value: Board

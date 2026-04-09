@@ -43,29 +43,32 @@ public class Board : MonoBehaviour
         OnButtonUnSelected += OnUnSelectBoard;
         queuecoroutineworking = false;
         InitBoard();
+        TurnEnd();
+        TurnStart();
     }
 
     void InitBoard()
     {
         Background.transform.localScale = new Vector3(N, M, 1);
         Buttons = new GameObject[N, M];
-        Vector3 pos = new Vector3(0,0,0);
-        for(int x = 0; x < N; x++)
+        Vector3 pos = new Vector3(0, 0, 0);
+        for (int x = 0; x < N; x++)
         {
-            for(int y = 0; y < M; y++)
+            for (int y = 0; y < M; y++)
             {
-                pos.x = 0.5f - N/2f + x; pos.z = 0.5f - M/2f + y;
-                GameObject obj = Instantiate(ButtonPrefab, pos, new Quaternion(),gameObject.transform);
+                pos.x = 0.5f - N / 2f + x; pos.z = 0.5f - M / 2f + y;
+                GameObject obj = Instantiate(ButtonPrefab, pos, new Quaternion(), gameObject.transform);
                 obj.GetComponent<Button>().Init(x, y, gameObject);
 
                 Buttons[x, y] = obj;
             }
         }
         ClearSelectedButton();
-        GetButtonScript(new Vector2(2, 2)).SetPiece(Instantiate(Pieces[0]));
-        GetButtonScript(new Vector2(2, 4)).SetPiece(Instantiate(Pieces[0]));
-        GetButtonScript(new Vector2(1, 4)).SetPiece(Instantiate(Pieces[1]));
-        //GetButtonScript(new Vector2(1, 2)).SetPiece(Instantiate(Pieces[1]));
+        GetButtonScript(new Vector2(5, 2)).SetPiece(Instantiate(Pieces[0]));
+        GetButtonScript(new Vector2(5, 4)).SetPiece(Instantiate(Pieces[0]));
+        GetButtonScript(new Vector2(1, 2)).SetPiece(Instantiate(Pieces[1]));
+        GetButtonScript(new Vector2(1, 4)).SetPiece(Instantiate(Pieces[2]));
+        enemyPositions.Add(new Vector2(1, 2));
         enemyPositions.Add(new Vector2(1, 4));
 
         //enemyPositions.Add(new Vector2(1, 2));
@@ -240,7 +243,7 @@ public class Board : MonoBehaviour
                 ExecuteEffect(pendingEffects.Dequeue(), TargetPos);
                 ProcessNextCardEffect();
             }
-            else if(nextEffect.requiredMode == BoardMode.targeting)
+            else if (nextEffect.requiredMode == BoardMode.targeting)
             {
 
             }
@@ -254,7 +257,7 @@ public class Board : MonoBehaviour
         // 2. 만약 조준이 필요한 모드라면 여기서 중단 (유저 입력을 기다림)
         if (boardmode == BoardMode.command)
         {
-            
+
         }
         else if (boardmode == BoardMode.targeting)
         {
@@ -283,10 +286,16 @@ public class Board : MonoBehaviour
                 break;
         }
     }
-    void TurnEnd()
+    void TurnStart()
+    {
+        CardCanvas.instance.DrawTurnStartCards();
+        CardCanvas.instance.GetMaxEnergy();
+    }
+    void TurnEnd()                                  //TurnManager에서 실행됨
     {
         FinishCardUsage();
         ClearSelectedButton();
+        CardCanvas.instance.HandtoDiscardAll();
     }
     void ResetBoardAfterCardUse()
     {

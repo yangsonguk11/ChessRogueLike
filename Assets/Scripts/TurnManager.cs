@@ -10,7 +10,7 @@ public class TurnManager : MonoBehaviour
 
     void Start()
     {
-        StartPlayerTurn();
+        //StartPlayerTurn();
     }
 
     private void Awake()
@@ -24,6 +24,7 @@ public class TurnManager : MonoBehaviour
         currentState = TurnState.Player;
         // 플레이어가 조작 가능하도록 UI 활성화 등
         Debug.Log("플레이어 턴 시작");
+        board.SendMessage("TurnStart");
     }
 
     public void EndPlayerTurn()
