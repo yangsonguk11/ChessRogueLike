@@ -9,7 +9,7 @@ public class CardCanvas : MonoBehaviour
 {
     public static CardCanvas instance;
 
-
+    [SerializeField] CardDatabase cardData;
     [SerializeField] Board board;
     public List<RectTransform> cards = new List<RectTransform>(); // 손에 든 카드들
     public List<RectTransform> Discardcards = new List<RectTransform>();
@@ -31,6 +31,16 @@ public class CardCanvas : MonoBehaviour
     {
         if (instance == null) instance = this;
         currentenergy = 3;
+        DataManager.Instance.LoadFromFile();
+        foreach(string cardName in DataManager.Instance.currentData.deckCardIDs)
+        {
+            GameObject obj = cardData.SpawnCard(GetComponent<RectTransform>(), cardName);
+            if(obj != null)
+            {
+                Discardcards.Add(obj.GetComponent<RectTransform>());
+                obj.GetComponent<RectTransform>().position = DiscardZone.position;
+            }
+        }
         AlignCards();
         HandZone.GetComponent<Image>().raycastTarget = false;
     }
@@ -126,11 +136,11 @@ public class CardCanvas : MonoBehaviour
 
     void DrawCard()                         //덱의 카드를 손으로 가져오기
     {
-        Debug.Log("c");
+
         if (Deckcards.Count == 0)
         {
-            DiscardtoDeck();                
-            
+            DiscardtoDeck();
+            Debug.Log("nodeck");
         }
         if (Deckcards.Count != 0)
         {

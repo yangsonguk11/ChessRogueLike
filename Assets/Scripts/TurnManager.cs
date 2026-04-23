@@ -18,7 +18,26 @@ public class TurnManager : MonoBehaviour
         if (instance == null)
             instance = this;
     }
+    private void OnEnable()
+    {
+        // 씬 전환 이벤트 구독 (유니티에서 씬이 바뀌면 자동으로 호출됨)
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+    }
 
+    private void OnDisable()
+    {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        AssignReferences();
+    }
+    void AssignReferences()
+    {
+        board = GameObject.Find("Board").GetComponent<Board>();
+
+    }
     public void StartPlayerTurn()
     {
         currentState = TurnState.Player;

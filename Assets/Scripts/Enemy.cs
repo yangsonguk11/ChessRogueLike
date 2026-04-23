@@ -15,6 +15,7 @@ public class Enemy : Piece
         Movenum = 0;
         nextMove = enemyCards[0];
         ActionText();
+        GameManager.instance.AddEnemy(gameObject);
     }
 
     public override List<Vector2> GetMoveableButton() {
@@ -46,5 +47,8 @@ public class Enemy : Piece
         pieceCanvas.ShowActionText(GetNextMove().Name);
     }
 
-   
+    private void OnDestroy()
+    {
+        GameManager.instance.RemoveEnemy(gameObject);
+    }
 }
