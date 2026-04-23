@@ -16,21 +16,7 @@ public class DataManager : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject);
             savePath = Path.Combine(Application.persistentDataPath, "save.json");
-            /*
-            currentData.deckCardIDs = new List<string>()
-            {
-                "AttackCard",
-                "AttackCard",
-                "AttackCard",
-                "Move",
-                "Move",
-                "Move",
-                "Heal",
-                "Heal",
-                "MoveAndAttackCard",
-                "MoveAndAttackCard",
-            };
-            */
+            DataManager.Instance.LoadFromFile();
         }
         else { Destroy(gameObject); }
     }
@@ -50,6 +36,23 @@ public class DataManager : MonoBehaviour
         {
             string json = File.ReadAllText(savePath);
             currentData = JsonUtility.FromJson<GameData>(json);
+        }
+        else
+        {
+            currentData.deckCardIDs = new List<string>()
+            {
+                "AttackCard",
+                "AttackCard",
+                "AttackCard",
+                "Move",
+                "Move",
+                "Move",
+                "Heal",
+                "Heal",
+                "MoveAndAttackCard",
+                "MoveAndAttackCard",
+            };
+            SaveToFile();
         }
     }
 

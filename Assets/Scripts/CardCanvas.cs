@@ -31,7 +31,6 @@ public class CardCanvas : MonoBehaviour
     {
         if (instance == null) instance = this;
         currentenergy = 3;
-        DataManager.Instance.LoadFromFile();
         foreach(string cardName in DataManager.Instance.currentData.deckCardIDs)
         {
             GameObject obj = cardData.SpawnCard(GetComponent<RectTransform>(), cardName);
