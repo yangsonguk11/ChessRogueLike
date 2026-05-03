@@ -2668,11 +2668,13 @@ MonoBehaviour:
   - {fileID: 8950236184682274632, guid: f830a35da65c76041bfef88e54df7c14, type: 3}
   - {fileID: 8950236184682274632, guid: 8390a38db968c2844b07cc7b0329065b, type: 3}
   - {fileID: 8950236184682274632, guid: ec2607d0132174d4c89b1a884f9d3131, type: 3}
+  - {fileID: 8950236184682274632, guid: 50cbf277ea309e24995a5285cfd6fe97, type: 3}
   spritesPrefabs:
   - {fileID: 8983308741282738250, guid: acfd85d4bfd6ed04789af40e579bad12, type: 3}
   - {fileID: 8983308741282738250, guid: c4ef5cce834770c4b9a92d5fbd271002, type: 3}
   - {fileID: 8983308741282738250, guid: 4cd8a850886c3d84192f6b9fe63b7103, type: 3}
   - {fileID: 8983308741282738250, guid: d6ec7fa0cc5931446b424c4004d3e957, type: 3}
+  - {fileID: 8983308741282738250, guid: 00d96774c4886c74da22f64c884decb8, type: 3}
 --- !u!4 &1458612081
 Transform:
   m_ObjectHideFlags: 0

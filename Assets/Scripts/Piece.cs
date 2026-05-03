@@ -13,6 +13,7 @@ public abstract class Piece : MonoBehaviour
     public int maxhp;
     public int colDamage;
     public int teamID;
+    public int shield;
     public virtual void Awake()
     {
         name = pieceInfo.PieceName;
@@ -25,7 +26,15 @@ public abstract class Piece : MonoBehaviour
     public virtual List<Vector2> GetMoveableButton() { return pieceInfo.RangeInfoSO.GetAbleRange(); }
     public int GetDamage(int damage, AttackType type)
     {
-        hp -= damage;
+        if(shield < damage)
+        {
+            hp -= damage - shield;
+            shield = 0;
+        }
+        else
+        {
+            shield -= damage;
+        }
 
         return hp;
     }
@@ -35,6 +44,18 @@ public abstract class Piece : MonoBehaviour
         if (hp > maxhp)
             hp = maxhp;
         return hp;
+    }
+    public int GetShield(int damage, AttackType type)
+    {
+        shield += damage;
+        return shield;
+    }
+    public virtual void OnTurnEnd()                 //턴 종료 시 행동
+    {
+    }
+    public virtual void OnTurnEndOther()
+    {
+
     }
     public virtual void ActionText()
     {
@@ -47,6 +68,11 @@ public abstract class Piece : MonoBehaviour
     }
 
     public IEnumerator HealText(int damage)
+    {
+        yield return new WaitForSeconds(1f);
+        pieceCanvas.InvokeDamageText(damage);
+    }
+    public IEnumerator ShieldText(int damage)
     {
         yield return new WaitForSeconds(1f);
         pieceCanvas.InvokeDamageText(damage);

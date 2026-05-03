@@ -31,6 +31,12 @@ public class Button : MonoBehaviour, ISelectable
     {
         SetLocation(x, y); board = _board;
     }
+
+    public void OnTurnEnd()
+    {
+        if (piece)
+            piece.GetComponent<Piece>().OnTurnEnd();
+    }
     public void MouseEnter()
     {
         ScaleHover();
@@ -47,6 +53,7 @@ public class Button : MonoBehaviour, ISelectable
 
 
     public GameObject GetPiece() { if (piece) return piece; else return null; }
+    public Piece GetPieceScript() { if (piece) return piece.GetComponent<Piece>(); else return null; }
 
     public void SetPiece(GameObject obj)
     {

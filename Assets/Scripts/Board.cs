@@ -8,7 +8,7 @@ public class Board : MonoBehaviour
     [SerializeField] GameObject Background;
     [SerializeField] GameObject ButtonPrefab;
     [SerializeField] GameObject[,] Buttons;
-    [SerializeField] GameObject[] Pieces;
+    [SerializeField] GameObject[] Pieces;           //배치할 기물 정보
     [SerializeField] GameObject BoardUICanvas;
     event Action OnButtonSelected;
     event Action OnButtonUnSelected;
@@ -43,7 +43,7 @@ public class Board : MonoBehaviour
         OnButtonUnSelected += OnUnSelectBoard;
         queuecoroutineworking = false;
         InitBoard();
-        TurnEnd();
+
         TurnStart();
     }
 
@@ -71,7 +71,11 @@ public class Board : MonoBehaviour
         enemyPositions.Add(new Vector2(1, 2));
         enemyPositions.Add(new Vector2(1, 4));
 
-        //enemyPositions.Add(new Vector2(1, 2));
+
+
+        FinishCardUsage();
+        ClearSelectedButton();
+        CardCanvas.instance.HandtoDiscardAll();
     }
 
     public void ButtonClicked(Vector2 pos)
@@ -232,7 +236,6 @@ public class Board : MonoBehaviour
                     case TargetLogic.LowestHP:
                         break;
                     case TargetLogic.self:
-                        Debug.Log("asdf");
                         break;
                     default:
                         TargetPos = selectedButton;
@@ -284,6 +287,13 @@ public class Board : MonoBehaviour
             case EffectType.Heal:
                 HealPiece(selectedButton, targetPos, cardEffect.dmg);
                 break;
+            case EffectType.Shield:
+                ShieldPiece(selectedButton, targetPos, cardEffect.dmg);
+                break;
+            default:
+                Debug.LogError("효과 타입이 맞지 않습니다");
+                break;
+
         }
     }
     void TurnStart()
@@ -291,12 +301,39 @@ public class Board : MonoBehaviour
         CardCanvas.instance.DrawTurnStartCards();
         CardCanvas.instance.GetMaxEnergy();
     }
-    void TurnEnd()                                  //TurnManager에서 실행됨
-    {
+    public void AllyTurnEnd() {
+        TurnEnd(0); 
         FinishCardUsage();
         ClearSelectedButton();
         CardCanvas.instance.HandtoDiscardAll();
     }
+    public void EnemyTurnEnd() 
+    { 
+        TurnEnd(1);
+        ClearSelectedButton();
+    }
+    void TurnEnd(int teamid)                                  //TurnManager에서 실행됨
+    {
+        Vector2 pos = new Vector2(0, 0);
+        for(int i = 0; i < N; i++)
+        {
+            pos.x = i;
+            for (int j = 0; j < M; j++)
+            {
+                pos.y = j;
+                Piece pp = GetButtonScript(pos).GetPieceScript();
+                if(pp != null)
+                {
+                    Debug.LogFormat("{0} {1}", pp.teamID, teamid);
+                    if (pp.teamID == teamid)
+                        pp.OnTurnEnd();
+                    else
+                        pp.OnTurnEndOther();
+                }
+            }
+        }
+    }
+
     void ResetBoardAfterCardUse()
     {
         boardmode = BoardMode.Inspect;
@@ -363,7 +400,33 @@ public class Board : MonoBehaviour
         }
 
         // 5. 모든 적의 턴이 종료되면 플레이어 턴으로 전환
+        TurnManager.instance.EndEnemyTurn();
         TurnManager.instance.StartPlayerTurn();
+    }
+    void ShieldPiece(Vector2 pos1, Vector2 pos2, int dmg)
+    {
+        GameObject button1 = GetButton(pos1);
+        GameObject button2 = GetButton(pos2);
+        Button button1script = button1.GetComponent<Button>();
+        Button button2script = button2.GetComponent<Button>();
+
+        if (button1script.GetPiece() != null)
+        {
+            GameObject Piece1 = button1script.GetPiece();
+            GameObject Piece2 = button2script.GetPiece();
+            if (Piece2)
+            {
+                Piece pScript1 = Piece1.GetComponent<Piece>();
+                Piece pScript2 = Piece2.GetComponent<Piece>();
+                int hpLeft = pScript2.GetShield(dmg, AttackType.NormalAttack);
+
+                motionQueue.Enqueue(PieceShieldCor(button1script, button2script, 1f));
+                motionQueue.Enqueue(pScript2.ShieldText(dmg));
+                if (hpLeft <= 0)
+                    motionQueue.Enqueue(pScript2.DeathCor());
+            }
+        }
+        StartCoroutine(ProcessQueue());
     }
     void HealPiece(Vector2 pos1, Vector2 pos2, int dmg)
     {
@@ -456,6 +519,10 @@ public class Board : MonoBehaviour
             }
         }
         StartCoroutine(ProcessQueue());
+    }
+    IEnumerator PieceShieldCor(Button Button1, Button Button2, float moveDuration)
+    {
+        yield return new WaitForSeconds(moveDuration);
     }
     IEnumerator PieceHealCor(Button Button1, Button Button2, float moveDuration)
     {

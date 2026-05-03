@@ -13,4 +13,14 @@ public class Ally : Piece
     {
         
     }
+    public override void OnTurnEnd()
+    {
+        base.OnTurnEnd();
+        //shield = 0;
+    }
+    public override void OnTurnEndOther()
+    {
+        base.OnTurnEndOther();
+        shield = 0;
+    }
 }

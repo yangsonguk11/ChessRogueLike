@@ -51,7 +51,7 @@ public class TurnManager : MonoBehaviour
         if (currentState != TurnState.Player) return;
 
         // 보드에 선택된 것들 해제
-        board.SendMessage("TurnEnd");
+        board.SendMessage("AllyTurnEnd");
 
         StartEnemyTurn();
     }
@@ -69,7 +69,7 @@ public class TurnManager : MonoBehaviour
     }
     public void EndEnemyTurn()
     {
-        board.SendMessage("TurnEnd");
+        board.SendMessage("EnemyTurnEnd");
     }
     public void TurnStateProcessing()
     {

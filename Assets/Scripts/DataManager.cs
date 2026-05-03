@@ -47,9 +47,9 @@ public class DataManager : MonoBehaviour
                 "Move",
                 "Move",
                 "Move",
-                "Heal",
-                "Heal",
-                "MoveAndAttackCard",
+                "Defense",
+                "Defense",
+                "Defense",
                 "MoveAndAttackCard",
             };
             SaveToFile();
