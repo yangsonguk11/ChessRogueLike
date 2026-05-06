@@ -14,15 +14,27 @@ public abstract class Piece : MonoBehaviour
     public int colDamage;
     public int teamID;
     public int shield;
+    public RangeInfoSO moveableRange;
     public virtual void Awake()
     {
+        /*
         name = pieceInfo.PieceName;
         hp = pieceInfo.MaxHp;
         maxhp = pieceInfo.MaxHp;
         colDamage = pieceInfo.ColDamage;
         teamID = pieceInfo.TeamID;
+        */
     }
-
+    public void SetPieceData(PieceData data)
+    {
+        name = data.pieceName;
+        hp = data.hp;
+        maxhp = data.maxHp;
+        colDamage = data.colDamage;
+        teamID = data.teamID;
+        shield = 0;
+        moveableRange = RangeInfoSODatabase.instance.GetRangeInfoSO(data.rangeinfoname);
+    }
     public virtual List<Vector2> GetMoveableButton() { return pieceInfo.RangeInfoSO.GetAbleRange(); }
     public int GetDamage(int damage, AttackType type)
     {

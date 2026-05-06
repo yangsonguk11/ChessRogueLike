@@ -7,6 +7,7 @@ public class DataManager : MonoBehaviour
     public static DataManager Instance;
 
     public GameData currentData = new GameData();
+    public PieceInfo basicPieceinfo;
     private string savePath;
 
     void Awake()
@@ -52,6 +53,22 @@ public class DataManager : MonoBehaviour
                 "Defense",
                 "MoveAndAttackCard",
             };
+
+            PieceData defaultPiece = new PieceData
+            {
+                pieceName = "Black Knight",
+                teamID = 0,
+                hp = 10,
+                maxHp = 10,
+                colDamage = 3,
+                rangeinfoname = "BasicRangeInfoSO"
+            };
+
+            if (currentData.pieceData.Count > 0)
+                currentData.pieceData[0] = defaultPiece;
+            else
+                currentData.pieceData.Add(defaultPiece);
+
             SaveToFile();
         }
     }
@@ -78,8 +95,20 @@ public class DataManager : MonoBehaviour
 [System.Serializable]
 public class GameData
 {
-    public int currentHp;
     public int gold;
     public List<string> deckCardIDs;// 카드 프리팹 이름이나 ID 저장
     public List<NodeRow> mapData;   // 지도 정보 저장
+    public List<PieceData> pieceData; // 플레이어 기물 저장
+}
+[System.Serializable]
+public struct PieceData
+{
+    public string pieceName;
+    public int teamID;
+    public int hp;
+
+    public int maxHp;
+    public int colDamage;
+    public string rangeinfoname;
+
 }

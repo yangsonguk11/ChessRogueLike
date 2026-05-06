@@ -13,6 +13,7 @@ public class LevelData : ScriptableObject
         public Vector2Int position;
         public int pieceTypeIndex; // Pieces 배열의 인덱스
         public bool isEnemy;
+        public string name;
     }
 
     public List<PiecePlacement> placements;

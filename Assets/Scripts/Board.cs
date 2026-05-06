@@ -8,8 +8,8 @@ public class Board : MonoBehaviour
     [SerializeField] GameObject Background;
     [SerializeField] GameObject ButtonPrefab;
     [SerializeField] GameObject[,] Buttons;
-    [SerializeField] GameObject[] Pieces;           //배치할 기물 정보
     [SerializeField] GameObject BoardUICanvas;
+    [SerializeField] PieceDatabase piecedatabase;
     event Action OnButtonSelected;
     event Action OnButtonUnSelected;
 
@@ -112,10 +112,19 @@ public class Board : MonoBehaviour
                 Buttons[x, y] = obj;
             }
         }
+        foreach(PieceData piecedata in DataManager.Instance.currentData.pieceData)
+        {
+            Debug.LogFormat("{0} {1}", piecedata.pieceName, piecedatabase.PiecePrefabs[0]);
+            GameObject piece = Instantiate(piecedatabase.GetPiece(piecedata.pieceName));
+            GetButtonScript(new Vector2(2, 2)).SetPiece(piece);
+            piece.GetComponent<Piece>().SetPieceData(piecedata);
+        }
+
         ClearSelectedButton();
         foreach (var placement in data.placements)
         {
-            GameObject piece = Instantiate(Pieces[placement.pieceTypeIndex]);
+            Debug.LogFormat("{0} {1}", piecedatabase, placement.name);
+            GameObject piece = Instantiate(piecedatabase.GetPiece(placement.name));
             GetButtonScript(placement.position).SetPiece(piece);
 
             if (placement.isEnemy)
