@@ -1621,6 +1621,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da531f167ceaf0e4abcc371b4c83c32a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Board
+--- !u!156049354 &712148470
+Grid:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 712148467}
+  m_Enabled: 1
+  m_CellSize: {x: 1, y: 1, z: 1}
+  m_CellGap: {x: 0, y: 0, z: 0}
+  m_CellLayout: 0
+  m_CellSwizzle: 0
 --- !u!1 &746435972
 GameObject:
   m_ObjectHideFlags: 0
@@ -3319,6 +3331,10 @@ PrefabInstance:
       value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 188146230140724658, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
+      propertyPath: leveldata
+      value: 
+      objectReference: {fileID: 11400000, guid: d564be8c8e84a494d8475bc69cc69160, type: 2}
+    - target: {fileID: 188146230140724658, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
       propertyPath: turnManager
       value: 
       objectReference: {fileID: 74168499}
@@ -3386,10 +3402,17 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4457270323820028761, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1353525679512012312, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 712148470}
   m_SourcePrefab: {fileID: 100100000, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

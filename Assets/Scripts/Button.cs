@@ -14,22 +14,25 @@ public class Button : MonoBehaviour, ISelectable
     Vector3 piecelocation;
     public Vector3 Piecelocation
     {
-        get { return piecelocation; }
+        get {
+            return transform.position;
+        }
     }
 
     public bool _selected;
     public bool selected { get { return _selected; } set { _selected = value; } }
 
-    private void Start()
+    private void Awake()
     {
         selected = false;
         defaultScale = transform.localScale;
-        piecelocation = transform.localPosition;
     }
 
     public void Init(int x, int y, GameObject _board)
     {
         SetLocation(x, y); board = _board;
+        piecelocation = board.GetComponent<Board>().grid.GetCellCenterWorld(new Vector3Int((int)location.x, 0, (int)location.y));
+       
     }
 
     public void OnTurnEnd()

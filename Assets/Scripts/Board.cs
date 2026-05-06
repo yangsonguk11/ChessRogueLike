@@ -17,6 +17,8 @@ public class Board : MonoBehaviour
     [Header("보드 크기")]
     [Min(1)] public int N; //세로
     [Min(1)] public int M; //가로
+    [SerializeField] LevelData leveldata;
+    public Grid grid;
     Vector2 _selectedButton;
     Vector2 selectedButton
     {
@@ -42,21 +44,28 @@ public class Board : MonoBehaviour
         OnButtonSelected += OnSelectBoard;
         OnButtonUnSelected += OnUnSelectBoard;
         queuecoroutineworking = false;
-        InitBoard();
+        InitBoard(leveldata);
 
         TurnStart();
     }
-
+    /*
     void InitBoard()
     {
         Background.transform.localScale = new Vector3(N, M, 1);
         Buttons = new GameObject[N, M];
         Vector3 pos = new Vector3(0, 0, 0);
+        grid = GetComponent<Grid>();
+        float offsetX = (N * grid.cellSize.x + (N - 1) * grid.cellGap.x) / 2f;
+        float offsetY = (M * grid.cellSize.y + (M - 1) * grid.cellGap.y) / 2f;
+
+        // Grid 오브젝트의 위치를 조정하여 전체를 중앙으로 맞춤
+        grid.transform.position = new Vector3(-offsetX + (grid.cellSize.x / 2f), 0, -offsetY + (grid.cellSize.y / 2f));
         for (int x = 0; x < N; x++)
         {
             for (int y = 0; y < M; y++)
             {
-                pos.x = 0.5f - N / 2f + x; pos.z = 0.5f - M / 2f + y;
+                pos = grid.CellToWorld(new Vector3Int(x, 0, y));
+                
                 GameObject obj = Instantiate(ButtonPrefab, pos, new Quaternion(), gameObject.transform);
                 obj.GetComponent<Button>().Init(x, y, gameObject);
 
@@ -77,7 +86,48 @@ public class Board : MonoBehaviour
         ClearSelectedButton();
         CardCanvas.instance.HandtoDiscardAll();
     }
+    */
+    void InitBoard(LevelData data)
+    {
+        N = data.N;
+        M = data.M;
+        Background.transform.localScale = new Vector3(N, M, 1);
+        Buttons = new GameObject[N, M];
+        Vector3 pos = new Vector3(0, 0, 0);
+        grid = GetComponent<Grid>();
+        float offsetX = (N * grid.cellSize.x + (N - 1) * grid.cellGap.x) / 2f;
+        float offsetY = (M * grid.cellSize.y + (M - 1) * grid.cellGap.y) / 2f;
 
+        // Grid 오브젝트의 위치를 조정하여 전체를 중앙으로 맞춤
+        grid.transform.position = new Vector3(-offsetX + (grid.cellSize.x / 2f), 0, -offsetY + (grid.cellSize.y / 2f));
+        for (int x = 0; x < N; x++)
+        {
+            for (int y = 0; y < M; y++)
+            {
+                pos = grid.CellToWorld(new Vector3Int(x, 0, y));
+
+                GameObject obj = Instantiate(ButtonPrefab, pos, new Quaternion(), gameObject.transform);
+                obj.GetComponent<Button>().Init(x, y, gameObject);
+
+                Buttons[x, y] = obj;
+            }
+        }
+        ClearSelectedButton();
+        foreach (var placement in data.placements)
+        {
+            GameObject piece = Instantiate(Pieces[placement.pieceTypeIndex]);
+            GetButtonScript(placement.position).SetPiece(piece);
+
+            if (placement.isEnemy)
+            {
+                enemyPositions.Add(placement.position);
+            }
+        }
+
+        FinishCardUsage();
+        ClearSelectedButton();
+        CardCanvas.instance.HandtoDiscardAll();
+    }
     public void ButtonClicked(Vector2 pos)
     {
 
@@ -563,8 +613,9 @@ public class Board : MonoBehaviour
     }
     IEnumerator PieceMoveCor(Button Button1, Button Button2, float moveDuration)
     {
-        Vector3 pos1 = Button1.Piecelocation;
-        Vector3 pos2 = Button2.Piecelocation;
+        Vector3 pos1 = Button1.transform.position;
+        Vector3 pos2 = Button2.transform.position;
+        Debug.LogFormat("{0} {1}", pos1, pos2);
         GameObject piece = Button1.GetPiece();
         if (Button1 == Button2)
             yield break;
