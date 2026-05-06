@@ -38,7 +38,10 @@ public class Map : MonoBehaviour
 
     void Start()
     {
-        GenerateMap();
+        if (DataManager.Instance.LoadMap())
+            mapData = DataManager.Instance.currentData.mapData;
+        else
+            GenerateMap();
     }
 
     void GenerateMap()
@@ -52,7 +55,7 @@ public class Map : MonoBehaviour
             int nodeCount = 0;
 
             if (y == 0 || y == totalFloors - 1) nodeCount = 1; // 1Ãþ°ú 5ÃþÀº ³ëµå 1°³
-            else nodeCount = Random.Range(1, 5); // 2~4ÃþÀº 1~4°³
+            else nodeCount = Random.Range(1, 3); // 2~4ÃþÀº 1~4°³
 
             for (int x = 0; x < nodeCount; x++)
             {
@@ -122,7 +125,7 @@ public class Map : MonoBehaviour
                 }
             }
         }
-
+        DataManager.Instance.GenerateMap(mapData);
         string output = "";
         foreach(NodeRow data in mapData)
         {

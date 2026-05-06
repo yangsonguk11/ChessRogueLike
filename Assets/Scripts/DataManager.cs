@@ -61,6 +61,19 @@ public class DataManager : MonoBehaviour
         currentData.deckCardIDs.Add(cardname);
         SaveToFile();
     }
+    public void GenerateMap(List<NodeRow> mapdata)
+    {
+        currentData.mapData = mapdata;
+        SaveToFile();
+    }
+    public bool LoadMap()
+    {
+        Debug.LogFormat("{0} {1}", currentData, currentData.mapData);
+        if (currentData == null || currentData.mapData.Count == 0)
+            return false;
+        else
+            return true;
+    }
 }
 [System.Serializable]
 public class GameData
@@ -68,4 +81,5 @@ public class GameData
     public int currentHp;
     public int gold;
     public List<string> deckCardIDs;// 카드 프리팹 이름이나 ID 저장
+    public List<NodeRow> mapData;   // 지도 정보 저장
 }
