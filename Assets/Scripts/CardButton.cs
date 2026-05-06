@@ -53,7 +53,7 @@ public class CardButton : MonoBehaviour, ISelectable
         StopAllCoroutines();
         ScaleCor = StartCoroutine(ScaleTo(defaultScale * hoverScale));
     }
-    IEnumerator ScaleTo(Vector3 target)
+    public IEnumerator ScaleTo(Vector3 target)
     {
         while (Vector3.Distance(transform.localScale, target) > 0.01f)
         {

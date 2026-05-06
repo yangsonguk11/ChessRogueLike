@@ -83,7 +83,7 @@ public abstract class Card : MonoBehaviour, ISelectable
     public GameObject cardCanvas;
     public int handNumber;
 
-    IEnumerator ScaleTo(Vector3 target)
+    public IEnumerator ScaleTo(Vector3 target)
     {
         while (Vector3.Distance(transform.localScale, target) > 0.01f)
         {

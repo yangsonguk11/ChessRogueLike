@@ -3,9 +3,6 @@ using UnityEngine;
 
 public class Button : MonoBehaviour, ISelectable
 {
-    Vector3 defaultScale;
-    float hoverScale = 1.1f;
-    float speed = 10f;
     [SerializeField] GameObject piece;
     [SerializeField] GameObject RangeObj;
     [SerializeField] GameObject SelectedObj;
@@ -95,7 +92,11 @@ public class Button : MonoBehaviour, ISelectable
     {
         location.x = _x; location.y = _y;
     }
-    IEnumerator ScaleTo(Vector3 target)
+
+    public Vector3 defaultScale;
+    public float hoverScale = 1.1f;
+    float speed = 10f;
+    public IEnumerator ScaleTo(Vector3 target)
     {
         while (Vector3.Distance(transform.localScale, target) > 0.01f)
         {
@@ -104,13 +105,13 @@ public class Button : MonoBehaviour, ISelectable
         }
         transform.localScale = target;
     }
-    void ScaleDefault()
+    public void ScaleDefault()
     {
         StopAllCoroutines();
         StartCoroutine(ScaleTo(defaultScale));
         SelectedObj.SetActive(false);
     }
-    void ScaleHover()
+    public void ScaleHover()
     {
         StopAllCoroutines();
         StartCoroutine(ScaleTo(defaultScale * hoverScale));

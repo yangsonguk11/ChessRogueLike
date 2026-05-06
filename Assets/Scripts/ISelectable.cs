@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public interface ISelectable
@@ -7,11 +9,14 @@ public interface ISelectable
     public void SelectedFalse()
     {
         selected = false;
-        //ScaleDefault();
+        ScaleDefault();
     }
     public void SelectedTrue()
     {
         selected = true;
-        //ScaleHover();
+        ScaleHover();
     }
+    public IEnumerator ScaleTo(Vector3 target);
+    public void ScaleDefault();
+    public void ScaleHover();
 }

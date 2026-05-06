@@ -9,8 +9,8 @@ public class MapUI : MonoBehaviour
     public GameObject linePrefab;
     public RectTransform contentParent;
 
-    public float xSpacing = 150f; // 노드 간 가로 간격
-    public float ySpacing = 200f; // 층 간 세로 간격
+    public float xSpacing = 100f; // 노드 간 가로 간격
+    public float ySpacing = 300f; // 층 간 세로 간격
 
     private List<List<RectTransform>> instantiatedNodes = new List<List<RectTransform>>();
 
@@ -22,6 +22,7 @@ public class MapUI : MonoBehaviour
 
     public void DrawMap()
     {
+        float mapHeight = (mapGenerator.mapData.Count) * ySpacing;
         // 1. 노드 생성 및 배치
         for (int y = 0; y < mapGenerator.mapData.Count; y++)
         {
@@ -30,15 +31,14 @@ public class MapUI : MonoBehaviour
 
             for (int x = 0; x < rowData.nodes.Count; x++)
             {
-                GameObject nodeObj = Instantiate(nodePrefab, contentParent);
+                GameObject nodeObj = Instantiate(nodePrefab, contentParent, false);
                 RectTransform rect = nodeObj.GetComponent<RectTransform>();
 
-                // [수정] 3D 오브젝트가 너무 작다면 크기를 강제로 키움
-                nodeObj.transform.localScale = Vector3.one * 20f; // 50배 확대 (적절히 조절)
 
                 float totalWidth = (rowData.nodes.Count - 1) * xSpacing;
+                //float totalHeight = (rowData.nodes.Count - 1) * ySpacing;
                 float posX = (x * xSpacing) - (totalWidth * 0.5f);
-                float posY = y * ySpacing;
+                float posY = y * ySpacing - (mapHeight * 0.25f);
 
                 rect.anchoredPosition = new Vector2(posX, posY);
                 rowNodes.Add(rect);
@@ -48,8 +48,7 @@ public class MapUI : MonoBehaviour
 
         // [중요] 2. Content 크기 확장 (스크롤 가능하게 함)
         // 맵 전체 높이에 맞춰 Content의 높이를 조절합니다.
-        float mapHeight = (mapGenerator.mapData.Count) * ySpacing;
-        contentParent.sizeDelta = new Vector2(contentParent.sizeDelta.x, mapHeight + 200f);
+        contentParent.sizeDelta = new Vector2(contentParent.sizeDelta.x, mapHeight);
 
         // 지도가 위로 뻗어있다면 시작 위치를 아래로 내림
         contentParent.anchoredPosition = Vector2.zero;
