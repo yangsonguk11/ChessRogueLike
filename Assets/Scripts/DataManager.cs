@@ -54,9 +54,9 @@ public class DataManager : MonoBehaviour
                 "Move",
                 "Defense",
                 "Defense",
-                "SpinAttack",
                 "MoveAndAttackCard",
-                "SpinAttack",
+                "HeavyAttack",
+                "DrawCard"
             };
 
             PieceData defaultPiece = new PieceData

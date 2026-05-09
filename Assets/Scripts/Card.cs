@@ -144,7 +144,7 @@ public abstract class Card : MonoBehaviour, ISelectable
     }
 
 }
-public enum EffectType { Move, Damage, Shield, Buff, Heal }
+public enum EffectType { Move, Damage, Shield, Buff, Heal, SelfDamage, Draw }
 public class CardEffect
 {
     public Board.BoardMode requiredMode; // �� ȿ���� ���� ���� �ʿ��� ��� (��: targeting)

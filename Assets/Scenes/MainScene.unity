@@ -1679,8 +1679,9 @@ GameObject:
   - component: {fileID: 746435976}
   - component: {fileID: 746435975}
   - component: {fileID: 746435974}
+  - component: {fileID: 746435977}
   m_Layer: 5
-  m_Name: Button
+  m_Name: MapButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1749,7 +1750,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 746435975}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 746435977}
+        m_TargetAssemblyTypeName: ToggleOnOff, Assembly-CSharp
+        m_MethodName: TurnOnOff
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &746435975
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1788,6 +1801,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 746435972}
   m_CullTransparentMesh: 1
+--- !u!114 &746435977
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 746435972}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff55bdd589cd82148b2a683d63d43dc3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ToggleOnOff
+  objs:
+  - {fileID: 571599798}
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -3547,9 +3574,33 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: cardPrefabs.Array.size
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: 'cardPrefabs.Array.data[6]'
+      value: 
+      objectReference: {fileID: 8950236184682274632, guid: 8d80e9818aa3eb6478ecdb9d5107bdd4, type: 3}
+    - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: 'cardPrefabs.Array.data[7]'
+      value: 
+      objectReference: {fileID: 8950236184682274632, guid: 7c890ac272383c743a0b7a29891a9f49, type: 3}
+    - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: spritesPrefabs.Array.size
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
       propertyPath: 'spritesPrefabs.Array.data[5]'
       value: 
       objectReference: {fileID: 8983308741282738250, guid: 394003bc21369ba42b8542e952472ddb, type: 3}
+    - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: 'spritesPrefabs.Array.data[6]'
+      value: 
+      objectReference: {fileID: 8950236184682274632, guid: 8d80e9818aa3eb6478ecdb9d5107bdd4, type: 3}
+    - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: 'spritesPrefabs.Array.data[7]'
+      value: 
+      objectReference: {fileID: 8983308741282738250, guid: fc64129e0fdbabc4a840729d0874e1fb, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

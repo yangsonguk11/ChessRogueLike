@@ -4,9 +4,11 @@ public enum TurnState { Player, Enemy, Processing }
 public class TurnManager : MonoBehaviour
 {
     public static TurnManager instance;
-    public TurnState currentState;// ÇöÀç ÅÏ »óÅÂ
-    public TurnState prevState;   // processing Á÷ÀüÀÇ ÅÏ »óÅÂ
-    [SerializeField] Board board; // º¸µå ÂüÁ¶
+    [Header("Debug")]
+    public TurnState currentState;
+    public TurnState prevState;
+    [Header("References")]
+    [SerializeField] Board board;
 
     void Start()
     {
@@ -20,7 +22,7 @@ public class TurnManager : MonoBehaviour
     }
     private void OnEnable()
     {
-        // ¾À ÀüÈ¯ ÀÌº¥Æ® ±¸µ¶ (À¯´ÏÆ¼¿¡¼­ ¾ÀÀÌ ¹Ù²î¸é ÀÚµ¿À¸·Î È£ÃâµÊ)
+        // ï¿½ï¿½ ï¿½ï¿½È¯ ï¿½Ìºï¿½Æ® ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½Æ¼ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ù²ï¿½ï¿½ ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ È£ï¿½ï¿½ï¿½)
         UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
@@ -41,8 +43,8 @@ public class TurnManager : MonoBehaviour
     public void StartPlayerTurn()
     {
         currentState = TurnState.Player;
-        // ÇÃ·¹ÀÌ¾î°¡ Á¶ÀÛ °¡´ÉÇÏµµ·Ï UI È°¼ºÈ­ µî
-        Debug.Log("ÇÃ·¹ÀÌ¾î ÅÏ ½ÃÀÛ");
+        // ï¿½Ã·ï¿½ï¿½Ì¾î°¡ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ UI È°ï¿½ï¿½È­ ï¿½ï¿½
+        Debug.Log("ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½");
         board.SendMessage("TurnStart");
     }
 
@@ -50,7 +52,7 @@ public class TurnManager : MonoBehaviour
     {
         if (currentState != TurnState.Player) return;
 
-        // º¸µå¿¡ ¼±ÅÃµÈ °Íµé ÇØÁ¦
+        // ï¿½ï¿½ï¿½å¿¡ ï¿½ï¿½ï¿½Ãµï¿½ ï¿½Íµï¿½ ï¿½ï¿½ï¿½ï¿½
         board.SendMessage("AllyTurnEnd");
 
         StartEnemyTurn();
@@ -60,11 +62,11 @@ public class TurnManager : MonoBehaviour
     {
         currentState = TurnState.Enemy;
         board.SendMessage("PlayEnemyTurn");
-        // Àû AI ·ÎÁ÷ ½ÇÇà...
-        Debug.Log("Àû ÅÏ ½ÃÀÛ");
+        // ï¿½ï¿½ AI ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½...
+        Debug.Log("ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½");
 
         
-        // ¿¹: Àû Çàµ¿ÀÌ ³¡³ª¸é ´Ù½Ã ÇÃ·¹ÀÌ¾î ÅÏÀ¸·Î
+        // ï¿½ï¿½: ï¿½ï¿½ ï¿½àµ¿ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ù½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         // StartCoroutine(EnemyAILogic());
     }
     public void EndEnemyTurn()

@@ -9,68 +9,72 @@ public class MapCanvas : MonoBehaviour
     CanvasGroup cg;
     MapUI mapUI;
     [SerializeField] GameObject runCompletePanel;
+    bool _activatingNormally = false;
+    bool _lastWasInteractive = false;
 
     void Awake()
     {
         instance = this;
         cg = GetComponent<CanvasGroup>();
         mapUI = GetComponentInChildren<MapUI>();
-        SetVisible(false);
         runCompletePanel?.SetActive(false);
+    }
+
+    void OnEnable()
+    {
+        if (_activatingNormally) return;
+        DrawAndShow(_lastWasInteractive);
     }
 
     IEnumerator Start()
     {
-        yield return null; // 한 프레임 대기 — 모든 Start()가 실행된 후 맵 표시
+        yield return null;
         if ((DataManager.Instance?.currentData.currentFloor ?? -1) < 0)
             Show();
     }
 
     public void Show()
     {
+        _lastWasInteractive = true;
+        _activatingNormally = true;
         gameObject.SetActive(true);
-        if (mapUI == null)
-        {
-            Debug.LogError("[MapCanvas] MapUI 컴포넌트를 찾을 수 없습니다.");
-            return;
-        }
-        if (mapUI.mapGenerator == null)
-            mapUI.mapGenerator = Map.instance;
-        if (mapUI.mapGenerator == null)
-        {
-            Debug.LogError("[MapCanvas] Map.instance가 없습니다. Map 오브젝트가 씬에 있는지 확인하세요.");
-            return;
-        }
-        if (mapUI.mapGenerator.mapData == null || mapUI.mapGenerator.mapData.Count == 0)
-        {
-            Debug.LogError("[MapCanvas] 맵 데이터가 비어있습니다.");
-            return;
-        }
+        _activatingNormally = false;
 
-        mapUI.ClearMap();
-        mapUI.DrawMap();
-        SetVisible(true);
+        if (mapUI == null) { Debug.LogError("[MapCanvas] MapUI 컴포넌트를 찾을 수 없습니다."); return; }
+        if (mapUI.mapGenerator == null) mapUI.mapGenerator = Map.instance;
+        if (mapUI.mapGenerator == null) { Debug.LogError("[MapCanvas] Map.instance가 없습니다."); return; }
+        if (mapUI.mapGenerator.mapData == null || mapUI.mapGenerator.mapData.Count == 0) { Debug.LogError("[MapCanvas] 맵 데이터가 비어있습니다."); return; }
+
+        DrawAndShow(true);
     }
 
     public void ShowRunComplete()
     {
+        _lastWasInteractive = true;
+        _activatingNormally = true;
         gameObject.SetActive(true);
-        if (mapUI == null)
-        {
-            Debug.LogError("[MapCanvas] ShowRunComplete: MapUI 없음");
-            return;
-        }
-        if (mapUI.mapGenerator == null)
-            mapUI.mapGenerator = Map.instance;
-        if (mapUI.mapGenerator == null)
-        {
-            Debug.LogError("[MapCanvas] ShowRunComplete: Map.instance 없음");
-            return;
-        }
+        _activatingNormally = false;
+
+        if (mapUI == null) { Debug.LogError("[MapCanvas] ShowRunComplete: MapUI 없음"); return; }
+        if (mapUI.mapGenerator == null) mapUI.mapGenerator = Map.instance;
+        if (mapUI.mapGenerator == null) { Debug.LogError("[MapCanvas] ShowRunComplete: Map.instance 없음"); return; }
+
         mapUI.ClearMap();
         mapUI.DrawMap(runComplete: true);
         runCompletePanel?.SetActive(true);
-        SetVisible(true);
+        SetVisible(true, interactable: true);
+    }
+
+    void DrawAndShow(bool interactive)
+    {
+        if (mapUI == null) return;
+        if (mapUI.mapGenerator == null) mapUI.mapGenerator = Map.instance;
+        if (mapUI.mapGenerator == null) return;
+        if (mapUI.mapGenerator.mapData == null || mapUI.mapGenerator.mapData.Count == 0) return;
+
+        mapUI.ClearMap();
+        mapUI.DrawMap(viewOnly: !interactive);
+        SetVisible(true, interactable: interactive);
     }
 
     public void RestartGame()
@@ -79,10 +83,10 @@ public class MapCanvas : MonoBehaviour
         SceneManager.LoadScene("MainScene");
     }
 
-    void SetVisible(bool visible)
+    void SetVisible(bool visible, bool interactable = true)
     {
         cg.alpha = visible ? 1f : 0f;
         cg.blocksRaycasts = visible;
-        cg.interactable = visible;
+        cg.interactable = visible && interactable;
     }
 }

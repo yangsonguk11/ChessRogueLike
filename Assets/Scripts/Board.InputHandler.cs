@@ -44,7 +44,7 @@ public partial class Board
                     else if (selectedButtonMovable.Contains(pos))
                     {
                         ExecuteEffect(pendingEffects.Dequeue(), pos);
-                        ProcessNextCardEffect();
+                        ScheduleNextCardEffect();
                     }
                 }
                 break;

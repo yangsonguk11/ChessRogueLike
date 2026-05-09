@@ -132,7 +132,7 @@ public class CardCanvas : MonoBehaviour
         CurrentEnergyText.text = string.Format("{0}/{1}", currentenergy, maxenergy);
     }
 
-    void DrawCard()                         //���� ī�带 ������ ��������
+    public void DrawCard()                         //���� ī�带 ������ ��������
     {
 
         if (Deckcards.Count == 0)

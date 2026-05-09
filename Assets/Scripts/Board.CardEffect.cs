@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -36,8 +37,22 @@ public partial class Board
         if (boardmode != BoardMode.command && boardmode != BoardMode.targeting)
         {
             ExecuteEffect(pendingEffects.Dequeue());
-            ProcessNextCardEffect();
+            ScheduleNextCardEffect();
         }
+    }
+
+    void ScheduleNextCardEffect()
+    {
+        if (queuecoroutineworking)
+            StartCoroutine(WaitThenProcessNext());
+        else
+            ProcessNextCardEffect();
+    }
+
+    IEnumerator WaitThenProcessNext()
+    {
+        yield return new WaitUntil(() => !queuecoroutineworking);
+        ProcessNextCardEffect();
     }
 
     void ProcessEnemyCardEffect(CardEffect nextEffect)
@@ -47,7 +62,7 @@ public partial class Board
             Vector2 targetPos = ResolveEnemyTarget(nextEffect);
             Debug.Log(targetPos);
             ExecuteEffect(pendingEffects.Dequeue(), targetPos);
-            ProcessNextCardEffect();
+            ScheduleNextCardEffect();
         }
         // targeting mode for enemies not yet implemented
     }
@@ -130,6 +145,12 @@ public partial class Board
                 break;
             case EffectType.Shield:
                 ShieldPiece(selectedButton, targetPos, cardEffect.dmg);
+                break;
+            case EffectType.SelfDamage:
+                SelfDamagePiece(selectedButton, cardEffect.dmg);
+                break;
+            case EffectType.Draw:
+                CardCanvas.instance.DrawCard();
                 break;
             default:
                 Debug.LogError("효과 타입을 찾지 못했습니다");

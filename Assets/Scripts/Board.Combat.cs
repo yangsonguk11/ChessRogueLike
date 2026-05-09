@@ -90,6 +90,18 @@ public partial class Board
         StartCoroutine(ProcessQueue());
     }
 
+    void SelfDamagePiece(Vector2 casterPos, int dmg)
+    {
+        if (casterPos.x < 0 || casterPos.y < 0) return;
+        Piece p = GetButtonScript(casterPos).GetPieceScript();
+        if (p == null) return;
+        int hpLeft = p.GetDamage(dmg, AttackType.NormalAttack);
+        motionQueue.Enqueue(p.DamageText(dmg));
+        if (hpLeft <= 0)
+            motionQueue.Enqueue(p.DeathCor());
+        StartCoroutine(ProcessQueue());
+    }
+
     void AreaAttackPiece(Vector2 casterPos, List<Vector2> targets, int dmg)
     {
         if (casterPos.x < 0 || casterPos.y < 0 || targets.Count == 0) return;
