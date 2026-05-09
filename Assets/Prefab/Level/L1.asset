@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0bd6631b7b10bc147bc0c85bb4b0003d, type: 3}
   m_Name: L1
   m_EditorClassIdentifier: Assembly-CSharp::LevelData
-  N: 5
-  M: 5
+  N: 7
+  M: 7
   placements:
-  - position: {x: 0, y: 0}
-    pieceTypeIndex: 0
-    isEnemy: 0
-    name: 
-  - position: {x: 0, y: 0}
-    pieceTypeIndex: 0
-    isEnemy: 0
-    name: 
+  - position: {x: 1, y: 2}
+    pieceTypeIndex: 1
+    isEnemy: 1
+    name: White Knight 1
+  - position: {x: 1, y: 4}
+    pieceTypeIndex: 2
+    isEnemy: 1
+    name: White Knight 2

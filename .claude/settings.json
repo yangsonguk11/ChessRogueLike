@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/yangs/OneDrive/**)",
+      "PowerShell(Get-ChildItem -Path \"Assets\\\\Prefab\" -Recurse -File | Where-Object { $_.Extension -eq \".asset\" -or $_.Extension -eq \".cs\" } | Select-Object -ExpandProperty FullName)"
+    ]
+  }
+}

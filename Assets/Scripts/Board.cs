@@ -47,12 +47,36 @@ public partial class Board : MonoBehaviour
         OnButtonSelected += OnSelectBoard;
         OnButtonUnSelected += OnUnSelectBoard;
         queuecoroutineworking = false;
-        InitBoard(leveldata);
+        InitBoard(ResolveLevelData());
         TurnStart();
+    }
+
+    LevelData ResolveLevelData()
+    {
+        if (LevelDatabase.instance == null) return leveldata;
+
+        string nextLevel = DataManager.Instance?.currentData.nextLevelName;
+
+        // 맵에서 노드를 선택한 경우: 저장된 레벨 이름으로 로드
+        if (!string.IsNullOrEmpty(nextLevel))
+        {
+            LevelData loaded = LevelDatabase.instance.GetLevel(nextLevel);
+            if (loaded != null) return loaded;
+        }
+
+        // 첫 전투(nextLevelName 없음): LevelDatabase 0층에서 랜덤 선택
+        LevelData firstLevel = LevelDatabase.instance.GetRandomLevel(0);
+        if (firstLevel != null) return firstLevel;
+
+        return leveldata; // LevelDatabase가 비어있을 때 Inspector 기본값
     }
 
     void InitBoard(LevelData data)
     {
+        // 이전 씬에서 남은 적 목록 초기화 (DontDestroyOnLoad인 GameManager의 리스트)
+        GameManager.instance?.Enemylist.Clear();
+        enemyPositions.Clear();
+
         N = data.N;
         M = data.M;
         Background.transform.localScale = new Vector3(N, M, 1);

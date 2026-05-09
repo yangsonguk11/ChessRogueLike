@@ -4,26 +4,33 @@ using UnityEngine.UI;
 
 public class MapUI : MonoBehaviour
 {
-    public Map mapGenerator; // ¾Æ±î ¸¸µç Map ½ºÅ©¸³Æ® ÂüÁ¶
+    public Map mapGenerator;
     public GameObject nodePrefab;
     public GameObject linePrefab;
     public RectTransform contentParent;
 
-    public float xSpacing = 100f; // ³ëµå °£ °¡·Î °£°İ
-    public float ySpacing = 300f; // Ãş °£ ¼¼·Î °£°İ
+    public float xSpacing = 100f;
+    public float ySpacing = 300f;
 
     private List<List<RectTransform>> instantiatedNodes = new List<List<RectTransform>>();
 
-    void Start()
+    void Start() { mapGenerator = Map.instance; }
+
+    public void ClearMap()
     {
-        // Map ½ºÅ©¸³Æ®¿¡¼­ µ¥ÀÌÅÍ »ı¼ºÀÌ ¿Ï·áµÈ ÈÄ È£Ãâ
-        DrawMap();
+        // contentParentì˜ ëª¨ë“  ìì‹ ì‚­ì œ (ë…¸ë“œ + ì—°ê²°ì„ )
+        for (int i = contentParent.childCount - 1; i >= 0; i--)
+            Destroy(contentParent.GetChild(i).gameObject);
+        instantiatedNodes.Clear();
     }
 
     public void DrawMap()
     {
-        float mapHeight = (mapGenerator.mapData.Count) * ySpacing;
-        // 1. ³ëµå »ı¼º ¹× ¹èÄ¡
+        int currentFloor = DataManager.Instance.currentData.currentFloor;
+        int currentNodeX = DataManager.Instance.currentData.currentNodeX;
+        float mapHeight = mapGenerator.mapData.Count * ySpacing;
+
+        // ë…¸ë“œ ìƒì„± ë° ì´ˆê¸°í™”
         for (int y = 0; y < mapGenerator.mapData.Count; y++)
         {
             var rowData = mapGenerator.mapData[y];
@@ -34,58 +41,84 @@ public class MapUI : MonoBehaviour
                 GameObject nodeObj = Instantiate(nodePrefab, contentParent, false);
                 RectTransform rect = nodeObj.GetComponent<RectTransform>();
 
-
                 float totalWidth = (rowData.nodes.Count - 1) * xSpacing;
-                //float totalHeight = (rowData.nodes.Count - 1) * ySpacing;
                 float posX = (x * xSpacing) - (totalWidth * 0.5f);
                 float posY = y * ySpacing - (mapHeight * 0.25f);
-
                 rect.anchoredPosition = new Vector2(posX, posY);
+
+                NodeButton btn = nodeObj.GetComponent<NodeButton>();
+                if (btn != null)
+                {
+                    btn.nodeData = rowData.nodes[x];
+                    btn.nodeFloor = y;
+                }
+
                 rowNodes.Add(rect);
             }
             instantiatedNodes.Add(rowNodes);
         }
 
-        // [Áß¿ä] 2. Content Å©±â È®Àå (½ºÅ©·Ñ °¡´ÉÇÏ°Ô ÇÔ)
-        // ¸Ê ÀüÃ¼ ³ôÀÌ¿¡ ¸ÂÃç ContentÀÇ ³ôÀÌ¸¦ Á¶ÀıÇÕ´Ï´Ù.
         contentParent.sizeDelta = new Vector2(contentParent.sizeDelta.x, mapHeight);
-
-        // Áöµµ°¡ À§·Î »¸¾îÀÖ´Ù¸é ½ÃÀÛ À§Ä¡¸¦ ¾Æ·¡·Î ³»¸²
         contentParent.anchoredPosition = Vector2.zero;
 
-        // 2. ¼± ±×¸®±â (¿¬°á)
+        // ì—°ê²°ì„  ê·¸ë¦¬ê¸°
         for (int y = 0; y < mapGenerator.mapData.Count - 1; y++)
         {
             var rowData = mapGenerator.mapData[y];
             for (int x = 0; x < rowData.nodes.Count; x++)
             {
-                var currentNode = rowData.nodes[x];
-                var startRT = instantiatedNodes[y][x];
-
-                foreach (int nextIdx in currentNode.nextNodes)
+                foreach (int nextIdx in rowData.nodes[x].nextNodes)
                 {
-                    var endRT = instantiatedNodes[y + 1][nextIdx];
-                    CreateLine(startRT.anchoredPosition, endRT.anchoredPosition);
+                    CreateLine(
+                        instantiatedNodes[y][x].anchoredPosition,
+                        instantiatedNodes[y + 1][nextIdx].anchoredPosition
+                    );
                 }
             }
         }
+
+        // ì„ íƒ ê°€ëŠ¥ ìƒíƒœ ì„¤ì •
+        for (int y = 0; y < instantiatedNodes.Count; y++)
+        {
+            for (int x = 0; x < instantiatedNodes[y].Count; x++)
+            {
+                NodeButton btn = instantiatedNodes[y][x].GetComponent<NodeButton>();
+                if (btn == null) continue;
+
+                bool isCurrent = (y == currentFloor && x == currentNodeX);
+                bool isSelectable = IsNodeReachable(y, x, currentFloor, currentNodeX);
+
+                btn.selectable = isSelectable;
+                btn.SetVisualState(isSelectable, isCurrent);
+            }
+        }
+    }
+
+    bool IsNodeReachable(int nodeFloor, int nodeX, int currentFloor, int currentNodeX)
+    {
+        // ì²« ë§µ ì§„ì…: ì¸µ 0ì˜ ëª¨ë“  ë…¸ë“œ ì„ íƒ ê°€ëŠ¥
+        if (currentFloor == -1)
+            return nodeFloor == 0;
+
+        // í˜„ì¬ ì¸µ + 1ì´ê³ , í˜„ì¬ ë…¸ë“œì™€ ì—°ê²°ë˜ì–´ ìˆì–´ì•¼ í•¨
+        if (nodeFloor != currentFloor + 1) return false;
+        var currentRow = mapGenerator.mapData[currentFloor];
+        if (currentNodeX < 0 || currentNodeX >= currentRow.nodes.Count) return false;
+        return currentRow.nodes[currentNodeX].nextNodes.Contains(nodeX);
     }
 
     void CreateLine(Vector2 start, Vector2 end)
     {
         GameObject lineObj = Instantiate(linePrefab, contentParent);
-        lineObj.transform.SetAsFirstSibling(); // ¼±ÀÌ ³ëµå µÚ·Î °¡µµ·Ï ¼³Á¤
+        lineObj.transform.SetAsFirstSibling();
 
         RectTransform rect = lineObj.GetComponent<RectTransform>();
-
-        // µÎ Á¡ »çÀÌÀÇ °Å¸®¿Í ¹æÇâ °è»ê
         Vector2 dir = end - start;
         float distance = dir.magnitude;
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
 
-        // ¼±ÀÇ À§Ä¡, Å©±â, È¸Àü ¼³Á¤
-        rect.anchoredPosition = start + (dir * 0.5f); // Áß°£ ÁöÁ¡
-        rect.sizeDelta = new Vector2(distance, 5f);    // ±æÀÌ´Â °Å¸®¸¸Å­, µÎ²²´Â 5
+        rect.anchoredPosition = start + (dir * 0.5f);
+        rect.sizeDelta = new Vector2(distance, 5f);
         rect.localRotation = Quaternion.Euler(0, 0, angle);
     }
 }
