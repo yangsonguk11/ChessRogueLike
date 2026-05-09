@@ -37,15 +37,14 @@ public class DataManager : MonoBehaviour
         {
             string json = File.ReadAllText(savePath);
             currentData = JsonUtility.FromJson<GameData>(json);
-            // 구버전 세이브 파일 호환: null 리스트 초기화
+        }
+        else
+        {
             if (currentData.deckCardIDs == null) currentData.deckCardIDs = new List<string>();
             if (currentData.mapData == null) currentData.mapData = new List<NodeRow>();
             if (currentData.pieceData == null) currentData.pieceData = new List<PieceData>();
             if (currentData.nextLevelName == null) currentData.nextLevelName = "";
             if (currentData.visitedNodeX == null) currentData.visitedNodeX = new List<int>();
-        }
-        else
-        {
             currentData.deckCardIDs = new List<string>()
             {
                 "AttackCard",
@@ -53,11 +52,11 @@ public class DataManager : MonoBehaviour
                 "AttackCard",
                 "Move",
                 "Move",
-                "Move",
                 "Defense",
                 "Defense",
-                "Defense",
+                "SpinAttack",
                 "MoveAndAttackCard",
+                "SpinAttack",
             };
 
             PieceData defaultPiece = new PieceData

@@ -35,6 +35,19 @@ public abstract class Piece : MonoBehaviour
         shield = 0;
         moveableRange = RangeInfoSODatabase.instance.GetRangeInfoSO(data.rangeinfoname);
     }
+
+    public PieceData GetPieceData()
+    {
+        return new PieceData
+        {
+            pieceName = name,
+            teamID = teamID,
+            hp = hp,
+            maxHp = maxhp,
+            colDamage = colDamage,
+            rangeinfoname = moveableRange != null ? moveableRange.name : ""
+        };
+    }
     public virtual List<Vector2> GetMoveableButton() { return pieceInfo.RangeInfoSO.GetAbleRange(); }
     public int GetDamage(int damage, AttackType type)
     {
@@ -62,7 +75,7 @@ public abstract class Piece : MonoBehaviour
         shield += damage;
         return shield;
     }
-    public virtual void OnTurnEnd()                 //ÅÏ Á¾·á ½Ã Çàµ¿
+    public virtual void OnTurnEnd()                 //ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½àµ¿
     {
     }
     public virtual void OnTurnEndOther()

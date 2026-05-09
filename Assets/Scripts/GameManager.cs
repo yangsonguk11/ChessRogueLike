@@ -55,7 +55,7 @@ public class GameManager : MonoBehaviour
         int currentFloor = DataManager.Instance.currentData.currentFloor;
         int currentNodeX = DataManager.Instance.currentData.currentNodeX;
 
-        // 맵 선택 없이 시작된 전투(currentNodeX == -1)는 층 0의 노드 0을 방문 기록으로 저장
+        // 맵 선택 없이 시작된 전투(currentNodeX == -1)는 노드 0을 방문 기록으로 저장
         if (currentNodeX < 0 && currentFloor >= 0 &&
             Map.instance != null && Map.instance.mapData.Count > currentFloor &&
             Map.instance.mapData[currentFloor].nodes.Count > 0)
@@ -64,6 +64,9 @@ public class GameManager : MonoBehaviour
                 DataManager.Instance.currentData.nextLevelName,
                 currentFloor, 0);
         }
+
+        // 생존한 플레이어 기물 데이터를 DataManager에 저장 (hp 0 이하는 이미 보드에서 제거됨)
+        this.Board?.GetComponent<global::Board>()?.SavePlayerPiecesToDataManager();
         if (Map.instance != null && currentFloor >= Map.instance.TotalFloors - 1)
         {
             if (MapCanvas.instance != null)

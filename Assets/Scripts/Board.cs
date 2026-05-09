@@ -55,9 +55,38 @@ public partial class Board : MonoBehaviour
         if ((DataManager.Instance?.currentData.currentFloor ?? -1) < 0)
             return; // 맵에서 노드를 아직 선택하지 않음 — 보드 초기화 건너뜀
 
+        var pieceData = DataManager.Instance.currentData.pieceData;
+        if (pieceData == null || pieceData.Count == 0)
+        {
+            Debug.LogError("[Board] pieceData가 비어있습니다. 플레이어 캐릭터 없이 게임을 진행할 수 없습니다.");
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
+            return;
+        }
+
         boardReady = true;
         InitBoard(ResolveLevelData());
         TurnStart();
+    }
+
+    public void SavePlayerPiecesToDataManager()
+    {
+        if (!boardReady) return;
+        var surviving = new List<PieceData>();
+        for (int x = 0; x < N; x++)
+        {
+            for (int y = 0; y < M; y++)
+            {
+                Piece p = GetButtonScript(new Vector2(x, y)).GetPieceScript();
+                if (p != null && p.teamID == 0)
+                    surviving.Add(p.GetPieceData());
+            }
+        }
+        DataManager.Instance.currentData.pieceData = surviving;
+        DataManager.Instance.SaveToFile();
     }
 
     LevelData ResolveLevelData()

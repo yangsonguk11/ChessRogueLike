@@ -27,7 +27,9 @@ public enum TargetLogic
 {
     NearestEnemy,
     LowestHP,
-    self
+    self,
+    AllEnemiesInRange,
+    AllAlliesInRange
 }
 public abstract class Card : MonoBehaviour, ISelectable
 {
@@ -145,7 +147,7 @@ public abstract class Card : MonoBehaviour, ISelectable
 public enum EffectType { Move, Damage, Shield, Buff, Heal }
 public class CardEffect
 {
-    public Board.BoardMode requiredMode; // ÀÌ È¿°ú¸¦ ¾²±â À§ÇØ ÇÊ¿äÇÑ ¸ðµå (¿¹: targeting)
+    public Board.BoardMode requiredMode; // ï¿½ï¿½ È¿ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ (ï¿½ï¿½: targeting)
     public EffectType type;
     public int dmg;
     public RangeInfoSO effectRange;

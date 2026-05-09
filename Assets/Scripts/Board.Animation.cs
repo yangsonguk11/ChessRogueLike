@@ -76,6 +76,23 @@ public partial class Board
         piece1.transform.rotation = Quaternion.Euler(pRotation);
     }
 
+    IEnumerator PieceAreaAttackCor(Button button, float duration)
+    {
+        GameObject piece = button.GetPiece();
+        if (piece == null) yield break;
+
+        Vector3 startEuler = piece.transform.eulerAngles;
+        float time = 0f;
+        while (time < duration)
+        {
+            float t = time / duration;
+            piece.transform.rotation = Quaternion.Euler(startEuler + new Vector3(0f, 360f * t, 0f));
+            time += Time.deltaTime;
+            yield return null;
+        }
+        piece.transform.rotation = Quaternion.Euler(startEuler);
+    }
+
     IEnumerator PieceShieldCor(Button button1, Button button2, float moveDuration)
     {
         yield return new WaitForSeconds(moveDuration);

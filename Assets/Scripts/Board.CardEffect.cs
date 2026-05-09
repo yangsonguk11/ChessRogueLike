@@ -109,6 +109,14 @@ public partial class Board
     void ExecuteEffect(CardEffect cardEffect, Vector2 targetPos = default)
     {
         currentActiveCard.cardCanvas.GetComponent<CardCanvas>().isCardEffecting = true;
+
+        if (cardEffect.targetlogic == TargetLogic.AllEnemiesInRange ||
+            cardEffect.targetlogic == TargetLogic.AllAlliesInRange)
+        {
+            ExecuteAreaEffect(cardEffect, targetPos);
+            return;
+        }
+
         switch (cardEffect.type)
         {
             case EffectType.Move:
@@ -125,6 +133,35 @@ public partial class Board
                 break;
             default:
                 Debug.LogError("효과 타입을 찾지 못했습니다");
+                break;
+        }
+    }
+
+    void ExecuteAreaEffect(CardEffect cardEffect, Vector2 center)
+    {
+        if (cardEffect.effectRange == null) return;
+
+        int targetTeam = cardEffect.targetlogic == TargetLogic.AllEnemiesInRange ? 1 : 0;
+        var targets = new List<Vector2>();
+
+        foreach (Vector2 offset in cardEffect.effectRange.GetAbleRange())
+        {
+            Vector2 pos = center + offset;
+            if (pos.x < 0 || pos.x >= N || pos.y < 0 || pos.y >= M) continue;
+
+            Piece p = GetButtonScript(pos).GetPieceScript();
+            if (p == null || p.teamID != targetTeam) continue;
+            targets.Add(pos);
+        }
+
+        switch (cardEffect.type)
+        {
+            case EffectType.Damage: AreaAttackPiece(selectedButton, targets, cardEffect.dmg); break;
+            case EffectType.Shield:
+                foreach (var pos in targets) ShieldPiece(selectedButton, pos, cardEffect.dmg);
+                break;
+            case EffectType.Heal:
+                foreach (var pos in targets) HealPiece(selectedButton, pos, cardEffect.dmg);
                 break;
         }
     }

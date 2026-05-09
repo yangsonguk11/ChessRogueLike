@@ -6,6 +6,7 @@ public class BoardUICanvas : MonoBehaviour
     [SerializeField] TextMeshProUGUI piecename;
     [SerializeField] TextMeshProUGUI hp;
     [SerializeField] TextMeshProUGUI isAlly;
+    [SerializeField] TextMeshProUGUI colDamage;
 
 
     public void UpdateButtonInfo(Button button)
@@ -14,6 +15,7 @@ public class BoardUICanvas : MonoBehaviour
         piecename.text = p.name;
         hp.text = string.Format("{0}/{1}", p.hp, p.maxhp);
         isAlly.text = p.teamID == 0 ? "Ally" : "Enemy";
+        colDamage.text = "Col Damage: " + p.colDamage;
     }
 
 

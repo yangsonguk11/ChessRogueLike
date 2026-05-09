@@ -11,16 +11,16 @@ public class CardCanvas : MonoBehaviour
 
     [SerializeField] CardDatabase cardData;
     [SerializeField] Board board;
-    public List<RectTransform> cards = new List<RectTransform>(); // ¼Õ¿¡ µç Ä«µåµé
+    public List<RectTransform> cards = new List<RectTransform>(); // ï¿½Õ¿ï¿½ ï¿½ï¿½ Ä«ï¿½ï¿½ï¿½
     public List<RectTransform> Discardcards = new List<RectTransform>();
     public Queue<RectTransform> Deckcards = new Queue<RectTransform>();
     [SerializeField] GameObject HandZone;
     [SerializeField] RectTransform CardNowUsingPos;
     [SerializeField] RectTransform DiscardZone;
     [SerializeField] TextMeshProUGUI CurrentEnergyText;
-    [SerializeField] float radius; // ¿øÀÇ ¹ÝÁö¸§ (Å¬¼ö·Ï ¿Ï¸¸ÇÔ)
-    [SerializeField] float angleBetween;  // Ä«µå »çÀÌÀÇ °¢µµ
-    [SerializeField] float heightOffset; // ºÎÃ¤²ÃÀÇ ³ôÀÌ º¸Á¤
+    [SerializeField] float radius; // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½Ï¸ï¿½ï¿½ï¿½)
+    [SerializeField] float angleBetween;  // Ä«ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+    [SerializeField] float heightOffset; // ï¿½ï¿½Ã¤ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
     int _currentenergy;
     public int currentenergy { get { return _currentenergy; } set { _currentenergy = value; UpdateCurrentEnergy(); } }
@@ -44,7 +44,7 @@ public class CardCanvas : MonoBehaviour
         HandZone.GetComponent<Image>().raycastTarget = false;
     }
 
-    public void CardSelected(int handNum)   //¼ÕÀÇ Ä«µå¸¦ ´­·¶À» ¶§
+    public void CardSelected(int handNum)   //ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½å¸¦ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
     {
         if (handNum == -1)
             return;
@@ -53,12 +53,12 @@ public class CardCanvas : MonoBehaviour
         HandZone.GetComponent<Image>().raycastTarget = true;
     }
 
-    public void CardUnSelected()            //¼ÕÀÇ Ä«µå¸¦ ¶ÃÀ» ¶§
+    public void CardUnSelected()            //ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½å¸¦ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
     {
         AlignCards();
         HandZone.GetComponent<Image>().raycastTarget = false;
     }
-    public void UseCard(int handnum)        //¼ÕÀÇ Ä«µå¸¦ ²ø¾î¼­ ³õ¾Æ »ç¿ëÇÒ ¶§
+    public void UseCard(int handnum)        //ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½å¸¦ ï¿½ï¿½ï¿½î¼­ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
     {
         Debug.Log(cards[handnum].GetComponent<Card>().Cost > currentenergy);
         Debug.Log(isCardEffecting);
@@ -68,15 +68,14 @@ public class CardCanvas : MonoBehaviour
         ClearnowusingCard();
         nowusingCard = cards[handnum];
         nowusingCard.GetComponent<Card>().handNumber = -1;
-        board.UseCard(nowusingCard.GetComponent<Card>());
-
+        cards.RemoveAt(handnum);
         nowusingCard.position = CardNowUsingPos.position;
         nowusingCard.localRotation = Quaternion.Euler(0, 0, 0);
-        cards.RemoveAt(handnum);
         AlignCards();
+        board.UseCard(nowusingCard.GetComponent<Card>());
     }
 
-    public void ClearnowusingCard()         //»ç¿ëÁßÀÎ Ä«µå ÃÊ±âÈ­
+    public void ClearnowusingCard()         //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½ ï¿½Ê±ï¿½È­
     {
         if (nowusingCard)
         {
@@ -88,7 +87,7 @@ public class CardCanvas : MonoBehaviour
 
     public void HandtoDiscardAll()
     {
-        Debug.LogFormat("{0} Àå", cards.Count);
+        Debug.LogFormat("{0} ï¿½ï¿½", cards.Count);
         while(cards.Count > 0)
         {
             HandtoDiscard(0);
@@ -117,7 +116,7 @@ public class CardCanvas : MonoBehaviour
         DrawCard();
         DrawCard();
     }
-    public void FinishUseCard()             //¼ÕÀÇ Ä«µå »ç¿ë ÀÌÈÄ
+    public void FinishUseCard()             //ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     {
         if (nowusingCard)
         {
@@ -133,7 +132,7 @@ public class CardCanvas : MonoBehaviour
         CurrentEnergyText.text = string.Format("{0}/{1}", currentenergy, maxenergy);
     }
 
-    void DrawCard()                         //µ¦ÀÇ Ä«µå¸¦ ¼ÕÀ¸·Î °¡Á®¿À±â
+    void DrawCard()                         //ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½å¸¦ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     {
 
         if (Deckcards.Count == 0)
@@ -154,16 +153,16 @@ public class CardCanvas : MonoBehaviour
 
         var random = new System.Random();
 
-        // 1. LINQ¸¦ »ç¿ëÇÏ¿© ¸®½ºÆ®¸¦ ¹«ÀÛÀ§·Î ¼¯°í ´Ù½Ã ¸®½ºÆ®·Î º¯È¯
+        // 1. LINQï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ù½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½È¯
         var shuffledCards = Discardcards.OrderBy(x => random.Next()).ToList();
 
-        // 2. ¼¯ÀÎ Ä«µåµéÀ» µ¦(Queue)¿¡ ¼ø¼­´ë·Î ³Ö±â
+        // 2. ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½(Queue)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö±ï¿½
         foreach (var card in shuffledCards)
         {
             Deckcards.Enqueue(card);
         }
 
-        // 3. ±âÁ¸ ¹ö¸° Ä«µå ¸®½ºÆ® ºñ¿ì±â
+        // 3. ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½
         Discardcards.Clear();
     }
 
@@ -171,13 +170,13 @@ public class CardCanvas : MonoBehaviour
     {
         currentenergy = maxenergy;
     }
-    [ContextMenu("Align Cards")] // ÀÎ½ºÆåÅÍ ¸Þ´º¿¡¼­ ¹Ù·Î ½ÇÇà °¡´É
+    [ContextMenu("Align Cards")] // ï¿½Î½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ´ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ù·ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     public void AlignCards()
     {
         int count = cards.Count;
         if (count == 0) return;
 
-        // ÀüÃ¼ °¢µµ ¹üÀ§ °è»ê (°¡¿îµ¥¸¦ 0µµ·Î ÀâÀ½)
+        // ï¿½ï¿½Ã¼ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½îµ¥ï¿½ï¿½ 0ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
         float totalAngle = (count - 1) * angleBetween;
         float startAngle = -totalAngle / 2f;
 
@@ -185,14 +184,14 @@ public class CardCanvas : MonoBehaviour
         {
             float currentAngle = startAngle + (i * angleBetween);
 
-            // 1. À§Ä¡ °è»ê (»ï°¢ÇÔ¼ö »ç¿ë)
-            // ¶óµð¾ÈÀ¸·Î º¯È¯: Degree * (PI / 180)
+            // 1. ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ (ï¿½ï°¢ï¿½Ô¼ï¿½ ï¿½ï¿½ï¿½)
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯: Degree * (PI / 180)
             float radian = currentAngle * Mathf.Deg2Rad;
 
             float x = Mathf.Sin(radian) * radius;
-            float y = Mathf.Cos(radian) * radius - radius; // ¿øÀÇ À­ºÎºÐ¿¡ ¸ÂÃã
+            float y = Mathf.Cos(radian) * radius - radius; // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ÎºÐ¿ï¿½ ï¿½ï¿½ï¿½ï¿½
 
-            // 2. Ä«µå ÁÂÇ¥ ¹× È¸Àü Àû¿ë
+            // 2. Ä«ï¿½ï¿½ ï¿½ï¿½Ç¥ ï¿½ï¿½ È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             cards[i].SetSiblingIndex(i);
             cards[i].localPosition = new Vector3(x, y + heightOffset, 0);
             cards[i].localRotation = Quaternion.Euler(0, 0, -currentAngle);
@@ -212,7 +211,7 @@ public class CardCanvas : MonoBehaviour
             count = cards.Count - 1;
         if (count == 0) return;
 
-        // ÀüÃ¼ °¢µµ ¹üÀ§ °è»ê (°¡¿îµ¥¸¦ 0µµ·Î ÀâÀ½)
+        // ï¿½ï¿½Ã¼ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½îµ¥ï¿½ï¿½ 0ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
         float totalAngle = (count - 1) * angleBetween;
         float startAngle = -totalAngle / 2f;
 
@@ -220,14 +219,14 @@ public class CardCanvas : MonoBehaviour
         {
             float currentAngle = startAngle + (i * angleBetween);
 
-            // 1. À§Ä¡ °è»ê (»ï°¢ÇÔ¼ö »ç¿ë)
-            // ¶óµð¾ÈÀ¸·Î º¯È¯: Degree * (PI / 180)
+            // 1. ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ (ï¿½ï°¢ï¿½Ô¼ï¿½ ï¿½ï¿½ï¿½)
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯: Degree * (PI / 180)
             float radian = currentAngle * Mathf.Deg2Rad;
 
             float x = Mathf.Sin(radian) * radius;
-            float y = Mathf.Cos(radian) * radius - radius; // ¿øÀÇ À­ºÎºÐ¿¡ ¸ÂÃã
+            float y = Mathf.Cos(radian) * radius - radius; // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ÎºÐ¿ï¿½ ï¿½ï¿½ï¿½ï¿½
 
-            // 2. Ä«µå ÁÂÇ¥ ¹× È¸Àü Àû¿ë
+            // 2. Ä«ï¿½ï¿½ ï¿½ï¿½Ç¥ ï¿½ï¿½ È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             if (i >= excludeCard && excludeCard >= 0)
             {
                 cards[i+1].SetSiblingIndex(i);

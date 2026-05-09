@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public partial class Board
@@ -85,6 +86,27 @@ public partial class Board
                 if (hpLeft <= 0)
                     motionQueue.Enqueue(pScript2.DeathCor());
             }
+        }
+        StartCoroutine(ProcessQueue());
+    }
+
+    void AreaAttackPiece(Vector2 casterPos, List<Vector2> targets, int dmg)
+    {
+        if (casterPos.x < 0 || casterPos.y < 0 || targets.Count == 0) return;
+
+        Button casterButton = GetButtonScript(casterPos);
+        if (casterButton.GetPiece() == null) return;
+
+        motionQueue.Enqueue(PieceAreaAttackCor(casterButton, 1f));
+
+        foreach (Vector2 pos in targets)
+        {
+            Piece p = GetButtonScript(pos).GetPieceScript();
+            if (p == null) continue;
+            int hpLeft = p.GetDamage(dmg, AttackType.NormalAttack);
+            motionQueue.Enqueue(p.DamageText(dmg));
+            if (hpLeft <= 0)
+                motionQueue.Enqueue(p.DeathCor());
         }
         StartCoroutine(ProcessQueue());
     }
