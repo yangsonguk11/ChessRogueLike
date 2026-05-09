@@ -34,11 +34,12 @@ public class NodeRow
 
 public class Map : MonoBehaviour
 {
-    public static Map instance; // 싱글톤 패턴
+    public static Map instance;
     public List<NodeRow> mapData = new List<NodeRow>();
     private int totalFloors = 5;
+    public int TotalFloors => totalFloors;
 
-    void Start()
+    void Awake()
     {
         if (instance == null)
         {
@@ -48,8 +49,12 @@ public class Map : MonoBehaviour
         else
         {
             Destroy(gameObject);
-            return;
         }
+    }
+
+    void Start()
+    {
+        if (instance != this) return;
         if (DataManager.Instance.LoadMap())
             mapData = DataManager.Instance.currentData.mapData;
         else

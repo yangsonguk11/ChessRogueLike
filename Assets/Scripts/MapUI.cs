@@ -24,10 +24,11 @@ public class MapUI : MonoBehaviour
         instantiatedNodes.Clear();
     }
 
-    public void DrawMap()
+    public void DrawMap(bool runComplete = false)
     {
         int currentFloor = DataManager.Instance.currentData.currentFloor;
         int currentNodeX = DataManager.Instance.currentData.currentNodeX;
+        var visited = DataManager.Instance.currentData.visitedNodeX;
         float mapHeight = mapGenerator.mapData.Count * ySpacing;
 
         // 노드 생성 및 초기화
@@ -85,11 +86,12 @@ public class MapUI : MonoBehaviour
                 NodeButton btn = instantiatedNodes[y][x].GetComponent<NodeButton>();
                 if (btn == null) continue;
 
-                bool isCurrent = (y == currentFloor && x == currentNodeX);
-                bool isSelectable = IsNodeReachable(y, x, currentFloor, currentNodeX);
+                bool isVisited = visited != null && y < visited.Count && visited[y] == x;
+                bool isCurrent = !runComplete && (y == currentFloor && x == currentNodeX);
+                bool isSelectable = !runComplete && IsNodeReachable(y, x, currentFloor, currentNodeX);
 
                 btn.selectable = isSelectable;
-                btn.SetVisualState(isSelectable, isCurrent);
+                btn.SetVisualState(isSelectable, isCurrent, isVisited);
             }
         }
     }
@@ -100,10 +102,12 @@ public class MapUI : MonoBehaviour
         if (currentFloor == -1)
             return nodeFloor == 0;
 
-        // 현재 층 + 1이고, 현재 노드와 연결되어 있어야 함
+        // 현재 층 + 1이어야 함
         if (nodeFloor != currentFloor + 1) return false;
+        // 특정 노드를 선택하지 않은 상태면 다음 층 전체 선택 가능
+        if (currentNodeX < 0) return true;
         var currentRow = mapGenerator.mapData[currentFloor];
-        if (currentNodeX < 0 || currentNodeX >= currentRow.nodes.Count) return false;
+        if (currentNodeX >= currentRow.nodes.Count) return false;
         return currentRow.nodes[currentNodeX].nextNodes.Contains(nodeX);
     }
 

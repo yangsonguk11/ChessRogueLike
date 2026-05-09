@@ -21,13 +21,15 @@ public class NodeButton : MonoBehaviour, ISelectable
             nodeImage = GetComponent<Image>();
     }
 
-    public void SetVisualState(bool isSelectable, bool isCurrent)
+    public void SetVisualState(bool isSelectable, bool isCurrent, bool isVisited = false)
     {
         if (nodeImage == null) return;
         if (isCurrent)
-            nodeImage.color = new Color(1f, 0.8f, 0f);      // 금색: 현재 위치
+            nodeImage.color = new Color(1f, 0.8f, 0f);        // 금색: 현재 위치
+        else if (isVisited)
+            nodeImage.color = new Color(0.4f, 0.9f, 0.4f);   // 녹색: 방문함
         else if (isSelectable)
-            nodeImage.color = Color.white;                    // 흰색: 선택 가능
+            nodeImage.color = Color.white;                     // 흰색: 선택 가능
         else
             nodeImage.color = new Color(0.35f, 0.35f, 0.35f); // 회색: 선택 불가
     }

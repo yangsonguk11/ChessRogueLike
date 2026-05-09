@@ -353,6 +353,10 @@ MonoBehaviour:
     deckCardIDs: []
     mapData: []
     pieceData: []
+    nextLevelName: 
+    currentFloor: 0
+    currentNodeX: 0
+    visitedNodeX: 
   basicPieceinfo: {fileID: 11400000, guid: 9b16472a2e113a741a3e068e3f9f8357, type: 2}
 --- !u!1 &177864984
 GameObject:
@@ -1433,8 +1437,10 @@ GameObject:
   - component: {fileID: 571599802}
   - component: {fileID: 571599801}
   - component: {fileID: 571599800}
+  - component: {fileID: 571599804}
+  - component: {fileID: 571599803}
   m_Layer: 5
-  m_Name: MAp
+  m_Name: Map
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1528,6 +1534,31 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 571599798}
   m_CullTransparentMesh: 1
+--- !u!225 &571599803
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 571599798}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!114 &571599804
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 571599798}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 599080cadb216f242bc142cbf6a5d0ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MapCanvas
+  runCompletePanel: {fileID: 571599798}
 --- !u!1 &633087996
 GameObject:
   m_ObjectHideFlags: 0
@@ -2689,6 +2720,29 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RangeInfoSODatabase
   RangeInfos:
   - {fileID: 11400000, guid: e798bd81c0425624ead1e05779a9c275, type: 2}
+--- !u!114 &1458612085
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1458612079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb2e70d153ac6774ab468fbbaeb720ae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LevelDatabase
+  floorPools:
+  - levels:
+    - {fileID: 11400000, guid: 19387901c67acba43a1c093a9bdcb7e8, type: 2}
+  - levels:
+    - {fileID: 11400000, guid: 19387901c67acba43a1c093a9bdcb7e8, type: 2}
+  - levels:
+    - {fileID: 11400000, guid: d564be8c8e84a494d8475bc69cc69160, type: 2}
+  - levels:
+    - {fileID: 11400000, guid: d564be8c8e84a494d8475bc69cc69160, type: 2}
+  - levels:
+    - {fileID: 11400000, guid: d564be8c8e84a494d8475bc69cc69160, type: 2}
 --- !u!1 &1709148941
 GameObject:
   m_ObjectHideFlags: 0
@@ -3360,6 +3414,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1924541253940516919, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1458612083}
+    - targetCorrespondingSourceObject: {fileID: 1924541253940516919, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1458612085}
   m_SourcePrefab: {fileID: 100100000, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
 --- !u!1001 &8273075905116608292
 PrefabInstance:

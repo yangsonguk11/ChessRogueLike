@@ -12,6 +12,7 @@ public partial class Board
 
     public void AllyTurnEnd()
     {
+        if (!boardReady) return;
         TurnEnd(0);
         FinishCardUsage();
         ClearSelectedButton();
@@ -20,6 +21,7 @@ public partial class Board
 
     public void EnemyTurnEnd()
     {
+        if (!boardReady) return;
         TurnEnd(1);
         ClearSelectedButton();
     }

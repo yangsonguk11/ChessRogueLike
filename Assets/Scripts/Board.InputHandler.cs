@@ -4,6 +4,7 @@ public partial class Board
 {
     public void ButtonClicked(Vector2 pos)
     {
+        if (!boardReady) return;
         if (TurnManager.instance.currentState != TurnState.Player) return;
 
         switch (boardmode)

@@ -12,6 +12,7 @@ public partial class Board : MonoBehaviour
     [SerializeField] PieceDatabase piecedatabase;
     event Action OnButtonSelected;
     event Action OnButtonUnSelected;
+    public bool boardReady = false;
 
     public List<Vector2> enemyPositions = new List<Vector2>();
     [Header("보드 크기")]
@@ -47,6 +48,14 @@ public partial class Board : MonoBehaviour
         OnButtonSelected += OnSelectBoard;
         OnButtonUnSelected += OnUnSelectBoard;
         queuecoroutineworking = false;
+    }
+
+    private void Start()
+    {
+        if ((DataManager.Instance?.currentData.currentFloor ?? -1) < 0)
+            return; // 맵에서 노드를 아직 선택하지 않음 — 보드 초기화 건너뜀
+
+        boardReady = true;
         InitBoard(ResolveLevelData());
         TurnStart();
     }

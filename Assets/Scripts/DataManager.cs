@@ -42,6 +42,7 @@ public class DataManager : MonoBehaviour
             if (currentData.mapData == null) currentData.mapData = new List<NodeRow>();
             if (currentData.pieceData == null) currentData.pieceData = new List<PieceData>();
             if (currentData.nextLevelName == null) currentData.nextLevelName = "";
+            if (currentData.visitedNodeX == null) currentData.visitedNodeX = new List<int>();
         }
         else
         {
@@ -75,7 +76,7 @@ public class DataManager : MonoBehaviour
                 currentData.pieceData.Add(defaultPiece);
 
             currentData.nextLevelName = "";
-            currentData.currentFloor = -1;
+            currentData.currentFloor = 0;
             currentData.currentNodeX = -1;
 
             SaveToFile();
@@ -107,6 +108,11 @@ public class DataManager : MonoBehaviour
         currentData.nextLevelName = levelName;
         currentData.currentFloor = floor;
         currentData.currentNodeX = nodeX;
+
+        while (currentData.visitedNodeX.Count <= floor)
+            currentData.visitedNodeX.Add(-1);
+        currentData.visitedNodeX[floor] = nodeX;
+
         SaveToFile();
     }
 
@@ -117,6 +123,7 @@ public class DataManager : MonoBehaviour
         currentData.currentFloor = -1;
         currentData.currentNodeX = -1;
         currentData.mapData = new List<NodeRow>();
+        currentData.visitedNodeX = new List<int>();
         SaveToFile();
     }
 }
@@ -127,9 +134,10 @@ public class GameData
     public List<string> deckCardIDs = new List<string>();
     public List<NodeRow> mapData = new List<NodeRow>();
     public List<PieceData> pieceData = new List<PieceData>();
-    public string nextLevelName;      // 다음 전투에서 로드할 LevelData 이름
-    public int currentFloor;          // 마지막으로 선택한 노드의 층 번호 (-1 = 맵 진입 전)
-    public int currentNodeX;          // 마지막으로 선택한 노드의 X 위치
+    public string nextLevelName;
+    public int currentFloor;
+    public int currentNodeX;
+    public List<int> visitedNodeX = new List<int>();
 }
 [System.Serializable]
 public struct PieceData
