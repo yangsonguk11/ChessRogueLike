@@ -1,0 +1,95 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public partial class Board
+{
+    Queue<IEnumerator> motionQueue = new Queue<IEnumerator>();
+    public bool queuecoroutineworking;
+
+    IEnumerator ProcessQueue()
+    {
+        queuecoroutineworking = true;
+        TurnManager.instance.TurnStateProcessing();
+        while (motionQueue.Count > 0)
+        {
+            IEnumerator nextAction = motionQueue.Dequeue();
+            yield return StartCoroutine(nextAction);
+        }
+        queuecoroutineworking = false;
+        TurnManager.instance.RollbackStateProcessing();
+    }
+
+    IEnumerator PieceMoveCor(Button button1, Button button2, float moveDuration)
+    {
+        Vector3 pos1 = button1.transform.position;
+        Vector3 pos2 = button2.transform.position;
+        Debug.LogFormat("{0} {1}", pos1, pos2);
+        GameObject piece = button1.GetPiece();
+        if (button1 == button2)
+            yield break;
+
+        piece.transform.rotation = Quaternion.LookRotation(pos2 - pos1);
+        float time = 0f;
+        while (time < moveDuration)
+        {
+            time += Time.deltaTime;
+            piece.transform.position = Vector3.Lerp(pos1, pos2, time / moveDuration);
+            yield return null;
+        }
+        piece.transform.position = pos2;
+        button2.SetPiece(button1.GetPiece());
+        button1.RemovePiece();
+
+        Piece pScript = piece.GetComponent<Piece>();
+        if (pScript != null && pScript.teamID == 1)
+            UpdateEnemyPositionList(button1.GetLocation(), button2.GetLocation());
+    }
+
+    IEnumerator PieceAttackCor(Button button1, Button button2, float moveDuration)
+    {
+        Vector3 pos1 = button1.Piecelocation;
+        Vector3 pos2 = button2.Piecelocation;
+        Debug.LogFormat("{0} {1}", pos1, pos2);
+        GameObject piece = button1.GetPiece();
+        if (button1 == button2)
+            yield break;
+
+        piece.transform.rotation = Quaternion.LookRotation(pos2 - pos1);
+        GameObject piece1 = button1.GetPiece();
+        float time = 0f;
+        Vector3 pRotation = piece1.transform.rotation.eulerAngles;
+        Vector3 tiltedRotation = pRotation + new Vector3(90, 0, 0);
+
+        while (time < moveDuration / 2)
+        {
+            piece1.transform.rotation = Quaternion.Euler(Vector3.Lerp(pRotation, tiltedRotation, time / moveDuration * 2));
+            time += Time.deltaTime;
+            yield return null;
+        }
+        while (time < moveDuration)
+        {
+            piece1.transform.rotation = Quaternion.Euler(Vector3.Lerp(tiltedRotation, pRotation, time / moveDuration * 2 - 1));
+            time += Time.deltaTime;
+            yield return null;
+        }
+        piece1.transform.rotation = Quaternion.Euler(pRotation);
+    }
+
+    IEnumerator PieceShieldCor(Button button1, Button button2, float moveDuration)
+    {
+        yield return new WaitForSeconds(moveDuration);
+    }
+
+    IEnumerator PieceHealCor(Button button1, Button button2, float moveDuration)
+    {
+        yield return new WaitForSeconds(moveDuration);
+    }
+
+    IEnumerator MoveAdjacent(Button button1, Button button2, float moveDuration)
+    {
+        Vector2 adjacentPos = GetAdjacentLocation(button1.GetLocation(), button2.GetLocation());
+        Button newTarget = GetButtonScript(adjacentPos);
+        yield return PieceMoveCor(button1, newTarget, moveDuration);
+    }
+}

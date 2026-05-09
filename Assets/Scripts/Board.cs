@@ -3,116 +3,78 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Board : MonoBehaviour
+public partial class Board : MonoBehaviour
 {
     [SerializeField] GameObject Background;
     [SerializeField] GameObject ButtonPrefab;
-    [SerializeField] GameObject[,] Buttons;
+    GameObject[,] Buttons;
     [SerializeField] GameObject BoardUICanvas;
     [SerializeField] PieceDatabase piecedatabase;
     event Action OnButtonSelected;
     event Action OnButtonUnSelected;
 
     public List<Vector2> enemyPositions = new List<Vector2>();
-    [Header("∫∏µÂ ≈©±‚")]
-    [Min(1)] public int N; //ºº∑Œ
-    [Min(1)] public int M; //∞°∑Œ
+    [Header("Î≥¥Îìú ÌÅ¨Í∏∞")]
+    [Min(1)] public int N;
+    [Min(1)] public int M;
     [SerializeField] LevelData leveldata;
     public Grid grid;
+
     Vector2 _selectedButton;
     Vector2 selectedButton
     {
         get { return _selectedButton; }
-        set { _selectedButton = value; if (isSelectedButtonActive()) { OnButtonSelected?.Invoke(); } else { OnButtonUnSelected?.Invoke(); } }
+        set
+        {
+            _selectedButton = value;
+            if (isSelectedButtonActive()) OnButtonSelected?.Invoke();
+            else OnButtonUnSelected?.Invoke();
+        }
     }
-
-    List<Vector2> selectedButtonMovable = new List<Vector2>();
-    Queue<IEnumerator> motionQueue = new Queue<IEnumerator>();
-    public bool queuecoroutineworking;
 
     public enum BoardMode
     {
-        Inspect,            //ªÁøÎ ¡ﬂ¿Œ ƒ´µÂ∞° æ¯¿Ω, «√∑π¿ÃæÓ∞° ∫∏µÂ∏¶ ∞¸¬˚«œ¥¬ ªÛ≈¬
-        command,            //±‚π∞ø°∞‘ ∏Ì∑…, π¸¿ß ≥ªø° ∏Ò«•«— ¿˚¿Ã æ¯¿∏∏È ¡¶¿œ ∞°±ÓøÓ π¸¿ßø° ªÁøÎ
-        targeting,          //±‚π∞ø°∞‘ ∏Ì∑…, π¸¿ß ≥ªø° ∏Ò«•«— ¿˚¿Ã æ¯¿∏∏È ªÁøÎ«œ¡ˆ æ ¿Ω
+        Inspect,
+        command,
+        targeting,
         enemy
     }
 
     public BoardMode boardmode;
+
     private void Awake()
     {
         OnButtonSelected += OnSelectBoard;
         OnButtonUnSelected += OnUnSelectBoard;
         queuecoroutineworking = false;
         InitBoard(leveldata);
-
         TurnStart();
     }
-    /*
-    void InitBoard()
-    {
-        Background.transform.localScale = new Vector3(N, M, 1);
-        Buttons = new GameObject[N, M];
-        Vector3 pos = new Vector3(0, 0, 0);
-        grid = GetComponent<Grid>();
-        float offsetX = (N * grid.cellSize.x + (N - 1) * grid.cellGap.x) / 2f;
-        float offsetY = (M * grid.cellSize.y + (M - 1) * grid.cellGap.y) / 2f;
 
-        // Grid ø¿∫Í¡ß∆Æ¿« ¿ßƒ°∏¶ ¡∂¡§«œø© ¿¸√º∏¶ ¡ﬂæ”¿∏∑Œ ∏¬√„
-        grid.transform.position = new Vector3(-offsetX + (grid.cellSize.x / 2f), 0, -offsetY + (grid.cellSize.y / 2f));
-        for (int x = 0; x < N; x++)
-        {
-            for (int y = 0; y < M; y++)
-            {
-                pos = grid.CellToWorld(new Vector3Int(x, 0, y));
-                
-                GameObject obj = Instantiate(ButtonPrefab, pos, new Quaternion(), gameObject.transform);
-                obj.GetComponent<Button>().Init(x, y, gameObject);
-
-                Buttons[x, y] = obj;
-            }
-        }
-        ClearSelectedButton();
-        GetButtonScript(new Vector2(5, 2)).SetPiece(Instantiate(Pieces[0]));
-        GetButtonScript(new Vector2(5, 4)).SetPiece(Instantiate(Pieces[0]));
-        GetButtonScript(new Vector2(1, 2)).SetPiece(Instantiate(Pieces[1]));
-        GetButtonScript(new Vector2(1, 4)).SetPiece(Instantiate(Pieces[2]));
-        enemyPositions.Add(new Vector2(1, 2));
-        enemyPositions.Add(new Vector2(1, 4));
-
-
-
-        FinishCardUsage();
-        ClearSelectedButton();
-        CardCanvas.instance.HandtoDiscardAll();
-    }
-    */
     void InitBoard(LevelData data)
     {
         N = data.N;
         M = data.M;
         Background.transform.localScale = new Vector3(N, M, 1);
         Buttons = new GameObject[N, M];
-        Vector3 pos = new Vector3(0, 0, 0);
         grid = GetComponent<Grid>();
+
         float offsetX = (N * grid.cellSize.x + (N - 1) * grid.cellGap.x) / 2f;
         float offsetY = (M * grid.cellSize.y + (M - 1) * grid.cellGap.y) / 2f;
-
-        // Grid ø¿∫Í¡ß∆Æ¿« ¿ßƒ°∏¶ ¡∂¡§«œø© ¿¸√º∏¶ ¡ﬂæ”¿∏∑Œ ∏¬√„
         grid.transform.position = new Vector3(-offsetX + (grid.cellSize.x / 2f), 0, -offsetY + (grid.cellSize.y / 2f));
+
         for (int x = 0; x < N; x++)
         {
             for (int y = 0; y < M; y++)
             {
-                pos = grid.CellToWorld(new Vector3Int(x, 0, y));
-
+                Vector3 pos = grid.CellToWorld(new Vector3Int(x, 0, y));
                 GameObject obj = Instantiate(ButtonPrefab, pos, new Quaternion(), gameObject.transform);
                 obj.GetComponent<Button>().Init(x, y, gameObject);
-
                 Buttons[x, y] = obj;
             }
         }
-        foreach(PieceData piecedata in DataManager.Instance.currentData.pieceData)
+
+        foreach (PieceData piecedata in DataManager.Instance.currentData.pieceData)
         {
             Debug.LogFormat("{0} {1}", piecedata.pieceName, piecedatabase.PiecePrefabs[0]);
             GameObject piece = Instantiate(piecedatabase.GetPiece(piecedata.pieceName));
@@ -128,619 +90,19 @@ public class Board : MonoBehaviour
             GetButtonScript(placement.position).SetPiece(piece);
 
             if (placement.isEnemy)
-            {
                 enemyPositions.Add(placement.position);
-            }
         }
 
         FinishCardUsage();
         ClearSelectedButton();
         CardCanvas.instance.HandtoDiscardAll();
     }
-    public void ButtonClicked(Vector2 pos)
-    {
 
-        if (TurnManager.instance.currentState != TurnState.Player) return;
-
-        switch (boardmode)
-        {
-            case BoardMode.Inspect:
-                if (selectedButton == pos)   //¿⁄Ω≈ º±≈√ Ω√
-                {
-                    ClearSelectedButton();
-                    return;
-                }
-                if (selectedButton.x >= 0 && selectedButton.y >= 0)   //¿ÃπÃ º±≈√µ» ƒ≠¿Ã ¿÷¿ª ∂ß 
-                {
-                    ClearSelectedButton();
-                }
-
-                if (GetButtonScript(pos).IsSelectable())
-                {
-                    selectedButton = pos;
-                    GetButtonScript(pos).SelectedTrue();
-                }
-                break;
-            case BoardMode.command:
-                if (selectedButton.x < 0 || selectedButton.y < 0)   //¿ÃπÃ º±≈√µ» ƒ≠¿Ã ∫ÒæÓ¿÷¿ª ∂ß
-                {
-                    if (GetButtonScript(pos).IsSelectable())
-                    {
-                        selectedButton = pos;
-                        GetButtonScript(pos).SelectedTrue();
-                    }
-                }
-                else if (selectedButton == pos || !selectedButtonMovable.Contains(pos)) //¿⁄±‚¿⁄Ω≈ »§¿∫ ¿Ø»ø«œ¡ˆ æ ¿∫ ƒ≠ ¥≠∑Ø √Îº“
-                {
-                    ClearSelectedButton();
-                }
-                else
-                {
-                    if (GetButtonScript(selectedButton).GetPiece().GetComponent<Piece>().teamID == 1) { }   //¿˚¿Ã º±≈√µ«æ˙¿ª ∂ß
-                    else if (selectedButtonMovable.Contains(pos))
-                    {
-                        ExecuteEffect(pendingEffects.Dequeue(), pos);
-                        ProcessNextCardEffect();
-                        ProcessNextCardEffect();
-                    }
-                }
-                break;
-            case BoardMode.targeting:
-                if (selectedButton.x < 0 || selectedButton.y < 0)   //¿ÃπÃ º±≈√µ» ƒ≠¿Ã ∫ÒæÓ¿÷¿ª ∂ß
-                {
-                    if (GetButtonScript(pos).IsSelectable())
-                    {
-                        selectedButton = pos;
-                        GetButtonScript(pos).SelectedTrue();
-                    }
-                }
-                else if (!selectedButtonMovable.Contains(pos)) //¿Ø»ø«œ¡ˆ æ ¿∫ ƒ≠ ¥≠∑Ø √Îº“
-                {
-                    ClearSelectedButton();
-                }
-                else
-                {
-                    ExecuteEffect(pendingEffects.Dequeue(), pos);
-                    ProcessNextCardEffect();
-                }
-                break;
-        }
-    }
-    Queue<CardEffect> pendingEffects = new Queue<CardEffect>();
-    Card currentActiveCard; // «ˆ¿Á ªÁøÎ ¡ﬂ¿Œ ƒ´µÂ ¬¸¡∂
-
-    public void UseCard(Card card)
-    {
-        currentActiveCard = card;
-        pendingEffects.Clear();
-
-        // ƒ´µÂ∞° ∞°¡¯ »ø∞˙µÈ¿ª ≈•ø° ¥„¿Ω
-        foreach (var effect in card.effects)
-        {
-            pendingEffects.Enqueue(effect);
-        }
-
-        ProcessNextCardEffect();
-    }
-
-    void ProcessNextCardEffect()
-    {
-        if (pendingEffects.Count == 0)
-        {
-            FinishCardUsage();
-            return;
-        }
-        CardEffect nextEffect = pendingEffects.Peek(); // ¥Ÿ¿Ωø° Ω««‡«“ »ø∞˙ »Æ¿Œ
-
-        if (currentActiveCard.user == User.Enemy)      // ¿˚¿Ã ƒ´µÂ∏¶ ªÁøÎ«“ ∂ß
-        {
-            if (nextEffect.requiredMode == BoardMode.command)
-            {
-                Vector2 TargetPos;
-                TargetPos = selectedButton;
-                switch (nextEffect.targetlogic)
-                {
-                    case TargetLogic.NearestEnemy:
-                        // 1. «ˆ¿Á ¿˚ ±‚π∞¿« ¿Ãµø(∞¯∞›) ∞°¥…«— π¸¿ß ∏ÆΩ∫∆Æ∏¶ ∞°¡ÆøÕº≠ selectedButtonMovableø° √§øÚ
-                        List<Vector2> movableRange = GetButtonScript(selectedButton).GetPiece()?.GetComponent<Piece>().GetMoveableButton();
-                        AddMovableButtons(movableRange);
-
-                        float minDistance = float.MaxValue;
-                        Vector2 bestTargetPos = new Vector2(-1, -1); // π¸¿ß ≥ªø° «√∑π¿ÃæÓ∞° æ¯¿ª ∞ÊøÏ∏¶ ¥Î∫Ò
-
-                        // 2. ¿¸√º ∫∏µÂ∏¶ º¯»∏«œ∏Á '∞¯∞› π¸¿ß ≥ªø° ¿÷¥¬' «√∑π¿ÃæÓµÈ¿ª »Æ¿Œ
-                        foreach (Vector2 movablePos in selectedButtonMovable)
-                        {
-                            Piece p = GetButtonScript(movablePos).GetPiece()?.GetComponent<Piece>();
-
-                            // «ÿ¥Á ƒ≠ø° ±‚π∞¿Ã ¿÷∞Ì, ±◊ ±‚π∞¿Ã «√∑π¿ÃæÓ ∆¿(teamID == 0)¿Œ ∞ÊøÏ
-                            if (p != null && p.teamID == 0)
-                            {
-                                float dist = Vector2.Distance(selectedButton, movablePos);
-                                if (dist < minDistance)
-                                {
-                                    minDistance = dist;
-                                    bestTargetPos = movablePos;
-                                }
-                            }
-                        }
-
-                        // 3. ∞·∞˙ √≥∏Æ
-                        if (bestTargetPos != new Vector2(-1, -1))
-                        {
-                            // π¸¿ß æ»ø° «√∑π¿ÃæÓ∞° ¿÷¥Ÿ∏È ±◊¡ﬂ ∞°¿Â ∞°±ÓøÓ «√∑π¿ÃæÓ∏¶ ≈∏∞Ÿ¿∏∑Œ º≥¡§
-                            TargetPos = bestTargetPos;
-                        }
-                        else
-                        {
-                            // π¸¿ß ≥ªø° «√∑π¿ÃæÓ∞° «— ∏Ìµµ æ¯¥Ÿ∏È, 
-                            // ±‚¡∏√≥∑≥ ∏  ¿¸√ºø°º≠ ∞°¿Â ∞°±ÓøÓ «√∑π¿ÃæÓ∏¶ √£æ∆ ±◊ πÊ«‚¿∏∑Œ ¿Ãµø∏∏ Ω√µµ
-                            Vector2 globalNearestPlayer = GetNearestPlayerPos(selectedButton);
-
-                            float minMoveDist = float.MaxValue;
-                            Vector2 bestMovePos = selectedButton;
-
-                            foreach (Vector2 movablePos in selectedButtonMovable)
-                            {
-                                float dist = Vector2.Distance(movablePos, globalNearestPlayer);
-                                if (dist < minMoveDist)
-                                {
-                                    minMoveDist = dist;
-                                    bestMovePos = movablePos;
-                                }
-                            }
-                            TargetPos = bestMovePos;
-                        }
-                        break;
-                    case TargetLogic.LowestHP:
-                        break;
-                    case TargetLogic.self:
-                        break;
-                    default:
-                        TargetPos = selectedButton;
-                        break;
-                }
-                Debug.Log(TargetPos);
-
-                ExecuteEffect(pendingEffects.Dequeue(), TargetPos);
-                ProcessNextCardEffect();
-            }
-            else if (nextEffect.requiredMode == BoardMode.targeting)
-            {
-
-            }
-            return;
-        }
-
-        // 1. ∏µÂ ¿¸»Ø
-        boardmode = nextEffect.requiredMode;
-
-
-        // 2. ∏∏æ‡ ¡∂¡ÿ¿Ã « ø‰«— ∏µÂ∂Û∏È ø©±‚º≠ ¡ﬂ¥‹ (¿Ø¿˙ ¿‘∑¬¿ª ±‚¥Ÿ∏≤)
-        if (boardmode == BoardMode.command)
-        {
-
-        }
-        else if (boardmode == BoardMode.targeting)
-        {
-
-        }
-        else
-        {
-            ExecuteEffect(pendingEffects.Dequeue());
-            ProcessNextCardEffect(); // ¥Ÿ¿Ω »ø∞˙∑Œ ≥—æÓ∞®
-        }
-    }
-
-    void ExecuteEffect(CardEffect cardEffect, Vector2 targetPos = default)
-    {
-        currentActiveCard.cardCanvas.GetComponent<CardCanvas>().isCardEffecting = true;
-        switch (cardEffect.type)
-        {
-            case EffectType.Move:
-                MovePiece(selectedButton, targetPos);
-                break;
-            case EffectType.Damage:
-                AttackPiece(selectedButton, targetPos, cardEffect.dmg);
-                break;
-            case EffectType.Heal:
-                HealPiece(selectedButton, targetPos, cardEffect.dmg);
-                break;
-            case EffectType.Shield:
-                ShieldPiece(selectedButton, targetPos, cardEffect.dmg);
-                break;
-            default:
-                Debug.LogError("»ø∞˙ ≈∏¿‘¿Ã ∏¬¡ˆ æ Ω¿¥œ¥Ÿ");
-                break;
-
-        }
-    }
-    void TurnStart()
-    {
-        CardCanvas.instance.DrawTurnStartCards();
-        CardCanvas.instance.GetMaxEnergy();
-    }
-    public void AllyTurnEnd() {
-        TurnEnd(0); 
-        FinishCardUsage();
-        ClearSelectedButton();
-        CardCanvas.instance.HandtoDiscardAll();
-    }
-    public void EnemyTurnEnd() 
-    { 
-        TurnEnd(1);
-        ClearSelectedButton();
-    }
-    void TurnEnd(int teamid)                                  //TurnManagerø°º≠ Ω««‡µ 
-    {
-        Vector2 pos = new Vector2(0, 0);
-        for(int i = 0; i < N; i++)
-        {
-            pos.x = i;
-            for (int j = 0; j < M; j++)
-            {
-                pos.y = j;
-                Piece pp = GetButtonScript(pos).GetPieceScript();
-                if(pp != null)
-                {
-                    Debug.LogFormat("{0} {1}", pp.teamID, teamid);
-                    if (pp.teamID == teamid)
-                        pp.OnTurnEnd();
-                    else
-                        pp.OnTurnEndOther();
-                }
-            }
-        }
-    }
-
-    void ResetBoardAfterCardUse()
-    {
-        boardmode = BoardMode.Inspect;
-        ClearSelectedButton();
-        Debug.Log("Finished Card Use");
-    }
-    void FinishCardUsage()
-    {
-        CardCanvas.instance.FinishUseCard();
-        ResetBoardAfterCardUse();
-    }
-
-    void PlayEnemyTurn()
-    {
-        //Debug.Log(enemyPositions[0]);
-        StartCoroutine(PlayEnemyTurnCoroutine());
-        /*
-        foreach (Vector2 pos in enemyPositions)
-        {
-            selectedButton = pos;
-
-            var (card, target) = GetButtonScript(pos).GetPiece().GetComponent<Enemy>().DecideCardAndTarget(this, pos);
-            if(card != null)
-            {
-                UseCard(card, target);
-            }
-        }
-        */
-    }
-    public IEnumerator PlayEnemyTurnCoroutine()
-    {
-        // 1. ¿˚ ∏Ò∑œ¿ª ∫πªÁ«ÿº≠ ªÁøÎ («‡µø ¡ﬂ ¿ßƒ°∞° πŸ≤ÓæÓµµ æ»¿¸«œ∞‘)
-        List<Vector2> currentEnemies = new List<Vector2>(enemyPositions);
-
-        int i = 0;
-        foreach (Vector2 pos in currentEnemies)
-        {
-            // ¿˚ ±‚π∞¿Ã Ω«¡¶∑Œ ¡∏¿Á«œ¥¬¡ˆ »Æ¿Œ
-            Piece p = GetButtonScript(pos).GetPiece()?.GetComponent<Piece>();
-            if (p == null || p is not Enemy enemy) continue;
-
-            // «ˆ¿Á «‡µø ¡ﬂ¿Œ ¿˚¿ª ∞≠¡∂
-            selectedButton = pos;
-
-            // 2. ¿˚ AI∑Œ∫Œ≈Õ ƒ´µÂøÕ ≈∏∞Ÿ¿ª ∞·¡§πﬁ¿Ω
-            Card card = enemy.GetNextMove();
-
-            if (card != null)
-            {
-                // 3. ƒ´µÂ ªÁøÎ Ω√¿€
-                UseCard(card);
-
-                // 4. [¡ﬂø‰] ƒ´µÂ¿« ∏µÁ »ø∞˙øÕ æ÷¥œ∏ﬁ¿Ãº«(motionQueue)¿Ã ≥°≥Ø ∂ß±Ó¡ˆ ¥Î±‚
-                // pendingEffects∞° ∫ÒæÓ¿÷∞Ì, queuecoroutineworking¿Ã false∞° µ… ∂ß±Ó¡ˆ ±‚¥Ÿ∏≤
-                yield return new WaitUntil(() => pendingEffects.Count == 0 && !queuecoroutineworking);
-
-                enemy.ChangeMove();
-                enemy.ActionText();
-            }
-            // «— ¿˚¿« «‡µø¿Ã ≥°≥≠ »ƒ ¿·Ω√ ¥Î±‚ (ø¨√‚ªÛ ¿⁄ø¨Ω∫∑ØøÚ)
-            yield return new WaitForSeconds(0.5f);
-            ClearSelectedButton();
-            i++;
-        }
-
-        // 5. ∏µÁ ¿˚¿« ≈œ¿Ã ¡æ∑·µ«∏È «√∑π¿ÃæÓ ≈œ¿∏∑Œ ¿¸»Ø
-        TurnManager.instance.EndEnemyTurn();
-        TurnManager.instance.StartPlayerTurn();
-    }
-    void ShieldPiece(Vector2 pos1, Vector2 pos2, int dmg)
-    {
-        GameObject button1 = GetButton(pos1);
-        GameObject button2 = GetButton(pos2);
-        Button button1script = button1.GetComponent<Button>();
-        Button button2script = button2.GetComponent<Button>();
-
-        if (button1script.GetPiece() != null)
-        {
-            GameObject Piece1 = button1script.GetPiece();
-            GameObject Piece2 = button2script.GetPiece();
-            if (Piece2)
-            {
-                Piece pScript1 = Piece1.GetComponent<Piece>();
-                Piece pScript2 = Piece2.GetComponent<Piece>();
-                int hpLeft = pScript2.GetShield(dmg, AttackType.NormalAttack);
-
-                motionQueue.Enqueue(PieceShieldCor(button1script, button2script, 1f));
-                motionQueue.Enqueue(pScript2.ShieldText(dmg));
-                if (hpLeft <= 0)
-                    motionQueue.Enqueue(pScript2.DeathCor());
-            }
-        }
-        StartCoroutine(ProcessQueue());
-    }
-    void HealPiece(Vector2 pos1, Vector2 pos2, int dmg)
-    {
-        GameObject button1 = GetButton(pos1);
-        GameObject button2 = GetButton(pos2);
-        Button button1script = button1.GetComponent<Button>();
-        Button button2script = button2.GetComponent<Button>();
-
-        if (button1script.GetPiece() != null)
-        {
-            GameObject Piece1 = button1script.GetPiece();
-            GameObject Piece2 = button2script.GetPiece();
-            if (Piece2)
-            {
-                Piece pScript1 = Piece1.GetComponent<Piece>();
-                Piece pScript2 = Piece2.GetComponent<Piece>();
-                int hpLeft = pScript2.GetHeal(dmg, AttackType.NormalAttack);
-
-                motionQueue.Enqueue(PieceHealCor(button1script, button2script, 1f));
-                motionQueue.Enqueue(pScript2.HealText(dmg));
-                if (hpLeft <= 0)
-                    motionQueue.Enqueue(pScript2.DeathCor());
-            }
-        }
-        StartCoroutine(ProcessQueue());
-    }
-    void MovePiece(Vector2 pos1, Vector2 pos2)      //±‚π∞¿Ã ¿Ãµø¿ª Ω√µµ
-    {
-        GameObject button1 = GetButton(pos1);
-        GameObject button2 = GetButton(pos2);
-        Button button1script = button1.GetComponent<Button>();
-        Button button2script = button2.GetComponent<Button>();
-        if (button1script.GetPiece() != null)
-        {
-            GameObject Piece1 = button1script.GetPiece();
-            GameObject Piece2 = button2script.GetPiece();
-            if (Piece2)
-            {
-                if(Piece1.GetComponent<Piece>().teamID != Piece2.GetComponent<Piece>().teamID)
-                    MoveAttack(button1script.GetPiece().GetComponent<Piece>(), button2script.GetPiece().GetComponent<Piece>(), button1script, button2script);
-            }
-            else 
-            {
-                motionQueue.Enqueue(PieceMoveCor(button1script, button2script, 1f));
-                StartCoroutine(ProcessQueue());
-            }
-        }
-
-        ClearSelectedButton();
-        button1script.SelectedFalse();
-        button2script.SelectedFalse();
-    }
-    void MoveAttack(Piece pScript1, Piece pScript2, Button bScript1, Button bScript2)
-    {
-        int dmg = pScript1.colDamage;
-        int hpLeft = pScript2.GetDamage(dmg, AttackType.MoveAttack);
-        Debug.Log(hpLeft);
-        motionQueue.Enqueue(MoveAdjacent(bScript1, bScript2, 1f));
-        //motionQueue.Enqueue(PieceAttackCor(bScript1, bScript2, 0.3f));
-        motionQueue.Enqueue(pScript2.DamageText(dmg));
-        if (hpLeft <= 0)
-        {
-            motionQueue.Enqueue(pScript2.DeathCor());
-            motionQueue.Enqueue(PieceMoveCor(GetButtonScript(GetAdjacentLocation(bScript1.GetLocation(), bScript2.GetLocation())), bScript2, 1f));
-        }
-        StartCoroutine(ProcessQueue());
-    }
-
-    void AttackPiece(Vector2 pos1, Vector2 pos2, int dmg)
-    {
-        GameObject button1 = GetButton(pos1);
-        GameObject button2 = GetButton(pos2);
-        Button button1script = button1.GetComponent<Button>();
-        Button button2script = button2.GetComponent<Button>();
-
-        if(button1script.GetPiece() != null)
-        {
-            GameObject Piece1 = button1script.GetPiece();
-            GameObject Piece2 = button2script.GetPiece();
-            if (Piece2)
-            {
-                Piece pScript1 = Piece1.GetComponent<Piece>();
-                Piece pScript2 = Piece2.GetComponent<Piece>();
-                int hpLeft = pScript2.GetDamage(dmg, AttackType.NormalAttack);
-
-                motionQueue.Enqueue(PieceAttackCor(button1script, button2script, 1f));
-                motionQueue.Enqueue(pScript2.DamageText(dmg));
-                if (hpLeft <= 0)
-                    motionQueue.Enqueue(pScript2.DeathCor());
-            }
-        }
-        StartCoroutine(ProcessQueue());
-    }
-    IEnumerator PieceShieldCor(Button Button1, Button Button2, float moveDuration)
-    {
-        yield return new WaitForSeconds(moveDuration);
-    }
-    IEnumerator PieceHealCor(Button Button1, Button Button2, float moveDuration)
-    {
-        yield return new WaitForSeconds(moveDuration);
-    }
-    IEnumerator PieceAttackCor(Button Button1, Button Button2, float moveDuration)
-    {
-        Vector3 pos1 = Button1.Piecelocation;
-        Vector3 pos2 = Button2.Piecelocation;
-        Debug.LogFormat("{0} {1}", pos1, pos2);
-        GameObject piece = Button1.GetPiece();
-        if (Button1 == Button2)
-            yield break;
-        piece.transform.rotation = Quaternion.LookRotation(pos2 - pos1);
-
-
-        GameObject Piece1 = Button1.GetPiece();
-        float time = 0f;
-        Vector3 pRotation = Piece1.transform.rotation.eulerAngles;
-        Vector3 temp = pRotation + new Vector3(90, 0, 0);
-        while (time < moveDuration/2)
-        {
-            Piece1.transform.rotation = Quaternion.Euler(Vector3.Lerp(pRotation, temp, time / moveDuration * 2));
-            time += Time.deltaTime;
-            float t = time / moveDuration;
-
-            yield return null;
-        }
-        while (time < moveDuration)
-        {
-            Piece1.transform.rotation = Quaternion.Euler(Vector3.Lerp(temp, pRotation, time / moveDuration * 2 - 1));
-            time += Time.deltaTime;
-            float t = time / moveDuration;
-
-            yield return null;
-        }
-        Piece1.transform.rotation = Quaternion.Euler(pRotation);
-    }
-    IEnumerator PieceMoveCor(Button Button1, Button Button2, float moveDuration)
-    {
-        Vector3 pos1 = Button1.transform.position;
-        Vector3 pos2 = Button2.transform.position;
-        Debug.LogFormat("{0} {1}", pos1, pos2);
-        GameObject piece = Button1.GetPiece();
-        if (Button1 == Button2)
-            yield break;
-        piece.transform.rotation = Quaternion.LookRotation(pos2 - pos1);
-        float time = 0f;
-
-        while(time < moveDuration)
-        {
-            time += Time.deltaTime;
-            float t = time / moveDuration;
-
-            piece.transform.position = Vector3.Lerp(pos1, pos2, t);
-            yield return null;
-        }
-        piece.transform.position = pos2;
-        Button2.SetPiece(Button1.GetPiece());
-        Button1.RemovePiece();
-        Piece pScript = piece.GetComponent<Piece>();
-        if (pScript != null && pScript.teamID == 1)
-        {
-            UpdateEnemyPositionList(Button1.GetLocation(), Button2.GetLocation());
-        }
-    }
-
-    private void UpdateEnemyPositionList(Vector2 pos1, Vector2 pos2)
-    {
-        int index = enemyPositions.IndexOf(pos1);
-
-        if (index != -1)
-        {
-            // º¯º≠¥¬ ¿Ø¡ˆ«— √§ ¡¬«• ∞™∏∏ ∫Ø∞Ê
-            enemyPositions[index] = pos2;
-            Debug.Log($"[∏ÆΩ∫∆Æ æ˜µ•¿Ã∆Æ] ¿Œµ¶Ω∫ {index}: {pos1} -> {pos2}");
-        }
-    }
-    Vector2 GetNearestPlayerPos(Vector2 enemyPos)           //¡¶¿œ ∞°±ÓøÓ «√∑π¿ÃæÓ √£±‚
-    {
-        Vector2 nearest = enemyPos;
-        float minDistance = float.MaxValue;
-
-        for (int x = 0; x < N; x++)
-        {
-            for (int y = 0; y < M; y++)
-            {
-                Piece p = GetButtonScript(new Vector2(x, y)).GetPiece()?.GetComponent<Piece>();
-                if (p != null && p.teamID == 0)
-                { // «√∑π¿ÃæÓ ∆¿
-                    float dist = Vector2.Distance(enemyPos, new Vector2(x, y));
-                    if (dist < minDistance)
-                    {
-                        minDistance = dist;
-                        nearest = new Vector2(x, y);
-                    }
-                }
-            }
-        }
-        return nearest;
-    }
-
-    IEnumerator MoveAdjacent(Button Button1, Button Button2, float moveDuration)
-    {
-        Button newTargetButton;
-        Vector2 location1 = Button1.GetLocation();
-        Vector2 location2 = Button2.GetLocation();
-        Vector2 temp = location2 - location1;
-        newTargetButton = GetButtonScript(GetAdjacentLocation(location1, location2));
-        yield return PieceMoveCor(Button1, newTargetButton, moveDuration);
-    }
-
-    Vector2 GetAdjacentLocation(Vector2 location1, Vector2 location2)
-    {
-        Vector2 temp = location2-location1;
-        if (Math.Abs(temp.x) == Math.Abs(temp.y))
-        {
-            if (temp.x < 0) temp.x = -1;
-            else if (temp.x > 0) temp.x = 1;
-
-            if (temp.y < 0) temp.y = -1;
-            else if (temp.y > 0) temp.y = 1;
-        }
-        else if (Math.Abs(temp.x) > Math.Abs(temp.y))
-        {
-            if (temp.x < 0) temp.x = -1;
-            else if (temp.x > 0) temp.x = 1;
-
-            temp.y = 0;
-        }
-        else if (Math.Abs(temp.x) < Math.Abs(temp.y))
-        {
-            temp.x = 0;
-
-            if (temp.y < 0) temp.y = -1;
-            else if (temp.y > 0) temp.y = 1;
-        }
-        return location2 - temp;
-    }
-    private IEnumerator ProcessQueue()
-    {
-        queuecoroutineworking = true;
-        TurnManager.instance.TurnStateProcessing();
-        while (motionQueue.Count > 0)
-        {
-            // ≈•ø°º≠ ¥Ÿ¿Ω ø¨√‚¿ª ≤®≥ø
-            IEnumerator nextAction = motionQueue.Dequeue();
-
-            // «ÿ¥Á ø¨√‚¿Ã ≥°≥Ø ∂ß±Ó¡ˆ ¥Î±‚
-            yield return StartCoroutine(nextAction);
-        }
-
-        queuecoroutineworking = false;
-        TurnManager.instance.RollbackStateProcessing();
-    }
     GameObject GetButton(Vector2 pos)
     {
         return Buttons[(int)pos.x, (int)pos.y];
     }
+
     Button GetButtonScript(Vector2 pos)
     {
         return Buttons[(int)pos.x, (int)pos.y].GetComponent<Button>();
@@ -748,83 +110,13 @@ public class Board : MonoBehaviour
 
     void ClearSelectedButton()
     {
-        if(selectedButton.x != -1 && selectedButton.y != -1)
+        if (selectedButton.x != -1 && selectedButton.y != -1)
             GetButtonScript(selectedButton).SelectedFalse();
         selectedButton = new Vector2(-1, -1);
     }
 
     bool isSelectedButtonActive()
     {
-        if (selectedButton.x < 0 || selectedButton.y < 0)
-            return false;
-        else
-            return true;
-    }
-
-    void OnSelectBoard()
-    {
-        List<Vector2> effectRange = null;
-        if (pendingEffects.Count > 0)
-        {
-            CardEffect currentEffect = pendingEffects.Peek();
-
-            // 2. »ø∞˙ø° ∞≈∏Æ ¡§∫∏(List<Vector2> ≈∏¿‘¿« π¸¿ß µ•¿Ã≈Õ µÓ)∞° ¿÷¥¬¡ˆ »Æ¿Œ
-            // CardEffect ≈¨∑°Ω∫ø° π¸¿ß ∏ÆΩ∫∆Æ(øπ: actionRange)∞° ¿÷¥Ÿ∞Ì ∞°¡§«’¥œ¥Ÿ.
-            if (currentEffect.effectRange != null)
-            {
-                effectRange = currentEffect.effectRange.GetAbleRange();
-            }
-        }
-        ShowMovableButtons(GetButtonScript(selectedButton).GetPiece(), effectRange);
-        ShowButtonInfo(selectedButton);
-    }
-    void OnUnSelectBoard()
-    {
-        HideMovableButtons();
-        HideButtonInfo();
-    }
-    void ShowMovableButtons(GameObject p, List<Vector2> effectableButton = default)
-    {
-        if (p == null)
-            return;
-
-        Piece piece = p.GetComponent<Piece>();
-        List<Vector2> list;
-        if (effectableButton == null)
-            list = piece.GetMoveableButton();
-        else
-            list = effectableButton;
-        AddMovableButtons(list);
-    }
-
-    void HideMovableButtons()
-    {
-        foreach (Vector2 v in selectedButtonMovable)
-        {
-            GetButtonScript(v).RangeOff();
-        }
-
-    }
-    void AddMovableButtons(List<Vector2> list)
-    {
-        selectedButtonMovable.Clear();
-        foreach (Vector2 v in list)
-        {
-            Vector2 m = selectedButton + v;
-            if (m.x < 0 || m.x >= N || m.y < 0 || m.y >= M)
-                continue;
-            GetButtonScript(m).RangeOn();
-            selectedButtonMovable.Add(m);
-        }
-    }
-    void ShowButtonInfo(Vector2 button)
-    {
-        BoardUICanvas.SetActive(true);
-        BoardUICanvas.GetComponent<BoardUICanvas>().UpdateButtonInfo(GetButtonScript(button));
-    }
-
-    void HideButtonInfo()
-    {
-        BoardUICanvas.SetActive(false);
+        return selectedButton.x >= 0 && selectedButton.y >= 0;
     }
 }
