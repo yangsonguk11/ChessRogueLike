@@ -139,7 +139,6 @@ MonoBehaviour:
   shield: 0
   moveableRange: {fileID: 0}
   enemyCards:
-  - {fileID: 0}
   - {fileID: 54401725194517764}
   - {fileID: 5766115866947927382}
 --- !u!114 &54401725194517764

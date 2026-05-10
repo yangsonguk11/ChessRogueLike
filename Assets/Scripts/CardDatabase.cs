@@ -3,8 +3,15 @@ using UnityEngine;
 
 public class CardDatabase : MonoBehaviour
 {
+    public static CardDatabase instance;
+
     public List<GameObject> cardPrefabs;
     public List<GameObject> spritesPrefabs;
+
+    private void Awake()
+    {
+        if (instance == null) instance = this;
+    }
 
     public GameObject SpawnCard(RectTransform handParent, string cardName)
     {

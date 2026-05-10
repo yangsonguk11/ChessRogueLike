@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class ResultCanvas : MonoBehaviour
 {
-    public List<GameObject> sprites = new List<GameObject>();
     public static ResultCanvas Instance;
     CanvasGroup cg;
+    List<GameObject> spawnedCards = new List<GameObject>();
 
     private void Awake()
     {
@@ -15,18 +15,33 @@ public class ResultCanvas : MonoBehaviour
         else
             Destroy(gameObject);
 
-        foreach (GameObject sp in sprites)
-        {
-            CardButton cb = Instantiate(sp, GetComponent<RectTransform>()).GetComponent<CardButton>();
-            cb.OnSelected += (id) => GetCardOnDeck(id);
-        }
         cg = GetComponent<CanvasGroup>();
         cg.blocksRaycasts = false;
         cg.alpha = 0;
     }
 
+    void SpawnRandomCards()
+    {
+        foreach (var card in spawnedCards)
+            Destroy(card);
+        spawnedCards.Clear();
+
+        List<GameObject> pool = new List<GameObject>(CardDatabase.instance.spritesPrefabs);
+        int count = Mathf.Min(3, pool.Count);
+
+        for (int i = 0; i < count; i++)
+        {
+            int idx = Random.Range(0, pool.Count);
+            CardButton cb = Instantiate(pool[idx], GetComponent<RectTransform>()).GetComponent<CardButton>();
+            cb.OnSelected += (id) => GetCardOnDeck(id);
+            spawnedCards.Add(cb.gameObject);
+            pool.RemoveAt(idx);
+        }
+    }
+
     public void EnableCanvas()
     {
+        SpawnRandomCards();
         StartCoroutine(OnActive());
     }
 
@@ -52,7 +67,6 @@ public class ResultCanvas : MonoBehaviour
     IEnumerator OffActive()
     {
         cg.blocksRaycasts = false;
-        cg.alpha = 1;
         float t = 1;
         while (t > 0)
         {
@@ -61,6 +75,10 @@ public class ResultCanvas : MonoBehaviour
             yield return new WaitForFixedUpdate();
         }
         cg.alpha = 0;
+
+        foreach (var card in spawnedCards)
+            Destroy(card);
+        spawnedCards.Clear();
     }
 
     public void GetCardOnDeck(string cardname)

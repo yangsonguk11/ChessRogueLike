@@ -34,6 +34,8 @@ public class TurnManager : MonoBehaviour
     private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
     {
         AssignReferences();
+        currentState = TurnState.Player;
+        prevState = TurnState.Player;
     }
     void AssignReferences()
     {
