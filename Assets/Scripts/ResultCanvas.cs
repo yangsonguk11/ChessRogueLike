@@ -33,6 +33,7 @@ public class ResultCanvas : MonoBehaviour
         {
             int idx = Random.Range(0, pool.Count);
             CardButton cb = Instantiate(pool[idx], GetComponent<RectTransform>()).GetComponent<CardButton>();
+            
             cb.OnSelected += (id) => GetCardOnDeck(id);
             spawnedCards.Add(cb.gameObject);
             pool.RemoveAt(idx);

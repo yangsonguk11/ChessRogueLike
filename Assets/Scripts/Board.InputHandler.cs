@@ -36,7 +36,8 @@ public partial class Board
                 }
                 else if (selectedButton == pos || !selectedButtonMovable.Contains(pos))
                 {
-                    ClearSelectedButton();
+                    if (!IsLockedCasterActive())
+                        ClearSelectedButton();
                 }
                 else
                 {
@@ -60,7 +61,8 @@ public partial class Board
                 }
                 else if (!selectedButtonMovable.Contains(pos))
                 {
-                    ClearSelectedButton();
+                    if (!IsLockedCasterActive())
+                        ClearSelectedButton();
                 }
                 else
                 {

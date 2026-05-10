@@ -40,6 +40,8 @@ public abstract class Card : MonoBehaviour, ISelectable
     TargetType target;
     public List<CardEffect> effects;
     public User user;
+    public bool shieldOnMoveAttack;   // 이동공격 발생 시 시전자에게 방어도 부여
+    public int moveAttackShieldAmount;
     public virtual void Awake()
     {
         defaultScale = transform.localScale;
@@ -147,14 +149,15 @@ public abstract class Card : MonoBehaviour, ISelectable
 public enum EffectType { Move, Damage, Shield, Buff, Heal, SelfDamage, Draw }
 public class CardEffect
 {
-    public Board.BoardMode requiredMode; // �� ȿ���� ���� ���� �ʿ��� ��� (��: targeting)
+    public Board.BoardMode requiredMode;
     public EffectType type;
     public int dmg;
     public RangeInfoSO effectRange;
     public TargetLogic targetlogic;
-    
-    public CardEffect(Board.BoardMode _requiredMode, EffectType _type, int _dmg, TargetLogic _targetlogic, RangeInfoSO _effectRange = null)
+    public bool lockCasterForNext; // true면 이 효과가 끝난 후 다음 효과에서도 같은 캐릭터를 강제 선택
+
+    public CardEffect(Board.BoardMode _requiredMode, EffectType _type, int _dmg, TargetLogic _targetlogic, RangeInfoSO _effectRange = null, bool _lockCasterForNext = false)
     {
-        requiredMode = _requiredMode; type = _type; dmg = _dmg; targetlogic = _targetlogic; effectRange = _effectRange;
+        requiredMode = _requiredMode; type = _type; dmg = _dmg; targetlogic = _targetlogic; effectRange = _effectRange; lockCasterForNext = _lockCasterForNext;
     }
 }

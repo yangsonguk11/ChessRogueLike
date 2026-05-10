@@ -53,7 +53,7 @@ public class DataManager : MonoBehaviour
                 "Move",
                 "Move",
                 "Defense",
-                "Defense",
+                "Push",
                 "MoveAndAttackCard",
                 "HeavyAttack",
                 "DrawCard"

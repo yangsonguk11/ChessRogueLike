@@ -6,9 +6,12 @@ public partial class Board
 {
     Queue<CardEffect> pendingEffects = new Queue<CardEffect>();
     Card currentActiveCard;
+    Vector2 lockedCaster = new Vector2(-1, -1);
+    bool IsLockedCasterActive() => lockedCaster.x >= 0;
 
     public void UseCard(Card card)
     {
+        lockedCaster = new Vector2(-1, -1);
         currentActiveCard = card;
         pendingEffects.Clear();
         foreach (var effect in card.effects)
@@ -38,6 +41,14 @@ public partial class Board
         {
             ExecuteEffect(pendingEffects.Dequeue());
             ScheduleNextCardEffect();
+        }
+        else if (IsLockedCasterActive())
+        {
+            // 이전 효과에서 선택된 캐릭터를 자동으로 다시 선택
+            selectedButton = lockedCaster;
+            GetButtonScript(selectedButton).SelectedTrue();
+            // selectedButton setter가 OnButtonSelected를 발생시켜 OnSelectBoard()를 호출하므로
+            // 범위 표시가 자동으로 업데이트됨
         }
     }
 
@@ -179,6 +190,11 @@ public partial class Board
 
     void ExecuteEffect(CardEffect cardEffect, Vector2 targetPos = default)
     {
+        // lockCasterForNext가 true이고 다음 효과가 있을 때만 시전자를 고정
+        // Move 효과는 기물이 targetPos로 이동하므로 목적지를 저장, 나머지는 현재 위치 유지
+        if (cardEffect.lockCasterForNext && pendingEffects.Count > 0)
+            lockedCaster = cardEffect.type == EffectType.Move ? targetPos : selectedButton;
+
         currentActiveCard.cardCanvas.GetComponent<CardCanvas>().isCardEffecting = true;
 
         if (cardEffect.targetlogic == TargetLogic.AllEnemiesInRange ||
@@ -250,6 +266,10 @@ public partial class Board
     void ResetBoardAfterCardUse()
     {
         boardmode = BoardMode.Inspect;
+        // lockedCaster가 있으면 해당 버튼을 명시적으로 deselect (selectedButton과 불일치 방지)
+        if (IsLockedCasterActive())
+            GetButtonScript(lockedCaster).SelectedFalse();
+        lockedCaster = new Vector2(-1, -1);
         ClearSelectedButton();
         Debug.Log("Finished Card Use");
     }

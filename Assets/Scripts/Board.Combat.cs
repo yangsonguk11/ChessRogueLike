@@ -43,6 +43,13 @@ public partial class Board
             motionQueue.Enqueue(pScript2.DeathCor());
             motionQueue.Enqueue(PieceMoveCor(GetButtonScript(GetAdjacentLocation(bScript1.GetLocation(), bScript2.GetLocation())), bScript2, 1f));
         }
+
+        if (currentActiveCard != null && currentActiveCard.shieldOnMoveAttack && currentActiveCard.moveAttackShieldAmount > 0)
+        {
+            pScript1.GetShield(currentActiveCard.moveAttackShieldAmount, AttackType.MoveAttack);
+            motionQueue.Enqueue(pScript1.ShieldText(currentActiveCard.moveAttackShieldAmount));
+        }
+
         StartCoroutine(ProcessQueue());
     }
 

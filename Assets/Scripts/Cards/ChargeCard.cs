@@ -1,16 +1,17 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
 
-public class BasicCard : Card
+public class ChargeCard : Card
 {
     public override void Awake()
     {
         base.Awake();
         Cost = 1;
+        shieldOnMoveAttack = true;
+        moveAttackShieldAmount = 3;
 
-        CardEffect cf = new CardEffect(Board.BoardMode.command, EffectType.Move, 0, TargetLogic.NearestEnemy);
-        effects.Add(cf);
+        effects.Add(new CardEffect(Board.BoardMode.command, EffectType.Move, 0, TargetLogic.NearestEnemy));
     }
+
     public override bool CanUse()
     {
         throw new System.NotImplementedException();

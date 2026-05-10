@@ -12,7 +12,8 @@ public partial class Board
         if (pendingEffects.Count > 0)
         {
             CardEffect currentEffect = pendingEffects.Peek();
-            if (currentEffect.effectRange != null)
+            // Move 효과는 항상 기물 자체의 이동 범위를 사용 (effectRange 무시)
+            if (currentEffect.type != EffectType.Move && currentEffect.effectRange != null)
                 effectRange = currentEffect.effectRange.GetAbleRange();
         }
         ShowMovableButtons(GetButtonScript(selectedButton).GetPiece(), effectRange);
