@@ -64,7 +64,20 @@ public partial class Board
             ExecuteEffect(pendingEffects.Dequeue(), targetPos);
             ScheduleNextCardEffect();
         }
-        // targeting mode for enemies not yet implemented
+        else if (nextEffect.requiredMode == BoardMode.targeting)
+        {
+            Vector2 targetPos = ResolveEnemyTargetingTarget(nextEffect);
+            if (targetPos.x >= 0)
+            {
+                ExecuteEffect(pendingEffects.Dequeue(), targetPos);
+                ScheduleNextCardEffect();
+            }
+            else
+            {
+                pendingEffects.Dequeue();
+                ScheduleNextCardEffect();
+            }
+        }
     }
 
     Vector2 ResolveEnemyTarget(CardEffect effect)
@@ -73,9 +86,52 @@ public partial class Board
         {
             case TargetLogic.NearestEnemy:
                 return ResolveNearestEnemyTarget();
+            case TargetLogic.LowestHP:
+                return ResolveLowestHPTarget(effect);
             default:
                 return selectedButton;
         }
+    }
+
+    Vector2 ResolveEnemyTargetingTarget(CardEffect effect)
+    {
+        switch (effect.targetlogic)
+        {
+            case TargetLogic.self:
+                return selectedButton;
+            case TargetLogic.LowestHP:
+                return ResolveLowestHPTarget(effect);
+            case TargetLogic.AllEnemiesInRange:
+            case TargetLogic.AllAlliesInRange:
+                return selectedButton;
+            default:
+                return new Vector2(-1, -1);
+        }
+    }
+
+    Vector2 ResolveLowestHPTarget(CardEffect effect)
+    {
+        if (effect.effectRange == null) return new Vector2(-1, -1);
+
+        Piece caster = GetButtonScript(selectedButton).GetPieceScript();
+        int targetTeam = caster != null ? (caster.teamID == 0 ? 1 : 0) : 1;
+
+        AddMovableButtons(effect.effectRange.GetAbleRange());
+
+        int lowestHP = int.MaxValue;
+        Vector2 target = new Vector2(-1, -1);
+
+        foreach (Vector2 pos in selectedButtonMovable)
+        {
+            Piece p = GetButtonScript(pos).GetPieceScript();
+            if (p != null && p.teamID == targetTeam && p.hp < lowestHP)
+            {
+                lowestHP = p.hp;
+                target = pos;
+            }
+        }
+
+        return target;
     }
 
     Vector2 ResolveNearestEnemyTarget()
@@ -162,7 +218,11 @@ public partial class Board
     {
         if (cardEffect.effectRange == null) return;
 
-        int targetTeam = cardEffect.targetlogic == TargetLogic.AllEnemiesInRange ? 1 : 0;
+        Piece caster = GetButtonScript(selectedButton).GetPieceScript();
+        int casterTeam = caster != null ? caster.teamID : 0;
+        int targetTeam = cardEffect.targetlogic == TargetLogic.AllEnemiesInRange
+            ? (casterTeam == 0 ? 1 : 0)
+            : casterTeam;
         var targets = new List<Vector2>();
 
         foreach (Vector2 offset in cardEffect.effectRange.GetAbleRange())

@@ -64,8 +64,16 @@ public partial class Board
                 }
                 else
                 {
-                    ExecuteEffect(pendingEffects.Dequeue(), pos);
-                    ProcessNextCardEffect();
+                    CardEffect currentEffect = pendingEffects.Count > 0 ? pendingEffects.Peek() : null;
+                    bool isAoE = currentEffect != null &&
+                        (currentEffect.targetlogic == TargetLogic.AllEnemiesInRange ||
+                         currentEffect.targetlogic == TargetLogic.AllAlliesInRange);
+
+                    if (isAoE || GetButtonScript(pos).GetPiece() != null)
+                    {
+                        ExecuteEffect(pendingEffects.Dequeue(), pos);
+                        ProcessNextCardEffect();
+                    }
                 }
                 break;
         }
