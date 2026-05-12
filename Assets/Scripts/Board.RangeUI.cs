@@ -8,11 +8,24 @@ public partial class Board
 
     void OnSelectBoard()
     {
+        if (pendingEffects.Count > 0)
+        {
+            CardEffect currentEffect = pendingEffects.Peek();
+            if (currentEffect.type != EffectType.Move &&
+                currentEffect.effectRange != null &&
+                currentEffect.areaTargetMode != AreaTargetMode.Fixed)
+            {
+                // 마우스 기반 범위 효과: 모든 칸을 클릭 가능하게 하되 시각적 표시 없음
+                FillAllMovableButtonsSilent();
+                ShowButtonInfo(selectedButton);
+                return;
+            }
+        }
+
         List<Vector2> effectRange = null;
         if (pendingEffects.Count > 0)
         {
             CardEffect currentEffect = pendingEffects.Peek();
-            // Move 효과는 항상 기물 자체의 이동 범위를 사용 (effectRange 무시)
             if (currentEffect.type != EffectType.Move && currentEffect.effectRange != null)
                 effectRange = currentEffect.effectRange.GetAbleRange();
         }
@@ -22,8 +35,17 @@ public partial class Board
 
     void OnUnSelectBoard()
     {
+        ClearHoverRange();
         HideMovableButtons();
         HideButtonInfo();
+    }
+
+    void FillAllMovableButtonsSilent()
+    {
+        selectedButtonMovable.Clear();
+        for (int x = 0; x < N; x++)
+            for (int y = 0; y < M; y++)
+                selectedButtonMovable.Add(new Vector2(x, y));
     }
 
     void ShowMovableButtons(GameObject p, List<Vector2> effectableButton = default)

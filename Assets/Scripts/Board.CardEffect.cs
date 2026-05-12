@@ -241,9 +241,19 @@ public partial class Board
             : casterTeam;
         var targets = new List<Vector2>();
 
-        foreach (Vector2 offset in cardEffect.effectRange.GetAbleRange())
+        List<Vector2> offsets = cardEffect.effectRange.GetAbleRange();
+        Vector2 actualCenter = center;
+
+        if (cardEffect.areaTargetMode == AreaTargetMode.Directional4 ||
+            cardEffect.areaTargetMode == AreaTargetMode.Directional8)
         {
-            Vector2 pos = center + offset;
+            actualCenter = selectedButton;
+            offsets = RotateOffsets(offsets, currentHoverDirection);
+        }
+
+        foreach (Vector2 offset in offsets)
+        {
+            Vector2 pos = actualCenter + offset;
             if (pos.x < 0 || pos.x >= N || pos.y < 0 || pos.y >= M) continue;
 
             Piece p = GetButtonScript(pos).GetPieceScript();
@@ -266,7 +276,7 @@ public partial class Board
     void ResetBoardAfterCardUse()
     {
         boardmode = BoardMode.Inspect;
-        // lockedCaster가 있으면 해당 버튼을 명시적으로 deselect (selectedButton과 불일치 방지)
+        ClearHoverRange();
         if (IsLockedCasterActive())
             GetButtonScript(lockedCaster).SelectedFalse();
         lockedCaster = new Vector2(-1, -1);

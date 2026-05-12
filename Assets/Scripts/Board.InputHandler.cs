@@ -70,11 +70,13 @@ public partial class Board
                     bool isAoE = currentEffect != null &&
                         (currentEffect.targetlogic == TargetLogic.AllEnemiesInRange ||
                          currentEffect.targetlogic == TargetLogic.AllAlliesInRange);
+                    bool isMouseAoE = currentEffect != null &&
+                        currentEffect.areaTargetMode != AreaTargetMode.Fixed;
 
-                    if (isAoE || GetButtonScript(pos).GetPiece() != null)
+                    if (isAoE || isMouseAoE || GetButtonScript(pos).GetPiece() != null)
                     {
                         ExecuteEffect(pendingEffects.Dequeue(), pos);
-                        ProcessNextCardEffect();
+                        ScheduleNextCardEffect();
                     }
                 }
                 break;

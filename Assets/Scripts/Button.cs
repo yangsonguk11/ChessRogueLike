@@ -7,6 +7,7 @@ public class Button : MonoBehaviour, ISelectable
     [SerializeField] GameObject RangeObj;
     [SerializeField] GameObject SelectedObj;
     GameObject board;
+    Board boardScript;
     Vector2 location;
     Vector3 piecelocation;
     public Vector3 Piecelocation
@@ -28,8 +29,8 @@ public class Button : MonoBehaviour, ISelectable
     public void Init(int x, int y, GameObject _board)
     {
         SetLocation(x, y); board = _board;
-        piecelocation = board.GetComponent<Board>().grid.GetCellCenterWorld(new Vector3Int((int)location.x, 0, (int)location.y));
-       
+        boardScript = _board.GetComponent<Board>();
+        piecelocation = boardScript.grid.GetCellCenterWorld(new Vector3Int((int)location.x, 0, (int)location.y));
     }
 
     public void OnTurnEnd()
@@ -40,11 +41,13 @@ public class Button : MonoBehaviour, ISelectable
     public void MouseEnter()
     {
         ScaleHover();
+        boardScript?.ButtonHovered(location);
     }
 
     public void MouseExit()
     {
         if(!selected) ScaleDefault();
+        boardScript?.ButtonUnhovered();
     }
     public void MouseDown()
     {

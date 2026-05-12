@@ -31,6 +31,14 @@ public enum TargetLogic
     AllEnemiesInRange,
     AllAlliesInRange
 }
+
+public enum AreaTargetMode
+{
+    Fixed,          // 기존 방식 — 클릭한 칸 기준 고정 범위
+    MouseCentered,  // 마우스를 올린 칸을 중심으로 범위 미리보기
+    Directional4,   // 시전자 기준 4방향으로 패턴 회전
+    Directional8    // 시전자 기준 8방향으로 패턴 회전
+}
 public abstract class Card : MonoBehaviour, ISelectable
 {
     public List<RangeInfoSO> effectRange;
@@ -154,10 +162,11 @@ public class CardEffect
     public int dmg;
     public RangeInfoSO effectRange;
     public TargetLogic targetlogic;
-    public bool lockCasterForNext; // true면 이 효과가 끝난 후 다음 효과에서도 같은 캐릭터를 강제 선택
+    public bool lockCasterForNext;
+    public AreaTargetMode areaTargetMode;
 
-    public CardEffect(Board.BoardMode _requiredMode, EffectType _type, int _dmg, TargetLogic _targetlogic, RangeInfoSO _effectRange = null, bool _lockCasterForNext = false)
+    public CardEffect(Board.BoardMode _requiredMode, EffectType _type, int _dmg, TargetLogic _targetlogic, RangeInfoSO _effectRange = null, bool _lockCasterForNext = false, AreaTargetMode _areaTargetMode = AreaTargetMode.Fixed)
     {
-        requiredMode = _requiredMode; type = _type; dmg = _dmg; targetlogic = _targetlogic; effectRange = _effectRange; lockCasterForNext = _lockCasterForNext;
+        requiredMode = _requiredMode; type = _type; dmg = _dmg; targetlogic = _targetlogic; effectRange = _effectRange; lockCasterForNext = _lockCasterForNext; areaTargetMode = _areaTargetMode;
     }
 }
