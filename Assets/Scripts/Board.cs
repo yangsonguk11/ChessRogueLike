@@ -5,6 +5,10 @@ using UnityEngine;
 
 public partial class Board : MonoBehaviour
 {
+    public static Board instance;
+    public static bool playerMovedThisTurn;
+    public static bool playerDamagedThisTurn;
+
     [SerializeField] GameObject Background;
     [SerializeField] GameObject ButtonPrefab;
     GameObject[,] Buttons;
@@ -45,6 +49,8 @@ public partial class Board : MonoBehaviour
 
     private void Awake()
     {
+        instance = this;
+        playerMovedThisTurn = false;
         OnButtonSelected += OnSelectBoard;
         OnButtonUnSelected += OnUnSelectBoard;
         queuecoroutineworking = false;

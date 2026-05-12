@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.EventSystems;
 
 public class HealCard : Card
@@ -10,10 +10,7 @@ public class HealCard : Card
         CardEffect cf = new CardEffect(Board.BoardMode.targeting, EffectType.Heal, 2, TargetLogic.self, effectRange[0]);
         effects.Add(cf);
     }
-    public override bool CanUse()
-    {
-        throw new System.NotImplementedException();
-    }
+    public override bool CanUse() => true;
 
     public override void Execute()
     {

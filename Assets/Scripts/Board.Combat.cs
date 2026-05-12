@@ -8,6 +8,10 @@ public partial class Board
         Button button1script = GetButtonScript(pos1);
         Button button2script = GetButtonScript(pos2);
 
+        Piece movingPiece = button1script.GetPieceScript();
+        if (movingPiece != null && movingPiece.teamID == 0)
+            playerMovedThisTurn = true;
+
         if (button1script.GetPiece() != null)
         {
             GameObject piece2 = button2script.GetPiece();
@@ -34,6 +38,7 @@ public partial class Board
     {
         int dmg = pScript1.colDamage;
         int hpLeft = pScript2.GetDamage(dmg, AttackType.MoveAttack);
+        if (pScript2.teamID == 0) playerDamagedThisTurn = true;
         Debug.Log(hpLeft);
 
         motionQueue.Enqueue(MoveAdjacent(bScript1, bScript2, 1f));
@@ -65,6 +70,7 @@ public partial class Board
             {
                 Piece pScript2 = piece2.GetComponent<Piece>();
                 int hpLeft = pScript2.GetDamage(dmg, AttackType.NormalAttack);
+                if (pScript2.teamID == 0) playerDamagedThisTurn = true;
 
                 motionQueue.Enqueue(PieceAttackCor(button1script, button2script, 1f));
                 motionQueue.Enqueue(pScript2.DamageText(dmg));
@@ -103,6 +109,7 @@ public partial class Board
         Piece p = GetButtonScript(casterPos).GetPieceScript();
         if (p == null) return;
         int hpLeft = p.GetDamage(dmg, AttackType.NormalAttack);
+        if (p.teamID == 0) playerDamagedThisTurn = true;
         motionQueue.Enqueue(p.DamageText(dmg));
         if (hpLeft <= 0)
             motionQueue.Enqueue(p.DeathCor());
@@ -123,6 +130,7 @@ public partial class Board
             Piece p = GetButtonScript(pos).GetPieceScript();
             if (p == null) continue;
             int hpLeft = p.GetDamage(dmg, AttackType.NormalAttack);
+            if (p.teamID == 0) playerDamagedThisTurn = true;
             motionQueue.Enqueue(p.DamageText(dmg));
             if (hpLeft <= 0)
                 motionQueue.Enqueue(p.DeathCor());

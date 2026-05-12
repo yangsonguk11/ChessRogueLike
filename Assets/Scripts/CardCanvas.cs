@@ -63,7 +63,8 @@ public class CardCanvas : MonoBehaviour
         Debug.Log(cards[handnum].GetComponent<Card>().Cost > currentenergy);
         Debug.Log(isCardEffecting);
         Debug.Log(TurnManager.instance.currentState != TurnState.Player);
-        if (cards[handnum].GetComponent<Card>().Cost > currentenergy || isCardEffecting || TurnManager.instance.currentState != TurnState.Player)
+        Card card = cards[handnum].GetComponent<Card>();
+        if (card.Cost > currentenergy || isCardEffecting || TurnManager.instance.currentState != TurnState.Player || !card.CanUse())
             return;
         ClearnowusingCard();
         nowusingCard = cards[handnum];

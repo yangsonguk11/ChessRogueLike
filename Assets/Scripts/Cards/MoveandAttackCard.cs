@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.EventSystems;
 
 public class MoveandAttackCard : Card
@@ -14,10 +14,7 @@ public class MoveandAttackCard : Card
         cf = new CardEffect(Board.BoardMode.command, EffectType.Damage, 3, TargetLogic.LowestHP, effectRange[0]);
         effects.Add(cf);
     }
-    public override bool CanUse()
-    {
-        throw new System.NotImplementedException();
-    }
+    public override bool CanUse() => !Board.playerMovedThisTurn;
 
     public override void Execute()
     {

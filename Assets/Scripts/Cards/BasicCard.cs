@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.EventSystems;
 
 public class BasicCard : Card
@@ -11,10 +11,7 @@ public class BasicCard : Card
         CardEffect cf = new CardEffect(Board.BoardMode.command, EffectType.Move, 0, TargetLogic.NearestEnemy);
         effects.Add(cf);
     }
-    public override bool CanUse()
-    {
-        throw new System.NotImplementedException();
-    }
+    public override bool CanUse() => !Board.playerMovedThisTurn;
 
     public override void Execute()
     {

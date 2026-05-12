@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class EnemyAttackCard : Card
 {
@@ -11,10 +11,7 @@ public class EnemyAttackCard : Card
         CardEffect cf = new CardEffect(Board.BoardMode.command, EffectType.Damage, 3,TargetLogic.NearestEnemy, effectRange[0]);
         effects.Add(cf);
     }
-    public override bool CanUse()
-    {
-        throw new System.NotImplementedException();
-    }
+    public override bool CanUse() => true;
 
     public override void Execute()
     {

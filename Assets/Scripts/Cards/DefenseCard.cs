@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class DefenseCard : Card
 {
@@ -11,10 +11,7 @@ public class DefenseCard : Card
         effects.Add(cf);
 
     }
-    public override bool CanUse()
-    {
-        throw new System.NotImplementedException();
-    }
+    public override bool CanUse() => true;
 
     public override void Execute()
     {

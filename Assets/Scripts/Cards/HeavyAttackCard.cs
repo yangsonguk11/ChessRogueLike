@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class HeavyAttackCard : Card
 {
@@ -12,10 +12,7 @@ public class HeavyAttackCard : Card
         effects.Add(new CardEffect(Board.BoardMode.Inspect, EffectType.SelfDamage, 2, TargetLogic.self, null));
     }
 
-    public override bool CanUse()
-    {
-        throw new System.NotImplementedException();
-    }
+    public override bool CanUse() => true;
 
     public override void Execute()
     {

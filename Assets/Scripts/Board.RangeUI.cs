@@ -8,6 +8,15 @@ public partial class Board
 
     void OnSelectBoard()
     {
+        // 자기 자신 대상 효과: 시전자 클릭 즉시 실행 (두 번째 클릭 불필요)
+        if (boardmode == BoardMode.targeting && pendingEffects.Count > 0 &&
+            pendingEffects.Peek().targetlogic == TargetLogic.self)
+        {
+            ExecuteEffect(pendingEffects.Dequeue(), selectedButton);
+            ScheduleNextCardEffect();
+            return;
+        }
+
         if (pendingEffects.Count > 0)
         {
             CardEffect currentEffect = pendingEffects.Peek();
@@ -15,8 +24,21 @@ public partial class Board
                 currentEffect.effectRange != null &&
                 currentEffect.areaTargetMode != AreaTargetMode.Fixed)
             {
-                // 마우스 기반 범위 효과: 모든 칸을 클릭 가능하게 하되 시각적 표시 없음
-                FillAllMovableButtonsSilent();
+                if (currentEffect.targetingUsesMovement)
+                {
+                    // 캐릭터 이동 범위 내에서만 AoE 중심 선택 가능 (시각적 표시 O)
+                    ShowMovableButtons(GetButtonScript(selectedButton).GetPiece(), null);
+                }
+                else if (currentEffect.targetingRange != null)
+                {
+                    // 지정된 사거리 내에서만 AoE 중심 선택 가능 (시각적 표시 O)
+                    AddMovableButtons(currentEffect.targetingRange.GetAbleRange());
+                }
+                else
+                {
+                    // 제한 없음: 전체 보드, 시각적 표시 없음
+                    FillAllMovableButtonsSilent();
+                }
                 ShowButtonInfo(selectedButton);
                 return;
             }

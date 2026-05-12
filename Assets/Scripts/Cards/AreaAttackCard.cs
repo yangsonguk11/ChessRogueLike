@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class AreaAttackCard : Card
 {
@@ -10,10 +10,7 @@ public class AreaAttackCard : Card
         effects.Add(cf);
     }
 
-    public override bool CanUse()
-    {
-        throw new System.NotImplementedException();
-    }
+    public override bool CanUse() => true;
 
     public override void Execute()
     {

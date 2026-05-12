@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 // 4방향 광역 공격 카드
 // RangeInfoSO의 패턴은 위쪽 방향 기준으로 Inspector에서 작성
@@ -22,10 +22,7 @@ public class DirectionalAttackCard : Card
         effects.Add(cf);
     }
 
-    public override bool CanUse()
-    {
-        throw new System.NotImplementedException();
-    }
+    public override bool CanUse() => true;
 
     public override void Execute()
     {

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class ChargeCard : Card
 {
@@ -12,10 +12,7 @@ public class ChargeCard : Card
         effects.Add(new CardEffect(Board.BoardMode.command, EffectType.Move, 0, TargetLogic.NearestEnemy));
     }
 
-    public override bool CanUse()
-    {
-        throw new System.NotImplementedException();
-    }
+    public override bool CanUse() => !Board.playerMovedThisTurn;
 
     public override void Execute()
     {

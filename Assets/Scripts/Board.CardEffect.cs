@@ -286,6 +286,8 @@ public partial class Board
 
     void FinishCardUsage()
     {
+        if (currentActiveCard != null && currentActiveCard.blocksMovementAfterUse)
+            playerMovedThisTurn = true;
         CardCanvas.instance.FinishUseCard();
         ResetBoardAfterCardUse();
     }

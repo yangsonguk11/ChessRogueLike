@@ -197,6 +197,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AreaHealCard
   effectRange:
   - {fileID: 11400000, guid: 787acd92475f59345ad8687718263004, type: 2}
+  - {fileID: 11400000, guid: e798bd81c0425624ead1e05779a9c275, type: 2}
   Name: 
   Description: 
   Cost: 0

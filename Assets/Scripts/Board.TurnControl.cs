@@ -6,6 +6,8 @@ public partial class Board
 {
     void TurnStart()
     {
+        playerMovedThisTurn = false;
+        playerDamagedThisTurn = false;
         CardCanvas.instance.DrawTurnStartCards();
         CardCanvas.instance.GetMaxEnergy();
     }

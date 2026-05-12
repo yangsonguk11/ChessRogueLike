@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class DrawCard : Card
 {
@@ -10,10 +10,7 @@ public class DrawCard : Card
         effects.Add(new CardEffect(Board.BoardMode.Inspect, EffectType.Draw, 1, TargetLogic.self, null));
     }
 
-    public override bool CanUse()
-    {
-        throw new System.NotImplementedException();
-    }
+    public override bool CanUse() => true;
 
     public override void Execute()
     {

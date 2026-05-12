@@ -48,8 +48,9 @@ public abstract class Card : MonoBehaviour, ISelectable
     TargetType target;
     public List<CardEffect> effects;
     public User user;
-    public bool shieldOnMoveAttack;   // 이동공격 발생 시 시전자에게 방어도 부여
+    public bool shieldOnMoveAttack;
     public int moveAttackShieldAmount;
+    public bool blocksMovementAfterUse; // 사용 후 이번 턴 이동 불가
     public virtual void Awake()
     {
         defaultScale = transform.localScale;
@@ -64,7 +65,7 @@ public abstract class Card : MonoBehaviour, ISelectable
     public bool selected { get { return _selected; } set { _selected = value; if (_selected) OnSelected?.Invoke(); else OnUnSelected?.Invoke(); }}
 
 
-    public abstract bool CanUse();
+    public virtual bool CanUse() => true;
     public abstract void Execute();
 
     public void Init()
@@ -164,9 +165,16 @@ public class CardEffect
     public TargetLogic targetlogic;
     public bool lockCasterForNext;
     public AreaTargetMode areaTargetMode;
+    public RangeInfoSO targetingRange;      // AoE 중심 배치 가능 범위 (null = 전체 보드)
+    public bool targetingUsesMovement;      // true면 캐릭터 이동 범위로 AoE 중심 제한
 
-    public CardEffect(Board.BoardMode _requiredMode, EffectType _type, int _dmg, TargetLogic _targetlogic, RangeInfoSO _effectRange = null, bool _lockCasterForNext = false, AreaTargetMode _areaTargetMode = AreaTargetMode.Fixed)
+    public CardEffect(Board.BoardMode _requiredMode, EffectType _type, int _dmg, TargetLogic _targetlogic,
+        RangeInfoSO _effectRange = null, bool _lockCasterForNext = false,
+        AreaTargetMode _areaTargetMode = AreaTargetMode.Fixed,
+        RangeInfoSO _targetingRange = null, bool _targetingUsesMovement = false)
     {
-        requiredMode = _requiredMode; type = _type; dmg = _dmg; targetlogic = _targetlogic; effectRange = _effectRange; lockCasterForNext = _lockCasterForNext; areaTargetMode = _areaTargetMode;
+        requiredMode = _requiredMode; type = _type; dmg = _dmg; targetlogic = _targetlogic;
+        effectRange = _effectRange; lockCasterForNext = _lockCasterForNext; areaTargetMode = _areaTargetMode;
+        targetingRange = _targetingRange; targetingUsesMovement = _targetingUsesMovement;
     }
 }
