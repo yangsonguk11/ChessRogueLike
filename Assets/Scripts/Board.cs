@@ -142,23 +142,30 @@ public partial class Board : MonoBehaviour
             }
         }
 
+        // isEnemy == false 배치를 플레이어 스폰 위치로 사용
+        List<Vector2> playerSpawns = new List<Vector2>();
+        foreach (var p in data.placements)
+            if (!p.isEnemy) playerSpawns.Add(new Vector2(p.position.x, p.position.y));
+
+        int spawnIdx = 0;
         foreach (PieceData piecedata in DataManager.Instance.currentData.pieceData)
         {
-            Debug.LogFormat("{0} {1}", piecedata.pieceName, piecedatabase.PiecePrefabs[0]);
+            Vector2 spawnPos = spawnIdx < playerSpawns.Count ? playerSpawns[spawnIdx] : new Vector2(2, 2);
             GameObject piece = Instantiate(piecedatabase.GetPiece(piecedata.pieceName));
-            GetButtonScript(new Vector2(2, 2)).SetPiece(piece);
+            GetButtonScript(spawnPos).SetPiece(piece);
             piece.GetComponent<Piece>().SetPieceData(piecedata);
+            spawnIdx++;
         }
 
         ClearSelectedButton();
         foreach (var placement in data.placements)
         {
+            if (!placement.isEnemy) continue; // 플레이어 스폰 마커는 건너뜀
+
             Debug.LogFormat("{0} {1}", piecedatabase, placement.name);
             GameObject piece = Instantiate(piecedatabase.GetPiece(placement.name));
             GetButtonScript(placement.position).SetPiece(piece);
-
-            if (placement.isEnemy)
-                enemyPositions.Add(placement.position);
+            enemyPositions.Add(placement.position);
         }
 
         FinishCardUsage();

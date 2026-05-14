@@ -47,26 +47,26 @@ public class DataManager : MonoBehaviour
             if (currentData.visitedNodeX == null) currentData.visitedNodeX = new List<int>();
             currentData.deckCardIDs = new List<string>()
             {
+                "Move",
+                "Move",
+                "Move",
                 "AttackCard",
-                "DirectionalAttackCard",
-                "AreaHealCard",
-                "Move",
-                "Move",
-                "Defense",
-                "Push",
+                "AttackCard",
+                "AttackCard",
                 "MoveAndAttackCard",
-                "HeavyAttack",
-                "DrawCard"
+                "Defense",
+                "Defense",
+                "Defense",
             };
 
             PieceData defaultPiece = new PieceData
             {
-                pieceName = "Black Knight",
-                teamID = 0,
-                hp = 10,
-                maxHp = 10,
-                colDamage = 3,
-                rangeinfoname = "BasicRangeInfoSO"
+                pieceName = basicPieceinfo.PieceName,
+                teamID = basicPieceinfo.TeamID,
+                hp = basicPieceinfo.MaxHp,
+                maxHp = basicPieceinfo.MaxHp,
+                colDamage = basicPieceinfo.ColDamage,
+                rangeinfoname = basicPieceinfo.RangeInfoSO != null ? basicPieceinfo.RangeInfoSO.name : ""
             };
 
             if (currentData.pieceData.Count > 0)

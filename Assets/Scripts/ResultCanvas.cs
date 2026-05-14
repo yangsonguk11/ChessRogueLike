@@ -26,17 +26,27 @@ public class ResultCanvas : MonoBehaviour
             Destroy(card);
         spawnedCards.Clear();
 
-        List<GameObject> pool = new List<GameObject>(CardDatabase.instance.spritesPrefabs);
+        int excludeStart = 0, excludeEnd = 2; // 제외할 범위 [excludeStart, excludeEnd)
+        var source = CardDatabase.instance.spritesPrefabs;
+        List<GameObject> pool = new List<GameObject>();
+        for (int i = 0; i < source.Count; i++)
+            if (i < excludeStart || i >= excludeEnd) pool.Add(source[i]);
         int count = Mathf.Min(3, pool.Count);
 
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < count && pool.Count > 0; i++)
         {
             int idx = Random.Range(0, pool.Count);
-            CardButton cb = Instantiate(pool[idx], GetComponent<RectTransform>()).GetComponent<CardButton>();
-            
-            cb.OnSelected += (id) => GetCardOnDeck(id);
-            spawnedCards.Add(cb.gameObject);
+            GameObject prefab = pool[idx];
             pool.RemoveAt(idx);
+
+            if (prefab == null) { i--; continue; }
+
+            GameObject spawned = Instantiate(prefab, GetComponent<RectTransform>());
+            CardButton cb = spawned.GetComponent<CardButton>();
+            if (cb == null) { Destroy(spawned); i--; continue; }
+
+            cb.OnSelected += (id) => GetCardOnDeck(id);
+            spawnedCards.Add(spawned);
         }
     }
 

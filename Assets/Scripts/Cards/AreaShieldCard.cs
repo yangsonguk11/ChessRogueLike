@@ -6,7 +6,7 @@ public class AreaShieldCard : Card
     {
         base.Awake();
         Cost = 1;
-        CardEffect cf = new CardEffect(Board.BoardMode.Inspect, EffectType.Shield, 3, TargetLogic.AllAlliesInRange, effectRange[0]);
+        CardEffect cf = new CardEffect(Board.BoardMode.targeting, EffectType.Shield, 3, TargetLogic.AllAlliesInRange, effectRange[0]);
         effects.Add(cf);
     }
 

@@ -3527,30 +3527,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
-      propertyPath: cardPrefabs.Array.size
-      value: 11
-      objectReference: {fileID: 0}
-    - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
-      propertyPath: 'cardPrefabs.Array.data[9]'
-      value: 
-      objectReference: {fileID: 8950236184682274632, guid: b9d4305a1597bbc4d8808975f5c6e4d7, type: 3}
-    - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
-      propertyPath: spritesPrefabs.Array.size
-      value: 11
-      objectReference: {fileID: 0}
-    - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
-      propertyPath: 'cardPrefabs.Array.data[10]'
-      value: 
-      objectReference: {fileID: 8950236184682274632, guid: f7da18452d83938429bc4f2e4554f0de, type: 3}
-    - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
-      propertyPath: 'spritesPrefabs.Array.data[9]'
-      value: 
-      objectReference: {fileID: 8983308741282738250, guid: a389f01b7cf18304cb854c5fa6c44f73, type: 3}
-    - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
-      propertyPath: 'spritesPrefabs.Array.data[10]'
-      value: 
-      objectReference: {fileID: 8983308741282738250, guid: 3b473eb0a7ddeeb46a4faaf681e451a2, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

@@ -12,7 +12,7 @@ public class ChargeCard : Card
         effects.Add(new CardEffect(Board.BoardMode.command, EffectType.Move, 0, TargetLogic.NearestEnemy));
     }
 
-    public override bool CanUse() => !Board.playerMovedThisTurn;
+    public override bool CanUse() => true;
 
     public override void Execute()
     {

@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e4dbbf5546730bb49820b9d1b68e5d31, type: 3}
-  m_Name: NewPieceInfo
+  m_Name: BossPieceInfo
   m_EditorClassIdentifier: Assembly-CSharp::PieceInfo
-  _pieceName: Black Knight
-  _teamID: 0
-  _maxHp: 30
-  _colDamage: 3
-  _rangeInfoSO: {fileID: 11400000, guid: e798bd81c0425624ead1e05779a9c275, type: 2}
+  _pieceName: BOSS
+  _teamID: 1
+  _maxHp: 20
+  _colDamage: 5
+  _rangeInfoSO: {fileID: 11400000, guid: 35d0d714c9e81e94ba8bb12c5d295a0e, type: 2}

@@ -77,7 +77,13 @@ public partial class Board
         }
         else if (nextEffect.requiredMode == BoardMode.targeting)
         {
-            Vector2 targetPos = ResolveEnemyTargetingTarget(nextEffect);
+            Vector2 targetPos;
+            if (nextEffect.areaTargetMode == AreaTargetMode.Directional4 ||
+                nextEffect.areaTargetMode == AreaTargetMode.Directional8)
+                targetPos = ResolveEnemyDirectionalTarget(nextEffect);
+            else
+                targetPos = ResolveEnemyTargetingTarget(nextEffect);
+
             if (targetPos.x >= 0)
             {
                 ExecuteEffect(pendingEffects.Dequeue(), targetPos);
@@ -118,6 +124,46 @@ public partial class Board
             default:
                 return new Vector2(-1, -1);
         }
+    }
+
+    Vector2 ResolveEnemyDirectionalTarget(CardEffect effect)
+    {
+        if (effect.effectRange == null) return new Vector2(-1, -1);
+
+        Piece caster = GetButtonScript(selectedButton).GetPieceScript();
+        if (caster == null) return new Vector2(-1, -1);
+
+        int targetTeam = effect.targetlogic == TargetLogic.AllEnemiesInRange
+            ? (caster.teamID == 0 ? 1 : 0)
+            : caster.teamID;
+
+        bool eightDir = effect.areaTargetMode == AreaTargetMode.Directional8;
+        Vector2[] directions = eightDir
+            ? new[] { Vector2.up, Vector2.right, Vector2.down, Vector2.left,
+                      new Vector2(1, 1), new Vector2(1, -1), new Vector2(-1, -1), new Vector2(-1, 1) }
+            : new[] { Vector2.up, Vector2.right, Vector2.down, Vector2.left };
+
+        List<Vector2> offsets = effect.effectRange.GetAbleRange();
+        Vector2 bestDir = new Vector2(-1, -1);
+        int bestCount = 0;
+
+        foreach (Vector2 dir in directions)
+        {
+            int count = 0;
+            foreach (Vector2 offset in RotateOffsets(offsets, dir))
+            {
+                Vector2 pos = selectedButton + offset;
+                if (pos.x < 0 || pos.x >= N || pos.y < 0 || pos.y >= M) continue;
+                Piece p = GetButtonScript(pos).GetPieceScript();
+                if (p != null && p.teamID == targetTeam) count++;
+            }
+            if (count > bestCount) { bestCount = count; bestDir = dir; }
+        }
+
+        if (bestCount == 0) return new Vector2(-1, -1); // 어느 방향에도 대상 없음 → 스킵
+
+        currentHoverDirection = bestDir;
+        return selectedButton; // Directional 모드는 시전자 위치를 중심으로 사용
     }
 
     Vector2 ResolveLowestHPTarget(CardEffect effect)
@@ -244,7 +290,11 @@ public partial class Board
         List<Vector2> offsets = cardEffect.effectRange.GetAbleRange();
         Vector2 actualCenter = center;
 
-        if (cardEffect.areaTargetMode == AreaTargetMode.Directional4 ||
+        if (cardEffect.areaTargetMode == AreaTargetMode.Fixed)
+        {
+            actualCenter = selectedButton; // 고정 범위는 항상 시전자 중심
+        }
+        else if (cardEffect.areaTargetMode == AreaTargetMode.Directional4 ||
             cardEffect.areaTargetMode == AreaTargetMode.Directional8)
         {
             actualCenter = selectedButton;
@@ -263,12 +313,14 @@ public partial class Board
 
         switch (cardEffect.type)
         {
-            case EffectType.Damage: AreaAttackPiece(selectedButton, targets, cardEffect.dmg); break;
+            case EffectType.Damage:
+                AreaAttackPiece(selectedButton, targets, cardEffect.dmg);
+                break;
             case EffectType.Shield:
-                foreach (var pos in targets) ShieldPiece(selectedButton, pos, cardEffect.dmg);
+                AreaShieldPiece(targets, cardEffect.dmg);
                 break;
             case EffectType.Heal:
-                foreach (var pos in targets) HealPiece(selectedButton, pos, cardEffect.dmg);
+                AreaHealPiece(targets, cardEffect.dmg);
                 break;
         }
     }

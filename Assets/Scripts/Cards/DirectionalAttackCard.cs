@@ -13,7 +13,7 @@ public class DirectionalAttackCard : Card
         CardEffect cf = new CardEffect(
             Board.BoardMode.targeting,
             EffectType.Damage,
-            4,
+            5,
             TargetLogic.AllEnemiesInRange,
             effectRange[0],
             false,

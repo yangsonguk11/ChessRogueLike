@@ -12,7 +12,6 @@ public partial class Board
         CardEffect effect = pendingEffects.Peek();
         if (effect.areaTargetMode == AreaTargetMode.Fixed) return;
         if (!isSelectedButtonActive()) return;
-        if (!selectedButtonMovable.Contains(pos)) { ClearHoverRange(); return; }
 
         ClearHoverRange();
 
@@ -50,11 +49,7 @@ public partial class Board
     public void ClearHoverRange()
     {
         foreach (Vector2 v in hoverRangeButtons)
-        {
-            // 사거리 표시용 셀(selectedButtonMovable)은 끄지 않음
-            if (!selectedButtonMovable.Contains(v))
-                GetButtonScript(v).RangeOff();
-        }
+            GetButtonScript(v).RangeOff();
         hoverRangeButtons.Clear();
     }
 

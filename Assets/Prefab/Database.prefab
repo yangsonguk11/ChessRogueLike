@@ -48,25 +48,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardDatabase
   cardPrefabs:
+  - {fileID: 8950236184682274632, guid: 8390a38db968c2844b07cc7b0329065b, type: 3}
   - {fileID: 8950236184682274632, guid: 5cf6dfdf369d79745aedd1b98d2f3a3e, type: 3}
   - {fileID: 8950236184682274632, guid: f830a35da65c76041bfef88e54df7c14, type: 3}
-  - {fileID: 8950236184682274632, guid: 8390a38db968c2844b07cc7b0329065b, type: 3}
   - {fileID: 8950236184682274632, guid: ec2607d0132174d4c89b1a884f9d3131, type: 3}
   - {fileID: 8950236184682274632, guid: 50cbf277ea309e24995a5285cfd6fe97, type: 3}
   - {fileID: 8950236184682274632, guid: ff5c7349cde0c0644aa0ec0c1cd160b9, type: 3}
   - {fileID: 8950236184682274632, guid: 8d80e9818aa3eb6478ecdb9d5107bdd4, type: 3}
   - {fileID: 8950236184682274632, guid: 7c890ac272383c743a0b7a29891a9f49, type: 3}
   - {fileID: 8950236184682274632, guid: 97f38d0230af3844b942a5ee11e61fcc, type: 3}
+  - {fileID: 8950236184682274632, guid: f7da18452d83938429bc4f2e4554f0de, type: 3}
   spritesPrefabs:
+  - {fileID: 8983308741282738250, guid: 4cd8a850886c3d84192f6b9fe63b7103, type: 3}
   - {fileID: 8983308741282738250, guid: acfd85d4bfd6ed04789af40e579bad12, type: 3}
   - {fileID: 8983308741282738250, guid: c4ef5cce834770c4b9a92d5fbd271002, type: 3}
-  - {fileID: 8983308741282738250, guid: 4cd8a850886c3d84192f6b9fe63b7103, type: 3}
   - {fileID: 8983308741282738250, guid: d6ec7fa0cc5931446b424c4004d3e957, type: 3}
   - {fileID: 8983308741282738250, guid: 00d96774c4886c74da22f64c884decb8, type: 3}
   - {fileID: 8983308741282738250, guid: 394003bc21369ba42b8542e952472ddb, type: 3}
   - {fileID: 8950236184682274632, guid: 8d80e9818aa3eb6478ecdb9d5107bdd4, type: 3}
   - {fileID: 8983308741282738250, guid: fc64129e0fdbabc4a840729d0874e1fb, type: 3}
   - {fileID: 8983308741282738250, guid: 6208e53ee2c33fc4e90e611e73aaed63, type: 3}
+  - {fileID: 8983308741282738250, guid: 3b473eb0a7ddeeb46a4faaf681e451a2, type: 3}
 --- !u!114 &3973567015829007392
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -83,6 +85,7 @@ MonoBehaviour:
   - {fileID: 196802, guid: 8b7908f48c3331c4d9476763edc435c6, type: 3}
   - {fileID: 107724, guid: 1bae5e056ac375b46a1158f8b09b1f7f, type: 3}
   - {fileID: 107724, guid: a6c81ec23ba21934d8b9b426d6346406, type: 3}
+  - {fileID: 107724, guid: dddbd189b3c883441abbe09a3edf3d3d, type: 3}
 --- !u!114 &3181729770140103546
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -119,4 +122,4 @@ MonoBehaviour:
   - levels:
     - {fileID: 11400000, guid: d564be8c8e84a494d8475bc69cc69160, type: 2}
   - levels:
-    - {fileID: 11400000, guid: d564be8c8e84a494d8475bc69cc69160, type: 2}
+    - {fileID: 11400000, guid: 5f4a354edaae2d840bd0efa6f53a65ce, type: 2}

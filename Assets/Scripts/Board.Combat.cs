@@ -138,6 +138,34 @@ public partial class Board
         StartCoroutine(ProcessQueue());
     }
 
+    void AreaShieldPiece(List<Vector2> targets, int dmg)
+    {
+        Button casterBtn = GetButtonScript(selectedButton);
+        foreach (Vector2 pos in targets)
+        {
+            Piece p = GetButtonScript(pos).GetPieceScript();
+            if (p == null) continue;
+            p.GetShield(dmg, AttackType.NormalAttack);
+            motionQueue.Enqueue(PieceShieldCor(casterBtn, GetButtonScript(pos), 1f));
+            motionQueue.Enqueue(p.ShieldText(dmg));
+        }
+        StartCoroutine(ProcessQueue());
+    }
+
+    void AreaHealPiece(List<Vector2> targets, int dmg)
+    {
+        Button casterBtn = GetButtonScript(selectedButton);
+        foreach (Vector2 pos in targets)
+        {
+            Piece p = GetButtonScript(pos).GetPieceScript();
+            if (p == null) continue;
+            int hpLeft = p.GetHeal(dmg, AttackType.NormalAttack);
+            motionQueue.Enqueue(PieceHealCor(casterBtn, GetButtonScript(pos), 1f));
+            motionQueue.Enqueue(p.HealText(dmg));
+        }
+        StartCoroutine(ProcessQueue());
+    }
+
     void ShieldPiece(Vector2 pos1, Vector2 pos2, int dmg)
     {
         Button button1script = GetButtonScript(pos1);

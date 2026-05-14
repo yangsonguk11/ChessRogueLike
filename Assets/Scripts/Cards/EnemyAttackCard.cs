@@ -8,7 +8,8 @@ public class EnemyAttackCard : Card
     {
         base.Awake();
         Cost = 2;
-        CardEffect cf = new CardEffect(Board.BoardMode.command, EffectType.Damage, 3,TargetLogic.NearestEnemy, effectRange[0]);
+        RangeInfoSO range = effectRange.Count > 0 ? effectRange[0] : null;
+        CardEffect cf = new CardEffect(Board.BoardMode.command, EffectType.Damage, 3, TargetLogic.NearestEnemy, range);
         effects.Add(cf);
     }
     public override bool CanUse() => true;

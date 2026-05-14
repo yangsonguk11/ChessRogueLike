@@ -11,7 +11,7 @@ public class BasicCard : Card
         CardEffect cf = new CardEffect(Board.BoardMode.command, EffectType.Move, 0, TargetLogic.NearestEnemy);
         effects.Add(cf);
     }
-    public override bool CanUse() => !Board.playerMovedThisTurn;
+    public override bool CanUse() => true;
 
     public override void Execute()
     {

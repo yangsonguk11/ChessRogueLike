@@ -150,4 +150,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a56551f13abd2b4bb20cbcf6c853035, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardButton
-  cardName: SpinAttack
+  cardName: Push

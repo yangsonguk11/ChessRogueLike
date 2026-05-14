@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0bd6631b7b10bc147bc0c85bb4b0003d, type: 3}
-  m_Name: L2
+  m_Name: L3
   m_EditorClassIdentifier: Assembly-CSharp::LevelData
   N: 7
   M: 7
@@ -27,3 +27,7 @@ MonoBehaviour:
     pieceTypeIndex: 2
     isEnemy: 1
     name: White Knight 2
+  - position: {x: 1, y: 3}
+    pieceTypeIndex: 2
+    isEnemy: 1
+    name: White Knight 3

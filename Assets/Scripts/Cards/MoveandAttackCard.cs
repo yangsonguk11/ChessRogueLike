@@ -14,7 +14,7 @@ public class MoveandAttackCard : Card
         cf = new CardEffect(Board.BoardMode.command, EffectType.Damage, 3, TargetLogic.LowestHP, effectRange[0]);
         effects.Add(cf);
     }
-    public override bool CanUse() => !Board.playerMovedThisTurn;
+    public override bool CanUse() => true;
 
     public override void Execute()
     {

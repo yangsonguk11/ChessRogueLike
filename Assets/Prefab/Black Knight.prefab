@@ -130,11 +130,12 @@ MonoBehaviour:
   pieceInfo: {fileID: 11400000, guid: 9b16472a2e113a741a3e068e3f9f8357, type: 2}
   pieceCanvas: {fileID: 3352859856568857834}
   name: 
-  hp: 5
-  maxhp: 5
+  hp: 30
+  maxhp: 30
   colDamage: 3
   teamID: 0
   shield: 0
+  moveableRange: {fileID: 0}
 --- !u!1 &4137426062183288963
 GameObject:
   m_ObjectHideFlags: 0
