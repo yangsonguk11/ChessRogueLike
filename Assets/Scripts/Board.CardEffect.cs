@@ -257,12 +257,15 @@ public partial class Board
                 break;
             case EffectType.Damage:
                 AttackPiece(selectedButton, targetPos, cardEffect.dmg);
+                ApplyStatusToTarget(targetPos, cardEffect);
                 break;
             case EffectType.Heal:
                 HealPiece(selectedButton, targetPos, cardEffect.dmg);
+                ApplyStatusToTarget(targetPos, cardEffect);
                 break;
             case EffectType.Shield:
                 ShieldPiece(selectedButton, targetPos, cardEffect.dmg);
+                ApplyStatusToTarget(targetPos, cardEffect);
                 break;
             case EffectType.SelfDamage:
                 SelfDamagePiece(selectedButton, cardEffect.dmg);
@@ -270,10 +273,51 @@ public partial class Board
             case EffectType.Draw:
                 CardCanvas.instance.DrawCard();
                 break;
+            case EffectType.ApplyStatus:
+                ApplyStatusToTarget(targetPos, cardEffect);
+                break;
             default:
                 Debug.LogError("효과 타입을 찾지 못했습니다");
                 break;
         }
+    }
+
+    void ApplyStatusToTarget(Vector2 targetPos, CardEffect cardEffect)
+    {
+        if (cardEffect.statusEffectType == StatusEffectType.None) return;
+        if (targetPos.x < 0 || targetPos.y < 0) return;
+        Piece target = GetButtonScript(targetPos).GetPieceScript();
+        if (target == null) return;
+        StatusEffect effect = CreateStatusEffect(cardEffect.statusEffectType, cardEffect.statusDuration, cardEffect.statusPower);
+        if (effect != null)
+            target.AddStatusEffect(effect);
+    }
+
+    void ApplyStatusToTargets(List<Vector2> targets, CardEffect cardEffect)
+    {
+        if (cardEffect.statusEffectType == StatusEffectType.None) return;
+        foreach (Vector2 pos in targets)
+        {
+            Piece target = GetButtonScript(pos).GetPieceScript();
+            if (target == null) continue;
+            StatusEffect effect = CreateStatusEffect(cardEffect.statusEffectType, cardEffect.statusDuration, cardEffect.statusPower);
+            if (effect != null)
+                target.AddStatusEffect(effect);
+        }
+    }
+
+    StatusEffect CreateStatusEffect(StatusEffectType type, int duration, int power)
+    {
+        return type switch
+        {
+            StatusEffectType.Poison    => new PoisonEffect(duration, power),
+            StatusEffectType.Burning   => new BurningEffect(duration, power),
+            StatusEffectType.Regen     => new RegenEffect(duration, power),
+            StatusEffectType.Stun      => new StunEffect(duration),
+            StatusEffectType.Strengthen => new StrengthenEffect(duration, power),
+            StatusEffectType.Weaken    => new WeakenEffect(duration, power),
+            _                          => null,
+        };
     }
 
     void ExecuteAreaEffect(CardEffect cardEffect, Vector2 center)
@@ -315,12 +359,18 @@ public partial class Board
         {
             case EffectType.Damage:
                 AreaAttackPiece(selectedButton, targets, cardEffect.dmg);
+                ApplyStatusToTargets(targets, cardEffect);
                 break;
             case EffectType.Shield:
                 AreaShieldPiece(targets, cardEffect.dmg);
+                ApplyStatusToTargets(targets, cardEffect);
                 break;
             case EffectType.Heal:
                 AreaHealPiece(targets, cardEffect.dmg);
+                ApplyStatusToTargets(targets, cardEffect);
+                break;
+            case EffectType.ApplyStatus:
+                ApplyStatusToTargets(targets, cardEffect);
                 break;
         }
     }

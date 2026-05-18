@@ -155,7 +155,7 @@ public abstract class Card : MonoBehaviour, ISelectable
     }
 
 }
-public enum EffectType { Move, Damage, Shield, Buff, Heal, SelfDamage, Draw }
+public enum EffectType { Move, Damage, Shield, Buff, Heal, SelfDamage, Draw, ApplyStatus }
 public class CardEffect
 {
     public Board.BoardMode requiredMode;
@@ -168,13 +168,21 @@ public class CardEffect
     public RangeInfoSO targetingRange;      // AoE 중심 배치 가능 범위 (null = 전체 보드)
     public bool targetingUsesMovement;      // true면 캐릭터 이동 범위로 AoE 중심 제한
 
+    // 상태이상 부여 (type이 ApplyStatus이거나 다른 효과와 함께 사용)
+    public StatusEffectType statusEffectType;
+    public int statusDuration;
+    public int statusPower;                 // 독/화상/재생의 턴당 수치, 강화/약화의 수치
+
     public CardEffect(Board.BoardMode _requiredMode, EffectType _type, int _dmg, TargetLogic _targetlogic,
         RangeInfoSO _effectRange = null, bool _lockCasterForNext = false,
         AreaTargetMode _areaTargetMode = AreaTargetMode.Fixed,
-        RangeInfoSO _targetingRange = null, bool _targetingUsesMovement = false)
+        RangeInfoSO _targetingRange = null, bool _targetingUsesMovement = false,
+        StatusEffectType _statusEffectType = StatusEffectType.None,
+        int _statusDuration = 0, int _statusPower = 0)
     {
         requiredMode = _requiredMode; type = _type; dmg = _dmg; targetlogic = _targetlogic;
         effectRange = _effectRange; lockCasterForNext = _lockCasterForNext; areaTargetMode = _areaTargetMode;
         targetingRange = _targetingRange; targetingUsesMovement = _targetingUsesMovement;
+        statusEffectType = _statusEffectType; statusDuration = _statusDuration; statusPower = _statusPower;
     }
 }

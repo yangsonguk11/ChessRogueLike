@@ -15,6 +15,35 @@ public abstract class Piece : MonoBehaviour
     public int teamID;
     public int shield;
     public RangeInfoSO moveableRange;
+
+    public List<StatusEffect> activeEffects = new List<StatusEffect>();
+
+    public void AddStatusEffect(StatusEffect effect)
+    {
+        StatusEffect existing = activeEffects.Find(e => e.GetType() == effect.GetType());
+        if (existing != null)
+        {
+            existing.duration = Mathf.Max(existing.duration, effect.duration);
+            return;
+        }
+        effect.OnApply(this);
+        activeEffects.Add(effect);
+    }
+
+    public bool IsStunned() => activeEffects.Exists(e => e is StunEffect);
+
+    void ProcessStatusEffects()
+    {
+        for (int i = activeEffects.Count - 1; i >= 0; i--)
+        {
+            bool stillActive = activeEffects[i].OnTurnEnd(this);
+            if (!stillActive)
+            {
+                activeEffects[i].OnRemove(this);
+                activeEffects.RemoveAt(i);
+            }
+        }
+    }
     public virtual void Awake()
     {
         /*
@@ -75,8 +104,9 @@ public abstract class Piece : MonoBehaviour
         shield += damage;
         return shield;
     }
-    public virtual void OnTurnEnd()                 //�� ���� �� �ൿ
+    public virtual void OnTurnEnd()
     {
+        ProcessStatusEffects();
     }
     public virtual void OnTurnEndOther()
     {
