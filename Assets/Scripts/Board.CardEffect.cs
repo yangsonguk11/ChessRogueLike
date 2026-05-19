@@ -11,7 +11,8 @@ public partial class Board
 
     public void UseCard(Card card)
     {
-        ClearSelectedButton();
+        if (card.user == User.Ally)
+            ClearSelectedButton();
         lockedCaster = new Vector2(-1, -1);
         currentActiveCard = card;
         pendingEffects.Clear();
