@@ -173,16 +173,20 @@ public class CardEffect
     public int statusDuration;
     public int statusPower;                 // 독/화상/재생의 턴당 수치, 강화/약화의 수치
 
+    public AnimationClip animationClip;     // null이면 기본 하드코딩 애니메이션 사용
+
     public CardEffect(Board.BoardMode _requiredMode, EffectType _type, int _dmg, TargetLogic _targetlogic,
         RangeInfoSO _effectRange = null, bool _lockCasterForNext = false,
         AreaTargetMode _areaTargetMode = AreaTargetMode.Fixed,
         RangeInfoSO _targetingRange = null, bool _targetingUsesMovement = false,
         StatusEffectType _statusEffectType = StatusEffectType.None,
-        int _statusDuration = 0, int _statusPower = 0)
+        int _statusDuration = 0, int _statusPower = 0,
+        AnimationClip _animationClip = null)
     {
         requiredMode = _requiredMode; type = _type; dmg = _dmg; targetlogic = _targetlogic;
         effectRange = _effectRange; lockCasterForNext = _lockCasterForNext; areaTargetMode = _areaTargetMode;
         targetingRange = _targetingRange; targetingUsesMovement = _targetingUsesMovement;
         statusEffectType = _statusEffectType; statusDuration = _statusDuration; statusPower = _statusPower;
+        animationClip = _animationClip;
     }
 }

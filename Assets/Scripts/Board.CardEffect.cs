@@ -11,6 +11,7 @@ public partial class Board
 
     public void UseCard(Card card)
     {
+        ClearSelectedButton();
         lockedCaster = new Vector2(-1, -1);
         currentActiveCard = card;
         pendingEffects.Clear();
@@ -253,18 +254,18 @@ public partial class Board
         switch (cardEffect.type)
         {
             case EffectType.Move:
-                MovePiece(selectedButton, targetPos);
+                MovePiece(selectedButton, targetPos, cardEffect);
                 break;
             case EffectType.Damage:
-                AttackPiece(selectedButton, targetPos, cardEffect.dmg);
+                AttackPiece(selectedButton, targetPos, cardEffect.dmg, cardEffect);
                 ApplyStatusToTarget(targetPos, cardEffect);
                 break;
             case EffectType.Heal:
-                HealPiece(selectedButton, targetPos, cardEffect.dmg);
+                HealPiece(selectedButton, targetPos, cardEffect.dmg, cardEffect);
                 ApplyStatusToTarget(targetPos, cardEffect);
                 break;
             case EffectType.Shield:
-                ShieldPiece(selectedButton, targetPos, cardEffect.dmg);
+                ShieldPiece(selectedButton, targetPos, cardEffect.dmg, cardEffect);
                 ApplyStatusToTarget(targetPos, cardEffect);
                 break;
             case EffectType.SelfDamage:
@@ -358,15 +359,15 @@ public partial class Board
         switch (cardEffect.type)
         {
             case EffectType.Damage:
-                AreaAttackPiece(selectedButton, targets, cardEffect.dmg);
+                AreaAttackPiece(selectedButton, targets, cardEffect.dmg, cardEffect);
                 ApplyStatusToTargets(targets, cardEffect);
                 break;
             case EffectType.Shield:
-                AreaShieldPiece(targets, cardEffect.dmg);
+                AreaShieldPiece(targets, cardEffect.dmg, cardEffect);
                 ApplyStatusToTargets(targets, cardEffect);
                 break;
             case EffectType.Heal:
-                AreaHealPiece(targets, cardEffect.dmg);
+                AreaHealPiece(targets, cardEffect.dmg, cardEffect);
                 ApplyStatusToTargets(targets, cardEffect);
                 break;
             case EffectType.ApplyStatus:

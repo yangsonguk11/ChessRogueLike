@@ -3,7 +3,7 @@ using UnityEngine;
 
 public partial class Board
 {
-    void MovePiece(Vector2 pos1, Vector2 pos2)
+    void MovePiece(Vector2 pos1, Vector2 pos2, CardEffect cardEffect = null)
     {
         Button button1script = GetButtonScript(pos1);
         Button button2script = GetButtonScript(pos2);
@@ -21,10 +21,15 @@ public partial class Board
                 Piece p2 = piece2.GetComponent<Piece>();
                 if (p1.teamID != p2.teamID)
                     MoveAttack(p1, p2, button1script, button2script);
+                else if (IsLockedCasterActive())
+                    lockedCaster = pos1; // 아군 충돌: 이동 실패, 원래 위치로 복구
             }
             else
             {
-                motionQueue.Enqueue(PieceMoveCor(button1script, button2script, 1f));
+                if (cardEffect?.animationClip != null)
+                    motionQueue.Enqueue(PieceCustomAnimCor(button1script.GetPiece(), cardEffect.animationClip));
+                else
+                    motionQueue.Enqueue(PieceMoveCor(button1script, button2script, 1f));
                 StartCoroutine(ProcessQueue());
             }
         }
@@ -41,12 +46,18 @@ public partial class Board
         if (pScript2.teamID == 0) playerDamagedThisTurn = true;
         Debug.Log(hpLeft);
 
+        Vector2 adjacentPos = GetAdjacentLocation(bScript1.GetLocation(), bScript2.GetLocation());
+
+        // 실제 도착 위치로 lockedCaster 수정: 적 생존 시 adjacentPos, 사망 시 bScript2
+        if (IsLockedCasterActive())
+            lockedCaster = hpLeft <= 0 ? bScript2.GetLocation() : adjacentPos;
+
         motionQueue.Enqueue(MoveAdjacent(bScript1, bScript2, 1f));
         motionQueue.Enqueue(pScript2.DamageText(dmg));
         if (hpLeft <= 0)
         {
             motionQueue.Enqueue(pScript2.DeathCor());
-            motionQueue.Enqueue(PieceMoveCor(GetButtonScript(GetAdjacentLocation(bScript1.GetLocation(), bScript2.GetLocation())), bScript2, 1f));
+            motionQueue.Enqueue(PieceMoveCor(GetButtonScript(adjacentPos), bScript2, 1f));
         }
 
         if (currentActiveCard != null && currentActiveCard.shieldOnMoveAttack && currentActiveCard.moveAttackShieldAmount > 0)
@@ -58,7 +69,7 @@ public partial class Board
         StartCoroutine(ProcessQueue());
     }
 
-    void AttackPiece(Vector2 pos1, Vector2 pos2, int dmg)
+    void AttackPiece(Vector2 pos1, Vector2 pos2, int dmg, CardEffect cardEffect = null)
     {
         Button button1script = GetButtonScript(pos1);
         Button button2script = GetButtonScript(pos2);
@@ -72,7 +83,10 @@ public partial class Board
                 int hpLeft = pScript2.GetDamage(dmg, AttackType.NormalAttack);
                 if (pScript2.teamID == 0) playerDamagedThisTurn = true;
 
-                motionQueue.Enqueue(PieceAttackCor(button1script, button2script, 1f));
+                if (cardEffect?.animationClip != null)
+                    motionQueue.Enqueue(PieceCustomAnimCor(button1script.GetPiece(), cardEffect.animationClip));
+                else
+                    motionQueue.Enqueue(PieceAttackCor(button1script, button2script, 1f));
                 motionQueue.Enqueue(pScript2.DamageText(dmg));
                 if (hpLeft <= 0)
                     motionQueue.Enqueue(pScript2.DeathCor());
@@ -81,7 +95,7 @@ public partial class Board
         StartCoroutine(ProcessQueue());
     }
 
-    void HealPiece(Vector2 pos1, Vector2 pos2, int dmg)
+    void HealPiece(Vector2 pos1, Vector2 pos2, int dmg, CardEffect cardEffect = null)
     {
         Button button1script = GetButtonScript(pos1);
         Button button2script = GetButtonScript(pos2);
@@ -94,7 +108,10 @@ public partial class Board
                 Piece pScript2 = piece2.GetComponent<Piece>();
                 int hpLeft = pScript2.GetHeal(dmg, AttackType.NormalAttack);
 
-                motionQueue.Enqueue(PieceHealCor(button1script, button2script, 1f));
+                if (cardEffect?.animationClip != null)
+                    motionQueue.Enqueue(PieceCustomAnimCor(button1script.GetPiece(), cardEffect.animationClip));
+                else
+                    motionQueue.Enqueue(PieceHealCor(button1script, button2script, 1f));
                 motionQueue.Enqueue(pScript2.HealText(dmg));
                 if (hpLeft <= 0)
                     motionQueue.Enqueue(pScript2.DeathCor());
@@ -116,14 +133,17 @@ public partial class Board
         StartCoroutine(ProcessQueue());
     }
 
-    void AreaAttackPiece(Vector2 casterPos, List<Vector2> targets, int dmg)
+    void AreaAttackPiece(Vector2 casterPos, List<Vector2> targets, int dmg, CardEffect cardEffect = null)
     {
         if (casterPos.x < 0 || casterPos.y < 0 || targets.Count == 0) return;
 
         Button casterButton = GetButtonScript(casterPos);
         if (casterButton.GetPiece() == null) return;
 
-        motionQueue.Enqueue(PieceAreaAttackCor(casterButton, 1f));
+        if (cardEffect?.animationClip != null)
+            motionQueue.Enqueue(PieceCustomAnimCor(casterButton.GetPiece(), cardEffect.animationClip));
+        else
+            motionQueue.Enqueue(PieceAreaAttackCor(casterButton, 1f));
 
         foreach (Vector2 pos in targets)
         {
@@ -138,7 +158,7 @@ public partial class Board
         StartCoroutine(ProcessQueue());
     }
 
-    void AreaShieldPiece(List<Vector2> targets, int dmg)
+    void AreaShieldPiece(List<Vector2> targets, int dmg, CardEffect cardEffect = null)
     {
         Button casterBtn = GetButtonScript(selectedButton);
         foreach (Vector2 pos in targets)
@@ -146,13 +166,16 @@ public partial class Board
             Piece p = GetButtonScript(pos).GetPieceScript();
             if (p == null) continue;
             p.GetShield(dmg, AttackType.NormalAttack);
-            motionQueue.Enqueue(PieceShieldCor(casterBtn, GetButtonScript(pos), 1f));
+            if (cardEffect?.animationClip != null)
+                motionQueue.Enqueue(PieceCustomAnimCor(casterBtn.GetPiece(), cardEffect.animationClip));
+            else
+                motionQueue.Enqueue(PieceShieldCor(casterBtn, GetButtonScript(pos), 1f));
             motionQueue.Enqueue(p.ShieldText(dmg));
         }
         StartCoroutine(ProcessQueue());
     }
 
-    void AreaHealPiece(List<Vector2> targets, int dmg)
+    void AreaHealPiece(List<Vector2> targets, int dmg, CardEffect cardEffect = null)
     {
         Button casterBtn = GetButtonScript(selectedButton);
         foreach (Vector2 pos in targets)
@@ -160,13 +183,16 @@ public partial class Board
             Piece p = GetButtonScript(pos).GetPieceScript();
             if (p == null) continue;
             int hpLeft = p.GetHeal(dmg, AttackType.NormalAttack);
-            motionQueue.Enqueue(PieceHealCor(casterBtn, GetButtonScript(pos), 1f));
+            if (cardEffect?.animationClip != null)
+                motionQueue.Enqueue(PieceCustomAnimCor(casterBtn.GetPiece(), cardEffect.animationClip));
+            else
+                motionQueue.Enqueue(PieceHealCor(casterBtn, GetButtonScript(pos), 1f));
             motionQueue.Enqueue(p.HealText(dmg));
         }
         StartCoroutine(ProcessQueue());
     }
 
-    void ShieldPiece(Vector2 pos1, Vector2 pos2, int dmg)
+    void ShieldPiece(Vector2 pos1, Vector2 pos2, int dmg, CardEffect cardEffect = null)
     {
         Button button1script = GetButtonScript(pos1);
         Button button2script = GetButtonScript(pos2);
@@ -179,7 +205,10 @@ public partial class Board
                 Piece pScript2 = piece2.GetComponent<Piece>();
                 int hpLeft = pScript2.GetShield(dmg, AttackType.NormalAttack);
 
-                motionQueue.Enqueue(PieceShieldCor(button1script, button2script, 1f));
+                if (cardEffect?.animationClip != null)
+                    motionQueue.Enqueue(PieceCustomAnimCor(button1script.GetPiece(), cardEffect.animationClip));
+                else
+                    motionQueue.Enqueue(PieceShieldCor(button1script, button2script, 1f));
                 motionQueue.Enqueue(pScript2.ShieldText(dmg));
                 if (hpLeft <= 0)
                     motionQueue.Enqueue(pScript2.DeathCor());
