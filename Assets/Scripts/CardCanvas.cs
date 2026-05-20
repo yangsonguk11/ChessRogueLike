@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 using System;
 using System.Linq;
@@ -17,6 +18,9 @@ public class CardCanvas : MonoBehaviour
     [SerializeField] GameObject HandZone;
     [SerializeField] RectTransform CardNowUsingPos;
     [SerializeField] RectTransform DiscardZone;
+    [SerializeField] RectTransform DeckZone;
+    [SerializeField] RectTransform ExileZone;
+    public List<RectTransform> Exilecards = new List<RectTransform>();
     [SerializeField] TextMeshProUGUI CurrentEnergyText;
     [SerializeField] float radius; // ���� ������ (Ŭ���� �ϸ���)
     [SerializeField] float angleBetween;  // ī�� ������ ����
@@ -37,7 +41,7 @@ public class CardCanvas : MonoBehaviour
             if(obj != null)
             {
                 Discardcards.Add(obj.GetComponent<RectTransform>());
-                obj.GetComponent<RectTransform>().position = DiscardZone.position;
+                obj.GetComponent<RectTransform>().position = DeckZone.position;
             }
         }
         AlignCards();
@@ -70,10 +74,9 @@ public class CardCanvas : MonoBehaviour
         nowusingCard = cards[handnum];
         nowusingCard.GetComponent<Card>().handNumber = -1;
         cards.RemoveAt(handnum);
-        nowusingCard.position = CardNowUsingPos.position;
-        nowusingCard.localRotation = Quaternion.Euler(0, 0, 0);
+        isCardEffecting = true;
         AlignCards();
-        board.UseCard(nowusingCard.GetComponent<Card>());
+        StartCoroutine(AnimateCardToUsingPos(nowusingCard));
     }
 
     public void ClearnowusingCard()         //������� ī�� �ʱ�ȭ
@@ -111,22 +114,85 @@ public class CardCanvas : MonoBehaviour
     }
     public void DrawTurnStartCards()
     {
-        DrawCard();
-        DrawCard();
-        DrawCard();
-        DrawCard();
-        DrawCard();
+        StartCoroutine(DrawCardsWithDelay(5, 0.15f));
+    }
+
+    IEnumerator DrawCardsWithDelay(int count, float delay)
+    {
+        var newCards = new List<RectTransform>();
+        for (int i = 0; i < count; i++)
+        {
+            if (Deckcards.Count == 0) DiscardtoDeck();
+            if (Deckcards.Count == 0) break;
+            var card = Deckcards.Dequeue();
+            cards.Add(card);
+            newCards.Add(card);
+        }
+        if (newCards.Count == 0) yield break;
+
+        AlignCards();
+
+        var targetPositions = new List<Vector3>();
+        var targetRotations = new List<Quaternion>();
+        foreach (var c in newCards)
+        {
+            targetPositions.Add(c.position);
+            targetRotations.Add(c.localRotation);
+            c.position = DeckZone.position;
+            c.localRotation = Quaternion.identity;
+        }
+
+        for (int i = 0; i < newCards.Count; i++)
+        {
+            StartCoroutine(MoveCard(newCards[i], targetPositions[i], targetRotations[i], 0.3f));
+            if (i < newCards.Count - 1)
+                yield return new WaitForSeconds(delay);
+        }
     }
     public void FinishUseCard()             //���� ī�� ��� ����
     {
         if (nowusingCard)
         {
-            HandtoDiscard(nowusingCard);
             currentenergy -= nowusingCard.GetComponent<Card>().Cost;
+            RectTransform cardToDiscard = nowusingCard;
+            nowusingCard = null;
+            StartCoroutine(AnimateCardToDiscard(cardToDiscard));
         }
+        else
+        {
+            isCardEffecting = false;
+        }
+    }
 
-        nowusingCard = null;
+    IEnumerator AnimateCardToUsingPos(RectTransform card)
+    {
+        yield return StartCoroutine(MoveCard(card, CardNowUsingPos.position, Quaternion.identity, 0.35f));
+        board.UseCard(card.GetComponent<Card>());
+    }
+
+    IEnumerator AnimateCardToDiscard(RectTransform card)
+    {
+        yield return StartCoroutine(MoveCard(card, DiscardZone.position, Quaternion.identity, 0.15f));
+        Discardcards.Add(card);
         isCardEffecting = false;
+    }
+
+    IEnumerator MoveCard(RectTransform card, Vector3 targetWorldPos, Quaternion targetLocalRot, float duration)
+    {
+        Vector3 startPos = card.position;
+        Quaternion startRot = card.localRotation;
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            float smooth = 1f - Mathf.Pow(1f - t, 3f);
+            card.position = Vector3.Lerp(startPos, targetWorldPos, smooth);
+            card.localRotation = Quaternion.Lerp(startRot, targetLocalRot, smooth);
+            yield return null;
+        }
+        card.position = targetWorldPos;
+        card.localRotation = targetLocalRot;
     }
     private void UpdateCurrentEnergy()
     {
@@ -143,9 +209,15 @@ public class CardCanvas : MonoBehaviour
         }
         if (Deckcards.Count != 0)
         {
-            cards.Add(Deckcards.Dequeue());
+            RectTransform newCard = Deckcards.Dequeue();
+            cards.Add(newCard);
+            AlignCards();
+            Vector3 targetPos = newCard.position;
+            Quaternion targetRot = newCard.localRotation;
+            newCard.position = DeckZone.position;
+            newCard.localRotation = Quaternion.identity;
+            StartCoroutine(MoveCard(newCard, targetPos, targetRot, 0.3f));
         }
-        AlignCards();
     }
 
     void DiscardtoDeck()
@@ -160,6 +232,7 @@ public class CardCanvas : MonoBehaviour
         // 2. ���� ī����� ��(Queue)�� ������� �ֱ�
         foreach (var card in shuffledCards)
         {
+            card.position = DeckZone.position;
             Deckcards.Enqueue(card);
         }
 
@@ -170,6 +243,39 @@ public class CardCanvas : MonoBehaviour
     public void GetMaxEnergy()
     {
         currentenergy = maxenergy;
+    }
+
+    public void ExileHandCard(int handnum)
+    {
+        if (handnum < 0 || handnum >= cards.Count) return;
+        ExileCard(cards[handnum]);
+    }
+
+    public void ExileCard(RectTransform card)
+    {
+        bool wasInHand = cards.Remove(card);
+        if (!wasInHand)
+        {
+            if (!Discardcards.Remove(card))
+            {
+                var deckList = Deckcards.ToList();
+                if (deckList.Remove(card))
+                    Deckcards = new Queue<RectTransform>(deckList);
+            }
+        }
+        if (nowusingCard == card)
+            nowusingCard = null;
+
+        Exilecards.Add(card);
+        StartCoroutine(AnimateCardToExile(card));
+
+        if (wasInHand)
+            AlignCards();
+    }
+
+    IEnumerator AnimateCardToExile(RectTransform card)
+    {
+        yield return StartCoroutine(MoveCard(card, ExileZone.position, Quaternion.identity, 0.25f));
     }
     [ContextMenu("Align Cards")] // �ν����� �޴����� �ٷ� ���� ����
     public void AlignCards()
