@@ -3880,6 +3880,22 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: cardPrefabs.Array.size
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: spritesPrefabs.Array.size
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: 'cardPrefabs.Array.data[10]'
+      value: 
+      objectReference: {fileID: 8950236184682274632, guid: d3acc7b523c7f9b41bc46e106a7faae3, type: 3}
+    - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: 'spritesPrefabs.Array.data[10]'
+      value: 
+      objectReference: {fileID: 8983308741282738250, guid: 815495e0286df3a42a7993559aae1d89, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

@@ -57,6 +57,7 @@ public class DataManager : MonoBehaviour
                 "Defense",
                 "Defense",
                 "Defense",
+                "FlameThrowingCard",
             };
 
             PieceData defaultPiece = new PieceData

@@ -36,6 +36,7 @@ public abstract class Piece : MonoBehaviour
     {
         for (int i = activeEffects.Count - 1; i >= 0; i--)
         {
+            if (activeEffects[i] is TurnEffect) continue; // Board가 처리
             bool stillActive = activeEffects[i].OnTurnEnd(this);
             if (!stillActive)
             {
@@ -116,25 +117,33 @@ public abstract class Piece : MonoBehaviour
     {
 
     }
+    bool isDeathScheduled;
+
     public IEnumerator DamageText(int damage)
     {
         yield return new WaitForSeconds(1f);
-        pieceCanvas.InvokeDamageText(damage);
+        if (this != null && pieceCanvas != null)
+            pieceCanvas.InvokeDamageText(damage);
     }
 
     public IEnumerator HealText(int damage)
     {
         yield return new WaitForSeconds(1f);
-        pieceCanvas.InvokeDamageText(damage);
+        if (this != null && pieceCanvas != null)
+            pieceCanvas.InvokeDamageText(damage);
     }
+
     public IEnumerator ShieldText(int damage)
     {
         yield return new WaitForSeconds(1f);
-        pieceCanvas.InvokeDamageText(damage);
+        if (this != null && pieceCanvas != null)
+            pieceCanvas.InvokeDamageText(damage);
     }
 
     public IEnumerator DeathCor()
     {
+        if (isDeathScheduled) yield break;
+        isDeathScheduled = true;
         yield return new WaitForSeconds(1f);
         Destroy(gameObject);
     }

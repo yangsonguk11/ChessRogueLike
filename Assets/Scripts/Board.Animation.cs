@@ -7,6 +7,17 @@ public partial class Board
     Queue<IEnumerator> motionQueue = new Queue<IEnumerator>();
     public bool queuecoroutineworking;
 
+    Queue<IEnumerator> turnEffectQueue = new Queue<IEnumerator>();
+    public bool turnEffectQueueRunning;
+
+    IEnumerator ProcessTurnEffectQueue()
+    {
+        turnEffectQueueRunning = true;
+        while (turnEffectQueue.Count > 0)
+            yield return StartCoroutine(turnEffectQueue.Dequeue());
+        turnEffectQueueRunning = false;
+    }
+
     IEnumerator ProcessQueue()
     {
         queuecoroutineworking = true;

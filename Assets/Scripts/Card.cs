@@ -155,7 +155,7 @@ public abstract class Card : MonoBehaviour, ISelectable
     }
 
 }
-public enum EffectType { Move, Damage, Shield, Buff, Heal, SelfDamage, Draw, ApplyStatus }
+public enum EffectType { Move, Damage, Shield, Buff, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect }
 public class CardEffect
 {
     public Board.BoardMode requiredMode;
@@ -174,6 +174,10 @@ public class CardEffect
     public int statusPower;                 // 독/화상/재생의 턴당 수치, 강화/약화의 수치
 
     public AnimationClip animationClip;     // null이면 기본 하드코딩 애니메이션 사용
+
+    // ApplyTurnEffect 타입에서 사용: 턴 종료마다 실행할 CardEffect와 지속 턴 수
+    public CardEffect onTurnEndEffect;
+    public int turnDuration;
 
     public CardEffect(Board.BoardMode _requiredMode, EffectType _type, int _dmg, TargetLogic _targetlogic,
         RangeInfoSO _effectRange = null, bool _lockCasterForNext = false,

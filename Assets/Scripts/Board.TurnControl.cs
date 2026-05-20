@@ -6,6 +6,7 @@ public partial class Board
 {
     void TurnStart()
     {
+        ProcessTeamTurnEffects(0, TurnPhase.OwnTurnStart);
         playerMovedThisTurn = false;
         playerDamagedThisTurn = false;
         CardCanvas.instance.DrawTurnStartCards();
@@ -15,6 +16,7 @@ public partial class Board
     public void AllyTurnEnd()
     {
         if (!boardReady) return;
+        ProcessTeamTurnEffects(0, TurnPhase.OwnTurnEnd);
         TurnEnd(0);
         FinishCardUsage();
         ClearSelectedButton();
@@ -24,6 +26,7 @@ public partial class Board
     public void EnemyTurnEnd()
     {
         if (!boardReady) return;
+        ProcessTeamTurnEffects(1, TurnPhase.OwnTurnEnd);
         TurnEnd(1);
         ClearSelectedButton();
     }
@@ -71,7 +74,7 @@ public partial class Board
             if (card != null && !enemy.IsStunned())
             {
                 UseCard(card);
-                yield return new WaitUntil(() => pendingEffects.Count == 0 && !queuecoroutineworking);
+                yield return new WaitUntil(() => pendingEffects.Count == 0 && !queuecoroutineworking && !turnEffectQueueRunning);
                 enemy.ChangeMove();
                 enemy.ActionText();
             }

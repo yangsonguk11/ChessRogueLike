@@ -278,10 +278,21 @@ public partial class Board
             case EffectType.ApplyStatus:
                 ApplyStatusToTarget(targetPos, cardEffect);
                 break;
+            case EffectType.ApplyTurnEffect:
+                ApplyTurnEffectToTarget(targetPos, cardEffect);
+                break;
             default:
                 Debug.LogError("효과 타입을 찾지 못했습니다");
                 break;
         }
+    }
+
+    void ApplyTurnEffectToTarget(Vector2 targetPos, CardEffect cardEffect)
+    {
+        if (cardEffect.onTurnEndEffect == null) return;
+        Piece target = GetButtonScript(targetPos).GetPieceScript();
+        if (target == null) return;
+        target.AddStatusEffect(new TurnEffect(TurnPhase.OwnTurnEnd, cardEffect.onTurnEndEffect, cardEffect.turnDuration));
     }
 
     void ApplyStatusToTarget(Vector2 targetPos, CardEffect cardEffect)
@@ -290,7 +301,8 @@ public partial class Board
         if (targetPos.x < 0 || targetPos.y < 0) return;
         Piece target = GetButtonScript(targetPos).GetPieceScript();
         if (target == null) return;
-        StatusEffect effect = CreateStatusEffect(cardEffect.statusEffectType, cardEffect.statusDuration, cardEffect.statusPower);
+        StatusEffect effect = CreateStatusEffect(cardEffect.statusEffectType, cardEffect.statusDuration, cardEffect.statusPower,
+            cardEffect.effectRange, cardEffect.targetlogic);
         if (effect != null)
             target.AddStatusEffect(effect);
     }
@@ -302,23 +314,33 @@ public partial class Board
         {
             Piece target = GetButtonScript(pos).GetPieceScript();
             if (target == null) continue;
-            StatusEffect effect = CreateStatusEffect(cardEffect.statusEffectType, cardEffect.statusDuration, cardEffect.statusPower);
+            StatusEffect effect = CreateStatusEffect(cardEffect.statusEffectType, cardEffect.statusDuration, cardEffect.statusPower,
+                cardEffect.effectRange, cardEffect.targetlogic);
             if (effect != null)
                 target.AddStatusEffect(effect);
         }
     }
 
-    StatusEffect CreateStatusEffect(StatusEffectType type, int duration, int power)
+    StatusEffect CreateStatusEffect(StatusEffectType type, int duration, int power,
+        RangeInfoSO range = null, TargetLogic targetLogic = TargetLogic.AllEnemiesInRange)
     {
         return type switch
         {
-            StatusEffectType.Poison    => new PoisonEffect(duration, power),
-            StatusEffectType.Burning   => new BurningEffect(duration, power),
-            StatusEffectType.Regen     => new RegenEffect(duration, power),
-            StatusEffectType.Stun      => new StunEffect(duration),
-            StatusEffectType.Strengthen => new StrengthenEffect(duration, power),
-            StatusEffectType.Weaken    => new WeakenEffect(duration, power),
-            _                          => null,
+            StatusEffectType.Poison             => new PoisonEffect(duration, power),
+            StatusEffectType.Burning            => new BurningEffect(duration, power),
+            StatusEffectType.Regen              => new RegenEffect(duration, power),
+            StatusEffectType.Stun               => new StunEffect(duration),
+            StatusEffectType.Strengthen         => new StrengthenEffect(duration, power),
+            StatusEffectType.Weaken             => new WeakenEffect(duration, power),
+            StatusEffectType.TurnDamageStart    => new TurnEffect(TurnPhase.OwnTurnStart,
+                new CardEffect(BoardMode.Inspect, EffectType.Damage, power, TargetLogic.self), duration),
+            StatusEffectType.TurnDamageEnd      => new TurnEffect(TurnPhase.OwnTurnEnd,
+                new CardEffect(BoardMode.Inspect, EffectType.Damage, power, TargetLogic.self), duration),
+            StatusEffectType.TurnAoEDamageStart => new TurnEffect(TurnPhase.OwnTurnStart,
+                new CardEffect(BoardMode.Inspect, EffectType.Damage, power, TargetLogic.AllEnemiesInRange, range), duration),
+            StatusEffectType.TurnAoEDamageEnd   => new TurnEffect(TurnPhase.OwnTurnEnd,
+                new CardEffect(BoardMode.Inspect, EffectType.Damage, power, TargetLogic.AllEnemiesInRange, range), duration),
+            _                                   => null,
         };
     }
 

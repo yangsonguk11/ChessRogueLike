@@ -1,4 +1,6 @@
 using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
 
 public enum TurnState { Player, Enemy, Processing }
 public class TurnManager : MonoBehaviour
@@ -53,10 +55,13 @@ public class TurnManager : MonoBehaviour
     public void EndPlayerTurn()
     {
         if (currentState != TurnState.Player) return;
+        StartCoroutine(EndPlayerTurnCoroutine());
+    }
 
-        // ���忡 ���õ� �͵� ����
+    IEnumerator EndPlayerTurnCoroutine()
+    {
         board.SendMessage("AllyTurnEnd");
-
+        yield return new WaitUntil(() => !board.turnEffectQueueRunning);
         StartEnemyTurn();
     }
 
