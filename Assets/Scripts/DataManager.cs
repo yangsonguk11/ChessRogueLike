@@ -56,8 +56,6 @@ public class DataManager : MonoBehaviour
                 "DefensiveStanceCard",
                 "DirectionalAttackCard",
                 "DrawCard",
-                "EnemyAttackCard",
-                "EnemyMoveCard",
                 "FlameThrowingCard",
                 "HealCard",
                 "HeavyAttackCard",
