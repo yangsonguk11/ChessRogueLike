@@ -47,16 +47,28 @@ public class DataManager : MonoBehaviour
             if (currentData.visitedNodeX == null) currentData.visitedNodeX = new List<int>();
             currentData.deckCardIDs = new List<string>()
             {
-                "MoveCard",
-                "MoveCard",
-                "MoveCard",
                 "AttackCard",
-                "AttackCard",
-                "AttackCard",
+                "MoveCard",
+                "ChargeCard",
+                "ColDamageAttackCard",
+                "ColDamageUpCard",
                 "DefenseCard",
-                "DefenseCard",
-                "DefenseCard",
+                "DefensiveStanceCard",
+                "DirectionalAttackCard",
+                "DrawCard",
+                "EnemyAttackCard",
+                "EnemyMoveCard",
                 "FlameThrowingCard",
+                "HealCard",
+                "HeavyAttackCard",
+                "HeavyShieldCard",
+                "LifeDrainCard",
+                "MoveAndAttackCard",
+                "MoveAndDrawCard",
+                "PersistentShieldCard",
+                "SafeMoveCard",
+                "ShieldCycleCard",
+                "TempColDamageUpCard",
             };
 
             PieceData defaultPiece = new PieceData
