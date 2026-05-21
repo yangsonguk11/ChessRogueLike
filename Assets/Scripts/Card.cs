@@ -3,8 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using TMPro;
 
-enum CardType
+public enum CardType
 {
     Attack,
     Action,
@@ -43,19 +44,43 @@ public abstract class Card : MonoBehaviour, ISelectable
 {
     public List<RangeInfoSO> effectRange;
     public string Name, Description;
+    public virtual string EffectDescription => "";
     public int Cost;
-    CardType type;
+    public CardType type;
     TargetType target;
     public List<CardEffect> effects;
     public User user;
     public bool shieldOnMoveAttack;
     public int moveAttackShieldAmount;
     public bool blocksMovementAfterUse; // 사용 후 이번 턴 이동 불가
+    public bool exileOnUse;             // 사용 후 소멸
+
+    [Header("Card View")]
+    [SerializeField] TextMeshProUGUI costText;
+    [SerializeField] TextMeshProUGUI nameText;
+    [SerializeField] TextMeshProUGUI descriptionText;
+    [SerializeField] TextMeshProUGUI typeText;
+    [SerializeField] TextMeshProUGUI effectText;
+
     public virtual void Awake()
     {
         defaultScale = transform.localScale;
         effects = new List<CardEffect>();
         cardCanvas = GameObject.Find("CardCanvas");
+    }
+
+    void Start()
+    {
+        RefreshView();
+    }
+
+    public void RefreshView()
+    {
+        costText?.SetText(Cost.ToString());
+        nameText?.SetText(Name);
+        descriptionText?.SetText(Description);
+        typeText?.SetText(type.ToString());
+        effectText?.SetText(EffectDescription);
     }
 
     public event Action OnSelected;
@@ -175,9 +200,10 @@ public class CardEffect
 
     public AnimationClip animationClip;     // null이면 기본 하드코딩 애니메이션 사용
 
-    // ApplyTurnEffect 타입에서 사용: 턴 종료마다 실행할 CardEffect와 지속 턴 수
+    // ApplyTurnEffect 타입에서 사용: 지정한 타이밍에 실행할 CardEffect와 지속 턴 수
     public CardEffect onTurnEndEffect;
     public int turnDuration;
+    public TurnPhase turnPhase = TurnPhase.OwnTurnEnd;
 
     public CardEffect(Board.BoardMode _requiredMode, EffectType _type, int _dmg, TargetLogic _targetlogic,
         RangeInfoSO _effectRange = null, bool _lockCasterForNext = false,

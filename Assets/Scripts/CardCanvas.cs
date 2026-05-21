@@ -149,19 +149,41 @@ public class CardCanvas : MonoBehaviour
                 yield return new WaitForSeconds(delay);
         }
     }
+    public void RefreshAllCardViews()
+    {
+        foreach (var rt in cards)
+            rt.GetComponent<Card>()?.RefreshView();
+    }
+
     public void FinishUseCard()             //���� ī�� ��� ����
     {
+        RefreshAllCardViews();
         if (nowusingCard)
         {
-            currentenergy -= nowusingCard.GetComponent<Card>().Cost;
-            RectTransform cardToDiscard = nowusingCard;
+            Card card = nowusingCard.GetComponent<Card>();
+            currentenergy -= card.Cost;
+            RectTransform usedCard = nowusingCard;
             nowusingCard = null;
-            StartCoroutine(AnimateCardToDiscard(cardToDiscard));
+            if (card.exileOnUse)
+            {
+                Exilecards.Add(usedCard);
+                StartCoroutine(AnimateCardToExileAndFinish(usedCard));
+            }
+            else
+            {
+                StartCoroutine(AnimateCardToDiscard(usedCard));
+            }
         }
         else
         {
             isCardEffecting = false;
         }
+    }
+
+    IEnumerator AnimateCardToExileAndFinish(RectTransform card)
+    {
+        yield return StartCoroutine(MoveCard(card, ExileZone.position, Quaternion.identity, 0.25f));
+        isCardEffecting = false;
     }
 
     IEnumerator AnimateCardToUsingPos(RectTransform card)

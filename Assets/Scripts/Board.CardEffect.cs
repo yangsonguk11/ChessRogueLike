@@ -292,7 +292,7 @@ public partial class Board
         if (cardEffect.onTurnEndEffect == null) return;
         Piece target = GetButtonScript(targetPos).GetPieceScript();
         if (target == null) return;
-        target.AddStatusEffect(new TurnEffect(TurnPhase.OwnTurnEnd, cardEffect.onTurnEndEffect, cardEffect.turnDuration));
+        target.AddStatusEffect(new TurnEffect(cardEffect.turnPhase, cardEffect.onTurnEndEffect, cardEffect.turnDuration));
     }
 
     void ApplyStatusToTarget(Vector2 targetPos, CardEffect cardEffect)

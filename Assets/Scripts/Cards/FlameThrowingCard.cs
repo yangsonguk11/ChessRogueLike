@@ -28,6 +28,9 @@ public class FlameThrowingCard : Card
         effects.Add(cf);
     }
 
+    public override string EffectDescription =>
+        $"턴 종료 시 주변 {effects[0].onTurnEndEffect.dmg} 데미지, {effects[0].turnDuration}턴 지속";
+
     public override bool CanUse() => true;
 
     public override void Execute()
