@@ -31,6 +31,7 @@ public class CardCanvas : MonoBehaviour
     public int maxenergy = 3;
     RectTransform nowusingCard;
     public bool isCardEffecting;
+    Coroutine pendingCardCoroutine;
     private void Awake()
     {
         if (instance == null) instance = this;
@@ -68,15 +69,21 @@ public class CardCanvas : MonoBehaviour
         Debug.Log(isCardEffecting);
         Debug.Log(TurnManager.instance.currentState != TurnState.Player);
         Card card = cards[handnum].GetComponent<Card>();
-        if (card.Cost > currentenergy || isCardEffecting || TurnManager.instance.currentState != TurnState.Player || !card.CanUse())
+        // isCardEffecting이면서 nowusingCard가 없으면 보드가 실제 효과 처리 중 → 차단
+        // nowusingCard가 있으면 아직 애니메이션/대기 중이므로 교체 허용
+        if (card.Cost > currentenergy || (isCardEffecting && nowusingCard == null) || TurnManager.instance.currentState != TurnState.Player || !card.CanUse())
             return;
+        if (pendingCardCoroutine != null)
+        {
+            StopCoroutine(pendingCardCoroutine);
+            pendingCardCoroutine = null;
+        }
         ClearnowusingCard();
         nowusingCard = cards[handnum];
         nowusingCard.GetComponent<Card>().handNumber = -1;
         cards.RemoveAt(handnum);
-        isCardEffecting = true;
         AlignCards();
-        StartCoroutine(AnimateCardToUsingPos(nowusingCard));
+        pendingCardCoroutine = StartCoroutine(AnimateCardToUsingPos(nowusingCard));
     }
 
     public void ClearnowusingCard()         //������� ī�� �ʱ�ȭ
@@ -189,6 +196,7 @@ public class CardCanvas : MonoBehaviour
     IEnumerator AnimateCardToUsingPos(RectTransform card)
     {
         yield return StartCoroutine(MoveCard(card, CardNowUsingPos.position, Quaternion.identity, 0.35f));
+        pendingCardCoroutine = null;
         board.UseCard(card.GetComponent<Card>());
     }
 
@@ -265,6 +273,72 @@ public class CardCanvas : MonoBehaviour
     public void GetMaxEnergy()
     {
         currentenergy = maxenergy;
+    }
+
+    public void HandtoDiscardCount(int count)
+    {
+        int n = (count <= 0) ? cards.Count : Mathf.Min(count, cards.Count);
+        for (int i = 0; i < n; i++)
+        {
+            if (cards.Count == 0) break;
+            int idx = UnityEngine.Random.Range(0, cards.Count);
+            HandtoDiscard(cards[idx]);
+        }
+        AlignCards();
+    }
+
+    public void HandtoDeckCount(int count)
+    {
+        int n = (count <= 0) ? cards.Count : Mathf.Min(count, cards.Count);
+        var handSnapshot = new List<RectTransform>(cards);
+        for (int i = 0; i < n && handSnapshot.Count > 0; i++)
+        {
+            int idx = UnityEngine.Random.Range(0, handSnapshot.Count);
+            RectTransform card = handSnapshot[idx];
+            handSnapshot.RemoveAt(idx);
+            cards.Remove(card);
+            card.position = DeckZone.position;
+            Deckcards.Enqueue(card);
+        }
+        var list = Deckcards.ToList().OrderBy(x => UnityEngine.Random.value).ToList();
+        Deckcards = new Queue<RectTransform>(list);
+        AlignCards();
+    }
+
+    public void HandtoExileCount(int count)
+    {
+        int n = (count <= 0) ? cards.Count : Mathf.Min(count, cards.Count);
+        var handSnapshot = new List<RectTransform>(cards);
+        var toExile = new List<RectTransform>();
+        for (int i = 0; i < n && handSnapshot.Count > 0; i++)
+        {
+            int idx = UnityEngine.Random.Range(0, handSnapshot.Count);
+            toExile.Add(handSnapshot[idx]);
+            handSnapshot.RemoveAt(idx);
+        }
+        foreach (var card in toExile)
+            ExileCard(card);
+    }
+
+    public void HandtoDeckTop(int count)
+    {
+        int n = (count <= 0) ? cards.Count : Mathf.Min(count, cards.Count);
+        var handSnapshot = new List<RectTransform>(cards);
+        var toReturn = new List<RectTransform>();
+        for (int i = 0; i < n && handSnapshot.Count > 0; i++)
+        {
+            int idx = UnityEngine.Random.Range(0, handSnapshot.Count);
+            toReturn.Add(handSnapshot[idx]);
+            handSnapshot.RemoveAt(idx);
+        }
+        foreach (var card in toReturn)
+        {
+            cards.Remove(card);
+            card.position = DeckZone.position;
+        }
+        var newDeck = toReturn.Concat(Deckcards.ToList()).ToList();
+        Deckcards = new Queue<RectTransform>(newDeck);
+        AlignCards();
     }
 
     public void ExileHandCard(int handnum)

@@ -8,8 +8,9 @@ public class DirectionalAttackCard : Card
     public override void Awake()
     {
         base.Awake();
+        Name = "DirectionalAttackCard";
         Cost = 2;
-
+        type = CardType.Attack;
         CardEffect cf = new CardEffect(
             Board.BoardMode.targeting,
             EffectType.Damage,
@@ -21,6 +22,8 @@ public class DirectionalAttackCard : Card
         );
         effects.Add(cf);
     }
+
+    public override string EffectDescription => $"방향을 선택해 범위 내 적에게 {effects[0].dmg} 피해를 줍니다.";
 
     public override bool CanUse() => true;
 

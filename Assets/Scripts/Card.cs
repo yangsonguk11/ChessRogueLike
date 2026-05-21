@@ -8,7 +8,19 @@ using TMPro;
 public enum CardType
 {
     Attack,
-    Action,
+    Skill,
+    Move,
+}
+
+public static class CardTypeExtensions
+{
+    public static string ToDisplayString(this CardType type) => type switch
+    {
+        CardType.Attack => "공격",
+        CardType.Skill  => "스킬",
+        CardType.Move   => "이동",
+        _ => type.ToString()
+    };
 }
 
 enum TargetType
@@ -79,7 +91,7 @@ public abstract class Card : MonoBehaviour, ISelectable
         costText?.SetText(Cost.ToString());
         nameText?.SetText(Name);
         descriptionText?.SetText(Description);
-        typeText?.SetText(type.ToString());
+        typeText?.SetText(type.ToDisplayString());
         effectText?.SetText(EffectDescription);
     }
 
@@ -180,7 +192,7 @@ public abstract class Card : MonoBehaviour, ISelectable
     }
 
 }
-public enum EffectType { Move, Damage, Shield, Buff, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect }
+public enum EffectType { Move, Damage, Shield, Buff, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop }
 public class CardEffect
 {
     public Board.BoardMode requiredMode;
@@ -198,6 +210,9 @@ public class CardEffect
     public int statusDuration;
     public int statusPower;                 // 독/화상/재생의 턴당 수치, 강화/약화의 수치
 
+    public bool useColDamageAsDmg;           // true면 dmg 대신 시전자의 colDamage 사용
+    public bool noMoveAttack;               // true면 이동 시 충돌 공격 불가
+    public int healOnHit;                   // 적을 공격할 때마다 시전자 회복량
     public AnimationClip animationClip;     // null이면 기본 하드코딩 애니메이션 사용
 
     // ApplyTurnEffect 타입에서 사용: 지정한 타이밍에 실행할 CardEffect와 지속 턴 수

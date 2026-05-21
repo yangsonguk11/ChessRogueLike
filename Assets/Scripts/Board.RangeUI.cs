@@ -52,7 +52,26 @@ public partial class Board
                 effectRange = currentEffect.effectRange.GetAbleRange();
         }
         ShowMovableButtons(GetButtonScript(selectedButton).GetPiece(), effectRange);
+
+        if (pendingEffects.Count > 0 && pendingEffects.Peek().type == EffectType.Move && pendingEffects.Peek().noMoveAttack)
+            FilterEnemyOccupiedFromMovable();
+
         ShowButtonInfo(selectedButton);
+    }
+
+    void FilterEnemyOccupiedFromMovable()
+    {
+        Piece caster = GetButtonScript(selectedButton).GetPieceScript();
+        if (caster == null) return;
+        for (int i = selectedButtonMovable.Count - 1; i >= 0; i--)
+        {
+            Piece p = GetButtonScript(selectedButtonMovable[i]).GetPieceScript();
+            if (p != null && p.teamID != caster.teamID)
+            {
+                GetButtonScript(selectedButtonMovable[i]).RangeOff();
+                selectedButtonMovable.RemoveAt(i);
+            }
+        }
     }
 
     void OnUnSelectBoard()

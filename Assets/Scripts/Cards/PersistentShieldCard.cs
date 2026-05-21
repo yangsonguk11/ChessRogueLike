@@ -7,7 +7,7 @@ public class PersistentShieldCard : Card
         base.Awake();
         Name = "PersistentShieldCard";
         Cost = 2;
-        type = CardType.Action;
+        type = CardType.Skill;
 
         // 즉시 방어도 부여
         effects.Add(new CardEffect(
@@ -16,7 +16,7 @@ public class PersistentShieldCard : Card
             4,
             TargetLogic.self,
             effectRange[0],
-            lockCasterForNext: true
+            true
         ));
 
         // 다음 아군 턴 시작 시 방어도 부여 (1턴 후 소멸)
@@ -40,7 +40,7 @@ public class PersistentShieldCard : Card
     }
 
     public override string EffectDescription =>
-        $"방어도 {effects[0].dmg} 부여, 다음 턴 시작 시 방어도 {effects[1].onTurnEndEffect.dmg} 추가";
+        $"방어도 {effects[0].dmg}를 부여하고, 다음 턴 시작 시 방어도 {effects[1].onTurnEndEffect.dmg}를 추가로 부여합니다.";
 
     public override bool CanUse() => true;
 

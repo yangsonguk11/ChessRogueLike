@@ -98,6 +98,9 @@ public partial class Board
                 target.GetShield(ce.dmg, AttackType.NormalAttack);
                 turnEffectQueue.Enqueue(target.ShieldText(ce.dmg));
                 break;
+            case EffectType.ColDamageUp:
+                target.colDamage += ce.dmg;
+                break;
         }
     }
 }

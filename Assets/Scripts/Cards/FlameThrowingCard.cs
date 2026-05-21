@@ -7,7 +7,7 @@ public class FlameThrowingCard : Card
         base.Awake();
         Name = "FlameThrowingCard";
         Cost = 1;
-
+        type = CardType.Skill;
         CardEffect cf = new CardEffect(
             Board.BoardMode.targeting,
             EffectType.ApplyTurnEffect,
@@ -29,7 +29,7 @@ public class FlameThrowingCard : Card
     }
 
     public override string EffectDescription =>
-        $"턴 종료 시 주변 {effects[0].onTurnEndEffect.dmg} 데미지, {effects[0].turnDuration}턴 지속";
+        $"턴 종료 시 주변에 {effects[0].onTurnEndEffect.dmg} 피해를 줍니다. ({effects[0].turnDuration}턴 지속)";
 
     public override bool CanUse() => true;
 

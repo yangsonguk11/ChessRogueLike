@@ -19,7 +19,7 @@ public partial class Board
             {
                 Piece p1 = button1script.GetPiece().GetComponent<Piece>();
                 Piece p2 = piece2.GetComponent<Piece>();
-                if (p1.teamID != p2.teamID)
+                if (p1.teamID != p2.teamID && !(cardEffect?.noMoveAttack ?? false))
                     MoveAttack(p1, p2, button1script, button2script);
                 else if (IsLockedCasterActive())
                     lockedCaster = pos1; // 아군 충돌: 이동 실패, 원래 위치로 복구
@@ -145,6 +145,9 @@ public partial class Board
         else
             motionQueue.Enqueue(PieceAreaAttackCor(casterButton, 1f));
 
+        Piece caster = casterButton.GetPieceScript();
+        int totalHeal = 0;
+
         foreach (Vector2 pos in targets)
         {
             Piece p = GetButtonScript(pos).GetPieceScript();
@@ -154,7 +157,16 @@ public partial class Board
             motionQueue.Enqueue(p.DamageText(dmg));
             if (hpLeft <= 0)
                 motionQueue.Enqueue(p.DeathCor());
+            if (cardEffect != null && cardEffect.healOnHit > 0)
+                totalHeal += cardEffect.healOnHit;
         }
+
+        if (totalHeal > 0 && caster != null)
+        {
+            caster.GetHeal(totalHeal, AttackType.NormalAttack);
+            motionQueue.Enqueue(caster.HealText(totalHeal));
+        }
+
         StartCoroutine(ProcessQueue());
     }
 

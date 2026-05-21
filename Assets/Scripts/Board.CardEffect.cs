@@ -252,21 +252,25 @@ public partial class Board
             return;
         }
 
+        int resolvedDmg = cardEffect.useColDamageAsDmg
+            ? (GetButtonScript(selectedButton).GetPieceScript()?.colDamage ?? cardEffect.dmg)
+            : cardEffect.dmg;
+
         switch (cardEffect.type)
         {
             case EffectType.Move:
                 MovePiece(selectedButton, targetPos, cardEffect);
                 break;
             case EffectType.Damage:
-                AttackPiece(selectedButton, targetPos, cardEffect.dmg, cardEffect);
+                AttackPiece(selectedButton, targetPos, resolvedDmg, cardEffect);
                 ApplyStatusToTarget(targetPos, cardEffect);
                 break;
             case EffectType.Heal:
-                HealPiece(selectedButton, targetPos, cardEffect.dmg, cardEffect);
+                HealPiece(selectedButton, targetPos, resolvedDmg, cardEffect);
                 ApplyStatusToTarget(targetPos, cardEffect);
                 break;
             case EffectType.Shield:
-                ShieldPiece(selectedButton, targetPos, cardEffect.dmg, cardEffect);
+                ShieldPiece(selectedButton, targetPos, resolvedDmg, cardEffect);
                 ApplyStatusToTarget(targetPos, cardEffect);
                 break;
             case EffectType.SelfDamage:
@@ -280,6 +284,24 @@ public partial class Board
                 break;
             case EffectType.ApplyTurnEffect:
                 ApplyTurnEffectToTarget(targetPos, cardEffect);
+                break;
+            case EffectType.ColDamageUp:
+            {
+                Piece p = GetButtonScript(targetPos).GetPieceScript();
+                if (p != null) p.colDamage += cardEffect.dmg;
+                break;
+            }
+            case EffectType.DiscardHand:
+                CardCanvas.instance.HandtoDiscardCount(cardEffect.dmg);
+                break;
+            case EffectType.ShuffleHandToDeck:
+                CardCanvas.instance.HandtoDeckCount(cardEffect.dmg);
+                break;
+            case EffectType.ExileHand:
+                CardCanvas.instance.HandtoExileCount(cardEffect.dmg);
+                break;
+            case EffectType.HandToDeckTop:
+                CardCanvas.instance.HandtoDeckTop(cardEffect.dmg);
                 break;
             default:
                 Debug.LogError("효과 타입을 찾지 못했습니다");

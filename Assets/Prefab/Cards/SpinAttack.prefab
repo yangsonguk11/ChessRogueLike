@@ -200,6 +200,16 @@ MonoBehaviour:
   Name: 
   Description: 
   Cost: 0
+  type: 0
   user: 0
+  shieldOnMoveAttack: 0
+  moveAttackShieldAmount: 0
+  blocksMovementAfterUse: 0
+  exileOnUse: 0
+  costText: {fileID: 0}
+  nameText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  typeText: {fileID: 0}
+  effectText: {fileID: 0}
   cardCanvas: {fileID: 0}
   handNumber: 0
