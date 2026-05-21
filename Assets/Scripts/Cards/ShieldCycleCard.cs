@@ -14,7 +14,7 @@ public class ShieldCycleCard : Card
             EffectType.Shield,
             3,
             TargetLogic.self,
-            effectRange[0],
+            null,
             true
         ));
 

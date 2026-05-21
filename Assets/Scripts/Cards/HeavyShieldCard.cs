@@ -14,8 +14,7 @@ public class HeavyShieldCard : Card
             Board.BoardMode.targeting,
             EffectType.Shield,
             8,
-            TargetLogic.self,
-            effectRange[0]
+            TargetLogic.self
         ));
     }
 

@@ -726,7 +726,7 @@ GameObject:
   - component: {fileID: 827117756608949290}
   - component: {fileID: 5473452768917983486}
   m_Layer: 5
-  m_Name: MoveandAttackCard
+  m_Name: MoveAndAttackCard
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

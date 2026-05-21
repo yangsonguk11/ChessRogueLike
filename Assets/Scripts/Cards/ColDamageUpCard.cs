@@ -13,8 +13,7 @@ public class ColDamageUpCard : Card
             Board.BoardMode.targeting,
             EffectType.ColDamageUp,
             1,
-            TargetLogic.self,
-            effectRange[0]
+            TargetLogic.self
         ));
     }
 

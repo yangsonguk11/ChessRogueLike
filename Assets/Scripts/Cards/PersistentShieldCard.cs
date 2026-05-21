@@ -15,7 +15,7 @@ public class PersistentShieldCard : Card
             EffectType.Shield,
             4,
             TargetLogic.self,
-            effectRange[0],
+            null,
             true
         ));
 
@@ -24,8 +24,7 @@ public class PersistentShieldCard : Card
             Board.BoardMode.targeting,
             EffectType.ApplyTurnEffect,
             0,
-            TargetLogic.self,
-            effectRange[0]
+            TargetLogic.self
         )
         {
             onTurnEndEffect = new CardEffect(

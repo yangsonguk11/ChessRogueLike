@@ -9,7 +9,7 @@ public class HealCard : Card
         Name = "HealCard";
         Cost = 2;
         type = CardType.Skill;
-        CardEffect cf = new CardEffect(Board.BoardMode.targeting, EffectType.Heal, 2, TargetLogic.self, effectRange[0]);
+        CardEffect cf = new CardEffect(Board.BoardMode.targeting, EffectType.Heal, 2, TargetLogic.self);
         effects.Add(cf);
     }
     public override string EffectDescription => $"자신을 {effects[0].dmg} 회복합니다.";

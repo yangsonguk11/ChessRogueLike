@@ -14,7 +14,7 @@ public class TempColDamageUpCard : Card
             EffectType.ColDamageUp,
             2,
             TargetLogic.self,
-            effectRange[0],
+            null,
             true
         ));
 
@@ -22,8 +22,7 @@ public class TempColDamageUpCard : Card
             Board.BoardMode.targeting,
             EffectType.ApplyTurnEffect,
             0,
-            TargetLogic.self,
-            effectRange[0]
+            TargetLogic.self
         )
         {
             onTurnEndEffect = new CardEffect(
