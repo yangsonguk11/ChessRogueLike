@@ -2356,7 +2356,7 @@ MonoBehaviour:
   Exilecards: []
   CurrentEnergyText: {fileID: 1084626605}
   radius: 1000
-  angleBetween: 8
+  angleBetween: 10
   heightOffset: -400
   maxenergy: 3
   isCardEffecting: 0
@@ -3891,7 +3891,7 @@ PrefabInstance:
     - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
       propertyPath: 'cardPrefabs.Array.data[1]'
       value: 
-      objectReference: {fileID: 8950236184682274632, guid: 898a6433037d4f96979aea8f115ca58e, type: 3}
+      objectReference: {fileID: 8950236184682274632, guid: 38553affb47d42c2ad258b265e639c2f, type: 3}
     - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
       propertyPath: 'cardPrefabs.Array.data[2]'
       value: 
