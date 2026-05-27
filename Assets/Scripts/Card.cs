@@ -67,6 +67,10 @@ public abstract class Card : MonoBehaviour, ISelectable
     public bool blocksMovementAfterUse; // 사용 후 이번 턴 이동 불가
     public bool exileOnUse;             // 사용 후 소멸
 
+    // 코스트 임시 변경 추적 (-1이면 미변경)
+    public int originalCost = -1;
+    public CostDuration costDuration = CostDuration.Permanent;
+
     [Header("Card View")]
     [SerializeField] TextMeshProUGUI costText;
     [SerializeField] TextMeshProUGUI nameText;
@@ -163,6 +167,11 @@ public abstract class Card : MonoBehaviour, ISelectable
     }
     public void MouseDown(BaseEventData data)
     {
+        if (CardCanvas.cardSelectionMode)
+        {
+            CardCanvas.instance.ToggleCardInPanel(GetComponent<RectTransform>());
+            return;
+        }
         if (!selected) { cardCanvas.GetComponent<CardCanvas>().CardSelected(handNumber); gameObject.GetComponent<CanvasGroup>().blocksRaycasts = false; }
     }
     public void MouseUp(BaseEventData data)
@@ -192,7 +201,13 @@ public abstract class Card : MonoBehaviour, ISelectable
     }
 
 }
-public enum EffectType { Move, Damage, Shield, Buff, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop }
+/// <summary>카드 선택 패널에서 선택할 존</summary>
+public enum CardZone { Hand, Deck, Discard, Any }
+
+/// <summary>코스트 변경 효과의 지속 시간</summary>
+public enum CostDuration { Permanent, ThisTurnOnly, OneUse }
+
+public enum EffectType { Move, Damage, Shield, Buff, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop, SelectAndDiscard, SelectAndChangeCost }
 public class CardEffect
 {
     public Board.BoardMode requiredMode;
@@ -219,6 +234,12 @@ public class CardEffect
     public CardEffect onTurnEndEffect;
     public int turnDuration;
     public TurnPhase turnPhase = TurnPhase.OwnTurnEnd;
+
+    // SelectAndDiscard / SelectAndChangeCost 타입에서 사용
+    public CardZone cardZone = CardZone.Hand;   // 선택 대상 존
+    public int selectCount = 1;                 // 선택할 카드 수 (0 = 제한 없음)
+    public int costChange = 0;                  // 코스트 변화량 (SelectAndChangeCost용)
+    public CostDuration costDuration = CostDuration.Permanent; // 코스트 지속 시간
 
     public CardEffect(Board.BoardMode _requiredMode, EffectType _type, int _dmg, TargetLogic _targetlogic,
         RangeInfoSO _effectRange = null, bool _lockCasterForNext = false,

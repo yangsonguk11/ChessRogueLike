@@ -26,6 +26,29 @@ public class CardCanvas : MonoBehaviour
     [SerializeField] float angleBetween;  // ī�� ������ ����
     [SerializeField] float heightOffset; // ��ä���� ���� ����
 
+    // ── 카드 선택 패널 ──────────────────────────────────────────
+    // Unity Inspector에서 연결 필요:
+    //   cardSelectionPanel  : 패널 최상위 GameObject (기본 비활성화)
+    //   cardSelectionContent: 카드가 표시될 RectTransform (Content 영역)
+    //   selectionCountText  : "0/2 선택됨" 표시 TextMeshProUGUI
+    //   selectionPromptText : 안내 문구 TextMeshProUGUI
+    //   confirmSelectionBtn : 확인 Button
+    [Header("카드 선택 패널")]
+    [SerializeField] GameObject cardSelectionPanel;
+    [SerializeField] RectTransform cardSelectionContent;
+    [SerializeField] TextMeshProUGUI selectionCountText;
+    [SerializeField] TextMeshProUGUI selectionPromptText;
+    [SerializeField] UnityEngine.UI.Button confirmSelectionBtn;
+
+    public static bool cardSelectionMode = false;
+    List<RectTransform> panelCardPool = new List<RectTransform>();
+    HashSet<RectTransform> selectedInPanel = new HashSet<RectTransform>();
+    int panelRequiredCount;
+    Action<List<RectTransform>> panelCallback;
+    Dictionary<RectTransform, (Transform parent, Vector3 worldPos)> savedCardStates
+        = new Dictionary<RectTransform, (Transform, Vector3)>();
+    // ────────────────────────────────────────────────────────────
+
     int _currentenergy;
     public int currentenergy { get { return _currentenergy; } set { _currentenergy = value; UpdateCurrentEnergy(); } }
     public int maxenergy = 3;
@@ -162,12 +185,18 @@ public class CardCanvas : MonoBehaviour
             rt.GetComponent<Card>()?.RefreshView();
     }
 
-    public void FinishUseCard()             //���� ī�� ��� ����
+    public void FinishUseCard()             //사용한 카드 처리
     {
         RefreshAllCardViews();
         if (nowusingCard)
         {
             Card card = nowusingCard.GetComponent<Card>();
+            // OneUse 코스트 임시 변경 복구
+            if (card.originalCost >= 0 && card.costDuration == CostDuration.OneUse)
+            {
+                card.Cost = card.originalCost;
+                card.originalCost = -1;
+            }
             currentenergy -= card.Cost;
             RectTransform usedCard = nowusingCard;
             nowusingCard = null;
@@ -373,7 +402,167 @@ public class CardCanvas : MonoBehaviour
     {
         yield return StartCoroutine(MoveCard(card, ExileZone.position, Quaternion.identity, 0.25f));
     }
-    [ContextMenu("Align Cards")] // �ν����� �޴����� �ٷ� ���� ����
+
+    // ────────── 카드 선택 패널 ──────────
+
+    /// <summary>카드 선택 패널을 열어 플레이어가 카드를 선택하도록 합니다.</summary>
+    public void ShowCardSelectionPanel(CardZone zone, int count, CardEffect effect, Action<List<RectTransform>> onConfirm)
+    {
+        panelRequiredCount = count;
+        panelCallback = onConfirm;
+        selectedInPanel.Clear();
+        savedCardStates.Clear();
+
+        panelCardPool.Clear();
+        if (zone == CardZone.Hand   || zone == CardZone.Any) panelCardPool.AddRange(cards);
+        if (zone == CardZone.Discard || zone == CardZone.Any) panelCardPool.AddRange(Discardcards);
+        if (zone == CardZone.Deck   || zone == CardZone.Any) panelCardPool.AddRange(Deckcards);
+
+        // 선택 가능한 카드가 없으면 즉시 빈 목록으로 콜백
+        if (panelCardPool.Count == 0)
+        {
+            onConfirm?.Invoke(new List<RectTransform>());
+            return;
+        }
+
+        cardSelectionPanel.SetActive(true);
+
+        // 카드를 패널 영역으로 이동
+        RectTransform canvasRoot = GetComponent<RectTransform>();
+        foreach (var card in panelCardPool)
+        {
+            savedCardStates[card] = (card.parent, card.position);
+            card.SetParent(cardSelectionContent, true);
+        }
+
+        LayoutCardsInPanel();
+        cardSelectionMode = true;
+
+        // 안내 문구
+        string verb = effect.type == EffectType.SelectAndDiscard ? "버릴" : "코스트를 변경할";
+        int max = count > 0 ? Mathf.Min(count, panelCardPool.Count) : panelCardPool.Count;
+        if (selectionPromptText != null)
+            selectionPromptText.text = $"{verb} 카드를 {max}장 선택하세요";
+
+        UpdatePanelUI();
+    }
+
+    void LayoutCardsInPanel()
+    {
+        const float spacing = 180f;
+        float totalWidth = (panelCardPool.Count - 1) * spacing;
+        for (int i = 0; i < panelCardPool.Count; i++)
+        {
+            panelCardPool[i].localPosition = new Vector3(-totalWidth / 2f + i * spacing, 0f, 0f);
+            panelCardPool[i].localRotation = Quaternion.identity;
+            panelCardPool[i].GetComponent<Card>()?.ScaleDefault();
+        }
+    }
+
+    /// <summary>패널 내 카드 클릭 시 선택/해제 토글</summary>
+    public void ToggleCardInPanel(RectTransform card)
+    {
+        if (!panelCardPool.Contains(card)) return;
+
+        if (selectedInPanel.Contains(card))
+        {
+            selectedInPanel.Remove(card);
+            card.GetComponent<Card>()?.ScaleDefault();
+        }
+        else
+        {
+            int maxAllowed = panelRequiredCount > 0
+                ? Mathf.Min(panelRequiredCount, panelCardPool.Count)
+                : panelCardPool.Count;
+            if (selectedInPanel.Count < maxAllowed)
+            {
+                selectedInPanel.Add(card);
+                card.GetComponent<Card>()?.ScaleHover();
+            }
+        }
+        UpdatePanelUI();
+    }
+
+    void UpdatePanelUI()
+    {
+        int selected = selectedInPanel.Count;
+        int required = panelRequiredCount > 0
+            ? Mathf.Min(panelRequiredCount, panelCardPool.Count)
+            : panelCardPool.Count;
+
+        if (selectionCountText != null)
+            selectionCountText.text = $"{selected}/{required} 선택됨";
+
+        if (confirmSelectionBtn != null)
+            confirmSelectionBtn.interactable = (panelRequiredCount == 0) || (selected >= required);
+    }
+
+    /// <summary>Inspector의 확인 버튼 OnClick에 연결하세요.</summary>
+    public void ConfirmCardSelection()
+    {
+        cardSelectionMode = false;
+        cardSelectionPanel.SetActive(false);
+
+        var selected = new List<RectTransform>(selectedInPanel);
+
+        // 모든 카드를 원래 존/위치로 복구
+        RectTransform canvasRoot = GetComponent<RectTransform>();
+        foreach (var card in panelCardPool)
+        {
+            var (originalParent, worldPos) = savedCardStates[card];
+            card.SetParent(originalParent, true);
+            card.position = worldPos;
+            card.localRotation = Quaternion.identity;
+            card.GetComponent<Card>()?.ScaleDefault();
+        }
+
+        AlignCards(); // 손패 아크 레이아웃 복구
+
+        panelCallback?.Invoke(selected);
+    }
+
+    // ────────────────────────────────────
+
+    /// <summary>카드를 어느 존에서든 버린 카드 더미로 이동합니다.</summary>
+    public void MoveCardToDiscard(RectTransform card)
+    {
+        bool wasInHand = cards.Remove(card);
+        if (!wasInHand)
+        {
+            if (!Discardcards.Remove(card))
+            {
+                var deckList = Deckcards.ToList();
+                if (deckList.Remove(card))
+                    Deckcards = new Queue<RectTransform>(deckList);
+            }
+        }
+
+        // 복구된 parent가 canvasRoot가 아닐 수 있으니 재부착
+        card.SetParent(GetComponent<RectTransform>(), true);
+        Discardcards.Add(card);
+        StartCoroutine(MoveCard(card, DiscardZone.position, Quaternion.identity, 0.3f));
+
+        if (wasInHand) AlignCards();
+    }
+
+    /// <summary>코스트가 ThisTurnOnly로 변경된 카드들을 원래 코스트로 복구합니다.</summary>
+    public void RestoreThisTurnCosts()
+    {
+        var allCards = cards
+            .Concat(Discardcards)
+            .Concat(Deckcards)
+            .Select(rt => rt.GetComponent<Card>())
+            .Where(c => c != null && c.originalCost >= 0 && c.costDuration == CostDuration.ThisTurnOnly);
+
+        foreach (var card in allCards.ToList())
+        {
+            card.Cost = card.originalCost;
+            card.originalCost = -1;
+            card.RefreshView();
+        }
+    }
+
+    [ContextMenu("Align Cards")] // 인스펙터 메뉴에서 바로 테스트 가능
     public void AlignCards()
     {
         int count = cards.Count;

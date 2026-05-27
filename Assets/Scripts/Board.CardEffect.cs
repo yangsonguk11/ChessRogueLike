@@ -39,6 +39,17 @@ public partial class Board
 
         boardmode = nextEffect.requiredMode;
 
+        if (boardmode == BoardMode.cardSelecting)
+        {
+            CardEffect effect = pendingEffects.Dequeue();
+            CardCanvas.instance.ShowCardSelectionPanel(
+                effect.cardZone,
+                effect.selectCount,
+                effect,
+                (selected) => ApplyCardSelectionEffect(effect, selected));
+            return;
+        }
+
         if (boardmode != BoardMode.command && boardmode != BoardMode.targeting)
         {
             ExecuteEffect(pendingEffects.Dequeue());
@@ -438,5 +449,29 @@ public partial class Board
             playerMovedThisTurn = true;
         CardCanvas.instance.FinishUseCard();
         ResetBoardAfterCardUse();
+    }
+
+    // 카드 선택 패널에서 플레이어가 선택을 확정한 후 호출됨
+    void ApplyCardSelectionEffect(CardEffect effect, List<RectTransform> selected)
+    {
+        switch (effect.type)
+        {
+            case EffectType.SelectAndDiscard:
+                foreach (var card in selected)
+                    CardCanvas.instance.MoveCardToDiscard(card);
+                break;
+            case EffectType.SelectAndChangeCost:
+                foreach (var card in selected)
+                {
+                    var c = card.GetComponent<Card>();
+                    if (c == null) continue;
+                    if (c.originalCost < 0) c.originalCost = c.Cost;
+                    c.Cost = Mathf.Max(0, c.Cost + effect.costChange);
+                    c.costDuration = effect.costDuration;
+                    c.RefreshView();
+                }
+                break;
+        }
+        ScheduleNextCardEffect();
     }
 }

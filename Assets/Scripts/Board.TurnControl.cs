@@ -20,6 +20,7 @@ public partial class Board
         TurnEnd(0);
         FinishCardUsage();
         ClearSelectedButton();
+        CardCanvas.instance.RestoreThisTurnCosts(); // ThisTurnOnly 코스트 복구
         CardCanvas.instance.HandtoDiscardAll();
     }
 

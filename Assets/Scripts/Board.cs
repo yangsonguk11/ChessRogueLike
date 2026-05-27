@@ -42,7 +42,8 @@ public partial class Board : MonoBehaviour
         Inspect,
         command,
         targeting,
-        enemy
+        enemy,
+        cardSelecting   // 카드 선택 패널 대기 중
     }
 
     public BoardMode boardmode;

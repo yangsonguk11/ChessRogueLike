@@ -67,6 +67,7 @@ public class DataManager : MonoBehaviour
                 "SafeMoveCard",
                 "ShieldCycleCard",
                 "TempColDamageUpCard",
+                "SacrificeShieldCard",
             };
 
             PieceData defaultPiece = new PieceData
