@@ -191,13 +191,14 @@ public class CardCanvas : MonoBehaviour
         if (nowusingCard)
         {
             Card card = nowusingCard.GetComponent<Card>();
-            // OneUse 코스트 임시 변경 복구
+            int costToDeduct = card.Cost;
+            // OneUse 코스트 임시 변경 복구 (복구 전 실제 사용 코스트를 저장)
             if (card.originalCost >= 0 && card.costDuration == CostDuration.OneUse)
             {
                 card.Cost = card.originalCost;
                 card.originalCost = -1;
             }
-            currentenergy -= card.Cost;
+            currentenergy -= costToDeduct;
             RectTransform usedCard = nowusingCard;
             nowusingCard = null;
             if (card.exileOnUse)

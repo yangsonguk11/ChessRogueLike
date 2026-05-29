@@ -5,7 +5,9 @@ public class AreaAttackCard : Card
     public override void Awake()
     {
         base.Awake();
+        Name = "AreaAttackCard";
         Cost = 2;
+        type = CardType.Attack;
         CardEffect cf = new CardEffect(Board.BoardMode.targeting, EffectType.Damage, 2, TargetLogic.AllEnemiesInRange, effectRange[0]);
         effects.Add(cf);
     }

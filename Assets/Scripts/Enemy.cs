@@ -4,7 +4,7 @@ using UnityEngine;
 public class Enemy : Piece
 {
     Card c;
-    public List<Card> enemyCards; // ÀûÀÌ º¸À¯ÇÑ ½ºÅ³/È¿°ú ¸®½ºÆ®
+    public List<Card> enemyCards; // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å³/È¿ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®
 
     int Movenum;
 
@@ -19,15 +19,14 @@ public class Enemy : Piece
     }
 
     public override List<Vector2> GetMoveableButton() {
-        if (GetNextMove().effects[0].type == EffectType.Move)
+        Card move = GetNextMove();
+        if (move == null || move.effects.Count == 0) return base.GetMoveableButton();
+        if (move.effects[0].type == EffectType.Move)
             return base.GetMoveableButton();
-        else
-        {
-            return GetNextMove().effects[0].effectRange.GetAbleRange();
-        }
+        return move.effects[0].effectRange?.GetAbleRange() ?? base.GetMoveableButton();
     }
 
-    // °£´ÜÇÑ AI ·ÎÁ÷: Å¸°Ù ¼±Á¤ ¹× È¿°ú ¹ÝÈ¯
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ AI ï¿½ï¿½ï¿½ï¿½: Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ È¿ï¿½ï¿½ ï¿½ï¿½È¯
     public virtual Card GetNextMove()
     {
         if (enemyCards == null || enemyCards.Count == 0) return null;

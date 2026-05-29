@@ -49,7 +49,10 @@ public partial class Board
                     else pp.OnTurnEndOther();
 
                     if (pp.hp <= 0)
+                    {
+                        if (pp.teamID == 1) enemyPositions.Remove(pos);
                         StartCoroutine(pp.DeathCor());
+                    }
                 }
             }
         }

@@ -56,6 +56,7 @@ public partial class Board
         motionQueue.Enqueue(pScript2.DamageText(dmg));
         if (hpLeft <= 0)
         {
+            if (pScript2.teamID == 1) enemyPositions.Remove(bScript2.GetLocation());
             motionQueue.Enqueue(pScript2.DeathCor());
             motionQueue.Enqueue(PieceMoveCor(GetButtonScript(adjacentPos), bScript2, 1f));
         }
@@ -89,7 +90,10 @@ public partial class Board
                     motionQueue.Enqueue(PieceAttackCor(button1script, button2script, 1f));
                 motionQueue.Enqueue(pScript2.DamageText(dmg));
                 if (hpLeft <= 0)
+                {
+                    if (pScript2.teamID == 1) enemyPositions.Remove(pos2);
                     motionQueue.Enqueue(pScript2.DeathCor());
+                }
             }
         }
         StartCoroutine(ProcessQueue());
@@ -129,7 +133,10 @@ public partial class Board
         if (p.teamID == 0) playerDamagedThisTurn = true;
         motionQueue.Enqueue(p.DamageText(dmg));
         if (hpLeft <= 0)
+        {
+            if (p.teamID == 1) enemyPositions.Remove(casterPos);
             motionQueue.Enqueue(p.DeathCor());
+        }
         StartCoroutine(ProcessQueue());
     }
 
@@ -156,7 +163,10 @@ public partial class Board
             if (p.teamID == 0) playerDamagedThisTurn = true;
             motionQueue.Enqueue(p.DamageText(dmg));
             if (hpLeft <= 0)
+            {
+                if (p.teamID == 1) enemyPositions.Remove(pos);
                 motionQueue.Enqueue(p.DeathCor());
+            }
             if (cardEffect != null && cardEffect.healOnHit > 0)
                 totalHeal += cardEffect.healOnHit;
         }

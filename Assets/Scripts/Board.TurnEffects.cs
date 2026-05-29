@@ -49,7 +49,7 @@ public partial class Board
         {
             if (ce.effectRange == null) return;
 
-            var targets = new List<Piece>();
+            var targets = new List<(Vector2 pos, Piece piece)>();
             foreach (Vector2 offset in ce.effectRange.GetAbleRange())
             {
                 Vector2 targetPos = pos + offset;
@@ -58,7 +58,7 @@ public partial class Board
                 if (target == null) continue;
                 if (ce.targetlogic == TargetLogic.AllEnemiesInRange && target.teamID == caster.teamID) continue;
                 if (ce.targetlogic == TargetLogic.AllAlliesInRange  && target.teamID != caster.teamID) continue;
-                targets.Add(target);
+                targets.Add((targetPos, target));
             }
 
             if (targets.Count == 0) return;
@@ -66,20 +66,21 @@ public partial class Board
             if (casterButton.GetPiece() != null)
                 turnEffectQueue.Enqueue(PieceAreaAttackCor(casterButton, 0.6f));
 
-            foreach (Piece target in targets)
-                EnqueueTurnEffectOnPiece(target, ce);
+            foreach (var (targetPos, target) in targets)
+                EnqueueTurnEffectOnPiece(target, ce, targetPos);
         }
         else
         {
             if (casterButton.GetPiece() != null)
                 turnEffectQueue.Enqueue(PieceAreaAttackCor(casterButton, 0.5f));
-            EnqueueTurnEffectOnPiece(caster, ce);
+            EnqueueTurnEffectOnPiece(caster, ce, pos);
         }
 
-        StartCoroutine(ProcessTurnEffectQueue());
+        if (!turnEffectQueueRunning)
+            StartCoroutine(ProcessTurnEffectQueue());
     }
 
-    void EnqueueTurnEffectOnPiece(Piece target, CardEffect ce)
+    void EnqueueTurnEffectOnPiece(Piece target, CardEffect ce, Vector2 targetPos)
     {
         switch (ce.type)
         {
@@ -88,7 +89,10 @@ public partial class Board
                 if (target.teamID == 0) playerDamagedThisTurn = true;
                 turnEffectQueue.Enqueue(target.DamageText(ce.dmg));
                 if (hpLeft <= 0)
+                {
+                    if (target.teamID == 1) enemyPositions.Remove(targetPos);
                     turnEffectQueue.Enqueue(target.DeathCor());
+                }
                 break;
             case EffectType.Heal:
                 target.GetHeal(ce.dmg, AttackType.NormalAttack);

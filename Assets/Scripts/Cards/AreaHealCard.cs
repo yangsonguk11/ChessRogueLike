@@ -8,7 +8,9 @@ public class AreaHealCard : Card
     public override void Awake()
     {
         base.Awake();
+        Name = "AreaHealCard";
         Cost = 2;
+        type = CardType.Skill;
 
         RangeInfoSO targetRange = effectRange.Count > 1 ? effectRange[1] : null;
         bool useMovement = targetRange == null;

@@ -55,6 +55,11 @@ public partial class Board
                 {
                     if (GetButtonScript(pos).IsSelectable())
                     {
+                        bool isSelfCard = pendingEffects.Count > 0 &&
+                                          pendingEffects.Peek().targetlogic == TargetLogic.self;
+                        Piece clickedPiece = GetButtonScript(pos).GetPieceScript();
+                        if (isSelfCard && (clickedPiece == null || clickedPiece.teamID != 0))
+                            break;
                         selectedButton = pos;
                         GetButtonScript(pos).SelectedTrue();
                     }

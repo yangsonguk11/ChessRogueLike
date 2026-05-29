@@ -5,7 +5,9 @@ public class AreaShieldCard : Card
     public override void Awake()
     {
         base.Awake();
+        Name = "AreaShieldCard";
         Cost = 1;
+        type = CardType.Skill;
         CardEffect cf = new CardEffect(Board.BoardMode.targeting, EffectType.Shield, 3, TargetLogic.AllAlliesInRange, effectRange[0]);
         effects.Add(cf);
     }
