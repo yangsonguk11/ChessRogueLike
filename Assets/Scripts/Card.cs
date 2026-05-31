@@ -172,6 +172,11 @@ public abstract class Card : MonoBehaviour, ISelectable
             CardCanvas.instance.ToggleCardInPanel(GetComponent<RectTransform>());
             return;
         }
+        if (handNumber == -1)
+        {
+            cardCanvas.GetComponent<CardCanvas>().CancelCardUsage();
+            return;
+        }
         if (!selected) { cardCanvas.GetComponent<CardCanvas>().CardSelected(handNumber); gameObject.GetComponent<CanvasGroup>().blocksRaycasts = false; }
     }
     public void MouseUp(BaseEventData data)

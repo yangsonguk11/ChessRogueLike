@@ -432,6 +432,13 @@ public partial class Board
         }
     }
 
+    public void CancelCardUsage()
+    {
+        pendingEffects.Clear();
+        currentActiveCard = null;
+        ResetBoardAfterCardUse();
+    }
+
     void ResetBoardAfterCardUse()
     {
         boardmode = BoardMode.Inspect;
@@ -440,7 +447,6 @@ public partial class Board
             GetButtonScript(lockedCaster).SelectedFalse();
         lockedCaster = new Vector2(-1, -1);
         ClearSelectedButton();
-        Debug.Log("Finished Card Use");
     }
 
     void FinishCardUsage()

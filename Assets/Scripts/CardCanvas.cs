@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.InputSystem;
 
 public class CardCanvas : MonoBehaviour
 {
@@ -58,6 +59,9 @@ public class CardCanvas : MonoBehaviour
     RectTransform nowusingCard;
     public bool isCardEffecting;
     Coroutine pendingCardCoroutine;
+    Coroutine pendingMoveCardCoroutine;
+    List<RectTransform> pendingDrawCards = new List<RectTransform>();
+    Coroutine batchDrawCoroutine;
     private void Awake()
     {
         if (instance == null) instance = this;
@@ -190,6 +194,35 @@ public class CardCanvas : MonoBehaviour
             rt.GetComponent<Card>()?.RefreshView();
     }
 
+    void Update()
+    {
+        if (Mouse.current.rightButton.wasPressedThisFrame)
+            CancelCardUsage();
+    }
+
+    public void CancelCardUsage()
+    {
+        if (nowusingCard == null || isCardEffecting) return;
+
+        if (pendingMoveCardCoroutine != null)
+        {
+            StopCoroutine(pendingMoveCardCoroutine);
+            pendingMoveCardCoroutine = null;
+        }
+        if (pendingCardCoroutine != null)
+        {
+            StopCoroutine(pendingCardCoroutine);
+            pendingCardCoroutine = null;
+        }
+
+        RectTransform card = nowusingCard;
+        nowusingCard = null;
+        cards.Add(card);
+        AlignCards();
+
+        board.CancelCardUsage();
+    }
+
     public void FinishUseCard()             //사용한 카드 처리
     {
         RefreshAllCardViews();
@@ -230,7 +263,10 @@ public class CardCanvas : MonoBehaviour
 
     IEnumerator AnimateCardToUsingPos(RectTransform card)
     {
-        yield return StartCoroutine(MoveCard(card, CardNowUsingPos.position, Quaternion.identity, 0.35f));
+        var moveCor = StartCoroutine(MoveCard(card, CardNowUsingPos.position, Quaternion.identity, 0.35f));
+        pendingMoveCardCoroutine = moveCor;
+        yield return moveCor;
+        pendingMoveCardCoroutine = null;
         pendingCardCoroutine = null;
         board.UseCard(card.GetComponent<Card>());
     }
@@ -265,9 +301,8 @@ public class CardCanvas : MonoBehaviour
         CurrentEnergyText.text = string.Format("{0}/{1}", currentenergy, maxenergy);
     }
 
-    public void DrawCard()                         //���� ī�带 ������ ��������
+    public void DrawCard()
     {
-
         if (Deckcards.Count == 0)
         {
             DiscardtoDeck();
@@ -277,14 +312,34 @@ public class CardCanvas : MonoBehaviour
         {
             RectTransform newCard = Deckcards.Dequeue();
             cards.Add(newCard);
-            AlignCards();
+            pendingDrawCards.Add(newCard);
             NotifyPileChanged();
-            Vector3 targetPos = newCard.position;
-            Quaternion targetRot = newCard.localRotation;
-            newCard.position = DeckZone.position;
-            newCard.localRotation = Quaternion.identity;
-            StartCoroutine(MoveCard(newCard, targetPos, targetRot, 0.3f));
+            batchDrawCoroutine ??= StartCoroutine(BatchDrawAnim());
         }
+    }
+
+    IEnumerator BatchDrawAnim()
+    {
+        yield return null;  // 같은 프레임의 모든 DrawCard() 호출이 끝날 때까지 대기
+
+        var toDraw = new List<RectTransform>(pendingDrawCards);
+        pendingDrawCards.Clear();
+        batchDrawCoroutine = null;
+
+        AlignCards();  // 최종 손패 크기 기준으로 한 번만 정렬
+
+        var targetPositions = new List<Vector3>();
+        var targetRotations = new List<Quaternion>();
+        foreach (var c in toDraw)
+        {
+            targetPositions.Add(c.position);
+            targetRotations.Add(c.localRotation);
+            c.position = DeckZone.position;
+            c.localRotation = Quaternion.identity;
+        }
+
+        for (int i = 0; i < toDraw.Count; i++)
+            StartCoroutine(MoveCard(toDraw[i], targetPositions[i], targetRotations[i], 0.3f));
     }
 
     void DiscardtoDeck()
