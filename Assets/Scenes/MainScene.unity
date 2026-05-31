@@ -5651,6 +5651,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3973567015829007392, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: 'PiecePrefabs.Array.data[3]'
+      value: 
+      objectReference: {fileID: 100000, guid: b0550000000000000000000000000008, type: 3}
     - target: {fileID: 5845322441005520208, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
       propertyPath: 'floorPools.Array.data[0].levels.Array.data[0]'
       value: 

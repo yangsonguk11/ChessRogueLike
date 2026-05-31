@@ -19,15 +19,7 @@ MonoBehaviour:
     pieceTypeIndex: 0
     isEnemy: 0
     name: 
-  - position: {x: 2, y: 1}
-    pieceTypeIndex: 1
-    isEnemy: 1
-    name: White Knight 1
-  - position: {x: 2, y: 5}
+  - position: {x: 3, y: 3}
     pieceTypeIndex: 2
     isEnemy: 1
-    name: White Knight 2
-  - position: {x: 1, y: 3}
-    pieceTypeIndex: 2
-    isEnemy: 1
-    name: White Knight 3
+    name: Boss
