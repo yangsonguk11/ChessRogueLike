@@ -28,7 +28,8 @@ public partial class Board
             case BoardMode.command:
                 if (selectedButton.x < 0 || selectedButton.y < 0)
                 {
-                    if (GetButtonScript(pos).IsSelectable())
+                    Piece clickedPiece = GetButtonScript(pos).GetPieceScript();
+                    if (clickedPiece != null && clickedPiece.teamID == 0)
                     {
                         selectedButton = pos;
                         GetButtonScript(pos).SelectedTrue();
@@ -39,27 +40,19 @@ public partial class Board
                     if (!IsLockedCasterActive())
                         ClearSelectedButton();
                 }
-                else
+                else if (selectedButtonMovable.Contains(pos))
                 {
-                    if (GetButtonScript(selectedButton).GetPiece().GetComponent<Piece>().teamID == 1) { }
-                    else if (selectedButtonMovable.Contains(pos))
-                    {
-                        ExecuteEffect(pendingEffects.Dequeue(), pos);
-                        ScheduleNextCardEffect();
-                    }
+                    ExecuteEffect(pendingEffects.Dequeue(), pos);
+                    ScheduleNextCardEffect();
                 }
                 break;
 
             case BoardMode.targeting:
                 if (selectedButton.x < 0 || selectedButton.y < 0)
                 {
-                    if (GetButtonScript(pos).IsSelectable())
+                    Piece clickedPiece = GetButtonScript(pos).GetPieceScript();
+                    if (clickedPiece != null && clickedPiece.teamID == 0)
                     {
-                        bool isSelfCard = pendingEffects.Count > 0 &&
-                                          pendingEffects.Peek().targetlogic == TargetLogic.self;
-                        Piece clickedPiece = GetButtonScript(pos).GetPieceScript();
-                        if (isSelfCard && (clickedPiece == null || clickedPiece.teamID != 0))
-                            break;
                         selectedButton = pos;
                         GetButtonScript(pos).SelectedTrue();
                     }

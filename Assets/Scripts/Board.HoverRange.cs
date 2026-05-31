@@ -4,46 +4,77 @@ using UnityEngine;
 public partial class Board
 {
     List<Vector2> hoverRangeButtons = new List<Vector2>();
+    List<Vector2> hoverPieceRangeButtons = new List<Vector2>();
     Vector2 currentHoverDirection = Vector2.up;
 
     public void ButtonHovered(Vector2 pos)
     {
-        if (pendingEffects.Count == 0) return;
-        CardEffect effect = pendingEffects.Peek();
-        if (effect.areaTargetMode == AreaTargetMode.Fixed) return;
-        if (!isSelectedButtonActive()) return;
-
-        ClearHoverRange();
-
-        List<Vector2> offsets = effect.effectRange?.GetAbleRange();
-        if (offsets == null) return;
-
-        Vector2 center;
-        if (effect.areaTargetMode == AreaTargetMode.MouseCentered)
+        // AoE 카드 범위 미리보기 (카드 사용 중)
+        if (pendingEffects.Count > 0)
         {
-            center = pos;
+            CardEffect effect = pendingEffects.Peek();
+            if (effect.areaTargetMode != AreaTargetMode.Fixed && isSelectedButtonActive())
+            {
+                ClearHoverRange();
+
+                List<Vector2> offsets = effect.effectRange?.GetAbleRange();
+                if (offsets != null)
+                {
+                    Vector2 center;
+                    if (effect.areaTargetMode == AreaTargetMode.MouseCentered)
+                    {
+                        center = pos;
+                    }
+                    else
+                    {
+                        center = selectedButton;
+                        Vector2 dir = GetSnappedDirection(selectedButton, pos, effect.areaTargetMode == AreaTargetMode.Directional8);
+                        currentHoverDirection = dir;
+                        offsets = RotateOffsets(offsets, dir);
+                    }
+
+                    foreach (Vector2 offset in offsets)
+                    {
+                        Vector2 target = center + offset;
+                        if (target.x < 0 || target.x >= N || target.y < 0 || target.y >= M) continue;
+                        GetButtonScript(target).RangeOn();
+                        hoverRangeButtons.Add(target);
+                    }
+                }
+            }
+            return;
         }
-        else
-        {
-            // Directional4 or Directional8: rotate pattern from caster toward hovered pos
-            center = selectedButton;
-            Vector2 dir = GetSnappedDirection(selectedButton, pos, effect.areaTargetMode == AreaTargetMode.Directional8);
-            currentHoverDirection = dir;
-            offsets = RotateOffsets(offsets, dir);
-        }
 
-        foreach (Vector2 offset in offsets)
+        // Inspect 모드: 기물 위에 올리면 행동 범위와 정보 표시 (선택 없이)
+        if (boardmode == BoardMode.Inspect && !isSelectedButtonActive())
         {
-            Vector2 target = center + offset;
-            if (target.x < 0 || target.x >= N || target.y < 0 || target.y >= M) continue;
-            GetButtonScript(target).RangeOn();
-            hoverRangeButtons.Add(target);
+            ClearHoverPieceRange();
+            Piece hoveredPiece = GetButtonScript(pos).GetPieceScript();
+            if (hoveredPiece != null)
+            {
+                List<Vector2> moveRange = hoveredPiece.GetMoveableButton();
+                foreach (Vector2 offset in moveRange)
+                {
+                    Vector2 target = pos + offset;
+                    if (target.x < 0 || target.x >= N || target.y < 0 || target.y >= M) continue;
+                    GetButtonScript(target).RangeOn();
+                    hoverPieceRangeButtons.Add(target);
+                }
+                ShowButtonInfo(pos);
+            }
+            else
+            {
+                HideButtonInfo();
+            }
         }
     }
 
     public void ButtonUnhovered()
     {
         ClearHoverRange();
+        ClearHoverPieceRange();
+        if (!isSelectedButtonActive())
+            HideButtonInfo();
     }
 
     public void ClearHoverRange()
@@ -51,6 +82,13 @@ public partial class Board
         foreach (Vector2 v in hoverRangeButtons)
             GetButtonScript(v).RangeOff();
         hoverRangeButtons.Clear();
+    }
+
+    void ClearHoverPieceRange()
+    {
+        foreach (Vector2 v in hoverPieceRangeButtons)
+            GetButtonScript(v).RangeOff();
+        hoverPieceRangeButtons.Clear();
     }
 
     // 기준 방향(-1,0 = 인스펙터 위쪽 행)에서 dir 방향으로 오프셋 목록을 회전
