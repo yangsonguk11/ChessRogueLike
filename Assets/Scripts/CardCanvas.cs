@@ -40,6 +40,9 @@ public class CardCanvas : MonoBehaviour
     [SerializeField] TextMeshProUGUI selectionPromptText;
     [SerializeField] UnityEngine.UI.Button confirmSelectionBtn;
 
+    public static event Action OnPileChanged;
+    void NotifyPileChanged() => OnPileChanged?.Invoke();
+
     public static bool cardSelectionMode = false;
     List<RectTransform> panelCardPool = new List<RectTransform>();
     HashSet<RectTransform> selectedInPanel = new HashSet<RectTransform>();
@@ -141,6 +144,7 @@ public class CardCanvas : MonoBehaviour
         Discardcards.Add(card);
         card.position = DiscardZone.position;
         cards.Remove(card);
+        NotifyPileChanged();
     }
     public void DrawTurnStartCards()
     {
@@ -161,6 +165,7 @@ public class CardCanvas : MonoBehaviour
         if (newCards.Count == 0) yield break;
 
         AlignCards();
+        NotifyPileChanged();
 
         var targetPositions = new List<Vector3>();
         var targetRotations = new List<Quaternion>();
@@ -235,6 +240,7 @@ public class CardCanvas : MonoBehaviour
         yield return StartCoroutine(MoveCard(card, DiscardZone.position, Quaternion.identity, 0.15f));
         Discardcards.Add(card);
         isCardEffecting = false;
+        NotifyPileChanged();
     }
 
     IEnumerator MoveCard(RectTransform card, Vector3 targetWorldPos, Quaternion targetLocalRot, float duration)
@@ -272,6 +278,7 @@ public class CardCanvas : MonoBehaviour
             RectTransform newCard = Deckcards.Dequeue();
             cards.Add(newCard);
             AlignCards();
+            NotifyPileChanged();
             Vector3 targetPos = newCard.position;
             Quaternion targetRot = newCard.localRotation;
             newCard.position = DeckZone.position;
@@ -298,6 +305,7 @@ public class CardCanvas : MonoBehaviour
 
         // 3. ���� ���� ī�� ����Ʈ ����
         Discardcards.Clear();
+        NotifyPileChanged();
     }
 
     public void GetMaxEnergy()
@@ -333,6 +341,7 @@ public class CardCanvas : MonoBehaviour
         var list = Deckcards.ToList().OrderBy(x => UnityEngine.Random.value).ToList();
         Deckcards = new Queue<RectTransform>(list);
         AlignCards();
+        NotifyPileChanged();
     }
 
     public void HandtoExileCount(int count)
@@ -369,6 +378,7 @@ public class CardCanvas : MonoBehaviour
         var newDeck = toReturn.Concat(Deckcards.ToList()).ToList();
         Deckcards = new Queue<RectTransform>(newDeck);
         AlignCards();
+        NotifyPileChanged();
     }
 
     public void ExileHandCard(int handnum)
@@ -397,6 +407,7 @@ public class CardCanvas : MonoBehaviour
 
         if (wasInHand)
             AlignCards();
+        NotifyPileChanged();
     }
 
     IEnumerator AnimateCardToExile(RectTransform card)
@@ -544,6 +555,7 @@ public class CardCanvas : MonoBehaviour
         StartCoroutine(MoveCard(card, DiscardZone.position, Quaternion.identity, 0.3f));
 
         if (wasInHand) AlignCards();
+        NotifyPileChanged();
     }
 
     /// <summary>코스트가 ThisTurnOnly로 변경된 카드들을 원래 코스트로 복구합니다.</summary>

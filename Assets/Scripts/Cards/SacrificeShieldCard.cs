@@ -5,7 +5,7 @@ public class SacrificeShieldCard : Card
     public override void Awake()
     {
         base.Awake();
-        Name = "희생의 방패";
+        Name = "SacrificeShieldCard";
         Description = "손의 카드 1장을 버린다.\n방어도 6을 얻는다.";
         Cost = 1;
         type = CardType.Skill;
