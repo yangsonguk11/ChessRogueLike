@@ -212,7 +212,7 @@ public enum CardZone { Hand, Deck, Discard, Any }
 /// <summary>코스트 변경 효과의 지속 시간</summary>
 public enum CostDuration { Permanent, ThisTurnOnly, OneUse }
 
-public enum EffectType { Move, Damage, Shield, Buff, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop, SelectAndDiscard, SelectAndChangeCost }
+public enum EffectType { Move, Damage, Shield, Buff, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop, SelectAndDiscard, SelectAndChangeCost, SelectAndReturnToDeck }
 public class CardEffect
 {
     public Board.BoardMode requiredMode;

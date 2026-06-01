@@ -7,6 +7,7 @@ public partial class Board
     Queue<CardEffect> pendingEffects = new Queue<CardEffect>();
     Card currentActiveCard;
     Vector2 lockedCaster = new Vector2(-1, -1);
+    Piece lockedCasterPiece = null;
     bool IsLockedCasterActive() => lockedCaster.x >= 0;
 
     public void UseCard(Card card)
@@ -57,11 +58,17 @@ public partial class Board
         }
         else if (IsLockedCasterActive())
         {
-            // 이전 효과에서 선택된 캐릭터를 자동으로 다시 선택
-            selectedButton = lockedCaster;
-            GetButtonScript(selectedButton).SelectedTrue();
-            // selectedButton setter가 OnButtonSelected를 발생시켜 OnSelectBoard()를 호출하므로
-            // 범위 표시가 자동으로 업데이트됨
+            if (lockedCasterPiece != null && boardmode == BoardMode.targeting)
+            {
+                ExecuteEffect(pendingEffects.Dequeue(), lockedCasterPiece);
+                ScheduleNextCardEffect();
+            }
+            else
+            {
+                selectedButton = lockedCaster;
+                if (isSelectedButtonActive())
+                    GetButtonScript(selectedButton).SelectedTrue();
+            }
         }
     }
 
@@ -252,7 +259,10 @@ public partial class Board
         // lockCasterForNext가 true이고 다음 효과가 있을 때만 시전자를 고정
         // Move 효과는 기물이 targetPos로 이동하므로 목적지를 저장, 나머지는 현재 위치 유지
         if (cardEffect.lockCasterForNext && pendingEffects.Count > 0)
+        {
             lockedCaster = cardEffect.type == EffectType.Move ? targetPos : selectedButton;
+            lockedCasterPiece = GetButtonScript(lockedCaster).GetPieceScript();
+        }
 
         currentActiveCard.cardCanvas.GetComponent<CardCanvas>().isCardEffecting = true;
 
@@ -377,6 +387,62 @@ public partial class Board
         };
     }
 
+    void ExecuteEffect(CardEffect cardEffect, Piece target)
+    {
+        if (cardEffect.lockCasterForNext && pendingEffects.Count > 0)
+            lockedCasterPiece = target;
+
+        currentActiveCard.cardCanvas.GetComponent<CardCanvas>().isCardEffecting = true;
+
+        switch (cardEffect.type)
+        {
+            case EffectType.Shield:
+            {
+                Vector2 pos = FindPiecePos(target);
+                if (pos.x >= 0) ShieldPiece(pos, pos, cardEffect.dmg, cardEffect);
+                break;
+            }
+            case EffectType.Heal:
+            {
+                Vector2 pos = FindPiecePos(target);
+                if (pos.x >= 0) HealPiece(pos, pos, cardEffect.dmg, cardEffect);
+                break;
+            }
+            case EffectType.ApplyTurnEffect:
+                if (cardEffect.onTurnEndEffect != null)
+                    target.AddStatusEffect(new TurnEffect(cardEffect.turnPhase, cardEffect.onTurnEndEffect, cardEffect.turnDuration));
+                break;
+            case EffectType.ApplyStatus:
+            {
+                StatusEffect effect = CreateStatusEffect(cardEffect.statusEffectType, cardEffect.statusDuration, cardEffect.statusPower,
+                    cardEffect.effectRange, cardEffect.targetlogic);
+                if (effect != null) target.AddStatusEffect(effect);
+                break;
+            }
+            case EffectType.Draw:
+                CardCanvas.instance.DrawCard();
+                break;
+            case EffectType.ColDamageUp:
+                target.colDamage += cardEffect.dmg;
+                break;
+            default:
+                Debug.LogWarning($"ExecuteEffect(Piece): 지원하지 않는 효과 타입 {cardEffect.type}");
+                break;
+        }
+    }
+
+    Vector2 FindPiecePos(Piece piece)
+    {
+        for (int x = 0; x < N; x++)
+            for (int y = 0; y < M; y++)
+            {
+                Vector2 pos = new Vector2(x, y);
+                if (GetButtonScript(pos).GetPieceScript() == piece)
+                    return pos;
+            }
+        return new Vector2(-1, -1);
+    }
+
     void ExecuteAreaEffect(CardEffect cardEffect, Vector2 center)
     {
         if (cardEffect.effectRange == null) return;
@@ -446,6 +512,7 @@ public partial class Board
         if (IsLockedCasterActive())
             GetButtonScript(lockedCaster).SelectedFalse();
         lockedCaster = new Vector2(-1, -1);
+        lockedCasterPiece = null;
         ClearSelectedButton();
     }
 
@@ -476,6 +543,10 @@ public partial class Board
                     c.costDuration = effect.costDuration;
                     c.RefreshView();
                 }
+                break;
+            case EffectType.SelectAndReturnToDeck:
+                foreach (var card in selected)
+                    CardCanvas.instance.MoveCardToDeck(card);
                 break;
         }
         ScheduleNextCardEffect();

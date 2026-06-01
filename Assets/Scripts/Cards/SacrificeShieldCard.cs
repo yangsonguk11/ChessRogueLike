@@ -10,15 +10,15 @@ public class SacrificeShieldCard : Card
         Cost = 1;
         type = CardType.Skill;
 
-        // 효과 1: 손패에서 카드 1장 선택해서 버리기
+        // 효과 1: 자신에게 방어도 부여 (DefenseCard와 동일 패턴)
+        effects.Add(new CardEffect(Board.BoardMode.targeting, EffectType.Shield, 6, TargetLogic.self));
+        // 효과 2: 손패에서 카드 1장 선택해서 버리기
         effects.Add(new CardEffect(Board.BoardMode.cardSelecting, EffectType.SelectAndDiscard, 0, TargetLogic.self)
         {
             cardZone = CardZone.Hand,
             selectCount = 1
         });
 
-        // 효과 2: 자신에게 방어도 부여 (DefenseCard와 동일 패턴)
-        effects.Add(new CardEffect(Board.BoardMode.targeting, EffectType.Shield, 6, TargetLogic.self));
     }
 
     public override string EffectDescription =>

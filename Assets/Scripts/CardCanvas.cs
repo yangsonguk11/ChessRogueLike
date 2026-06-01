@@ -613,6 +613,30 @@ public class CardCanvas : MonoBehaviour
         NotifyPileChanged();
     }
 
+    /// <summary>카드를 어느 존에서든 덱으로 이동합니다 (덱 맨 아래에 추가).</summary>
+    public void MoveCardToDeck(RectTransform card)
+    {
+        bool wasInHand = cards.Remove(card);
+        if (!wasInHand)
+        {
+            if (!Discardcards.Remove(card))
+            {
+                var deckList = Deckcards.ToList();
+                if (deckList.Remove(card))
+                    Deckcards = new Queue<RectTransform>(deckList);
+            }
+        }
+
+        card.SetParent(GetComponent<RectTransform>(), true);
+        var newDeckList = Deckcards.ToList();
+        newDeckList.Add(card);
+        Deckcards = new Queue<RectTransform>(newDeckList);
+        StartCoroutine(MoveCard(card, DeckZone.position, Quaternion.identity, 0.3f));
+
+        if (wasInHand) AlignCards();
+        NotifyPileChanged();
+    }
+
     /// <summary>코스트가 ThisTurnOnly로 변경된 카드들을 원래 코스트로 복구합니다.</summary>
     public void RestoreThisTurnCosts()
     {
