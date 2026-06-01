@@ -202,7 +202,7 @@ public class CardCanvas : MonoBehaviour
 
     public void CancelCardUsage()
     {
-        if (nowusingCard == null || isCardEffecting) return;
+        if (nowusingCard == null || isCardEffecting || board.EffectApplied) return;
 
         if (pendingMoveCardCoroutine != null)
         {

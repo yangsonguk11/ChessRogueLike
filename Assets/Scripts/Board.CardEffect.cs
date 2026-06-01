@@ -9,12 +9,15 @@ public partial class Board
     Vector2 lockedCaster = new Vector2(-1, -1);
     Piece lockedCasterPiece = null;
     bool IsLockedCasterActive() => lockedCaster.x >= 0;
+    bool effectApplied = false;
+    public bool EffectApplied => effectApplied;
 
     public void UseCard(Card card)
     {
         if (card.user == User.Ally)
             ClearSelectedButton();
         lockedCaster = new Vector2(-1, -1);
+        effectApplied = false;
         currentActiveCard = card;
         pendingEffects.Clear();
         foreach (var effect in card.effects)
@@ -264,6 +267,7 @@ public partial class Board
             lockedCasterPiece = GetButtonScript(lockedCaster).GetPieceScript();
         }
 
+        effectApplied = true;
         currentActiveCard.cardCanvas.GetComponent<CardCanvas>().isCardEffecting = true;
 
         if (cardEffect.targetlogic == TargetLogic.AllEnemiesInRange ||
@@ -392,6 +396,7 @@ public partial class Board
         if (cardEffect.lockCasterForNext && pendingEffects.Count > 0)
             lockedCasterPiece = target;
 
+        effectApplied = true;
         currentActiveCard.cardCanvas.GetComponent<CardCanvas>().isCardEffecting = true;
 
         switch (cardEffect.type)

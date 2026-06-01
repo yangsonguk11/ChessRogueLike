@@ -102,7 +102,6 @@ public class DataManager : MonoBehaviour
     public void GenerateMap(List<NodeRow> mapdata)
     {
         currentData.mapData = mapdata;
-        SaveToFile();
     }
 
     public bool LoadMap()
@@ -122,8 +121,6 @@ public class DataManager : MonoBehaviour
         while (currentData.visitedNodeX.Count <= floor)
             currentData.visitedNodeX.Add(-1);
         currentData.visitedNodeX[floor] = nodeX;
-
-        SaveToFile();
     }
 
     // 맵 진행 상태 초기화 (새 게임 시작 시)

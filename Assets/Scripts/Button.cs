@@ -51,6 +51,7 @@ public class Button : MonoBehaviour, ISelectable
     }
     public void MouseDown()
     {
+        if (Input.GetMouseButton(1)) return;
         board.GetComponent<Board>().ButtonClicked(location);
     }
 
