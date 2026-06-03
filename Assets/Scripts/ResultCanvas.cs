@@ -26,13 +26,13 @@ public class ResultCanvas : MonoBehaviour
             Destroy(card);
         spawnedCards.Clear();
 
-        int excludeStart = 0, excludeEnd = 2; // 제외할 범위 [excludeStart, excludeEnd)
-        var source = CardDatabase.instance.spritesPrefabs;
-        List<GameObject> pool = new List<GameObject>();
+        int excludeEnd = 2;
+        var source = CardDatabase.instance.cardPrefabs;
+        var pool = new List<GameObject>();
         for (int i = 0; i < source.Count; i++)
-            if (i < excludeStart || i >= excludeEnd) pool.Add(source[i]);
-        int count = Mathf.Min(3, pool.Count);
+            if (i >= excludeEnd) pool.Add(source[i]);
 
+        int count = Mathf.Min(3, pool.Count);
         for (int i = 0; i < count && pool.Count > 0; i++)
         {
             int idx = Random.Range(0, pool.Count);
@@ -41,11 +41,13 @@ public class ResultCanvas : MonoBehaviour
 
             if (prefab == null) { i--; continue; }
 
-            GameObject spawned = Instantiate(prefab, GetComponent<RectTransform>());
-            CardButton cb = spawned.GetComponent<CardButton>();
-            if (cb == null) { Destroy(spawned); i--; continue; }
+            GameObject spawned = CardDatabase.instance.SpawnCard(GetComponent<RectTransform>(), prefab.name);
+            if (spawned == null) { i--; continue; }
 
-            cb.OnSelected += (id) => GetCardOnDeck(id);
+            Card card = spawned.GetComponent<Card>();
+            if (card == null) { Destroy(spawned); i--; continue; }
+
+            card.onClickOverride = (name) => GetCardOnDeck(name);
             spawnedCards.Add(spawned);
         }
     }

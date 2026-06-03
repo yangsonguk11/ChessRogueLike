@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 6426312}
   - component: {fileID: 2211220569692418932}
   - component: {fileID: 54401725194517764}
-  - component: {fileID: 5766115866947927382}
+  - component: {fileID: 4343390916458337320}
   m_Layer: 0
   m_Name: White Knight 2
   m_TagString: Untagged
@@ -139,8 +139,8 @@ MonoBehaviour:
   shield: 0
   moveableRange: {fileID: 0}
   enemyCards:
-  - {fileID: 5766115866947927382}
   - {fileID: 54401725194517764}
+  - {fileID: 4343390916458337320}
 --- !u!114 &54401725194517764
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -158,13 +158,22 @@ MonoBehaviour:
   Name: move
   Description: 
   Cost: 0
+  type: 0
   user: 1
   shieldOnMoveAttack: 0
   moveAttackShieldAmount: 0
   blocksMovementAfterUse: 0
+  exileOnUse: 0
+  originalCost: -1
+  costDuration: 0
+  costText: {fileID: 0}
+  nameText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  typeText: {fileID: 0}
+  effectText: {fileID: 0}
   cardCanvas: {fileID: 0}
   handNumber: 0
---- !u!114 &5766115866947927382
+--- !u!114 &4343390916458337320
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -173,18 +182,26 @@ MonoBehaviour:
   m_GameObject: {fileID: 107724}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a913a6e213419e84aa94043e61347dc4, type: 3}
+  m_Script: {fileID: 11500000, guid: a4ca332fc09bf1f44a909c122d58a492, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyAttackCard
-  effectRange:
-  - {fileID: 11400000, guid: 0427dde1aa7a88b4aacaacd2e50cf14e, type: 2}
-  Name: Attack
+  m_EditorClassIdentifier: Assembly-CSharp::ThornCard
+  effectRange: []
+  Name: 
   Description: 
   Cost: 0
+  type: 0
   user: 1
   shieldOnMoveAttack: 0
   moveAttackShieldAmount: 0
   blocksMovementAfterUse: 0
+  exileOnUse: 0
+  originalCost: -1
+  costDuration: 0
+  costText: {fileID: 0}
+  nameText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  typeText: {fileID: 0}
+  effectText: {fileID: 0}
   cardCanvas: {fileID: 0}
   handNumber: 0
 --- !u!1 &2736271924342697781

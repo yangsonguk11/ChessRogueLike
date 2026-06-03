@@ -32,6 +32,14 @@ public abstract class Piece : MonoBehaviour
 
     public bool IsStunned() => activeEffects.Exists(e => e is StunEffect);
 
+    public int TriggerReceiveMoveAttack(Piece attacker)
+    {
+        int total = 0;
+        foreach (var effect in activeEffects)
+            total += effect.OnReceiveMoveAttack(this, attacker);
+        return total;
+    }
+
     void ProcessStatusEffects()
     {
         for (int i = activeEffects.Count - 1; i >= 0; i--)

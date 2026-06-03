@@ -387,6 +387,7 @@ public partial class Board
                 new CardEffect(BoardMode.Inspect, EffectType.Damage, power, TargetLogic.AllEnemiesInRange, range), duration),
             StatusEffectType.TurnAoEDamageEnd   => new TurnEffect(TurnPhase.OwnTurnEnd,
                 new CardEffect(BoardMode.Inspect, EffectType.Damage, power, TargetLogic.AllEnemiesInRange, range), duration),
+            StatusEffectType.Thorn              => new ThornEffect(duration, power),
             _                                   => null,
         };
     }

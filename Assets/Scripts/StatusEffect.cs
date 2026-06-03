@@ -14,4 +14,7 @@ public abstract class StatusEffect
     }
 
     public virtual void OnRemove(Piece piece) { }
+
+    // 이동공격을 받았을 때 호출. 반격 피해량을 반환.
+    public virtual int OnReceiveMoveAttack(Piece self, Piece attacker) { return 0; }
 }

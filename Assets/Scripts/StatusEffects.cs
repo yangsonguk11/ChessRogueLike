@@ -89,6 +89,26 @@ public class StrengthenEffect : StatusEffect
     public override void OnRemove(Piece piece) => piece.colDamage -= bonusDamage;
 }
 
+// 가시: 이동공격을 받으면 공격자에게 고정 피해 반격
+public class ThornEffect : StatusEffect
+{
+    public readonly int returnDamage;
+    public override string DisplayName => $"가시 ({returnDamage})";
+    public override bool IsBuff => true;
+
+    public ThornEffect(int duration, int returnDamage)
+    {
+        this.duration = duration;
+        this.returnDamage = returnDamage;
+    }
+
+    public override int OnReceiveMoveAttack(Piece self, Piece attacker)
+    {
+        attacker.GetDamage(returnDamage, AttackType.MoveAttack);
+        return returnDamage;
+    }
+}
+
 // 약화: colDamage 감소, 해제 시 원복
 public class WeakenEffect : StatusEffect
 {

@@ -165,8 +165,15 @@ public abstract class Card : MonoBehaviour, ISelectable
     {
         if (!selected) ScaleDefault();
     }
+    public System.Action<string> onClickOverride;
+
     public void MouseDown(BaseEventData data)
     {
+        if (onClickOverride != null)
+        {
+            onClickOverride.Invoke(Name);
+            return;
+        }
         if (CardCanvas.cardSelectionMode)
         {
             CardCanvas.instance.ToggleCardInPanel(GetComponent<RectTransform>());

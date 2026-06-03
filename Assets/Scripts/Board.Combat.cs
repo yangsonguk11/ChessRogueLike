@@ -61,6 +61,18 @@ public partial class Board
             motionQueue.Enqueue(PieceMoveCor(GetButtonScript(adjacentPos), bScript2, 1f));
         }
 
+        int counterDmg = pScript2.TriggerReceiveMoveAttack(pScript1);
+        if (counterDmg > 0)
+        {
+            int attackerHp = pScript1.GetDamage(counterDmg, AttackType.MoveAttack);
+            motionQueue.Enqueue(pScript1.DamageText(counterDmg));
+            if (attackerHp <= 0)
+            {
+                if (pScript1.teamID == 1) enemyPositions.Remove(bScript1.GetLocation());
+                motionQueue.Enqueue(pScript1.DeathCor());
+            }
+        }
+
         if (currentActiveCard != null && currentActiveCard.shieldOnMoveAttack && currentActiveCard.moveAttackShieldAmount > 0)
         {
             pScript1.GetShield(currentActiveCard.moveAttackShieldAmount, AttackType.MoveAttack);
