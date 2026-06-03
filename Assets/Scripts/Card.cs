@@ -130,7 +130,7 @@ public abstract class Card : MonoBehaviour, ISelectable
     }
 
     Coroutine ScaleCor;
-    Vector3 defaultScale;
+    [HideInInspector] public Vector3 defaultScale;
     float hoverScale = 1.1f;
     float speed = 10f;
 
