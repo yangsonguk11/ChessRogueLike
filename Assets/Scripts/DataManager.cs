@@ -133,6 +133,15 @@ public class DataManager : MonoBehaviour
         currentData.visitedNodeX = new List<int>();
         SaveToFile();
     }
+
+    // 세이브 파일 삭제 후 기본값으로 초기화
+    public void DeleteSaveFile()
+    {
+        if (File.Exists(savePath))
+            File.Delete(savePath);
+        currentData = new GameData();
+        LoadFromFile();
+    }
 }
 [System.Serializable]
 public class GameData

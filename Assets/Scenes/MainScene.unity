@@ -5681,9 +5681,29 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 100000, guid: b0550000000000000000000000000008, type: 3}
     - target: {fileID: 5845322441005520208, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: floorPools.Array.size
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5845322441005520208, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: floorPools.Array.data[0].levels.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5845322441005520208, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
       propertyPath: 'floorPools.Array.data[0].levels.Array.data[0]'
       value: 
+      objectReference: {fileID: 11400000, guid: 19387901c67acba43a1c093a9bdcb7e8, type: 2}
+    - target: {fileID: 5845322441005520208, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: 'floorPools.Array.data[1].levels.Array.data[0]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 19387901c67acba43a1c093a9bdcb7e8, type: 2}
+    - target: {fileID: 5845322441005520208, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: 'floorPools.Array.data[2].levels.Array.data[0]'
+      value: 
       objectReference: {fileID: 11400000, guid: 5f4a354edaae2d840bd0efa6f53a65ce, type: 2}
+    - target: {fileID: 5845322441005520208, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: 'floorPools.Array.data[3].levels.Array.data[0]'
+      value: 
+      objectReference: {fileID: 11400000, guid: d564be8c8e84a494d8475bc69cc69160, type: 2}
     - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
       propertyPath: cardPrefabs.Array.size
       value: 21

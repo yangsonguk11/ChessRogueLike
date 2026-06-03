@@ -36,8 +36,7 @@ public class Map : MonoBehaviour
 {
     public static Map instance;
     public List<NodeRow> mapData = new List<NodeRow>();
-    private int totalFloors = 5;
-    public int TotalFloors => totalFloors;
+    public int TotalFloors => LevelDatabase.instance != null ? LevelDatabase.instance.floorPools.Count : 5;
 
     void Awake()
     {
@@ -64,6 +63,7 @@ public class Map : MonoBehaviour
     void GenerateMap()
     {
         mapData.Clear();
+        int totalFloors = TotalFloors;
 
         // 1. ��� ���� (������ y: 0 ~ 4)
         for (int y = 0; y < totalFloors; y++)
