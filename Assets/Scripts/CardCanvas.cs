@@ -666,7 +666,7 @@ public class CardCanvas : MonoBehaviour
 
         for (int i = 0; i < count; i++)
         {
-            float currentAngle = startAngle + (i * angleBetween);
+            float currentAngle = startAngle + ((count - 1 - i) * angleBetween);
 
             // 1. ��ġ ��� (�ﰢ�Լ� ���)
             // �������� ��ȯ: Degree * (PI / 180)
@@ -701,7 +701,7 @@ public class CardCanvas : MonoBehaviour
 
         for (int i = 0; i < count; i++)
         {
-            float currentAngle = startAngle + (i * angleBetween);
+            float currentAngle = startAngle + ((count - 1 - i) * angleBetween);
 
             // 1. ��ġ ��� (�ﰢ�Լ� ���)
             // �������� ��ȯ: Degree * (PI / 180)
