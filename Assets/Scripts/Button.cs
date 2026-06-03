@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class Button : MonoBehaviour, ISelectable
 {
@@ -51,7 +52,7 @@ public class Button : MonoBehaviour, ISelectable
     }
     public void MouseDown()
     {
-        if (Input.GetMouseButton(1)) return;
+        if (Mouse.current.rightButton.isPressed) return;
         board.GetComponent<Board>().ButtonClicked(location);
     }
 
