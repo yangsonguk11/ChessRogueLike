@@ -14,8 +14,12 @@ public class Enemy : Piece
         base.Awake();
         Movenum = 0;
         nextMove = enemyCards[0];
-        ActionText();
         GameManager.instance.AddEnemy(gameObject);
+    }
+
+    void Start()
+    {
+        ActionText();
     }
 
     public override List<Vector2> GetMoveableButton() {
@@ -47,14 +51,11 @@ public class Enemy : Piece
         if (card == null) return;
 
         var parts = new List<string>();
-        if (card.effects != null)
+        foreach (CardEffect effect in card.effects)
         {
-            foreach (CardEffect effect in card.effects)
-            {
-                string desc = BuildEffectDescription(effect);
-                if (!string.IsNullOrEmpty(desc))
-                    parts.Add(desc);
-            }
+            string desc = BuildEffectDescription(effect);
+            if (!string.IsNullOrEmpty(desc))
+                parts.Add(desc);
         }
 
         pieceCanvas.ShowActionText(parts.Count > 0 ? string.Join(", ", parts) : card.Name);

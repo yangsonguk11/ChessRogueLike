@@ -60,7 +60,7 @@ public abstract class Card : MonoBehaviour, ISelectable
     public int Cost;
     public CardType type;
     TargetType target;
-    public List<CardEffect> effects;
+    public List<CardEffect> effects = new List<CardEffect>();
     public User user;
     public bool shieldOnMoveAttack;
     public int moveAttackShieldAmount;
@@ -81,7 +81,6 @@ public abstract class Card : MonoBehaviour, ISelectable
     public virtual void Awake()
     {
         defaultScale = transform.localScale;
-        effects = new List<CardEffect>();
         cardCanvas = GameObject.Find("CardCanvas");
     }
 
