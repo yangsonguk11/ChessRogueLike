@@ -43,7 +43,66 @@ public class Enemy : Piece
     }
     public override void ActionText()
     {
-        pieceCanvas.ShowActionText(GetNextMove().Name);
+        Card card = GetNextMove();
+        if (card == null) return;
+
+        var parts = new List<string>();
+        if (card.effects != null)
+        {
+            foreach (CardEffect effect in card.effects)
+            {
+                string desc = BuildEffectDescription(effect);
+                if (!string.IsNullOrEmpty(desc))
+                    parts.Add(desc);
+            }
+        }
+
+        pieceCanvas.ShowActionText(parts.Count > 0 ? string.Join(", ", parts) : card.Name);
+    }
+
+    string BuildEffectDescription(CardEffect effect)
+    {
+        string primary = effect.type switch
+        {
+            EffectType.Move        => "이동",
+            EffectType.Damage      => effect.useColDamageAsDmg ? "충돌 공격" : $"{effect.dmg} 공격",
+            EffectType.Shield      => $"{effect.dmg} 방어",
+            EffectType.Heal        => $"{effect.dmg} 회복",
+            EffectType.SelfDamage  => $"{effect.dmg} 자해",
+            EffectType.Draw        => effect.dmg > 1 ? $"{effect.dmg} 드로우" : "드로우",
+            EffectType.ApplyStatus => BuildStatusDescription(effect),
+            EffectType.ColDamageUp => $"+{effect.dmg} 충돌력",
+            _                      => ""
+        };
+
+        // 주 효과에 상태이상이 함께 붙어있는 경우 표시
+        if (effect.type != EffectType.ApplyStatus && effect.statusEffectType != StatusEffectType.None)
+        {
+            string statusDesc = BuildStatusDescription(effect);
+            if (!string.IsNullOrEmpty(statusDesc))
+                primary += $"+{statusDesc}";
+        }
+
+        return primary;
+    }
+
+    string BuildStatusDescription(CardEffect effect)
+    {
+        return effect.statusEffectType switch
+        {
+            StatusEffectType.Poison              => $"독({effect.statusPower})",
+            StatusEffectType.Burning             => $"화상({effect.statusPower})",
+            StatusEffectType.Regen               => $"재생({effect.statusPower})",
+            StatusEffectType.Stun                => "기절",
+            StatusEffectType.Strengthen          => $"강화({effect.statusPower})",
+            StatusEffectType.Weaken              => $"약화({effect.statusPower})",
+            StatusEffectType.TurnDamageStart or
+            StatusEffectType.TurnDamageEnd       => $"턴 피해({effect.statusPower})",
+            StatusEffectType.TurnAoEDamageStart or
+            StatusEffectType.TurnAoEDamageEnd    => $"광역 피해({effect.statusPower})",
+            StatusEffectType.Thorn               => $"가시({effect.statusPower})",
+            _                                    => ""
+        };
     }
 
     private void OnDestroy()

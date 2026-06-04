@@ -78,13 +78,14 @@ public partial class Board
     void OnUnSelectBoard()
     {
         ClearHoverRange();
+        ClearHoverPieceRange();
         HideMovableButtons();
         HideButtonInfo();
     }
 
     void FillAllMovableButtonsSilent()
     {
-        selectedButtonMovable.Clear();
+        HideMovableButtons();
         for (int x = 0; x < N; x++)
             for (int y = 0; y < M; y++)
                 selectedButtonMovable.Add(new Vector2(x, y));
@@ -102,12 +103,13 @@ public partial class Board
     {
         foreach (Vector2 v in selectedButtonMovable)
             GetButtonScript(v).RangeOff(selectedMovableTeam);
+        selectedButtonMovable.Clear();
     }
 
     void AddMovableButtons(List<Vector2> list)
     {
+        HideMovableButtons();
         selectedMovableTeam = GetButtonScript(selectedButton).GetPieceScript()?.teamID ?? 0;
-        selectedButtonMovable.Clear();
         foreach (Vector2 v in list)
         {
             Vector2 m = selectedButton + v;
