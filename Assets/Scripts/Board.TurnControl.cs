@@ -11,11 +11,13 @@ public partial class Board
         playerDamagedThisTurn = false;
         CardCanvas.instance.DrawTurnStartCards();
         CardCanvas.instance.GetMaxEnergy();
+        ShowAllEnemyRanges();
     }
 
     public void AllyTurnEnd()
     {
         if (!boardReady) return;
+        ClearAllEnemyRanges();
         ProcessTeamTurnEffects(0, TurnPhase.OwnTurnEnd);
         TurnEnd(0);
         FinishCardUsage();

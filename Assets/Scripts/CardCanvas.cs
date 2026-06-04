@@ -54,7 +54,7 @@ public class CardCanvas : MonoBehaviour
     // ────────────────────────────────────────────────────────────
 
     int _currentenergy;
-    public int currentenergy { get { return _currentenergy; } set { _currentenergy = value; UpdateCurrentEnergy(); } }
+    public int currentenergy { get { return _currentenergy; } set { _currentenergy = value; UpdateCurrentEnergy(); UpdateCardInteractability(); } }
     public int maxenergy = 3;
     RectTransform nowusingCard;
     public bool isCardEffecting;
@@ -192,6 +192,21 @@ public class CardCanvas : MonoBehaviour
     {
         foreach (var rt in cards)
             rt.GetComponent<Card>()?.RefreshView();
+        UpdateCardInteractability();
+    }
+
+    public void UpdateCardInteractability()
+    {
+        if (cardSelectionMode) return;
+        bool playerTurn = TurnManager.instance != null && TurnManager.instance.currentState == TurnState.Player;
+        bool boardProcessing = isCardEffecting && nowusingCard == null;
+        foreach (var rt in cards)
+        {
+            Card card = rt.GetComponent<Card>();
+            if (card == null) continue;
+            bool canUse = playerTurn && !boardProcessing && card.Cost <= currentenergy && card.CanUse();
+            rt.GetComponent<CanvasGroup>().interactable = canUse;
+        }
     }
 
     void Update()
@@ -685,6 +700,7 @@ public class CardCanvas : MonoBehaviour
             cards[i].gameObject.GetComponent<Card>().cardCanvas = gameObject;
             cards[i].gameObject.GetComponent<Card>().handNumber = i;
         }
+        UpdateCardInteractability();
     }
     public void ExcludeAlignCards(int excludeCard = -1)
     {

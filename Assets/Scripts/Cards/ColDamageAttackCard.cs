@@ -14,7 +14,7 @@ public class ColDamageAttackCard : Card
             EffectType.Damage,
             0,
             TargetLogic.NearestEnemy,
-            effectRange[0]
+            null
         )
         { useColDamageAsDmg = true });
     }

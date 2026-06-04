@@ -5,6 +5,7 @@ public partial class Board
 {
     List<Vector2> hoverRangeButtons = new List<Vector2>();
     List<Vector2> hoverPieceRangeButtons = new List<Vector2>();
+    bool hoverPieceIsAlly = true;
     Vector2 currentHoverDirection = Vector2.up;
 
     public void ButtonHovered(Vector2 pos)
@@ -37,7 +38,7 @@ public partial class Board
                     {
                         Vector2 target = center + offset;
                         if (target.x < 0 || target.x >= N || target.y < 0 || target.y >= M) continue;
-                        GetButtonScript(target).RangeOn();
+                        GetButtonScript(target).RangeOn(0);
                         hoverRangeButtons.Add(target);
                     }
                 }
@@ -52,12 +53,13 @@ public partial class Board
             Piece hoveredPiece = GetButtonScript(pos).GetPieceScript();
             if (hoveredPiece != null)
             {
+                hoverPieceIsAlly = hoveredPiece.teamID == 0;
                 List<Vector2> moveRange = hoveredPiece.GetMoveableButton();
                 foreach (Vector2 offset in moveRange)
                 {
                     Vector2 target = pos + offset;
                     if (target.x < 0 || target.x >= N || target.y < 0 || target.y >= M) continue;
-                    GetButtonScript(target).RangeOn();
+                    GetButtonScript(target).RangeOn(hoveredPiece.teamID);
                     hoverPieceRangeButtons.Add(target);
                 }
                 ShowButtonInfo(pos);
@@ -80,14 +82,15 @@ public partial class Board
     public void ClearHoverRange()
     {
         foreach (Vector2 v in hoverRangeButtons)
-            GetButtonScript(v).RangeOff();
+            GetButtonScript(v).RangeOff(0);
         hoverRangeButtons.Clear();
     }
 
     void ClearHoverPieceRange()
     {
+        int team = hoverPieceIsAlly ? 0 : 1;
         foreach (Vector2 v in hoverPieceRangeButtons)
-            GetButtonScript(v).RangeOff();
+            GetButtonScript(v).RangeOff(team);
         hoverPieceRangeButtons.Clear();
     }
 

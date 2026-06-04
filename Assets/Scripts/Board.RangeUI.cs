@@ -5,6 +5,7 @@ using UnityEngine;
 public partial class Board
 {
     List<Vector2> selectedButtonMovable = new List<Vector2>();
+    int selectedMovableTeam = 0;
 
     void OnSelectBoard()
     {
@@ -68,7 +69,7 @@ public partial class Board
             Piece p = GetButtonScript(selectedButtonMovable[i]).GetPieceScript();
             if (p != null && p.teamID != caster.teamID)
             {
-                GetButtonScript(selectedButtonMovable[i]).RangeOff();
+                GetButtonScript(selectedButtonMovable[i]).RangeOff(selectedMovableTeam);
                 selectedButtonMovable.RemoveAt(i);
             }
         }
@@ -100,17 +101,18 @@ public partial class Board
     void HideMovableButtons()
     {
         foreach (Vector2 v in selectedButtonMovable)
-            GetButtonScript(v).RangeOff();
+            GetButtonScript(v).RangeOff(selectedMovableTeam);
     }
 
     void AddMovableButtons(List<Vector2> list)
     {
+        selectedMovableTeam = GetButtonScript(selectedButton).GetPieceScript()?.teamID ?? 0;
         selectedButtonMovable.Clear();
         foreach (Vector2 v in list)
         {
             Vector2 m = selectedButton + v;
             if (m.x < 0 || m.x >= N || m.y < 0 || m.y >= M) continue;
-            GetButtonScript(m).RangeOn();
+            GetButtonScript(m).RangeOn(selectedMovableTeam);
             selectedButtonMovable.Add(m);
         }
     }

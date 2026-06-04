@@ -5,7 +5,8 @@ using UnityEngine.InputSystem;
 public class Button : MonoBehaviour, ISelectable
 {
     [SerializeField] GameObject piece;
-    [SerializeField] GameObject RangeObj;
+    [SerializeField] GameObject AllyRangeObj;
+    [SerializeField] GameObject EnemyRangeObj;
     [SerializeField] GameObject SelectedObj;
     GameObject board;
     Board boardScript;
@@ -90,8 +91,27 @@ public class Button : MonoBehaviour, ISelectable
         ScaleHover();
     }
 
-    public void RangeOn(){ RangeObj.SetActive(true); }
-    public void RangeOff(){  RangeObj.SetActive(false); }
+    int allyRangeRefCount = 0;
+    int enemyRangeRefCount = 0;
+
+    public void RangeOn(int teamID)
+    {
+        if (teamID == 0) { allyRangeRefCount++;  AllyRangeObj.SetActive(true); }
+        else             { enemyRangeRefCount++; EnemyRangeObj.SetActive(true); }
+    }
+    public void RangeOff(int teamID)
+    {
+        if (teamID == 0)
+        {
+            allyRangeRefCount = Mathf.Max(0, allyRangeRefCount - 1);
+            if (allyRangeRefCount == 0) AllyRangeObj.SetActive(false);
+        }
+        else
+        {
+            enemyRangeRefCount = Mathf.Max(0, enemyRangeRefCount - 1);
+            if (enemyRangeRefCount == 0) EnemyRangeObj.SetActive(false);
+        }
+    }
     public Vector2 GetLocation() { return location; }
     void SetLocation(int _x, int _y)
     {
