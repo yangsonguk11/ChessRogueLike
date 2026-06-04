@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2673097316860228840}
   - component: {fileID: 188146230140724658}
+  - component: {fileID: 6237715602432664278}
   m_Layer: 0
   m_Name: Board
   m_TagString: Untagged
@@ -45,10 +46,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da531f167ceaf0e4abcc371b4c83c32a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Board
+  queuecoroutineworking: 0
+  turnEffectQueueRunning: 0
   Background: {fileID: 4457270323820028761}
   ButtonPrefab: {fileID: 7365110576053067192, guid: 734ee3083adea464faeb772349f0da64, type: 3}
+  BoardUICanvas: {fileID: 0}
+  piecedatabase: {fileID: 0}
+  boardReady: 0
+  enemyPositions: []
   N: 7
-  M: 5
+  M: 7
+  leveldata: {fileID: 11400000, guid: 19387901c67acba43a1c093a9bdcb7e8, type: 2}
+  grid: {fileID: 0}
+  boardmode: 0
+--- !u!156049354 &6237715602432664278
+Grid:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1353525679512012312}
+  m_Enabled: 1
+  m_CellSize: {x: 1, y: 1, z: 1}
+  m_CellGap: {x: 0, y: 0, z: 0}
+  m_CellLayout: 0
+  m_CellSwizzle: 0
 --- !u!1 &4457270323820028761
 GameObject:
   m_ObjectHideFlags: 0
@@ -67,7 +89,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1061874065880288454
 Transform:
   m_ObjectHideFlags: 0
@@ -116,7 +138,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

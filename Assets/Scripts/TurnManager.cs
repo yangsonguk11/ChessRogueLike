@@ -24,7 +24,6 @@ public class TurnManager : MonoBehaviour
     }
     private void OnEnable()
     {
-        // �� ��ȯ �̺�Ʈ ���� (����Ƽ���� ���� �ٲ�� �ڵ����� ȣ���)
         UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
@@ -42,13 +41,18 @@ public class TurnManager : MonoBehaviour
     void AssignReferences()
     {
         board = GameObject.Find("Board").GetComponent<Board>();
-
     }
     public void StartPlayerTurn()
     {
+        StartCoroutine(StartPlayerTurnCoroutine());
+    }
+
+    IEnumerator StartPlayerTurnCoroutine()
+    {
         currentState = TurnState.Player;
-        // �÷��̾ ���� �����ϵ��� UI Ȱ��ȭ ��
-        Debug.Log("�÷��̾� �� ����");
+        Debug.Log("플레이어 턴 시작");
+        if (TurnAnnouncementUI.instance != null)
+            yield return TurnAnnouncementUI.instance.ShowRoutine("플레이어 턴");
         board.SendMessage("TurnStart");
     }
 
@@ -67,14 +71,16 @@ public class TurnManager : MonoBehaviour
 
     void StartEnemyTurn()
     {
-        currentState = TurnState.Enemy;
-        board.SendMessage("PlayEnemyTurn");
-        // �� AI ���� ����...
-        Debug.Log("�� �� ����");
+        StartCoroutine(StartEnemyTurnCoroutine());
+    }
 
-        
-        // ��: �� �ൿ�� ������ �ٽ� �÷��̾� ������
-        // StartCoroutine(EnemyAILogic());
+    IEnumerator StartEnemyTurnCoroutine()
+    {
+        currentState = TurnState.Enemy;
+        Debug.Log("적 턴 시작");
+        if (TurnAnnouncementUI.instance != null)
+            yield return TurnAnnouncementUI.instance.ShowRoutine("적 턴");
+        board.SendMessage("PlayEnemyTurn");
     }
     public void EndEnemyTurn()
     {
