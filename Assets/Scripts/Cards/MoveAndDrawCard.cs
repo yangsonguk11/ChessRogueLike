@@ -6,7 +6,7 @@ public class MoveAndDrawCard : Card
     {
         base.Awake();
         Name = "MoveAndDrawCard";
-        Cost = 1;
+        Cost = 2;
         type = CardType.Move;
 
         effects.Add(new CardEffect(

@@ -8,7 +8,7 @@ public class DefenseCard : Card
         Name = "DefenseCard";
         Cost = 1;
         type = CardType.Skill;
-        CardEffect cf = new CardEffect(Board.BoardMode.targeting, EffectType.Shield, 3, TargetLogic.self);
+        CardEffect cf = new CardEffect(Board.BoardMode.targeting, EffectType.Shield, 2, TargetLogic.self);
         effects.Add(cf);
 
     }

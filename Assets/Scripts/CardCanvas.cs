@@ -55,7 +55,7 @@ public class CardCanvas : MonoBehaviour
 
     int _currentenergy;
     public int currentenergy { get { return _currentenergy; } set { _currentenergy = value; UpdateCurrentEnergy(); UpdateCardInteractability(); } }
-    public int maxenergy = 3;
+    public int maxenergy = 4;
     RectTransform nowusingCard;
     public bool isCardEffecting;
     Coroutine pendingCardCoroutine;

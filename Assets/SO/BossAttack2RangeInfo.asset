@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: BossAttack2RangeInfo
   m_EditorClassIdentifier: Assembly-CSharp::RangeInfoSO
   rows:
-  - columns: 00000000000000
-  - columns: 00000001010000
-  - columns: 00010001000000
-  - columns: 00010100010100
-  - columns: 00000001000100
-  - columns: 00000101000000
-  - columns: 00000000000000
+  - columns: 00000100010000
+  - columns: 00000100010000
+  - columns: 01010101010101
+  - columns: 00000100010000
+  - columns: 01010101010101
+  - columns: 00000100010000
+  - columns: 00000100010000

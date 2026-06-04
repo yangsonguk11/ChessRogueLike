@@ -6,7 +6,7 @@ public class SafeMoveCard : Card
     {
         base.Awake();
         Name = "SafeMoveCard";
-        Cost = 0;
+        Cost = 1;
         type = CardType.Move;
 
         effects.Add(new CardEffect(

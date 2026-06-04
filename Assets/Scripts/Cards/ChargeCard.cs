@@ -6,7 +6,7 @@ public class ChargeCard : Card
     {
         base.Awake();
         Name = "ChargeCard";
-        Cost = 1;
+        Cost = 2;
         type = CardType.Move;
         shieldOnMoveAttack = true;
         moveAttackShieldAmount = 3;

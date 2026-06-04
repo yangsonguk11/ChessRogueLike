@@ -48,26 +48,15 @@ public class DataManager : MonoBehaviour
             currentData.deckCardIDs = new List<string>()
             {
                 "AttackCard",
-                "MoveCard",
-                "ChargeCard",
-                "ColDamageAttackCard",
-                "ColDamageUpCard",
+                "AttackCard",
+                "AttackCard",
+                "AttackCard",
                 "DefenseCard",
-                "DefensiveStanceCard",
+                "DefenseCard",
+                "DefenseCard",
+                "DefenseCard",
+                "MoveCard",
                 "DirectionalAttackCard",
-                "DrawCard",
-                "FlameThrowingCard",
-                "HealCard",
-                "HeavyAttackCard",
-                "HeavyShieldCard",
-                "LifeDrainCard",
-                "MoveAndAttackCard",
-                "MoveAndDrawCard",
-                "PersistentShieldCard",
-                "SafeMoveCard",
-                "ShieldCycleCard",
-                "TempColDamageUpCard",
-                "SacrificeShieldCard",
             };
 
             PieceData defaultPiece = new PieceData

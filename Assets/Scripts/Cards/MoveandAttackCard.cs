@@ -7,7 +7,7 @@ public class MoveAndAttackCard : Card
     {
         base.Awake();
         Name = "MoveAndAttackCard";
-        Cost = 2;
+        Cost = 3;
         type = CardType.Attack;
         CardEffect cf = new CardEffect(Board.BoardMode.command, EffectType.Move, 0, TargetLogic.NearestEnemy, null, true);
         effects.Add(cf);

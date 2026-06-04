@@ -2495,18 +2495,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da531f167ceaf0e4abcc371b4c83c32a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Board
---- !u!156049354 &712148470
-Grid:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 712148467}
-  m_Enabled: 1
-  m_CellSize: {x: 1, y: 1, z: 1}
-  m_CellGap: {x: 0, y: 0, z: 0}
-  m_CellLayout: 0
-  m_CellSwizzle: 0
 --- !u!1 &746435972
 GameObject:
   m_ObjectHideFlags: 0
@@ -5889,7 +5877,7 @@ PrefabInstance:
     - target: {fileID: 5845322441005520208, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
       propertyPath: 'floorPools.Array.data[2].levels.Array.data[0]'
       value: 
-      objectReference: {fileID: 11400000, guid: 5f4a354edaae2d840bd0efa6f53a65ce, type: 2}
+      objectReference: {fileID: 11400000, guid: d564be8c8e84a494d8475bc69cc69160, type: 2}
     - target: {fileID: 5845322441005520208, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
       propertyPath: 'floorPools.Array.data[3].levels.Array.data[0]'
       value: 
@@ -6008,22 +5996,6 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 188146230140724658, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
-      propertyPath: M
-      value: 7
-      objectReference: {fileID: 0}
-    - target: {fileID: 188146230140724658, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
-      propertyPath: N
-      value: 7
-      objectReference: {fileID: 0}
-    - target: {fileID: 188146230140724658, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
-      propertyPath: leveldata
-      value: 
-      objectReference: {fileID: 11400000, guid: 19387901c67acba43a1c093a9bdcb7e8, type: 2}
-    - target: {fileID: 188146230140724658, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
-      propertyPath: turnManager
-      value: 
-      objectReference: {fileID: 74168499}
-    - target: {fileID: 188146230140724658, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
       propertyPath: BoardUICanvas
       value: 
       objectReference: {fileID: 1856970875}
@@ -6031,22 +6003,6 @@ PrefabInstance:
       propertyPath: piecedatabase
       value: 
       objectReference: {fileID: 1458612082}
-    - target: {fileID: 188146230140724658, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
-      propertyPath: Pieces.Array.size
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 188146230140724658, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
-      propertyPath: 'Pieces.Array.data[0]'
-      value: 
-      objectReference: {fileID: 196802, guid: 8b7908f48c3331c4d9476763edc435c6, type: 3}
-    - target: {fileID: 188146230140724658, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
-      propertyPath: 'Pieces.Array.data[1]'
-      value: 
-      objectReference: {fileID: 107724, guid: 1bae5e056ac375b46a1158f8b09b1f7f, type: 3}
-    - target: {fileID: 188146230140724658, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
-      propertyPath: 'Pieces.Array.data[2]'
-      value: 
-      objectReference: {fileID: 107724, guid: a6c81ec23ba21934d8b9b426d6346406, type: 3}
     - target: {fileID: 1353525679512012312, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
       propertyPath: m_Name
       value: Board
@@ -6091,17 +6047,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 4457270323820028761, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 1353525679512012312, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 712148470}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
