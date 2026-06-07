@@ -62,6 +62,7 @@ public class CardCanvas : MonoBehaviour
     Coroutine pendingMoveCardCoroutine;
     List<RectTransform> pendingDrawCards = new List<RectTransform>();
     Coroutine batchDrawCoroutine;
+    Vector2 pendingFirstTarget = new Vector2(-1, -1);
     private void Awake()
     {
         if (instance == null) instance = this;
@@ -109,11 +110,13 @@ public class CardCanvas : MonoBehaviour
             StopCoroutine(pendingCardCoroutine);
             pendingCardCoroutine = null;
         }
+        pendingFirstTarget = new Vector2(-1, -1);
         ClearnowusingCard();
         nowusingCard = cards[handnum];
         nowusingCard.GetComponent<Card>().handNumber = -1;
         cards.RemoveAt(handnum);
         AlignCards();
+        HandZone.GetComponent<Image>().raycastTarget = false;
         pendingCardCoroutine = StartCoroutine(AnimateCardToUsingPos(nowusingCard));
     }
 
@@ -235,7 +238,7 @@ public class CardCanvas : MonoBehaviour
         nowusingCard = null;
         cards.Add(card);
         AlignCards();
-
+        pendingFirstTarget = new Vector2(-1, -1);
         board.CancelCardUsage();
     }
 
@@ -285,6 +288,12 @@ public class CardCanvas : MonoBehaviour
         pendingMoveCardCoroutine = null;
         pendingCardCoroutine = null;
         board.UseCard(card.GetComponent<Card>());
+        if (pendingFirstTarget.x >= 0)
+        {
+            Vector2 target = pendingFirstTarget;
+            pendingFirstTarget = new Vector2(-1, -1);
+            board.ButtonClicked(target);
+        }
     }
 
     IEnumerator AnimateCardToDiscard(RectTransform card)
@@ -624,6 +633,36 @@ public class CardCanvas : MonoBehaviour
             card.originalCost = -1;
             card.RefreshView();
         }
+    }
+
+    public void OnDragCardReleased(Vector2 screenPos)
+    {
+        if (nowusingCard == null) return;
+        Card card = nowusingCard.GetComponent<Card>();
+        bool needsTargeting = card.effects.Any(e =>
+            e.requiredMode == Board.BoardMode.command || e.requiredMode == Board.BoardMode.targeting);
+        if (!needsTargeting) return;
+        Vector2 boardPos = FindBoardPosAtScreen(screenPos);
+        if (boardPos.x >= 0)
+        {
+            if (pendingCardCoroutine == null)
+                board.ButtonClicked(boardPos);
+            else
+                pendingFirstTarget = boardPos;
+        }
+        else
+            CancelCardUsage();
+    }
+
+    Vector2 FindBoardPosAtScreen(Vector2 screenPos)
+    {
+        Ray ray = Camera.main.ScreenPointToRay(screenPos);
+        if (Physics.Raycast(ray, out RaycastHit hit))
+        {
+            var btn = hit.collider.GetComponentInParent<global::Button>();
+            if (btn != null) return btn.GetLocation();
+        }
+        return new Vector2(-1, -1);
     }
 
     [ContextMenu("Align Cards")] // 인스펙터 메뉴에서 바로 테스트 가능

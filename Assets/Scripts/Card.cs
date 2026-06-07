@@ -177,15 +177,11 @@ public abstract class Card : MonoBehaviour, ISelectable
     }
     public void MouseUp(BaseEventData data)
     {
+        bool clearAfterDragUse = selected && handNumber == -1;
         if (selected) SelectedFalse();
         _canvasGroup.blocksRaycasts = true;
-        PointerEventData pointerData = (PointerEventData)data;
-
-        foreach(GameObject obj in pointerData.hovered)
-        {
-            if(obj.name == "HandZone")
-                CardCanvas.instance.UseCard(handNumber);
-        }
+        if (clearAfterDragUse)
+            CardCanvas.instance.OnDragCardReleased(((PointerEventData)data).position);
     }
 
     public void MouseDrag(BaseEventData data)
@@ -194,11 +190,16 @@ public abstract class Card : MonoBehaviour, ISelectable
             return;
         PointerEventData pointerData = (PointerEventData)data;
 
-        Vector2 screenPos = pointerData.position;
+        this.transform.position = pointerData.position;
 
-        Vector2 delta = pointerData.delta;
-
-        this.transform.position = screenPos;
+        foreach (GameObject obj in pointerData.hovered)
+        {
+            if (obj.name == "HandZone")
+            {
+                CardCanvas.instance.UseCard(handNumber);
+                return;
+            }
+        }
     }
 
 }
