@@ -22,8 +22,4 @@ public class BossAttack1Card : Card
     }
 
     public override string EffectDescription => $"상하좌우+대각선으로 {effects[0].dmg} 피해를 줍니다.";
-
-    public override bool CanUse() => true;
-
-    public override void Execute() => throw new System.NotImplementedException();
 }

@@ -23,8 +23,4 @@ public class BossAttack2Card : Card
     }
 
     public override string EffectDescription => $"선풍기 모양 범위의 적에게 {effects[0].dmg} 피해를 줍니다.";
-
-    public override bool CanUse() => true;
-
-    public override void Execute() => throw new System.NotImplementedException();
 }

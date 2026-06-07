@@ -30,11 +30,4 @@ public class AreaHealCard : Card
     }
 
     public override string EffectDescription => $"범위 내 모든 아군을 {effects[0].dmg} 회복합니다.";
-
-    public override bool CanUse() => true;
-
-    public override void Execute()
-    {
-        throw new System.NotImplementedException();
-    }
 }

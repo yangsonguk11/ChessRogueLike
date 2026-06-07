@@ -13,11 +13,4 @@ public class AreaAttackCard : Card
     }
 
     public override string EffectDescription => $"범위 내 모든 적에게 {effects[0].dmg} 피해를 줍니다.";
-
-    public override bool CanUse() => true;
-
-    public override void Execute()
-    {
-        throw new System.NotImplementedException();
-    }
 }

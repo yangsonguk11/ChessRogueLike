@@ -86,6 +86,7 @@ public partial class Board
     void FillAllMovableButtonsSilent()
     {
         HideMovableButtons();
+        selectedMovableTeam = GetButtonScript(selectedButton).GetPieceScript()?.teamID ?? 0;
         for (int x = 0; x < N; x++)
             for (int y = 0; y < M; y++)
                 selectedButtonMovable.Add(new Vector2(x, y));

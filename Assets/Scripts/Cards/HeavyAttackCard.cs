@@ -15,11 +15,4 @@ public class HeavyAttackCard : Card
     }
 
     public override string EffectDescription => $"적에게 {effects[0].dmg} 피해를 주고, 자신도 {effects[1].dmg} 피해를 받습니다.";
-
-    public override bool CanUse() => true;
-
-    public override void Execute()
-    {
-        throw new System.NotImplementedException();
-    }
 }

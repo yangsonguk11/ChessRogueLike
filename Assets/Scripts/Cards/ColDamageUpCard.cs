@@ -18,11 +18,4 @@ public class ColDamageUpCard : Card
     }
 
     public override string EffectDescription => "이동공격력을 1 올립니다.";
-
-    public override bool CanUse() => true;
-
-    public override void Execute()
-    {
-        throw new System.NotImplementedException();
-    }
 }

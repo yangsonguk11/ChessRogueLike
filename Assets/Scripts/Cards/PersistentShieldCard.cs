@@ -40,11 +40,4 @@ public class PersistentShieldCard : Card
 
     public override string EffectDescription =>
         $"방어도 {effects[0].dmg}를 부여하고, 다음 턴 시작 시 방어도 {effects[1].onTurnEndEffect.dmg}를 추가로 부여합니다.";
-
-    public override bool CanUse() => true;
-
-    public override void Execute()
-    {
-        throw new System.NotImplementedException();
-    }
 }

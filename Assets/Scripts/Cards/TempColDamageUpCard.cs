@@ -37,11 +37,4 @@ public class TempColDamageUpCard : Card
     }
 
     public override string EffectDescription => "이번 턴 동안 이동공격력을 2 올립니다.";
-
-    public override bool CanUse() => true;
-
-    public override void Execute()
-    {
-        throw new System.NotImplementedException();
-    }
 }

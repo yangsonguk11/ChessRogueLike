@@ -19,11 +19,4 @@ public class HeavyShieldCard : Card
     }
 
     public override string EffectDescription => $"자신에게 방어도 {effects[0].dmg}를 부여합니다. (소멸)";
-
-    public override bool CanUse() => true;
-
-    public override void Execute()
-    {
-        throw new System.NotImplementedException();
-    }
 }

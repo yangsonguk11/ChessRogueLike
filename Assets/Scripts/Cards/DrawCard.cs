@@ -13,11 +13,4 @@ public class DrawCard : Card
     }
 
     public override string EffectDescription => $"카드를 {effects.Count}장 드로우합니다.";
-
-    public override bool CanUse() => true;
-
-    public override void Execute()
-    {
-        throw new System.NotImplementedException();
-    }
 }

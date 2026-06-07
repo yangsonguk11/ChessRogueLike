@@ -216,7 +216,8 @@ public partial class Board
 
     Vector2 ResolveNearestEnemyTarget()
     {
-        List<Vector2> movableRange = GetButtonScript(selectedButton).GetPiece()?.GetComponent<Piece>().GetMoveableButton();
+        List<Vector2> movableRange = GetButtonScript(selectedButton).GetPiece()?.GetComponent<Piece>().GetMoveableButton()
+            ?? new List<Vector2>();
         AddMovableButtons(movableRange);
 
         float minDistance = float.MaxValue;
@@ -268,7 +269,7 @@ public partial class Board
         }
 
         effectApplied = true;
-        currentActiveCard.cardCanvas.GetComponent<CardCanvas>().isCardEffecting = true;
+        CardCanvas.instance.isCardEffecting = true;
 
         if (cardEffect.targetlogic == TargetLogic.AllEnemiesInRange ||
             cardEffect.targetlogic == TargetLogic.AllAlliesInRange)
@@ -398,7 +399,7 @@ public partial class Board
             lockedCasterPiece = target;
 
         effectApplied = true;
-        currentActiveCard.cardCanvas.GetComponent<CardCanvas>().isCardEffecting = true;
+        CardCanvas.instance.isCardEffecting = true;
 
         switch (cardEffect.type)
         {

@@ -174,11 +174,6 @@ public partial class Board : MonoBehaviour
         CardCanvas.instance.HandtoDiscardAll();
     }
 
-    GameObject GetButton(Vector2 pos)
-    {
-        return Buttons[(int)pos.x, (int)pos.y];
-    }
-
     Button GetButtonScript(Vector2 pos)
     {
         return Buttons[(int)pos.x, (int)pos.y].GetComponent<Button>();

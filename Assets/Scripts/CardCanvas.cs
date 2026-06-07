@@ -71,8 +71,9 @@ public class CardCanvas : MonoBehaviour
             GameObject obj = cardData.SpawnCard(GetComponent<RectTransform>(), cardName);
             if(obj != null)
             {
-                Discardcards.Add(obj.GetComponent<RectTransform>());
-                obj.GetComponent<RectTransform>().position = DeckZone.position;
+                var rt = obj.GetComponent<RectTransform>();
+                Discardcards.Add(rt);
+                rt.position = DeckZone.position;
             }
         }
         AlignCards();
@@ -361,19 +362,14 @@ public class CardCanvas : MonoBehaviour
     {
         if (Discardcards.Count == 0) return;
 
-        var random = new System.Random();
+        var shuffledCards = Discardcards.OrderBy(_ => UnityEngine.Random.value).ToList();
 
-        // 1. LINQ�� ����Ͽ� ����Ʈ�� �������� ���� �ٽ� ����Ʈ�� ��ȯ
-        var shuffledCards = Discardcards.OrderBy(x => random.Next()).ToList();
-
-        // 2. ���� ī����� ��(Queue)�� ������� �ֱ�
         foreach (var card in shuffledCards)
         {
             card.position = DeckZone.position;
             Deckcards.Enqueue(card);
         }
 
-        // 3. ���� ���� ī�� ����Ʈ ����
         Discardcards.Clear();
         NotifyPileChanged();
     }
@@ -383,32 +379,37 @@ public class CardCanvas : MonoBehaviour
         currentenergy = maxenergy;
     }
 
-    public void HandtoDiscardCount(int count)
+    // count장을 손패에서 무작위로 뽑아 반환 (count <= 0이면 전부)
+    List<RectTransform> PickRandomCardsFromHand(int count)
     {
         int n = (count <= 0) ? cards.Count : Mathf.Min(count, cards.Count);
-        for (int i = 0; i < n; i++)
+        var snapshot = new List<RectTransform>(cards);
+        var result = new List<RectTransform>();
+        for (int i = 0; i < n && snapshot.Count > 0; i++)
         {
-            if (cards.Count == 0) break;
-            int idx = UnityEngine.Random.Range(0, cards.Count);
-            HandtoDiscard(cards[idx]);
+            int idx = UnityEngine.Random.Range(0, snapshot.Count);
+            result.Add(snapshot[idx]);
+            snapshot.RemoveAt(idx);
         }
+        return result;
+    }
+
+    public void HandtoDiscardCount(int count)
+    {
+        foreach (var card in PickRandomCardsFromHand(count))
+            HandtoDiscard(card);
         AlignCards();
     }
 
     public void HandtoDeckCount(int count)
     {
-        int n = (count <= 0) ? cards.Count : Mathf.Min(count, cards.Count);
-        var handSnapshot = new List<RectTransform>(cards);
-        for (int i = 0; i < n && handSnapshot.Count > 0; i++)
+        foreach (var card in PickRandomCardsFromHand(count))
         {
-            int idx = UnityEngine.Random.Range(0, handSnapshot.Count);
-            RectTransform card = handSnapshot[idx];
-            handSnapshot.RemoveAt(idx);
             cards.Remove(card);
             card.position = DeckZone.position;
             Deckcards.Enqueue(card);
         }
-        var list = Deckcards.ToList().OrderBy(x => UnityEngine.Random.value).ToList();
+        var list = Deckcards.ToList().OrderBy(_ => UnityEngine.Random.value).ToList();
         Deckcards = new Queue<RectTransform>(list);
         AlignCards();
         NotifyPileChanged();
@@ -416,30 +417,13 @@ public class CardCanvas : MonoBehaviour
 
     public void HandtoExileCount(int count)
     {
-        int n = (count <= 0) ? cards.Count : Mathf.Min(count, cards.Count);
-        var handSnapshot = new List<RectTransform>(cards);
-        var toExile = new List<RectTransform>();
-        for (int i = 0; i < n && handSnapshot.Count > 0; i++)
-        {
-            int idx = UnityEngine.Random.Range(0, handSnapshot.Count);
-            toExile.Add(handSnapshot[idx]);
-            handSnapshot.RemoveAt(idx);
-        }
-        foreach (var card in toExile)
+        foreach (var card in PickRandomCardsFromHand(count))
             ExileCard(card);
     }
 
     public void HandtoDeckTop(int count)
     {
-        int n = (count <= 0) ? cards.Count : Mathf.Min(count, cards.Count);
-        var handSnapshot = new List<RectTransform>(cards);
-        var toReturn = new List<RectTransform>();
-        for (int i = 0; i < n && handSnapshot.Count > 0; i++)
-        {
-            int idx = UnityEngine.Random.Range(0, handSnapshot.Count);
-            toReturn.Add(handSnapshot[idx]);
-            handSnapshot.RemoveAt(idx);
-        }
+        var toReturn = PickRandomCardsFromHand(count);
         foreach (var card in toReturn)
         {
             cards.Remove(card);
@@ -451,6 +435,17 @@ public class CardCanvas : MonoBehaviour
         NotifyPileChanged();
     }
 
+    // 어느 존에서든 카드를 제거. 손패에 있었으면 true 반환
+    bool RemoveCardFromAnyZone(RectTransform card)
+    {
+        if (cards.Remove(card)) return true;
+        if (Discardcards.Remove(card)) return false;
+        var deckList = Deckcards.ToList();
+        if (deckList.Remove(card))
+            Deckcards = new Queue<RectTransform>(deckList);
+        return false;
+    }
+
     public void ExileHandCard(int handnum)
     {
         if (handnum < 0 || handnum >= cards.Count) return;
@@ -459,22 +454,11 @@ public class CardCanvas : MonoBehaviour
 
     public void ExileCard(RectTransform card)
     {
-        bool wasInHand = cards.Remove(card);
-        if (!wasInHand)
-        {
-            if (!Discardcards.Remove(card))
-            {
-                var deckList = Deckcards.ToList();
-                if (deckList.Remove(card))
-                    Deckcards = new Queue<RectTransform>(deckList);
-            }
-        }
+        bool wasInHand = RemoveCardFromAnyZone(card);
         if (nowusingCard == card)
             nowusingCard = null;
-
         Exilecards.Add(card);
         StartCoroutine(AnimateCardToExile(card));
-
         if (wasInHand)
             AlignCards();
         NotifyPileChanged();
@@ -509,8 +493,6 @@ public class CardCanvas : MonoBehaviour
 
         cardSelectionPanel.SetActive(true);
 
-        // 카드를 패널 영역으로 이동
-        RectTransform canvasRoot = GetComponent<RectTransform>();
         foreach (var card in panelCardPool)
         {
             savedCardStates[card] = (card.parent, card.position);
@@ -587,8 +569,6 @@ public class CardCanvas : MonoBehaviour
 
         var selected = new List<RectTransform>(selectedInPanel);
 
-        // 모든 카드를 원래 존/위치로 복구
-        RectTransform canvasRoot = GetComponent<RectTransform>();
         foreach (var card in panelCardPool)
         {
             var (originalParent, worldPos) = savedCardStates[card];
@@ -608,22 +588,10 @@ public class CardCanvas : MonoBehaviour
     /// <summary>카드를 어느 존에서든 버린 카드 더미로 이동합니다.</summary>
     public void MoveCardToDiscard(RectTransform card)
     {
-        bool wasInHand = cards.Remove(card);
-        if (!wasInHand)
-        {
-            if (!Discardcards.Remove(card))
-            {
-                var deckList = Deckcards.ToList();
-                if (deckList.Remove(card))
-                    Deckcards = new Queue<RectTransform>(deckList);
-            }
-        }
-
-        // 복구된 parent가 canvasRoot가 아닐 수 있으니 재부착
+        bool wasInHand = RemoveCardFromAnyZone(card);
         card.SetParent(GetComponent<RectTransform>(), true);
         Discardcards.Add(card);
         StartCoroutine(MoveCard(card, DiscardZone.position, Quaternion.identity, 0.3f));
-
         if (wasInHand) AlignCards();
         NotifyPileChanged();
     }
@@ -631,23 +599,12 @@ public class CardCanvas : MonoBehaviour
     /// <summary>카드를 어느 존에서든 덱으로 이동합니다 (덱 맨 아래에 추가).</summary>
     public void MoveCardToDeck(RectTransform card)
     {
-        bool wasInHand = cards.Remove(card);
-        if (!wasInHand)
-        {
-            if (!Discardcards.Remove(card))
-            {
-                var deckList = Deckcards.ToList();
-                if (deckList.Remove(card))
-                    Deckcards = new Queue<RectTransform>(deckList);
-            }
-        }
-
+        bool wasInHand = RemoveCardFromAnyZone(card);
         card.SetParent(GetComponent<RectTransform>(), true);
         var newDeckList = Deckcards.ToList();
         newDeckList.Add(card);
         Deckcards = new Queue<RectTransform>(newDeckList);
         StartCoroutine(MoveCard(card, DeckZone.position, Quaternion.identity, 0.3f));
-
         if (wasInHand) AlignCards();
         NotifyPileChanged();
     }
@@ -695,9 +652,10 @@ public class CardCanvas : MonoBehaviour
             cards[i].localPosition = new Vector3(x, y + heightOffset, 0);
             cards[i].localRotation = Quaternion.Euler(0, 0, -currentAngle);
 
-            cards[i].gameObject.GetComponent<Card>().OnUnSelected -= CardUnSelected;
-            cards[i].gameObject.GetComponent<Card>().OnUnSelected += CardUnSelected;
-            cards[i].gameObject.GetComponent<Card>().cardCanvas = gameObject;
+            Card cardComp = cards[i].GetComponent<Card>();
+            cardComp.OnUnSelected -= CardUnSelected;
+            cardComp.OnUnSelected += CardUnSelected;
+            cardComp.cardCanvas = gameObject;
             cards[i].gameObject.GetComponent<Card>().handNumber = i;
         }
         UpdateCardInteractability();

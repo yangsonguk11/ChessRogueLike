@@ -13,11 +13,4 @@ public class HealCard : Card
         effects.Add(cf);
     }
     public override string EffectDescription => $"자신을 {effects[0].dmg} 회복합니다.";
-
-    public override bool CanUse() => true;
-
-    public override void Execute()
-    {
-        throw new System.NotImplementedException();
-    }
 }

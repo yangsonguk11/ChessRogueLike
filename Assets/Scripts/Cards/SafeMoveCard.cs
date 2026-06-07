@@ -19,11 +19,4 @@ public class SafeMoveCard : Card
     }
 
     public override string EffectDescription => "이동합니다. (이동공격 불가)";
-
-    public override bool CanUse() => true;
-
-    public override void Execute()
-    {
-        throw new System.NotImplementedException();
-    }
 }

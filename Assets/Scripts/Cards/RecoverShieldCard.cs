@@ -21,9 +21,4 @@ public class RecoverShieldCard : Card
 
     public override string EffectDescription =>
         $"방어도 {effects[0].dmg}를 얻고\n버린 카드 1장을 덱으로 되돌립니다.";
-
-    public override void Execute()
-    {
-        throw new System.NotImplementedException();
-    }
 }

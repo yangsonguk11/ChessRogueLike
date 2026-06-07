@@ -15,11 +15,4 @@ public class ChargeCard : Card
     }
 
     public override string EffectDescription => $"이동합니다. 이동공격 시 방어도 {moveAttackShieldAmount}를 획득합니다.";
-
-    public override bool CanUse() => true;
-
-    public override void Execute()
-    {
-        throw new System.NotImplementedException();
-    }
 }

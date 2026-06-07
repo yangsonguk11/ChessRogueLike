@@ -23,13 +23,6 @@ public static class CardTypeExtensions
     };
 }
 
-enum TargetType
-{
-    Self,
-    Enemy,
-    Ally,
-}
-
 public enum User
 {
     Ally,
@@ -59,7 +52,6 @@ public abstract class Card : MonoBehaviour, ISelectable
     public virtual string EffectDescription => "";
     public int Cost;
     public CardType type;
-    TargetType target;
     public List<CardEffect> effects = new List<CardEffect>();
     public User user;
     public bool shieldOnMoveAttack;
@@ -78,10 +70,13 @@ public abstract class Card : MonoBehaviour, ISelectable
     [SerializeField] TextMeshProUGUI typeText;
     [SerializeField] TextMeshProUGUI effectText;
 
+    CanvasGroup _canvasGroup;
+
     public virtual void Awake()
     {
         defaultScale = transform.localScale;
         cardCanvas = GameObject.Find("CardCanvas");
+        _canvasGroup = GetComponent<CanvasGroup>();
     }
 
     void Start()
@@ -106,12 +101,8 @@ public abstract class Card : MonoBehaviour, ISelectable
 
 
     public virtual bool CanUse() => true;
-    public abstract void Execute();
+    public virtual void Execute() { }
 
-    public void Init()
-    {
-
-    }
     public bool IsSelectable()
     {
         return true;
@@ -128,7 +119,6 @@ public abstract class Card : MonoBehaviour, ISelectable
         ScaleHover();
     }
 
-    Coroutine ScaleCor;
     [HideInInspector] public Vector3 defaultScale;
     float hoverScale = 1.1f;
     float speed = 10f;
@@ -148,12 +138,12 @@ public abstract class Card : MonoBehaviour, ISelectable
     public void ScaleDefault()
     {
         StopAllCoroutines();
-        ScaleCor = StartCoroutine(ScaleTo(defaultScale));
+        StartCoroutine(ScaleTo(defaultScale));
     }
     public void ScaleHover()
     {
         StopAllCoroutines();
-        ScaleCor = StartCoroutine(ScaleTo(defaultScale * hoverScale));
+        StartCoroutine(ScaleTo(defaultScale * hoverScale));
     }
     public void MouseEnter()
     {
@@ -180,21 +170,21 @@ public abstract class Card : MonoBehaviour, ISelectable
         }
         if (handNumber == -1)
         {
-            cardCanvas.GetComponent<CardCanvas>().CancelCardUsage();
+            CardCanvas.instance.CancelCardUsage();
             return;
         }
-        if (!selected) { cardCanvas.GetComponent<CardCanvas>().CardSelected(handNumber); gameObject.GetComponent<CanvasGroup>().blocksRaycasts = false; }
+        if (!selected) { CardCanvas.instance.CardSelected(handNumber); _canvasGroup.blocksRaycasts = false; }
     }
     public void MouseUp(BaseEventData data)
     {
         if (selected) SelectedFalse();
-        gameObject.GetComponent<CanvasGroup>().blocksRaycasts = true;
+        _canvasGroup.blocksRaycasts = true;
         PointerEventData pointerData = (PointerEventData)data;
 
         foreach(GameObject obj in pointerData.hovered)
         {
             if(obj.name == "HandZone")
-                cardCanvas.GetComponent<CardCanvas>().UseCard(handNumber);
+                CardCanvas.instance.UseCard(handNumber);
         }
     }
 

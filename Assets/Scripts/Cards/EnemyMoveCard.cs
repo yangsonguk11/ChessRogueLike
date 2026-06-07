@@ -15,11 +15,4 @@ public class EnemyMoveCard : Card
         effects.Add(cf);
     }
     public override string EffectDescription => "이동합니다.";
-
-    public override bool CanUse() => true;
-
-    public override void Execute()
-    {
-        throw new System.NotImplementedException();
-    }
 }

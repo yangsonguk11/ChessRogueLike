@@ -25,11 +25,4 @@ public class MoveAndDrawCard : Card
     }
 
     public override string EffectDescription => "이동한 후 카드를 1장 드로우합니다.";
-
-    public override bool CanUse() => true;
-
-    public override void Execute()
-    {
-        throw new System.NotImplementedException();
-    }
 }
