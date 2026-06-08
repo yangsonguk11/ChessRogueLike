@@ -117,6 +117,10 @@ public class CardCanvas : MonoBehaviour
         cards.RemoveAt(handnum);
         AlignCards();
         HandZone.GetComponent<Image>().raycastTarget = false;
+        Card cardComp = nowusingCard.GetComponent<Card>();
+        if (cardComp.effects.Any(e => e.requiredMode == Board.BoardMode.command || e.requiredMode == Board.BoardMode.targeting))
+            board.UseCard(cardComp);
+        CardDragArrow.instance?.Show(CardNowUsingPos); // 카드 사용 후 화살표를 CardNowUsingPos 기준으로 전환
         pendingCardCoroutine = StartCoroutine(AnimateCardToUsingPos(nowusingCard));
     }
 
@@ -221,6 +225,7 @@ public class CardCanvas : MonoBehaviour
 
     public void CancelCardUsage()
     {
+        CardDragArrow.instance?.Hide();
         if (nowusingCard == null || isCardEffecting || board.EffectApplied) return;
 
         if (pendingMoveCardCoroutine != null)
@@ -244,6 +249,7 @@ public class CardCanvas : MonoBehaviour
 
     public void FinishUseCard()             //사용한 카드 처리
     {
+        CardDragArrow.instance?.Hide();
         RefreshAllCardViews();
         if (nowusingCard)
         {
@@ -287,7 +293,9 @@ public class CardCanvas : MonoBehaviour
         yield return moveCor;
         pendingMoveCardCoroutine = null;
         pendingCardCoroutine = null;
-        board.UseCard(card.GetComponent<Card>());
+        if (nowusingCard == null) yield break;
+        if (board.boardmode == Board.BoardMode.Inspect)
+            board.UseCard(card.GetComponent<Card>());
         if (pendingFirstTarget.x >= 0)
         {
             Vector2 target = pendingFirstTarget;
@@ -642,16 +650,20 @@ public class CardCanvas : MonoBehaviour
         bool needsTargeting = card.effects.Any(e =>
             e.requiredMode == Board.BoardMode.command || e.requiredMode == Board.BoardMode.targeting);
         if (!needsTargeting) return;
+
         Vector2 boardPos = FindBoardPosAtScreen(screenPos);
-        if (boardPos.x >= 0)
+
+        // 보드 밖이거나 카드의 dragDropTarget 조건을 만족하지 않으면 즉시 취소
+        if (boardPos.x < 0 || !board.IsValidDragTarget(boardPos, card.dragDropTarget))
         {
-            if (pendingCardCoroutine == null)
-                board.ButtonClicked(boardPos);
-            else
-                pendingFirstTarget = boardPos;
-        }
-        else
             CancelCardUsage();
+            return;
+        }
+
+        if (pendingCardCoroutine == null)
+            board.ButtonClicked(boardPos);
+        else
+            pendingFirstTarget = boardPos;
     }
 
     Vector2 FindBoardPosAtScreen(Vector2 screenPos)

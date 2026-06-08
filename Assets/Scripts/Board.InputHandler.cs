@@ -2,6 +2,20 @@ using UnityEngine;
 
 public partial class Board
 {
+    public bool IsValidDragTarget(Vector2 pos, DragDropTarget target)
+    {
+        if (pos.x < 0 || pos.y < 0) return false;
+        Piece piece = GetButtonScript(pos).GetPieceScript();
+        return target switch
+        {
+            DragDropTarget.Ally     => piece != null && piece.teamID == 0,
+            DragDropTarget.Enemy    => piece != null && piece.teamID != 0,
+            DragDropTarget.AnyPiece => piece != null,
+            DragDropTarget.AnyTile  => true,
+            _                       => false,
+        };
+    }
+
     public void ButtonClicked(Vector2 pos)
     {
         if (!boardReady) return;

@@ -10,11 +10,11 @@ public partial class Board
 
     public void ButtonHovered(Vector2 pos)
     {
-        // AoE 카드 범위 미리보기 (카드 사용 중)
-        if (pendingEffects.Count > 0)
+        // AoE 카드 범위 미리보기 (시전자 선택 후)
+        if (pendingEffects.Count > 0 && isSelectedButtonActive())
         {
             CardEffect effect = pendingEffects.Peek();
-            if (effect.areaTargetMode != AreaTargetMode.Fixed && isSelectedButtonActive())
+            if (effect.areaTargetMode != AreaTargetMode.Fixed)
             {
                 ClearHoverRange();
 
@@ -46,20 +46,36 @@ public partial class Board
             return;
         }
 
-        // Inspect 모드: 기물 위에 올리면 행동 범위와 정보 표시 (선택 없이)
-        if (boardmode == BoardMode.Inspect && !isSelectedButtonActive())
+        // 시전자 미선택 상태: 기물 위에 올리면 범위와 정보 표시
+        if (!isSelectedButtonActive())
         {
             ClearHoverPieceRange();
             Piece hoveredPiece = GetButtonScript(pos).GetPieceScript();
             if (hoveredPiece != null)
             {
                 hoverPieceIsAlly = hoveredPiece.teamID == 0;
-                List<Vector2> moveRange = hoveredPiece.GetMoveableButton();
-                foreach (Vector2 offset in moveRange)
+                List<Vector2> offsets;
+                int teamForRange;
+                if (pendingEffects.Count > 0 && hoveredPiece.teamID == 0)
+                {
+                    // 카드 사용 중 + 아군 기물: 카드 effectRange 표시
+                    CardEffect effect = pendingEffects.Peek();
+                    offsets = effect.effectRange != null
+                        ? effect.effectRange.GetAbleRange()
+                        : new List<Vector2>();
+                    teamForRange = 0;
+                }
+                else
+                {
+                    // Inspect 모드: 기물 기본 이동 범위 표시
+                    offsets = hoveredPiece.GetMoveableButton();
+                    teamForRange = hoveredPiece.teamID;
+                }
+                foreach (Vector2 offset in offsets)
                 {
                     Vector2 target = pos + offset;
                     if (target.x < 0 || target.x >= N || target.y < 0 || target.y >= M) continue;
-                    GetButtonScript(target).RangeOn(hoveredPiece.teamID);
+                    GetButtonScript(target).RangeOn(teamForRange);
                     hoverPieceRangeButtons.Add(target);
                 }
                 ShowButtonInfo(pos);

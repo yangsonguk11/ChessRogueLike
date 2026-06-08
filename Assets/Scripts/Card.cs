@@ -12,6 +12,14 @@ public enum CardType
     Move,
 }
 
+public enum DragDropTarget
+{
+    Ally,       // teamID == 0 인 아군 기물
+    Enemy,      // teamID != 0 인 적 기물
+    AnyPiece,   // 아군/적 관계없이 기물이 있는 칸
+    AnyTile,    // 보드 위 어느 칸이든
+}
+
 public static class CardTypeExtensions
 {
     public static string ToDisplayString(this CardType type) => type switch
@@ -58,6 +66,7 @@ public abstract class Card : MonoBehaviour, ISelectable
     public int moveAttackShieldAmount;
     public bool blocksMovementAfterUse; // 사용 후 이번 턴 이동 불가
     public bool exileOnUse;             // 사용 후 소멸
+    public DragDropTarget dragDropTarget = DragDropTarget.Ally;
 
     // 코스트 임시 변경 추적 (-1이면 미변경)
     public int originalCost = -1;
@@ -173,8 +182,14 @@ public abstract class Card : MonoBehaviour, ISelectable
             CardCanvas.instance.CancelCardUsage();
             return;
         }
-        if (!selected) { CardCanvas.instance.CardSelected(handNumber); _canvasGroup.blocksRaycasts = false; }
+        if (!selected)
+        {
+            CardCanvas.instance.CardSelected(handNumber);
+            _canvasGroup.blocksRaycasts = false;
+            CardDragArrow.instance?.Show(GetComponent<RectTransform>());
+        }
     }
+
     public void MouseUp(BaseEventData data)
     {
         bool clearAfterDragUse = selected && handNumber == -1;
@@ -182,6 +197,8 @@ public abstract class Card : MonoBehaviour, ISelectable
         _canvasGroup.blocksRaycasts = true;
         if (clearAfterDragUse)
             CardCanvas.instance.OnDragCardReleased(((PointerEventData)data).position);
+        else
+            CardDragArrow.instance?.Hide(); // 카드를 사용하지 않고 드래그 취소
     }
 
     public void MouseDrag(BaseEventData data)
