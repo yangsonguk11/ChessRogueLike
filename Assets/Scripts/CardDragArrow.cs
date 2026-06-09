@@ -19,6 +19,7 @@ public class CardDragArrow : MonoBehaviour
     [SerializeField] RectTransform headRect;
     [SerializeField] float lineThickness = 8f;
 
+
     Canvas _canvas;
     RectTransform _canvasRect;
     RectTransform _from;
@@ -44,7 +45,6 @@ public class CardDragArrow : MonoBehaviour
     {
         _from = from;
         SetVisible(true);
-        transform.SetAsLastSibling();
     }
 
     public void Hide()
@@ -85,12 +85,10 @@ public class CardDragArrow : MonoBehaviour
 
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
 
-        // 선: start~end 중앙에 배치, 회전
         lineRect.localPosition = (start + end) * 0.5f;
         lineRect.sizeDelta = new Vector2(dist, lineThickness);
         lineRect.localRotation = Quaternion.Euler(0f, 0f, angle);
 
-        // 화살촉: end에 배치 (스프라이트가 위쪽을 향한다고 가정 → angle-90)
         headRect.localPosition = end;
         headRect.localRotation = Quaternion.Euler(0f, 0f, angle - 90f);
     }

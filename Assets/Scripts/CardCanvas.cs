@@ -660,6 +660,7 @@ public class CardCanvas : MonoBehaviour
             return;
         }
 
+        CardDragArrow.instance?.Hide();
         if (pendingCardCoroutine == null)
             board.ButtonClicked(boardPos);
         else
