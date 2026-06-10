@@ -49,10 +49,9 @@ public partial class Board
                         GetButtonScript(pos).SelectedTrue();
                     }
                 }
-                else if (selectedButton == pos || !selectedButtonMovable.Contains(pos))
+                else if (!selectedButtonMovable.Contains(pos))
                 {
-                    if (!IsLockedCasterActive())
-                        ClearSelectedButton();
+                    // 유효하지 않은 범위 클릭 — 기물 선택 유지
                 }
                 else if (selectedButtonMovable.Contains(pos))
                 {
@@ -73,8 +72,7 @@ public partial class Board
                 }
                 else if (!selectedButtonMovable.Contains(pos))
                 {
-                    if (!IsLockedCasterActive())
-                        ClearSelectedButton();
+                    // 유효하지 않은 범위 클릭 — 기물 선택 유지
                 }
                 else
                 {

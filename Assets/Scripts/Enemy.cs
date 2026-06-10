@@ -65,14 +65,14 @@ public class Enemy : Piece
     {
         string primary = effect.type switch
         {
-            EffectType.Move        => "이동",
-            EffectType.Damage      => effect.useColDamageAsDmg ? "충돌 공격" : $"{effect.dmg} 공격",
-            EffectType.Shield      => $"{effect.dmg} 방어",
-            EffectType.Heal        => $"{effect.dmg} 회복",
-            EffectType.SelfDamage  => $"{effect.dmg} 자해",
-            EffectType.Draw        => effect.dmg > 1 ? $"{effect.dmg} 드로우" : "드로우",
+            EffectType.Move        => "<sprite name=\"Move\">",
+            EffectType.Damage      => effect.useColDamageAsDmg ? "<sprite name=\"Damage\">" : $"{effect.dmg} <sprite name=\"Damage\">",
+            EffectType.Shield      => $"{effect.dmg} <sprite name=\"Shield\">",
+            EffectType.Heal        => $"{effect.dmg} <sprite name=\"Heal\">",
+            EffectType.SelfDamage  => $"{effect.dmg} <sprite name=\"Damage\">",
+            EffectType.Draw        => effect.dmg > 1 ? $"{effect.dmg}" : "",
             EffectType.ApplyStatus => BuildStatusDescription(effect),
-            EffectType.ColDamageUp => $"+{effect.dmg} 충돌력",
+            EffectType.ColDamageUp => $"+{effect.dmg}",
             _                      => ""
         };
 

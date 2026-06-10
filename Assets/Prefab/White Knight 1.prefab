@@ -158,10 +158,21 @@ MonoBehaviour:
   Name: move
   Description: 
   Cost: 0
+  type: 0
   user: 1
   shieldOnMoveAttack: 0
   moveAttackShieldAmount: 0
   blocksMovementAfterUse: 0
+  exileOnUse: 0
+  dragDropTarget: 0
+  originalCost: -1
+  costDuration: 0
+  costText: {fileID: 0}
+  nameText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  typeText: {fileID: 0}
+  effectText: {fileID: 0}
+  defaultScale: {x: 0, y: 0, z: 0}
   cardCanvas: {fileID: 0}
   handNumber: 0
 --- !u!114 &5766115866947927382
@@ -181,10 +192,21 @@ MonoBehaviour:
   Name: Attack
   Description: 
   Cost: 0
+  type: 0
   user: 1
   shieldOnMoveAttack: 0
   moveAttackShieldAmount: 0
   blocksMovementAfterUse: 0
+  exileOnUse: 0
+  dragDropTarget: 0
+  originalCost: -1
+  costDuration: 0
+  costText: {fileID: 0}
+  nameText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  typeText: {fileID: 0}
+  effectText: {fileID: 0}
+  defaultScale: {x: 0, y: 0, z: 0}
   cardCanvas: {fileID: 0}
   handNumber: 0
 --- !u!1 &2736271924342697781
