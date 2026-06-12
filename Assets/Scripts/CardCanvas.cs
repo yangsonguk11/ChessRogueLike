@@ -111,16 +111,16 @@ public class CardCanvas : MonoBehaviour
             pendingCardCoroutine = null;
         }
         pendingFirstTarget = new Vector2(-1, -1);
-        ClearnowusingCard();
-        nowusingCard = cards[handnum];
-        nowusingCard.GetComponent<Card>().handNumber = -1;
+        RectTransform cardToUse = cards[handnum];
+        cardToUse.GetComponent<Card>().handNumber = -1;
         cards.RemoveAt(handnum);
+        ClearnowusingCard();
+        nowusingCard = cardToUse;
         AlignCards();
         HandZone.GetComponent<Image>().raycastTarget = false;
         Card cardComp = nowusingCard.GetComponent<Card>();
         if (cardComp.effects.Any(e => e.requiredMode == Board.BoardMode.command || e.requiredMode == Board.BoardMode.targeting))
             board.UseCard(cardComp);
-        CardDragArrow.instance?.Show(CardNowUsingPos); // 카드 사용 후 화살표를 CardNowUsingPos 기준으로 전환
         pendingCardCoroutine = StartCoroutine(AnimateCardToUsingPos(nowusingCard));
     }
 
@@ -294,6 +294,7 @@ public class CardCanvas : MonoBehaviour
         pendingMoveCardCoroutine = null;
         pendingCardCoroutine = null;
         if (nowusingCard == null) yield break;
+        CardDragArrow.instance?.Show(CardNowUsingPos);
         if (board.boardmode == Board.BoardMode.Inspect)
             board.UseCard(card.GetComponent<Card>());
         if (pendingFirstTarget.x >= 0)
@@ -651,6 +652,13 @@ public class CardCanvas : MonoBehaviour
             e.requiredMode == Board.BoardMode.command || e.requiredMode == Board.BoardMode.targeting);
         if (!needsTargeting) return;
 
+        // 화살표가 아직 나오지 않은 경우(카드 애니메이션 중) → 카드 선택 취소
+        if (pendingCardCoroutine != null)
+        {
+            CancelCardUsage();
+            return;
+        }
+
         Vector2 boardPos = FindBoardPosAtScreen(screenPos);
 
         // 보드 밖이거나 카드의 dragDropTarget 조건을 만족하지 않으면 즉시 취소
@@ -661,10 +669,7 @@ public class CardCanvas : MonoBehaviour
         }
 
         CardDragArrow.instance?.Hide();
-        if (pendingCardCoroutine == null)
-            board.ButtonClicked(boardPos);
-        else
-            pendingFirstTarget = boardPos;
+        board.ButtonClicked(boardPos);
     }
 
     Vector2 FindBoardPosAtScreen(Vector2 screenPos)

@@ -186,7 +186,6 @@ public abstract class Card : MonoBehaviour, ISelectable
         {
             CardCanvas.instance.CardSelected(handNumber);
             _canvasGroup.blocksRaycasts = false;
-            CardDragArrow.instance?.Show(GetComponent<RectTransform>());
         }
     }
 
