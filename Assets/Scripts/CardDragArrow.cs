@@ -81,7 +81,6 @@ public class CardDragArrow : MonoBehaviour
 
         Vector2 dir = end - start;
         float dist = dir.magnitude;
-        if (dist < 1f) return;
 
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
 

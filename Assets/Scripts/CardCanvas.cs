@@ -121,6 +121,7 @@ public class CardCanvas : MonoBehaviour
         Card cardComp = nowusingCard.GetComponent<Card>();
         if (cardComp.effects.Any(e => e.requiredMode == Board.BoardMode.command || e.requiredMode == Board.BoardMode.targeting))
             board.UseCard(cardComp);
+        CardDragArrow.instance?.Show(nowusingCard);
         pendingCardCoroutine = StartCoroutine(AnimateCardToUsingPos(nowusingCard));
     }
 
@@ -294,7 +295,6 @@ public class CardCanvas : MonoBehaviour
         pendingMoveCardCoroutine = null;
         pendingCardCoroutine = null;
         if (nowusingCard == null) yield break;
-        CardDragArrow.instance?.Show(CardNowUsingPos);
         if (board.boardmode == Board.BoardMode.Inspect)
             board.UseCard(card.GetComponent<Card>());
         if (pendingFirstTarget.x >= 0)
@@ -652,13 +652,6 @@ public class CardCanvas : MonoBehaviour
             e.requiredMode == Board.BoardMode.command || e.requiredMode == Board.BoardMode.targeting);
         if (!needsTargeting) return;
 
-        // 화살표가 아직 나오지 않은 경우(카드 애니메이션 중) → 카드 선택 취소
-        if (pendingCardCoroutine != null)
-        {
-            CancelCardUsage();
-            return;
-        }
-
         Vector2 boardPos = FindBoardPosAtScreen(screenPos);
 
         // 보드 밖이거나 카드의 dragDropTarget 조건을 만족하지 않으면 즉시 취소
@@ -669,7 +662,10 @@ public class CardCanvas : MonoBehaviour
         }
 
         CardDragArrow.instance?.Hide();
-        board.ButtonClicked(boardPos);
+        if (pendingCardCoroutine == null)
+            board.ButtonClicked(boardPos);
+        else
+            pendingFirstTarget = boardPos;
     }
 
     Vector2 FindBoardPosAtScreen(Vector2 screenPos)

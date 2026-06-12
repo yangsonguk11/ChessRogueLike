@@ -184,6 +184,7 @@ public abstract class Card : MonoBehaviour, ISelectable
         }
         if (!selected)
         {
+            CardDragArrow.instance?.Show(GetComponent<RectTransform>());
             CardCanvas.instance.CardSelected(handNumber);
             _canvasGroup.blocksRaycasts = false;
         }
