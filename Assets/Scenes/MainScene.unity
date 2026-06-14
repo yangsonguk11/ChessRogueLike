@@ -6086,6 +6086,22 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3973567015829007392, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: PiecePrefabs.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 3973567015829007392, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: 'PiecePrefabs.Array.data[0]'
+      value: 
+      objectReference: {fileID: 782353561853643713, guid: a880e1da517670843aadc5015f2e2d9a, type: 3}
+    - target: {fileID: 3973567015829007392, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: 'PiecePrefabs.Array.data[1]'
+      value: 
+      objectReference: {fileID: 107724, guid: 1bae5e056ac375b46a1158f8b09b1f7f, type: 3}
+    - target: {fileID: 3973567015829007392, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: 'PiecePrefabs.Array.data[2]'
+      value: 
+      objectReference: {fileID: 107724, guid: a6c81ec23ba21934d8b9b426d6346406, type: 3}
+    - target: {fileID: 3973567015829007392, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
       propertyPath: 'PiecePrefabs.Array.data[3]'
       value: 
       objectReference: {fileID: 100000, guid: b0550000000000000000000000000008, type: 3}

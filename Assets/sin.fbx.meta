@@ -1,209 +1,9 @@
 fileFormatVersion: 2
-guid: 96d122db0dca19041837a3ea91ed6db0
+guid: 742bb922158a3cf43afbaf9029a2c76c
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: N00_000_00_HairBack_00_nml_001
-    second: {fileID: 2800000, guid: f8bc7b79d81d44742b85737d35ff4008, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: N00_000_00_HairBack_00_nml_002
-    second: {fileID: 2800000, guid: 106f6fc73cfda864ea0a45046bdcbbd4, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: N00_000_Hair_00_nml_001
-    second: {fileID: 2800000, guid: 7e276e8ea080c2e419af9b75a59b2cc8, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: N00_000_Hair_00_nml_002
-    second: {fileID: 2800000, guid: c3b85f3fb833be841b09fc55737da48c, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: Shader_NoneBlack_001
-    second: {fileID: 2800000, guid: 8d6728a8dec0c0e4abb7069e9b1b955b, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: Shader_NoneBlack_002
-    second: {fileID: 2800000, guid: 47d067e55e732164d974e1ce1f6839d1, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: Shader_NoneNormal_001
-    second: {fileID: 2800000, guid: eb687e7984823fa45b8162881fc8aabe, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: Shader_NoneNormal_002
-    second: {fileID: 2800000, guid: a2a227fe2a6ab3e4e90d4e6179f0ef54, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _01_001
-    second: {fileID: 2800000, guid: dd51a1d6b8b106a45a51a87714f22d52, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _01_002
-    second: {fileID: 2800000, guid: db46fbc77f1b6d048a2c019c4fd34da6, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _02_001
-    second: {fileID: 2800000, guid: d20a4a569cd0d3d488f0794629f0b66e, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _02_002
-    second: {fileID: 2800000, guid: 32ae8de8a4fc5404794d01f340d98670, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _03_001
-    second: {fileID: 2800000, guid: d3246445dc6c0e74688539a5c6283457, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _03_002
-    second: {fileID: 2800000, guid: 3b180efa9aa1b174d828f900057c2aae, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _04_001
-    second: {fileID: 2800000, guid: ab6341fa2d014374b99e648936eb759f, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _04_002
-    second: {fileID: 2800000, guid: d920ac1faef1a3b48b39e5f37f75675c, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _05_001
-    second: {fileID: 2800000, guid: 343c97adb656af448b0050f75894f7ce, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _05_002
-    second: {fileID: 2800000, guid: 3531db41b5d3f9f448297f0e049fa31f, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _06_001
-    second: {fileID: 2800000, guid: cd09daf471743164a8d2f7e740820bee, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _06_002
-    second: {fileID: 2800000, guid: a89aaba5c98b0f8498965a0729ea6000, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _07_001
-    second: {fileID: 2800000, guid: 1676f045d827f224892b11d29a0f67ae, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _07_002
-    second: {fileID: 2800000, guid: 523f007dade55be469a08f9babaf6039, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _09_001
-    second: {fileID: 2800000, guid: f58c47bb950a998408c93ce243ff8185, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _09_002
-    second: {fileID: 2800000, guid: 7513f4e290419a74c9025dff2f78214c, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _10_001
-    second: {fileID: 2800000, guid: 8c359f12268594240baaef7bef91fea7, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _10_002
-    second: {fileID: 2800000, guid: 7d6b8e8e921dbb1489ae083162384358, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _11_001
-    second: {fileID: 2800000, guid: a792b1ac5a49fe4438213d8623bf8ce1, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _11_002
-    second: {fileID: 2800000, guid: 9b655b2f459e31f4898805353a58d435, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _12_001
-    second: {fileID: 2800000, guid: 0e54dc90d9542ae4ebd561c98d4064a8, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _12_002
-    second: {fileID: 2800000, guid: ef3480eee568aee4d955700cfc9c1406, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _13_001
-    second: {fileID: 2800000, guid: da9b994a311c21143b583f56a873a79a, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _13_002
-    second: {fileID: 2800000, guid: c85d4b40ff61a1e40a60183acb022240, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _14_001
-    second: {fileID: 2800000, guid: 05c97dca22c0b8f45b11f8d50c04b3e5, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _14_002
-    second: {fileID: 2800000, guid: 1d4cb218ee99b5444a8d3a464cfbfc14, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _15_001
-    second: {fileID: 2800000, guid: c365030b8e4b777438bdb94dcc453132, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _15_002
-    second: {fileID: 2800000, guid: 7de451144097d4d46bdfe65e892ce2b3, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _16_001
-    second: {fileID: 2800000, guid: 6a3cf6cce370a8f40b9403a51bf7be27, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _16_002
-    second: {fileID: 2800000, guid: bd9aa326b42e973498fff62ccc93a880, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _17_001
-    second: {fileID: 2800000, guid: 0054a5adaa10daf409ffec74047c697f, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: _17_002
-    second: {fileID: 2800000, guid: d86ff29ae0ecf7c46be68c195d703634, type: 3}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -222,7 +22,7 @@ ModelImporter:
     animationDoRetargetingWarnings: 0
     importAnimatedCustomProperties: 0
     importConstraints: 0
-    animationCompression: 1
+    animationCompression: 3
     animationRotationError: 0.5
     animationPositionError: 0.5
     animationScaleError: 0.5
@@ -294,13 +94,13 @@ ModelImporter:
     globalScale: 1
     rootMotionBoneName: 
     hasTranslationDoF: 0
-    hasExtraRoot: 0
+    hasExtraRoot: 1
     skeletonHasParents: 1
   lastHumanDescriptionAvatarSource: {instanceID: 0}
   autoGenerateAvatarMappingIfUnspecified: 1
-  animationType: 2
+  animationType: 3
   humanoidOversampling: 1
-  avatarSetup: 0
+  avatarSetup: 1
   addHumanoidExtraRootOnlyWhenUsingAvatar: 1
   importBlendShapeDeformPercent: 1
   remapMaterialsIfMaterialImportModeIsNone: 0

@@ -152,7 +152,14 @@ public partial class Board : MonoBehaviour
         foreach (PieceData piecedata in DataManager.Instance.currentData.pieceData)
         {
             Vector2 spawnPos = spawnIdx < playerSpawns.Count ? playerSpawns[spawnIdx] : new Vector2(2, 2);
-            GameObject piece = Instantiate(piecedatabase.GetPiece(piecedata.pieceName));
+            GameObject prefab = piecedatabase.GetPiece(piecedata.pieceName);
+            if (prefab == null)
+            {
+                Debug.LogError($"[Board] 플레이어 기물 스폰 실패: '{piecedata.pieceName}' 을(를) PieceDatabase에서 찾을 수 없습니다. (spawnPos={spawnPos})");
+                spawnIdx++;
+                continue;
+            }
+            GameObject piece = Instantiate(prefab);
             GetButtonScript(spawnPos).SetPiece(piece);
             piece.GetComponent<Piece>().SetPieceData(piecedata);
             spawnIdx++;
@@ -163,8 +170,13 @@ public partial class Board : MonoBehaviour
         {
             if (!placement.isEnemy) continue; // 플레이어 스폰 마커는 건너뜀
 
-            Debug.LogFormat("{0} {1}", piecedatabase, placement.name);
-            GameObject piece = Instantiate(piecedatabase.GetPiece(placement.name));
+            GameObject enemyPrefab = piecedatabase.GetPiece(placement.name);
+            if (enemyPrefab == null)
+            {
+                Debug.LogError($"[Board] 적 기물 스폰 실패: '{placement.name}' 을(를) PieceDatabase에서 찾을 수 없습니다. (pos={placement.position})");
+                continue;
+            }
+            GameObject piece = Instantiate(enemyPrefab);
             GetButtonScript(placement.position).SetPiece(piece);
             enemyPositions.Add(placement.position);
         }
