@@ -148,6 +148,18 @@ public abstract class Piece : MonoBehaviour
             pieceCanvas.InvokeDamageText(damage);
     }
 
+    public bool HasAnimator()
+    {
+        Animator anim = GetComponent<Animator>();
+        return anim != null;
+    }
+
+    public void TriggerAnim(string triggerName)
+    {
+        Animator anim = GetComponent<Animator>();
+        if (anim != null) anim.SetTrigger(triggerName);
+    }
+
     public IEnumerator DeathCor()
     {
         if (isDeathScheduled) yield break;

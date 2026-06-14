@@ -65,8 +65,7 @@ public class Button : MonoBehaviour, ISelectable
     {
         piece = obj;
         piece.transform.position = transform.position;
-        piece.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
-        piece.transform.parent = gameObject.transform;
+piece.transform.parent = gameObject.transform;
     }
     
     public void RemovePiece()

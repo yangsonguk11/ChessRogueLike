@@ -307,6 +307,8 @@ public partial class Board
                 break;
             case EffectType.ApplyStatus:
                 ApplyStatusToTarget(targetPos, cardEffect);
+                if (targetPos.x >= 0 && targetPos.y >= 0)
+                    GetButtonScript(targetPos).GetPieceScript()?.TriggerAnim("ApplyStatus");
                 break;
             case EffectType.ApplyTurnEffect:
                 ApplyTurnEffectToTarget(targetPos, cardEffect);
@@ -314,7 +316,11 @@ public partial class Board
             case EffectType.ColDamageUp:
             {
                 Piece p = GetButtonScript(targetPos).GetPieceScript();
-                if (p != null) p.colDamage += cardEffect.dmg;
+                if (p != null)
+                {
+                    p.colDamage += cardEffect.dmg;
+                    p.TriggerAnim("Buff");
+                }
                 break;
             }
             case EffectType.DiscardHand:
@@ -424,6 +430,7 @@ public partial class Board
                 StatusEffect effect = CreateStatusEffect(cardEffect.statusEffectType, cardEffect.statusDuration, cardEffect.statusPower,
                     cardEffect.effectRange, cardEffect.targetlogic);
                 if (effect != null) target.AddStatusEffect(effect);
+                target.TriggerAnim("ApplyStatus");
                 break;
             }
             case EffectType.Draw:
@@ -431,6 +438,7 @@ public partial class Board
                 break;
             case EffectType.ColDamageUp:
                 target.colDamage += cardEffect.dmg;
+                target.TriggerAnim("Buff");
                 break;
             default:
                 Debug.LogWarning($"ExecuteEffect(Piece): 지원하지 않는 효과 타입 {cardEffect.type}");
