@@ -56,7 +56,7 @@ public class CardCanvas : MonoBehaviour
     int _currentenergy;
     public int currentenergy { get { return _currentenergy; } set { _currentenergy = value; UpdateCurrentEnergy(); UpdateCardInteractability(); } }
     public int maxenergy = 4;
-    RectTransform nowusingCard;
+    public RectTransform nowusingCard;
     public bool isCardEffecting;
     Coroutine pendingCardCoroutine;
     Coroutine pendingMoveCardCoroutine;
@@ -112,7 +112,6 @@ public class CardCanvas : MonoBehaviour
         }
         pendingFirstTarget = new Vector2(-1, -1);
         RectTransform cardToUse = cards[handnum];
-        cardToUse.GetComponent<Card>().handNumber = -1;
         cards.RemoveAt(handnum);
         ClearnowusingCard();
         nowusingCard = cardToUse;
@@ -242,7 +241,8 @@ public class CardCanvas : MonoBehaviour
 
         RectTransform card = nowusingCard;
         nowusingCard = null;
-        cards.Add(card);
+        int originalIndex = card.GetComponent<Card>().handNumber;
+        cards.Insert(Mathf.Clamp(originalIndex, 0, cards.Count), card);
         AlignCards();
         pendingFirstTarget = new Vector2(-1, -1);
         board.CancelCardUsage();
@@ -264,6 +264,7 @@ public class CardCanvas : MonoBehaviour
             }
             currentenergy -= costToDeduct;
             RectTransform usedCard = nowusingCard;
+            usedCard.GetComponent<Card>().handNumber = -1;
             nowusingCard = null;
             if (card.exileOnUse)
             {

@@ -177,7 +177,7 @@ public abstract class Card : MonoBehaviour, ISelectable
             CardCanvas.instance.ToggleCardInPanel(GetComponent<RectTransform>());
             return;
         }
-        if (handNumber == -1)
+        if (CardCanvas.instance.nowusingCard == GetComponent<RectTransform>() || handNumber < 0)
         {
             CardCanvas.instance.CancelCardUsage();
             return;
@@ -192,7 +192,7 @@ public abstract class Card : MonoBehaviour, ISelectable
 
     public void MouseUp(BaseEventData data)
     {
-        bool clearAfterDragUse = selected && handNumber == -1;
+        bool clearAfterDragUse = selected && CardCanvas.instance.nowusingCard == GetComponent<RectTransform>();
         if (selected) SelectedFalse();
         _canvasGroup.blocksRaycasts = true;
         if (clearAfterDragUse)
@@ -203,7 +203,7 @@ public abstract class Card : MonoBehaviour, ISelectable
 
     public void MouseDrag(BaseEventData data)
     {
-        if (handNumber == -1)
+        if (CardCanvas.instance.nowusingCard == GetComponent<RectTransform>() || handNumber < 0)
             return;
         PointerEventData pointerData = (PointerEventData)data;
 

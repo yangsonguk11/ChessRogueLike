@@ -1309,13 +1309,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.539329, y: -0, z: -0, w: 0.8420952}
+  m_LocalRotation: {x: 0.4848096, y: 0, z: 0, w: 0.8746197}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 381135497}
-  m_LocalEulerAnglesHint: {x: 65.276, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 58, y: 0, z: 0}
 --- !u!114 &330585547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1556,8 +1556,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 381135496}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 4.057, y: 8.249, z: 0}
+  m_LocalRotation: {x: 0.0116401445, y: -0.9234521, z: 0.028101802, w: 0.38250637}
+  m_LocalPosition: {x: 4.64, y: 7.66, z: 4.64}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -3142,6 +3142,7 @@ MonoBehaviour:
   selectionPromptText: {fileID: 9001000043}
   confirmSelectionBtn: {fileID: 9001000054}
   maxenergy: 3
+  nowusingCard: {fileID: 0}
   isCardEffecting: 0
 --- !u!114 &1065319767
 MonoBehaviour:
