@@ -55,10 +55,9 @@ public partial class Board
             lockedCaster = hpLeft <= 0 ? bScript2.GetLocation() : adjacentPos;
 
         motionQueue.Enqueue(MoveAdjacent(bScript1, bScript2, 1f));
-        motionQueue.Enqueue(TriggerAnimAndWaitCor(pScript1, "Attack"));
-        motionQueue.Enqueue(Parallel(
-            TriggerAnimAndWaitCor(pScript2, hpLeft <= 0 ? "Die" : "Hit"),
-            pScript2.DamageText(dmg)));
+        motionQueue.Enqueue(TriggerAnimCor(pScript1, "Attack"));
+        motionQueue.Enqueue(TriggerAnimCor(pScript2, hpLeft <= 0 ? "Die" : "Hit"));
+        motionQueue.Enqueue(pScript2.DamageText(dmg));
         if (hpLeft <= 0)
         {
             if (pScript2.teamID == 1) enemyPositions.Remove(bScript2.GetLocation());
@@ -70,7 +69,7 @@ public partial class Board
         if (counterDmg > 0)
         {
             int attackerHp = pScript1.GetDamage(counterDmg, AttackType.MoveAttack);
-            motionQueue.Enqueue(TriggerAnimAndWaitCor(pScript1, attackerHp <= 0 ? "Die" : "Hit"));
+            pScript1.TriggerAnim(attackerHp <= 0 ? "Die" : "Hit");
             motionQueue.Enqueue(pScript1.DamageText(counterDmg));
             if (attackerHp <= 0)
             {

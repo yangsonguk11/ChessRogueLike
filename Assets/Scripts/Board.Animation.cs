@@ -121,6 +121,12 @@ public partial class Board
         yield return PieceMoveCor(button1, newTarget, moveDuration);
     }
 
+    IEnumerator TriggerAnimCor(Piece piece, string triggerName)
+    {
+        piece?.TriggerAnim(triggerName);
+        yield break;
+    }
+
     // CardEffect에 AnimationClip이 있으면 해당 이름의 Animator 상태를 재생하고 끝날 때까지 대기.
     // Animator가 없거나 clip이 null이면 즉시 반환 (호출부에서 폴백 사용).
     IEnumerator PieceCustomAnimCor(GameObject piece, AnimationClip clip)
@@ -136,27 +142,4 @@ public partial class Board
             yield return null;
     }
 
-    // 두 코루틴을 동시에 실행하고 둘 다 끝날 때까지 대기.
-    IEnumerator Parallel(IEnumerator a, IEnumerator b)
-    {
-        Coroutine ca = StartCoroutine(a);
-        Coroutine cb = StartCoroutine(b);
-        yield return ca;
-        yield return cb;
-    }
-
-    // Animator 트리거를 큐 안에서 발동하고 애니메이션이 끝날 때까지 대기.
-    // Animator가 없으면 즉시 반환.
-    IEnumerator TriggerAnimAndWaitCor(Piece piece, string triggerName)
-    {
-        if (piece == null || !piece.HasAnimator()) yield break;
-        piece.TriggerAnim(triggerName);
-        yield return null; // 한 프레임 대기 — 전환 시작 반영
-
-        Animator animator = piece.GetComponent<Animator>();
-        while (animator.IsInTransition(0))
-            yield return null;
-        while (animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1f)
-            yield return null;
-    }
 }
