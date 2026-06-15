@@ -89,7 +89,6 @@ public partial class Board
                 enemy.ActionText();
             }
 
-            yield return new WaitForSeconds(0.5f);
             ClearSelectedButton();
         }
 

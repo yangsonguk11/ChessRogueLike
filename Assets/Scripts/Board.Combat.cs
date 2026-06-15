@@ -44,9 +44,7 @@ public partial class Board
     {
         int dmg = pScript1.colDamage;
         int hpLeft = pScript2.GetDamage(dmg, AttackType.MoveAttack);
-        pScript1.TriggerAnim("Attack");
         pScript2.gameObject.transform.rotation = Quaternion.LookRotation(bScript1.Piecelocation - bScript2.Piecelocation);
-        pScript2.TriggerAnim(hpLeft <= 0 ? "Die" : "Hit");
         if (pScript2.teamID == 0) playerDamagedThisTurn = true;
         Debug.Log(hpLeft);
 
@@ -57,7 +55,10 @@ public partial class Board
             lockedCaster = hpLeft <= 0 ? bScript2.GetLocation() : adjacentPos;
 
         motionQueue.Enqueue(MoveAdjacent(bScript1, bScript2, 1f));
-        motionQueue.Enqueue(pScript2.DamageText(dmg));
+        motionQueue.Enqueue(TriggerAnimAndWaitCor(pScript1, "Attack"));
+        motionQueue.Enqueue(Parallel(
+            TriggerAnimAndWaitCor(pScript2, hpLeft <= 0 ? "Die" : "Hit"),
+            pScript2.DamageText(dmg)));
         if (hpLeft <= 0)
         {
             if (pScript2.teamID == 1) enemyPositions.Remove(bScript2.GetLocation());
@@ -69,7 +70,7 @@ public partial class Board
         if (counterDmg > 0)
         {
             int attackerHp = pScript1.GetDamage(counterDmg, AttackType.MoveAttack);
-            pScript1.TriggerAnim(attackerHp <= 0 ? "Die" : "Hit");
+            motionQueue.Enqueue(TriggerAnimAndWaitCor(pScript1, attackerHp <= 0 ? "Die" : "Hit"));
             motionQueue.Enqueue(pScript1.DamageText(counterDmg));
             if (attackerHp <= 0)
             {

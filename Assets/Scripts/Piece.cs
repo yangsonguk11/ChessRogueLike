@@ -129,16 +129,16 @@ public abstract class Piece : MonoBehaviour
 
     public IEnumerator DamageText(int damage)
     {
-        yield return new WaitForSeconds(1f);
         if (this != null && pieceCanvas != null)
             pieceCanvas.InvokeDamageText(damage);
+        yield return null;
     }
 
     public IEnumerator HealText(int damage)
     {
-        yield return new WaitForSeconds(1f);
         if (this != null && pieceCanvas != null)
             pieceCanvas.InvokeDamageText(damage);
+        yield return null;
     }
 
     public IEnumerator ShieldText(int damage)

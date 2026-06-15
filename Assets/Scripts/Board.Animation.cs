@@ -135,4 +135,28 @@ public partial class Board
         while (animator.IsInTransition(0) || animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1f)
             yield return null;
     }
+
+    // 두 코루틴을 동시에 실행하고 둘 다 끝날 때까지 대기.
+    IEnumerator Parallel(IEnumerator a, IEnumerator b)
+    {
+        Coroutine ca = StartCoroutine(a);
+        Coroutine cb = StartCoroutine(b);
+        yield return ca;
+        yield return cb;
+    }
+
+    // Animator 트리거를 큐 안에서 발동하고 애니메이션이 끝날 때까지 대기.
+    // Animator가 없으면 즉시 반환.
+    IEnumerator TriggerAnimAndWaitCor(Piece piece, string triggerName)
+    {
+        if (piece == null || !piece.HasAnimator()) yield break;
+        piece.TriggerAnim(triggerName);
+        yield return null; // 한 프레임 대기 — 전환 시작 반영
+
+        Animator animator = piece.GetComponent<Animator>();
+        while (animator.IsInTransition(0))
+            yield return null;
+        while (animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1f)
+            yield return null;
+    }
 }
