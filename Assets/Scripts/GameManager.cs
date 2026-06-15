@@ -8,6 +8,10 @@ public class GameManager : MonoBehaviour
     [SerializeField] GameObject Board;
     [SerializeField] GameObject CardCanvas;
     public List<GameObject> Enemylist = new List<GameObject>();
+
+    private bool isQuitting = false;
+    private void OnApplicationQuit() { isQuitting = true; }
+
     private void Awake()
     {
         if (instance == null)
@@ -46,7 +50,7 @@ public class GameManager : MonoBehaviour
     public void RemoveEnemy(GameObject obj)
     {
         Enemylist.Remove(obj);
-        if (Enemylist.Count == 0)
+        if (Enemylist.Count == 0 && !isQuitting)
             EndBattle();
     }
 

@@ -9,6 +9,8 @@ public partial class Board
 
     void OnSelectBoard()
     {
+        casterPiece = GetButtonScript(selectedButton).GetPieceScript();
+        CardCanvas.instance?.RefreshAllCardViews();
         // 자기 자신 대상 효과: 시전자 클릭 즉시 실행 (두 번째 클릭 불필요)
         if (boardmode == BoardMode.targeting && pendingEffects.Count > 0 &&
             pendingEffects.Peek().targetlogic == TargetLogic.self)
@@ -77,6 +79,8 @@ public partial class Board
 
     void OnUnSelectBoard()
     {
+        casterPiece = null;
+        CardCanvas.instance?.RefreshAllCardViews();
         ClearHoverRange();
         ClearHoverPieceRange();
         HideMovableButtons();

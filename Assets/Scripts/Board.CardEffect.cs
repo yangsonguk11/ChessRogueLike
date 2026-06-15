@@ -278,9 +278,10 @@ public partial class Board
             return;
         }
 
+        int casterColDmg = GetButtonScript(selectedButton).GetPieceScript()?.colDamage ?? 0;
         int resolvedDmg = cardEffect.useColDamageAsDmg
-            ? (GetButtonScript(selectedButton).GetPieceScript()?.colDamage ?? cardEffect.dmg)
-            : cardEffect.dmg;
+            ? casterColDmg
+            : (cardEffect.type == EffectType.Damage ? cardEffect.dmg + casterColDmg : cardEffect.dmg);
 
         switch (cardEffect.type)
         {
@@ -320,6 +321,7 @@ public partial class Board
                 {
                     p.colDamage += cardEffect.dmg;
                     p.TriggerAnim("Buff");
+                    CardCanvas.instance?.RefreshAllCardViews();
                 }
                 break;
             }
@@ -439,6 +441,7 @@ public partial class Board
             case EffectType.ColDamageUp:
                 target.colDamage += cardEffect.dmg;
                 target.TriggerAnim("Buff");
+                CardCanvas.instance?.RefreshAllCardViews();
                 break;
             default:
                 Debug.LogWarning($"ExecuteEffect(Piece): 지원하지 않는 효과 타입 {cardEffect.type}");
@@ -496,7 +499,7 @@ public partial class Board
         switch (cardEffect.type)
         {
             case EffectType.Damage:
-                AreaAttackPiece(selectedButton, targets, cardEffect.dmg, cardEffect);
+                AreaAttackPiece(selectedButton, targets, cardEffect.dmg + (caster?.colDamage ?? 0), cardEffect);
                 ApplyStatusToTargets(targets, cardEffect);
                 break;
             case EffectType.Shield:

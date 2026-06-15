@@ -23,5 +23,5 @@ public class DirectionalAttackCard : Card
         effects.Add(cf);
     }
 
-    public override string EffectDescription => $"방향을 선택해 범위 내 적에게 {effects[0].dmg} 피해를 줍니다.";
+    public override string EffectDescription => $"방향을 선택해 범위 내 적에게 {EffectiveDmg(effects[0])} 피해를 줍니다.";
 }

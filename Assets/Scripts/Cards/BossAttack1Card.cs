@@ -12,7 +12,7 @@ public class BossAttack1Card : Card
         CardEffect cf = new CardEffect(
             Board.BoardMode.targeting,
             EffectType.Damage,
-            4,
+            6,
             TargetLogic.AllEnemiesInRange,
             effectRange.Count > 0 ? effectRange[0] : null,
             false,

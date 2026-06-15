@@ -202,4 +202,8 @@ public partial class Board : MonoBehaviour
     {
         return selectedButton.x >= 0 && selectedButton.y >= 0;
     }
+
+    public Piece casterPiece;
+
+    public int CasterColDamage => casterPiece?.colDamage ?? 0;
 }

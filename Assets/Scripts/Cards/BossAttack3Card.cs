@@ -16,7 +16,7 @@ public class BossAttack3Card : Card
         CardEffect damage = new CardEffect(
             Board.BoardMode.targeting,
             EffectType.Damage,
-            2,
+            5,
             TargetLogic.AllEnemiesInRange,
             range,
             false,

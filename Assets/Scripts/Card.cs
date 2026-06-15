@@ -109,6 +109,12 @@ public abstract class Card : MonoBehaviour, ISelectable
     public bool selected { get { return _selected; } set { _selected = value; if (_selected) OnSelected?.Invoke(); else OnUnSelected?.Invoke(); }}
 
 
+    protected int EffectiveDmg(CardEffect effect)
+    {
+        if (effect.type != EffectType.Damage || effect.useColDamageAsDmg) return effect.dmg;
+        return effect.dmg + (Board.instance?.CasterColDamage ?? 0);
+    }
+
     public virtual bool CanUse() => true;
     public virtual void Execute() { }
 

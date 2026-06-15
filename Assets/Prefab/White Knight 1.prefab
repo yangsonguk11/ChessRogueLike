@@ -134,7 +134,7 @@ MonoBehaviour:
   name: 
   hp: 15
   maxhp: 15
-  colDamage: 3
+  colDamage: 5
   teamID: 1
   shield: 0
   moveableRange: {fileID: 0}

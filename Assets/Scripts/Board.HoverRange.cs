@@ -51,6 +51,15 @@ public partial class Board
         {
             ClearHoverPieceRange();
             Piece hoveredPiece = GetButtonScript(pos).GetPieceScript();
+
+            Piece newCaster = (hoveredPiece != null && pendingEffects.Count > 0 && hoveredPiece.teamID == 0)
+                ? hoveredPiece : null;
+            if (casterPiece != newCaster)
+            {
+                casterPiece = newCaster;
+                CardCanvas.instance?.RefreshAllCardViews();
+            }
+
             if (hoveredPiece != null)
             {
                 hoverPieceIsAlly = hoveredPiece.teamID == 0;
@@ -93,6 +102,11 @@ public partial class Board
         ClearHoverPieceRange();
         if (!isSelectedButtonActive())
             HideButtonInfo();
+        if (casterPiece != null)
+        {
+            casterPiece = null;
+            CardCanvas.instance?.RefreshAllCardViews();
+        }
     }
 
     public void ClearHoverRange()

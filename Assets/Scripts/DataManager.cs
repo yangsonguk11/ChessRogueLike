@@ -54,7 +54,7 @@ public class DataManager : MonoBehaviour
                 "DefenseCard",
                 "DefenseCard",
                 "DefenseCard",
-                "DefenseCard",
+                "MoveCard",
                 "MoveCard",
                 "DirectionalAttackCard",
             };

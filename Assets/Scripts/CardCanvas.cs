@@ -198,8 +198,9 @@ public class CardCanvas : MonoBehaviour
     }
     public void RefreshAllCardViews()
     {
-        foreach (var rt in cards)
+        foreach (var rt in cards.Concat(Discardcards).Concat(Deckcards))
             rt.GetComponent<Card>()?.RefreshView();
+        if (nowusingCard != null) nowusingCard.GetComponent<Card>()?.RefreshView();
         UpdateCardInteractability();
     }
 

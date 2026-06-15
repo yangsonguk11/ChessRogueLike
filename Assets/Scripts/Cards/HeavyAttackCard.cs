@@ -14,5 +14,5 @@ public class HeavyAttackCard : Card
         effects.Add(new CardEffect(Board.BoardMode.Inspect, EffectType.SelfDamage, 2, TargetLogic.self, null));
     }
 
-    public override string EffectDescription => $"적에게 {effects[0].dmg} 피해를 주고, 자신도 {effects[1].dmg} 피해를 받습니다.";
+    public override string EffectDescription => $"적에게 {EffectiveDmg(effects[0])} 피해를 주고, 자신도 {effects[1].dmg} 피해를 받습니다.";
 }

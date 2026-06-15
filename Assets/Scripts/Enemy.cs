@@ -66,7 +66,7 @@ public class Enemy : Piece
         string primary = effect.type switch
         {
             EffectType.Move        => "<sprite name=\"Move\">",
-            EffectType.Damage      => effect.useColDamageAsDmg ? "<sprite name=\"Damage\">" : $"{effect.dmg} <sprite name=\"Damage\">",
+            EffectType.Damage      => effect.useColDamageAsDmg ? "<sprite name=\"Damage\">" : $"{effect.dmg + colDamage} <sprite name=\"Damage\">",
             EffectType.Shield      => $"{effect.dmg} <sprite name=\"Shield\">",
             EffectType.Heal        => $"{effect.dmg} <sprite name=\"Heal\">",
             EffectType.SelfDamage  => $"{effect.dmg} <sprite name=\"Damage\">",
