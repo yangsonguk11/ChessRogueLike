@@ -25,7 +25,8 @@ public class AreaHealCard : Card
             AreaTargetMode.MouseCentered,
             targetRange,
             useMovement
-        );
+        )
+        { animTrigger = "Heal" };
         effects.Add(cf);
     }
 

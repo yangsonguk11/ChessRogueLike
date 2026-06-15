@@ -21,7 +21,8 @@ public class FlameThrowingCard : Card
                 2,
                 TargetLogic.AllEnemiesInRange,
                 effectRange[0]
-            ),
+            )
+            { animTrigger = "AreaAttack" },
             turnDuration = 3
         };
 

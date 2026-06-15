@@ -49,9 +49,9 @@ public class DataManager : MonoBehaviour
             {
                 "AttackCard",
                 "AttackCard",
-                "AttackCard",
-                "AttackCard",
-                "DefenseCard",
+                "DefensiveStanceCard",
+                "TempColDamageUpCard",
+                "FlameThrowingCard",
                 "DefenseCard",
                 "DefenseCard",
                 "MoveCard",

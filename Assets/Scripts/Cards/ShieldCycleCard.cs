@@ -16,7 +16,8 @@ public class ShieldCycleCard : Card
             TargetLogic.self,
             null,
             true
-        ));
+        )
+        { animTrigger = "Shield" });
 
         effects.Add(new CardEffect(
             Board.BoardMode.Inspect,

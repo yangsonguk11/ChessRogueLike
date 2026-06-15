@@ -21,14 +21,16 @@ public class BossAttack3Card : Card
             range,
             false,
             AreaTargetMode.Fixed
-        );
+        )
+        { animTrigger = "AreaAttack" };
         // BoardMode.command + TargetLogic.self → ResolveEnemyTarget returns selectedButton (boss pos)
         CardEffect shield = new CardEffect(
             Board.BoardMode.command,
             EffectType.Shield,
             shieldAmount,
             TargetLogic.self
-        );
+        )
+        { animTrigger = "Shield" };
         effects.Add(damage);
         effects.Add(shield);
     }

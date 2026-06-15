@@ -63,7 +63,9 @@ public partial class Board
 
             if (targets.Count == 0) return;
 
-            if (casterButton.GetPiece() != null)
+            if (ce.animTrigger != null)
+                caster?.TriggerAnim(ce.animTrigger);
+            else if (ce.type == EffectType.Damage && casterButton.GetPiece() != null)
                 turnEffectQueue.Enqueue(PieceAreaAttackCor(casterButton, 0.6f));
 
             foreach (var (targetPos, target) in targets)
@@ -71,7 +73,9 @@ public partial class Board
         }
         else
         {
-            if (casterButton.GetPiece() != null)
+            if (ce.animTrigger != null)
+                caster?.TriggerAnim(ce.animTrigger);
+            else if (ce.type == EffectType.Damage && casterButton.GetPiece() != null)
                 turnEffectQueue.Enqueue(PieceAreaAttackCor(casterButton, 0.5f));
             EnqueueTurnEffectOnPiece(caster, ce, pos);
         }
@@ -104,6 +108,7 @@ public partial class Board
                 break;
             case EffectType.ColDamageUp:
                 target.colDamage += ce.dmg;
+                if (ce.animTrigger != null) target.TriggerAnim(ce.animTrigger);
                 break;
         }
     }

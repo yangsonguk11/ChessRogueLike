@@ -14,7 +14,8 @@ public class MoveAndDrawCard : Card
             EffectType.Move,
             0,
             TargetLogic.NearestEnemy
-        ));
+        )
+        { animTrigger = "Move" });
 
         effects.Add(new CardEffect(
             Board.BoardMode.Inspect,

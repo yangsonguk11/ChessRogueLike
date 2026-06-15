@@ -15,7 +15,8 @@ public class HeavyShieldCard : Card
             EffectType.Shield,
             8,
             TargetLogic.self
-        ));
+        )
+        { animTrigger = "Shield" });
     }
 
     public override string EffectDescription => $"자신에게 방어도 {effects[0].dmg}를 부여합니다. (소멸)";

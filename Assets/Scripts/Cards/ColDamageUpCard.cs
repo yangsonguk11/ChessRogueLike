@@ -14,7 +14,8 @@ public class ColDamageUpCard : Card
             EffectType.ColDamageUp,
             1,
             TargetLogic.self
-        ));
+        )
+        { animTrigger = "Buff" });
     }
 
     public override string EffectDescription => "이동공격력을 1 올립니다.";

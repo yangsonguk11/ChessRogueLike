@@ -9,7 +9,8 @@ public class MoveCard : Card
         Name = "MoveCard";
         Cost = 2;
         type = CardType.Move;
-        CardEffect cf = new CardEffect(Board.BoardMode.command, EffectType.Move, 0, TargetLogic.NearestEnemy);
+        CardEffect cf = new CardEffect(Board.BoardMode.command, EffectType.Move, 0, TargetLogic.NearestEnemy)
+            { animTrigger = "Move" };
         effects.Add(cf);
     }
     public override string EffectDescription => "이동합니다.";

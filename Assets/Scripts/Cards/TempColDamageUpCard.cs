@@ -16,7 +16,8 @@ public class TempColDamageUpCard : Card
             TargetLogic.self,
             null,
             true
-        ));
+        )
+        { animTrigger = "Buff" });
 
         effects.Add(new CardEffect(
             Board.BoardMode.targeting,

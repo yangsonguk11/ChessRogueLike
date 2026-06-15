@@ -19,7 +19,8 @@ public class DirectionalAttackCard : Card
             effectRange[0],
             false,
             AreaTargetMode.Directional4
-        );
+        )
+        { animTrigger = "AreaAttack" };
         effects.Add(cf);
     }
 

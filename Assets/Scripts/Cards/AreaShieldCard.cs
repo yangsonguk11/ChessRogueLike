@@ -8,7 +8,8 @@ public class AreaShieldCard : Card
         Name = "AreaShieldCard";
         Cost = 1;
         type = CardType.Skill;
-        CardEffect cf = new CardEffect(Board.BoardMode.targeting, EffectType.Shield, 3, TargetLogic.AllAlliesInRange, effectRange[0]);
+        CardEffect cf = new CardEffect(Board.BoardMode.targeting, EffectType.Shield, 3, TargetLogic.AllAlliesInRange, effectRange[0])
+            { animTrigger = "Shield" };
         effects.Add(cf);
     }
 

@@ -260,7 +260,7 @@ public class CardEffect
     public bool useColDamageAsDmg;           // true면 dmg 대신 시전자의 colDamage 사용
     public bool noMoveAttack;               // true면 이동 시 충돌 공격 불가
     public int healOnHit;                   // 적을 공격할 때마다 시전자 회복량
-    public AnimationClip animationClip;     // null이면 기본 하드코딩 애니메이션 사용
+    public string animTrigger;              // 효과 시전 시 재생할 Animator 트리거 (null이면 기본 코루틴 애니메이션 사용)
 
     // ApplyTurnEffect 타입에서 사용: 지정한 타이밍에 실행할 CardEffect와 지속 턴 수
     public CardEffect onTurnEndEffect;
@@ -278,13 +278,11 @@ public class CardEffect
         AreaTargetMode _areaTargetMode = AreaTargetMode.Fixed,
         RangeInfoSO _targetingRange = null, bool _targetingUsesMovement = false,
         StatusEffectType _statusEffectType = StatusEffectType.None,
-        int _statusDuration = 0, int _statusPower = 0,
-        AnimationClip _animationClip = null)
+        int _statusDuration = 0, int _statusPower = 0)
     {
         requiredMode = _requiredMode; type = _type; dmg = _dmg; targetlogic = _targetlogic;
         effectRange = _effectRange; lockCasterForNext = _lockCasterForNext; areaTargetMode = _areaTargetMode;
         targetingRange = _targetingRange; targetingUsesMovement = _targetingUsesMovement;
         statusEffectType = _statusEffectType; statusDuration = _statusDuration; statusPower = _statusPower;
-        animationClip = _animationClip;
     }
 }

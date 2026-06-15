@@ -15,7 +15,7 @@ public class SafeMoveCard : Card
             0,
             TargetLogic.NearestEnemy
         )
-        { noMoveAttack = true });
+        { noMoveAttack = true, animTrigger = "Move" });
     }
 
     public override string EffectDescription => "이동합니다. (이동공격 불가)";

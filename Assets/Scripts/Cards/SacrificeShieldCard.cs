@@ -11,7 +11,8 @@ public class SacrificeShieldCard : Card
         type = CardType.Skill;
 
         // 효과 1: 자신에게 방어도 부여 (DefenseCard와 동일 패턴)
-        effects.Add(new CardEffect(Board.BoardMode.targeting, EffectType.Shield, 6, TargetLogic.self));
+        effects.Add(new CardEffect(Board.BoardMode.targeting, EffectType.Shield, 6, TargetLogic.self)
+            { animTrigger = "Shield" });
         // 효과 2: 손패에서 카드 1장 선택해서 버리기
         effects.Add(new CardEffect(Board.BoardMode.cardSelecting, EffectType.SelectAndDiscard, 0, TargetLogic.self)
         {

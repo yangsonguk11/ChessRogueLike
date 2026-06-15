@@ -127,19 +127,4 @@ public partial class Board
         yield break;
     }
 
-    // CardEffect에 AnimationClip이 있으면 해당 이름의 Animator 상태를 재생하고 끝날 때까지 대기.
-    // Animator가 없거나 clip이 null이면 즉시 반환 (호출부에서 폴백 사용).
-    IEnumerator PieceCustomAnimCor(GameObject piece, AnimationClip clip)
-    {
-        if (piece == null || clip == null) yield break;
-        Animator animator = piece.GetComponent<Animator>();
-        if (animator == null) yield break;
-
-        animator.Play(clip.name);
-        yield return null; // 한 프레임 대기 — Animator 상태 전환 반영
-
-        while (animator.IsInTransition(0) || animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1f)
-            yield return null;
-    }
-
 }

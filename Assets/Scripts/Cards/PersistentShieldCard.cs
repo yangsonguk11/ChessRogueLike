@@ -17,7 +17,8 @@ public class PersistentShieldCard : Card
             TargetLogic.self,
             null,
             true
-        ));
+        )
+        { animTrigger = "Shield" });
 
         // 다음 아군 턴 시작 시 방어도 부여 (1턴 후 소멸)
         effects.Add(new CardEffect(
@@ -32,7 +33,8 @@ public class PersistentShieldCard : Card
                 EffectType.Shield,
                 4,
                 TargetLogic.self
-            ),
+            )
+            { animTrigger = "Shield" },
             turnDuration = 1,
             turnPhase = TurnPhase.OwnTurnStart
         });

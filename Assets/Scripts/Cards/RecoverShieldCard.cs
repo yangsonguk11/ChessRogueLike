@@ -10,7 +10,8 @@ public class RecoverShieldCard : Card
         Cost = 1;
         type = CardType.Skill;
 
-        effects.Add(new CardEffect(Board.BoardMode.targeting, EffectType.Shield, 4, TargetLogic.self));
+        effects.Add(new CardEffect(Board.BoardMode.targeting, EffectType.Shield, 4, TargetLogic.self)
+            { animTrigger = "Shield" });
 
         effects.Add(new CardEffect(Board.BoardMode.cardSelecting, EffectType.SelectAndReturnToDeck, 0, TargetLogic.self)
         {

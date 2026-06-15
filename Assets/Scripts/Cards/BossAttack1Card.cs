@@ -17,7 +17,8 @@ public class BossAttack1Card : Card
             effectRange.Count > 0 ? effectRange[0] : null,
             false,
             AreaTargetMode.Fixed
-        );
+        )
+        { animTrigger = "AreaAttack" };
         effects.Add(cf);
     }
 
