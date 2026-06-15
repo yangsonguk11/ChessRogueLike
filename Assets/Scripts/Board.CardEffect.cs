@@ -286,8 +286,17 @@ public partial class Board
         switch (cardEffect.type)
         {
             case EffectType.Move:
+            {
+                Piece moveCaster = GetButtonScript(selectedButton).GetPieceScript();
+                if (moveCaster != null && moveCaster.activeEffects.Exists(e => e is MovementDisabledEffect))
+                {
+                    pendingEffects.Clear();
+                    AnnouncementUI.instance?.Show("이동 불가 상태입니다");
+                    break;
+                }
                 MovePiece(selectedButton, targetPos, cardEffect);
                 break;
+            }
             case EffectType.Damage:
                 AttackPiece(selectedButton, targetPos, resolvedDmg, cardEffect);
                 ApplyStatusToTarget(targetPos, cardEffect);
@@ -305,6 +314,9 @@ public partial class Board
                 break;
             case EffectType.Draw:
                 CardCanvas.instance.DrawCard();
+                break;
+            case EffectType.DeBuff:
+                ApplyStatusToTarget(targetPos, cardEffect);
                 break;
             case EffectType.ApplyStatus:
                 ApplyStatusToTarget(targetPos, cardEffect);
@@ -397,6 +409,7 @@ public partial class Board
             StatusEffectType.TurnAoEDamageEnd   => new TurnEffect(TurnPhase.OwnTurnEnd,
                 new CardEffect(BoardMode.Inspect, EffectType.Damage, power, TargetLogic.AllEnemiesInRange, range), duration),
             StatusEffectType.Thorn              => new ThornEffect(duration, power),
+            StatusEffectType.MovementDisabled   => new MovementDisabledEffect(duration),
             _                                   => null,
         };
     }
@@ -427,6 +440,13 @@ public partial class Board
                 if (cardEffect.onTurnEndEffect != null)
                     target.AddStatusEffect(new TurnEffect(cardEffect.turnPhase, cardEffect.onTurnEndEffect, cardEffect.turnDuration));
                 break;
+            case EffectType.DeBuff:
+            {
+                StatusEffect effect = CreateStatusEffect(cardEffect.statusEffectType, cardEffect.statusDuration, cardEffect.statusPower,
+                    cardEffect.effectRange, cardEffect.targetlogic);
+                if (effect != null) target.AddStatusEffect(effect);
+                break;
+            }
             case EffectType.ApplyStatus:
             {
                 StatusEffect effect = CreateStatusEffect(cardEffect.statusEffectType, cardEffect.statusDuration, cardEffect.statusPower,
@@ -536,8 +556,8 @@ public partial class Board
 
     void FinishCardUsage()
     {
-        if (currentActiveCard != null && currentActiveCard.blocksMovementAfterUse)
-            playerMovedThisTurn = true;
+        if (currentActiveCard != null && currentActiveCard.blocksMovementAfterUse && casterPiece != null)
+            casterPiece.movedThisTurn = true;
         CardCanvas.instance.FinishUseCard();
         ResetBoardAfterCardUse();
     }

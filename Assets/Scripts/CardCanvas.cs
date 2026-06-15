@@ -685,11 +685,44 @@ public class CardCanvas : MonoBehaviour
             return;
         }
 
+        if (!CheckCasterStatusRestrictions(boardPos, card))
+        {
+            CancelCardUsage();
+            return;
+        }
+
         CardDragArrow.instance?.Hide();
         if (pendingCardCoroutine == null)
             board.ButtonClicked(boardPos);
         else
             pendingFirstTarget = boardPos;
+    }
+
+    bool CheckCasterStatusRestrictions(Vector2 casterPos, Card card)
+    {
+        Piece caster = board.GetPieceAt(casterPos);
+        if (caster == null) return true;
+
+        if (card.requiresCasterNotMoved && caster.movedThisTurn)
+        {
+            AnnouncementUI.instance?.Show("이동 전에만 사용할 수 있습니다");
+            return false;
+        }
+
+        foreach (var effect in caster.activeEffects)
+        {
+            switch (effect)
+            {
+                case MovementDisabledEffect:
+                    if (card.effects.Count > 0 && card.effects[0].type == EffectType.Move)
+                    {
+                        AnnouncementUI.instance?.Show("이동 불가 상태입니다");
+                        return false;
+                    }
+                    break;
+            }
+        }
+        return true;
     }
 
     Vector2 FindBoardPosAtScreen(Vector2 screenPos)
@@ -755,7 +788,6 @@ public class CardCanvas : MonoBehaviour
             float x = Mathf.Sin(radian) * radius;
             float y = Mathf.Cos(radian) * radius - radius; 
 
-            // 2. ī�� ��ǥ �� ȸ�� ����
             if (i >= excludeCard && excludeCard >= 0)
             {
                 cards[i+1].SetSiblingIndex(i);

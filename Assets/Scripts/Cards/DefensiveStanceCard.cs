@@ -13,13 +13,13 @@ public class DefensiveStanceCard : Card
         Cost = 1;
         type = CardType.Skill;
         blocksMovementAfterUse = true;
+        requiresCasterNotMoved = true;
 
         effects.Add(new CardEffect(Board.BoardMode.targeting, EffectType.Shield, 5, TargetLogic.self)
-            { animTrigger = "Shield" });
+            { animTrigger = "Shield", lockCasterForNext = true });
+        effects.Add(new CardEffect(Board.BoardMode.targeting, EffectType.DeBuff, 0, TargetLogic.self)
+            { statusEffectType = StatusEffectType.MovementDisabled, statusDuration = 2 });
     }
 
     public override string EffectDescription => $"방어도 {effects[0].dmg}를 부여합니다. (이동 전 사용 가능, 사용 후 이동 불가)";
-
-    public override bool CanUse() => !Board.playerMovedThisTurn;
-    public override string GetCannotUseReason() => "이동 전에만 사용할 수 있습니다";
 }

@@ -10,7 +10,7 @@ public partial class Board
 
         Piece movingPiece = button1script.GetPieceScript();
         if (movingPiece != null && movingPiece.teamID == 0)
-            playerMovedThisTurn = true;
+            movingPiece.movedThisTurn = true;
 
         if (button1script.GetPiece() != null)
         {

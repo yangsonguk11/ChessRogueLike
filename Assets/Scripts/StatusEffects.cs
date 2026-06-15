@@ -109,6 +109,18 @@ public class ThornEffect : StatusEffect
     }
 }
 
+// 이동 불가: 현재 게임플레이 미적용, 상태 표시만
+public class MovementDisabledEffect : StatusEffect
+{
+    public override string DisplayName => "이동 불가";
+    public override bool IsBuff => false;
+
+    public MovementDisabledEffect(int duration)
+    {
+        this.duration = duration;
+    }
+}
+
 // 약화: colDamage 감소, 해제 시 원복
 public class WeakenEffect : StatusEffect
 {

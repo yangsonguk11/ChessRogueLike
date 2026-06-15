@@ -64,7 +64,8 @@ public abstract class Card : MonoBehaviour, ISelectable
     public User user;
     public bool shieldOnMoveAttack;
     public int moveAttackShieldAmount;
-    public bool blocksMovementAfterUse; // 사용 후 이번 턴 이동 불가
+    public bool blocksMovementAfterUse;    // 사용 후 이번 턴 이동 불가
+    public bool requiresCasterNotMoved;   // 사용자가 이번 턴에 이동하지 않았어야 사용 가능
     public bool exileOnUse;             // 사용 후 소멸
     public DragDropTarget dragDropTarget = DragDropTarget.Ally;
 
@@ -239,7 +240,7 @@ public enum CardZone { Hand, Deck, Discard, Any }
 /// <summary>코스트 변경 효과의 지속 시간</summary>
 public enum CostDuration { Permanent, ThisTurnOnly, OneUse }
 
-public enum EffectType { Move, Damage, Shield, Buff, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop, SelectAndDiscard, SelectAndChangeCost, SelectAndReturnToDeck }
+public enum EffectType { Move, Damage, Shield, Buff, DeBuff, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop, SelectAndDiscard, SelectAndChangeCost, SelectAndReturnToDeck }
 public class CardEffect
 {
     public Board.BoardMode requiredMode;

@@ -6,7 +6,6 @@ using UnityEngine;
 public partial class Board : MonoBehaviour
 {
     public static Board instance;
-    public static bool playerMovedThisTurn;
     public static bool playerDamagedThisTurn;
 
     [SerializeField] GameObject Background;
@@ -51,7 +50,6 @@ public partial class Board : MonoBehaviour
     private void Awake()
     {
         instance = this;
-        playerMovedThisTurn = false;
         OnButtonSelected += OnSelectBoard;
         OnButtonUnSelected += OnUnSelectBoard;
         queuecoroutineworking = false;
@@ -206,4 +204,17 @@ public partial class Board : MonoBehaviour
     public Piece casterPiece;
 
     public int CasterColDamage => casterPiece?.colDamage ?? 0;
+
+    public Piece GetPieceAt(Vector2 pos) => GetButtonScript(pos)?.GetPieceScript();
+
+    void ResetPieceMovedThisTurn()
+    {
+        for (int x = 0; x < N; x++)
+            for (int y = 0; y < M; y++)
+            {
+                Piece p = GetPieceAt(new Vector2(x, y));
+                if (p != null && p.teamID == 0)
+                    p.movedThisTurn = false;
+            }
+    }
 }

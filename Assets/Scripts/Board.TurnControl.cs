@@ -7,8 +7,8 @@ public partial class Board
     void TurnStart()
     {
         ProcessTeamTurnEffects(0, TurnPhase.OwnTurnStart);
-        playerMovedThisTurn = false;
         playerDamagedThisTurn = false;
+        ResetPieceMovedThisTurn();
         CardCanvas.instance.DrawTurnStartCards();
         CardCanvas.instance.GetMaxEnergy();
         ShowAllEnemyRanges();

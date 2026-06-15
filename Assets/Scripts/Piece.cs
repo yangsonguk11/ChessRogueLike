@@ -17,6 +17,7 @@ public abstract class Piece : MonoBehaviour
     public RangeInfoSO moveableRange;
 
     public List<StatusEffect> activeEffects = new List<StatusEffect>();
+    public bool movedThisTurn;
 
     public void AddStatusEffect(StatusEffect effect)
     {
