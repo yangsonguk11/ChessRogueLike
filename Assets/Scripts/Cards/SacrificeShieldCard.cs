@@ -24,6 +24,4 @@ public class SacrificeShieldCard : Card
     public override string EffectDescription =>
         $"손의 카드 1장을 버린 후\n방어도 {effects[0].dmg}를 얻습니다.";
 
-    // 버릴 카드가 없으면 사용 불가 (이 카드 자신은 이미 손패 목록에 포함된 상태로 체크됨)
-    public override bool CanUse() => CardCanvas.instance.cards.Count >= 2;
 }

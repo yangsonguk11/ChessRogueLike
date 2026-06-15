@@ -81,7 +81,7 @@ public class CardCanvas : MonoBehaviour
         HandZone.GetComponent<Image>().raycastTarget = false;
     }
 
-    public void CardSelected(int handNum)   //���� ī�带 ������ ��
+    public void CardSelected(int handNum)   
     {
         if (handNum == -1)
             return;
@@ -90,12 +90,12 @@ public class CardCanvas : MonoBehaviour
         HandZone.GetComponent<Image>().raycastTarget = true;
     }
 
-    public void CardUnSelected()            //���� ī�带 ���� ��
+    public void CardUnSelected()           
     {
         AlignCards();
         HandZone.GetComponent<Image>().raycastTarget = false;
     }
-    public void UseCard(int handnum)        //���� ī�带 ��� ���� ����� ��
+    public bool UseCard(int handnum)
     {
         Debug.Log(cards[handnum].GetComponent<Card>().Cost > currentenergy);
         Debug.Log(isCardEffecting);
@@ -103,8 +103,18 @@ public class CardCanvas : MonoBehaviour
         Card card = cards[handnum].GetComponent<Card>();
         // isCardEffecting이면서 nowusingCard가 없으면 보드가 실제 효과 처리 중 → 차단
         // nowusingCard가 있으면 아직 애니메이션/대기 중이므로 교체 허용
-        if (card.Cost > currentenergy || (isCardEffecting && nowusingCard == null) || TurnManager.instance.currentState != TurnState.Player || !card.CanUse())
-            return;
+        if (card.Cost > currentenergy)
+        {
+            AnnouncementUI.instance?.Show("코스트가 부족합니다");
+            return false;
+        }
+        if ((isCardEffecting && nowusingCard == null) || TurnManager.instance.currentState != TurnState.Player)
+            return false;
+        if (!card.CanUse())
+        {
+            AnnouncementUI.instance?.Show(card.GetCannotUseReason());
+            return false;
+        }
         if (pendingCardCoroutine != null)
         {
             StopCoroutine(pendingCardCoroutine);
@@ -122,9 +132,10 @@ public class CardCanvas : MonoBehaviour
             board.UseCard(cardComp);
         CardDragArrow.instance?.Show(nowusingCard);
         pendingCardCoroutine = StartCoroutine(AnimateCardToUsingPos(nowusingCard));
+        return true;
     }
 
-    public void ClearnowusingCard()         //������� ī�� �ʱ�ȭ
+    public void ClearnowusingCard()         
     {
         if (nowusingCard)
         {
@@ -659,6 +670,17 @@ public class CardCanvas : MonoBehaviour
         // 보드 밖이거나 카드의 dragDropTarget 조건을 만족하지 않으면 즉시 취소
         if (boardPos.x < 0 || !board.IsValidDragTarget(boardPos, card.dragDropTarget))
         {
+            if (boardPos.x >= 0)
+            {
+                string reason = card.dragDropTarget switch
+                {
+                    DragDropTarget.Ally => "아군 기물에 사용해야 합니다",
+                    DragDropTarget.Enemy => "적 기물에 사용해야 합니다",
+                    DragDropTarget.AnyPiece => "기물이 있는 칸에 사용해야 합니다",
+                    _ => "올바른 위치가 아닙니다"
+                };
+                AnnouncementUI.instance?.Show(reason);
+            }
             CancelCardUsage();
             return;
         }
@@ -687,7 +709,6 @@ public class CardCanvas : MonoBehaviour
         int count = cards.Count;
         if (count == 0) return;
 
-        // ��ü ���� ���� ��� (����� 0���� ����)
         float totalAngle = (count - 1) * angleBetween;
         float startAngle = -totalAngle / 2f;
 
@@ -695,12 +716,10 @@ public class CardCanvas : MonoBehaviour
         {
             float currentAngle = startAngle + ((count - 1 - i) * angleBetween);
 
-            // 1. ��ġ ��� (�ﰢ�Լ� ���)
-            // �������� ��ȯ: Degree * (PI / 180)
             float radian = currentAngle * Mathf.Deg2Rad;
 
             float x = Mathf.Sin(radian) * radius;
-            float y = Mathf.Cos(radian) * radius - radius; // ���� ���κп� ����
+            float y = Mathf.Cos(radian) * radius - radius; 
 
             // 2. ī�� ��ǥ �� ȸ�� ����
             cards[i].SetSiblingIndex(i);
@@ -724,7 +743,6 @@ public class CardCanvas : MonoBehaviour
             count = cards.Count - 1;
         if (count == 0) return;
 
-        // ��ü ���� ���� ��� (����� 0���� ����)
         float totalAngle = (count - 1) * angleBetween;
         float startAngle = -totalAngle / 2f;
 
@@ -732,12 +750,10 @@ public class CardCanvas : MonoBehaviour
         {
             float currentAngle = startAngle + ((count - 1 - i) * angleBetween);
 
-            // 1. ��ġ ��� (�ﰢ�Լ� ���)
-            // �������� ��ȯ: Degree * (PI / 180)
             float radian = currentAngle * Mathf.Deg2Rad;
 
             float x = Mathf.Sin(radian) * radius;
-            float y = Mathf.Cos(radian) * radius - radius; // ���� ���κп� ����
+            float y = Mathf.Cos(radian) * radius - radius; 
 
             // 2. ī�� ��ǥ �� ȸ�� ����
             if (i >= excludeCard && excludeCard >= 0)

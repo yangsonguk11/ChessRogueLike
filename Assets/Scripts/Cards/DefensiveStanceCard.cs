@@ -20,4 +20,5 @@ public class DefensiveStanceCard : Card
     public override string EffectDescription => $"방어도 {effects[0].dmg}를 부여합니다. (이동 전 사용 가능, 사용 후 이동 불가)";
 
     public override bool CanUse() => !Board.playerMovedThisTurn;
+    public override string GetCannotUseReason() => "이동 전에만 사용할 수 있습니다";
 }

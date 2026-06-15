@@ -116,6 +116,7 @@ public abstract class Card : MonoBehaviour, ISelectable
     }
 
     public virtual bool CanUse() => true;
+    public virtual string GetCannotUseReason() => "사용할 수 없습니다";
     public virtual void Execute() { }
 
     public bool IsSelectable()
@@ -209,7 +210,7 @@ public abstract class Card : MonoBehaviour, ISelectable
 
     public void MouseDrag(BaseEventData data)
     {
-        if (CardCanvas.instance.nowusingCard == GetComponent<RectTransform>() || handNumber < 0)
+        if (CardCanvas.instance.nowusingCard == GetComponent<RectTransform>() || handNumber < 0 || !selected)
             return;
         PointerEventData pointerData = (PointerEventData)data;
 
@@ -219,7 +220,13 @@ public abstract class Card : MonoBehaviour, ISelectable
         {
             if (obj.name == "HandZone")
             {
-                CardCanvas.instance.UseCard(handNumber);
+                if (!CardCanvas.instance.UseCard(handNumber))
+                {
+                    SelectedFalse();
+                    _canvasGroup.blocksRaycasts = true;
+                    CardCanvas.instance.CardUnSelected();
+                    CardDragArrow.instance?.Hide();
+                }
                 return;
             }
         }

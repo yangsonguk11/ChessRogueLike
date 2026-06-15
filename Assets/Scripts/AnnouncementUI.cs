@@ -2,15 +2,15 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 
-public class TurnAnnouncementUI : MonoBehaviour
+public class AnnouncementUI : MonoBehaviour
 {
-    public static TurnAnnouncementUI instance;
+    public static AnnouncementUI instance;
 
     [SerializeField] TextMeshProUGUI announcementText;
     [SerializeField] float displayDuration = 1.0f;
     [SerializeField] float fadeDuration = 0.3f;
 
-    Coroutine currentRoutine;
+    public Coroutine currentRoutine;
 
     void Awake()
     {
