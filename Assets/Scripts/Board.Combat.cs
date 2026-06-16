@@ -27,7 +27,7 @@ public partial class Board
             }
             else
             {
-                motionQueue.Enqueue(MovePieceWithAnim(button1script, button2script, 1f, cardEffect?.animTrigger));
+                motionQueue.Enqueue(MovePieceWithAnim(button1script, button2script, 1f, cardEffect?.animTrigger, cardEffect));
                 StartMotionQueue();
             }
         }
@@ -155,14 +155,10 @@ public partial class Board
                 if (pScript2.teamID == 0) playerDamagedThisTurn = true;
 
                 piece2.transform.rotation = Quaternion.LookRotation(button1script.Piecelocation - button2script.Piecelocation);
-                pScript2.TriggerAnim(hpLeft <= 0 ? "Die" : "Hit");
+                button1script.GetPiece().transform.rotation = Quaternion.LookRotation(button2script.Piecelocation - button1script.Piecelocation);
 
-                if (cardEffect?.animTrigger != null)
-                    button1script.GetPiece().transform.rotation = Quaternion.LookRotation(button2script.Piecelocation - button1script.Piecelocation);
-                else
-                    motionQueue.Enqueue(PieceAttackCor(button1script, button2script, 1f));
-                StartCoroutine(TriggerAnimCor(pScript1, cardEffect?.animTrigger, cardEffect: cardEffect));
-                motionQueue.Enqueue(pScript2.DamageText(dmg));
+                motionQueue.Enqueue(PieceAttackCor(pScript1, pScript2, cardEffect?.animTrigger, hpLeft <= 0 ? "Die" : "Hit", cardEffect,
+                    new List<IEnumerator> { pScript2.DamageText(dmg) }));
                 if (hpLeft <= 0)
                 {
                     if (pScript2.teamID == 1) enemyPositions.Remove(pos2);
@@ -183,15 +179,12 @@ public partial class Board
             GameObject piece2 = button2script.GetPiece();
             if (piece2)
             {
+                Piece pScript1 = button1script.GetPieceScript();
                 Piece pScript2 = piece2.GetComponent<Piece>();
                 int hpLeft = pScript2.GetHeal(dmg, AttackType.NormalAttack);
 
-                pScript2.TriggerAnim("Heal");
-
-                if (cardEffect?.animTrigger == null)
-                    motionQueue.Enqueue(PieceHealCor(button1script, button2script, 1f));
-                StartCoroutine(TriggerAnimCor(button1script.GetPieceScript(), cardEffect?.animTrigger, cardEffect: cardEffect));
-                motionQueue.Enqueue(pScript2.HealText(dmg));
+                motionQueue.Enqueue(PieceHealCor(pScript1, pScript2, cardEffect,
+                    new List<IEnumerator> { pScript2.HealText(dmg) }));
                 if (hpLeft <= 0)
                     motionQueue.Enqueue(pScript2.DeathCor());
             }
@@ -206,9 +199,11 @@ public partial class Board
         if (p == null) return;
         int hpLeft = p.GetDamage(dmg, AttackType.NormalAttack);
         if (p.teamID == 0) playerDamagedThisTurn = true;
-        p.TriggerAnim(hpLeft <= 0 ? "Die" : "Hit");
-        StartCoroutine(TriggerAnimCor(p, cardEffect?.animTrigger));
-        motionQueue.Enqueue(p.DamageText(dmg));
+
+        motionQueue.Enqueue(Parallel(
+            TriggerAnimCor(p, cardEffect?.animTrigger, cardEffect: cardEffect),
+            TriggerAnimCor(p, hpLeft <= 0 ? "Die" : "Hit", 0.3f, false),
+            p.DamageText(dmg)));
         if (hpLeft <= 0)
         {
             if (p.teamID == 1) enemyPositions.Remove(casterPos);
@@ -226,16 +221,13 @@ public partial class Board
 
         Piece caster = casterButton.GetPieceScript();
 
-        if (cardEffect?.animTrigger != null)
-        {
-            if (targets.Count > 0)
-                casterButton.GetPiece().transform.rotation = Quaternion.LookRotation(GetButtonScript(targets[0]).Piecelocation - casterButton.Piecelocation);
-        }
-        else
-            motionQueue.Enqueue(PieceAreaAttackCor(casterButton, 1f));
-        StartCoroutine(TriggerAnimCor(caster, cardEffect?.animTrigger, cardEffect: cardEffect));
+        if (targets.Count > 0)
+            casterButton.GetPiece().transform.rotation = Quaternion.LookRotation(GetButtonScript(targets[0]).Piecelocation - casterButton.Piecelocation);
 
         int totalHeal = 0;
+        var hitTargets = new List<(Piece piece, bool died)>();
+        var textCoroutines = new List<IEnumerator>();
+        var deathCoroutines = new List<IEnumerator>();
 
         foreach (Vector2 pos in targets)
         {
@@ -244,16 +236,21 @@ public partial class Board
             int hpLeft = p.GetDamage(dmg, AttackType.NormalAttack);
             if (p.teamID == 0) playerDamagedThisTurn = true;
             p.transform.rotation = Quaternion.LookRotation(casterButton.Piecelocation - GetButtonScript(pos).Piecelocation);
-            p.TriggerAnim(hpLeft <= 0 ? "Die" : "Hit");
-            motionQueue.Enqueue(p.DamageText(dmg));
-            if (hpLeft <= 0)
+            bool died = hpLeft <= 0;
+            hitTargets.Add((p, died));
+            textCoroutines.Add(p.DamageText(dmg));
+            if (died)
             {
                 if (p.teamID == 1) enemyPositions.Remove(pos);
-                motionQueue.Enqueue(p.DeathCor());
+                deathCoroutines.Add(p.DeathCor());
             }
             if (cardEffect != null && cardEffect.healOnHit > 0)
                 totalHeal += cardEffect.healOnHit;
         }
+
+        motionQueue.Enqueue(PieceAreaAttackCor(caster, hitTargets, cardEffect?.animTrigger, cardEffect, textCoroutines));
+        foreach (var d in deathCoroutines)
+            motionQueue.Enqueue(d);
 
         if (totalHeal > 0 && caster != null)
         {
@@ -267,35 +264,42 @@ public partial class Board
     void AreaShieldPiece(List<Vector2> targets, int dmg, CardEffect cardEffect = null)
     {
         Button casterBtn = GetButtonScript(selectedButton);
-        if (cardEffect?.animTrigger != null)
-            casterBtn.GetPieceScript()?.TriggerAnim(cardEffect.animTrigger);
+        Piece caster = casterBtn.GetPieceScript();
+        var shieldedPieces = new List<Piece>();
+        var textCoroutines = new List<IEnumerator>();
+
         foreach (Vector2 pos in targets)
         {
             Piece p = GetButtonScript(pos).GetPieceScript();
             if (p == null) continue;
             p.GetShield(dmg, AttackType.NormalAttack);
-            p.TriggerAnim("Shield");
-            if (cardEffect?.animTrigger == null)
-                motionQueue.Enqueue(PieceShieldCor(casterBtn, GetButtonScript(pos), 1f));
-            motionQueue.Enqueue(p.ShieldText(dmg));
+            shieldedPieces.Add(p);
+            textCoroutines.Add(p.ShieldText(dmg));
         }
+
+        motionQueue.Enqueue(PieceAreaShieldCor(caster, shieldedPieces, cardEffect?.animTrigger, cardEffect, textCoroutines));
+
         StartMotionQueue();
     }
 
     void AreaHealPiece(List<Vector2> targets, int dmg, CardEffect cardEffect = null)
     {
         Button casterBtn = GetButtonScript(selectedButton);
-        StartCoroutine(TriggerAnimCor(casterBtn.GetPieceScript(), cardEffect?.animTrigger, cardEffect: cardEffect));
+        Piece caster = casterBtn.GetPieceScript();
+        var healedPieces = new List<Piece>();
+        var textCoroutines = new List<IEnumerator>();
+
         foreach (Vector2 pos in targets)
         {
             Piece p = GetButtonScript(pos).GetPieceScript();
             if (p == null) continue;
-            int hpLeft = p.GetHeal(dmg, AttackType.NormalAttack);
-            p.TriggerAnim("Heal");
-            if (cardEffect?.animTrigger == null)
-                motionQueue.Enqueue(PieceHealCor(casterBtn, GetButtonScript(pos), 1f));
-            motionQueue.Enqueue(p.HealText(dmg));
+            p.GetHeal(dmg, AttackType.NormalAttack);
+            healedPieces.Add(p);
+            textCoroutines.Add(p.HealText(dmg));
         }
+
+        motionQueue.Enqueue(PieceAreaHealCor(caster, healedPieces, cardEffect?.animTrigger, cardEffect, textCoroutines));
+
         StartMotionQueue();
     }
 
@@ -309,15 +313,12 @@ public partial class Board
             GameObject piece2 = button2script.GetPiece();
             if (piece2)
             {
+                Piece pScript1 = button1script.GetPieceScript();
                 Piece pScript2 = piece2.GetComponent<Piece>();
                 int hpLeft = pScript2.GetShield(dmg, AttackType.NormalAttack);
 
-                pScript2.TriggerAnim("Shield");
-                if (cardEffect?.animTrigger != null)
-                    button1script.GetPieceScript()?.TriggerAnim(cardEffect.animTrigger);
-                else
-                    motionQueue.Enqueue(PieceShieldCor(button1script, button2script, 1f));
-                motionQueue.Enqueue(pScript2.ShieldText(dmg));
+                motionQueue.Enqueue(PieceShieldCor(pScript1, pScript2, cardEffect,
+                    new List<IEnumerator> { pScript2.ShieldText(dmg) }));
                 if (hpLeft <= 0)
                     motionQueue.Enqueue(pScript2.DeathCor());
             }

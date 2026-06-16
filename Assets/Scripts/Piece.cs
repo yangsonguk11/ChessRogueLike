@@ -12,6 +12,7 @@ public abstract class Piece : MonoBehaviour
     public int hp;
     public int maxhp;
     public int colDamage;
+    public int baseColDamage;
     public int teamID;
     public int shield;
     public RangeInfoSO moveableRange;
@@ -56,6 +57,7 @@ public abstract class Piece : MonoBehaviour
     }
     public virtual void Awake()
     {
+        baseColDamage = colDamage;
         /*
         name = pieceInfo.PieceName;
         hp = pieceInfo.MaxHp;
@@ -70,6 +72,7 @@ public abstract class Piece : MonoBehaviour
         hp = data.hp;
         maxhp = data.maxHp;
         colDamage = data.colDamage;
+        baseColDamage = data.colDamage;
         teamID = data.teamID;
         shield = 0;
         moveableRange = RangeInfoSODatabase.instance.GetRangeInfoSO(data.rangeinfoname);

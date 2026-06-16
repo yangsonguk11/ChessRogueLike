@@ -54,78 +54,84 @@ public partial class Board
             UpdateEnemyPositionList(button1.GetLocation(), button2.GetLocation());
     }
 
-    IEnumerator PieceAttackCor(Button button1, Button button2, float moveDuration)
+    // 공격자/피격자의 TriggerAnim을 extra(데미지 텍스트 등)와 함께 Parallel로 동시에 실행하고 전부 끝나야 종료(motionQueue가 다음으로 넘어감).
+    IEnumerator PieceAttackCor(Piece attacker, Piece defender, string attackTrigger, string hitOrDieTrigger, CardEffect cardEffect = null, List<IEnumerator> extra = null)
     {
-        Vector3 pos1 = button1.Piecelocation;
-        Vector3 pos2 = button2.Piecelocation;
-        Debug.LogFormat("{0} {1}", pos1, pos2);
-        GameObject piece = button1.GetPiece();
-        if (button1 == button2)
-            yield break;
-
-        piece.transform.rotation = Quaternion.LookRotation(pos2 - pos1);
-        GameObject piece1 = button1.GetPiece();
-        float time = 0f;
-        Vector3 pRotation = piece1.transform.rotation.eulerAngles;
-        Vector3 tiltedRotation = pRotation + new Vector3(90, 0, 0);
-
-        while (time < moveDuration / 2)
+        var coroutines = new List<IEnumerator>
         {
-            piece1.transform.rotation = Quaternion.Euler(Vector3.Lerp(pRotation, tiltedRotation, time / moveDuration * 2));
-            time += Time.deltaTime;
-            yield return null;
-        }
-        while (time < moveDuration)
-        {
-            piece1.transform.rotation = Quaternion.Euler(Vector3.Lerp(tiltedRotation, pRotation, time / moveDuration * 2 - 1));
-            time += Time.deltaTime;
-            yield return null;
-        }
-        piece1.transform.rotation = Quaternion.Euler(pRotation);
+            TriggerAnimCor(attacker, attackTrigger, cardEffect: cardEffect),
+            TriggerAnimCor(defender, hitOrDieTrigger, 0.3f, false)
+        };
+        if (extra != null) coroutines.AddRange(extra);
+        yield return Parallel(coroutines.ToArray());
     }
 
-    IEnumerator PieceAreaAttackCor(Button button, float duration)
+    // 시전자/대상의 TriggerAnim을 extra와 함께 Parallel로 동시에 실행하고 전부 끝나야 종료.
+    IEnumerator PieceShieldCor(Piece caster, Piece target, CardEffect cardEffect = null, List<IEnumerator> extra = null)
     {
-        GameObject piece = button.GetPiece();
-        if (piece == null) yield break;
-
-        Vector3 startEuler = piece.transform.eulerAngles;
-        float time = 0f;
-        while (time < duration)
+        var coroutines = new List<IEnumerator>
         {
-            float t = time / duration;
-            piece.transform.rotation = Quaternion.Euler(startEuler + new Vector3(0f, 360f * t, 0f));
-            time += Time.deltaTime;
-            yield return null;
-        }
-        piece.transform.rotation = Quaternion.Euler(startEuler);
+            TriggerAnimCor(caster, cardEffect?.animTrigger, cardEffect: cardEffect),
+            TriggerAnimCor(target, "Shield", 0.3f, false)
+        };
+        if (extra != null) coroutines.AddRange(extra);
+        yield return Parallel(coroutines.ToArray());
     }
 
-    IEnumerator PieceShieldCor(Button button1, Button button2, float moveDuration)
+    IEnumerator PieceHealCor(Piece healer, Piece target, CardEffect cardEffect = null, List<IEnumerator> extra = null)
     {
-        yield return new WaitForSeconds(moveDuration);
+        var coroutines = new List<IEnumerator>
+        {
+            TriggerAnimCor(healer, cardEffect?.animTrigger, cardEffect: cardEffect),
+            TriggerAnimCor(target, "Heal", 0.3f, false)
+        };
+        if (extra != null) coroutines.AddRange(extra);
+        yield return Parallel(coroutines.ToArray());
     }
 
-    IEnumerator PieceHealCor(Button button1, Button button2, float moveDuration)
+    // 시전자 + 여러 대상의 TriggerAnim을 extra와 함께 한꺼번에 Parallel로 실행 (AreaAttack/AreaHeal/AreaShield 공용 패턴).
+    IEnumerator PieceAreaAttackCor(Piece caster, List<(Piece piece, bool died)> targets, string attackTrigger, CardEffect cardEffect = null, List<IEnumerator> extra = null)
     {
-        yield return new WaitForSeconds(moveDuration);
+        var coroutines = new List<IEnumerator> { TriggerAnimCor(caster, attackTrigger, cardEffect: cardEffect) };
+        foreach (var (piece, died) in targets)
+            coroutines.Add(TriggerAnimCor(piece, died ? "Die" : "Hit", 0.3f, false));
+        if (extra != null) coroutines.AddRange(extra);
+        yield return Parallel(coroutines.ToArray());
+    }
+
+    IEnumerator PieceAreaHealCor(Piece caster, List<Piece> targets, string healTrigger, CardEffect cardEffect = null, List<IEnumerator> extra = null)
+    {
+        var coroutines = new List<IEnumerator> { TriggerAnimCor(caster, healTrigger, cardEffect: cardEffect) };
+        foreach (var p in targets)
+            coroutines.Add(TriggerAnimCor(p, "Heal", 0.3f, false));
+        if (extra != null) coroutines.AddRange(extra);
+        yield return Parallel(coroutines.ToArray());
+    }
+
+    IEnumerator PieceAreaShieldCor(Piece caster, List<Piece> targets, string shieldTrigger, CardEffect cardEffect = null, List<IEnumerator> extra = null)
+    {
+        var coroutines = new List<IEnumerator> { TriggerAnimCor(caster, shieldTrigger, cardEffect: cardEffect) };
+        foreach (var p in targets)
+            coroutines.Add(TriggerAnimCor(p, "Shield", 0.3f, false));
+        if (extra != null) coroutines.AddRange(extra);
+        yield return Parallel(coroutines.ToArray());
     }
 
     // 위치 이동(PieceMoveCor)과 이동 트리거 애니메이션(+범위 표시)을 동시에 재생.
     // MovePiece의 일반 이동과 MoveAttack의 인접 칸 접근이 공유하는 로직.
-    IEnumerator MovePieceWithAnim(Button button1, Button button2, float moveDuration, string animTrigger)
+    IEnumerator MovePieceWithAnim(Button button1, Button button2, float moveDuration, string animTrigger, CardEffect cardEffect = null)
     {
         if (button1 == button2) yield break; // PieceMoveCor와 동일하게, 실제로 이동할 필요 없으면 즉시 종료
         yield return Parallel(
             PieceMoveCor(button1, button2, moveDuration),
-            TriggerAnimCor(button1.GetPieceScript(), animTrigger, moveDuration));
+            TriggerAnimCor(button1.GetPieceScript(), animTrigger, moveDuration, cardEffect: cardEffect));
     }
 
-    IEnumerator MoveAdjacent(Button button1, Button button2, float moveDuration, string animTrigger = null)
+    IEnumerator MoveAdjacent(Button button1, Button button2, float moveDuration, string animTrigger = null, CardEffect cardEffect = null)
     {
         Vector2 adjacentPos = GetAdjacentLocation(button1.GetLocation(), button2.GetLocation());
         Button newTarget = GetButtonScript(adjacentPos);
-        yield return MovePieceWithAnim(button1, newTarget, moveDuration, animTrigger);
+        yield return MovePieceWithAnim(button1, newTarget, moveDuration, animTrigger, cardEffect);
     }
 
     // 여러 코루틴을 동시에 실행하고 전부 끝날 때까지 대기.

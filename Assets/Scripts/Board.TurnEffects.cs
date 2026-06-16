@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -69,9 +70,10 @@ public partial class Board
                 return;
             }
 
-            StartCoroutine(TriggerAnimCor(caster, ce.animTrigger));
+            var animCoroutines = new List<IEnumerator> { TriggerAnimCor(caster, ce.animTrigger, cardEffect: ce) };
             foreach (var (targetPos, target) in targets)
-                EnqueueTurnEffectOnPiece(target, ce, targetPos);
+                animCoroutines.Add(EnqueueTurnEffectOnPiece(target, ce));
+            motionQueue.Enqueue(Parallel(animCoroutines.ToArray()));
             StartMotionQueue();
         }
         else
@@ -83,23 +85,24 @@ public partial class Board
                 return;
             }
 
-            StartCoroutine(TriggerAnimCor(caster, ce.animTrigger));
-            EnqueueTurnEffectOnPiece(caster, ce, pos);
+            motionQueue.Enqueue(Parallel(
+                TriggerAnimCor(caster, ce.animTrigger, cardEffect: ce),
+                EnqueueTurnEffectOnPiece(caster, ce)));
             StartMotionQueue();
         }
     }
 
-    void EnqueueTurnEffectOnPiece(Piece target, CardEffect ce, Vector2 targetPos)
+    IEnumerator EnqueueTurnEffectOnPiece(Piece target, CardEffect ce)
     {
         switch (ce.type)
         {
             case EffectType.Heal:
                 target.GetHeal(ce.dmg, AttackType.NormalAttack);
-                motionQueue.Enqueue(target.HealText(ce.dmg));
+                yield return target.HealText(ce.dmg);
                 break;
             case EffectType.Shield:
                 target.GetShield(ce.dmg, AttackType.NormalAttack);
-                motionQueue.Enqueue(target.ShieldText(ce.dmg));
+                yield return target.ShieldText(ce.dmg);
                 break;
             case EffectType.ColDamageUp:
                 target.colDamage += ce.dmg;
