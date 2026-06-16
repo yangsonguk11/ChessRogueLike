@@ -6,6 +6,7 @@ public partial class Board
     List<Vector2> hoverRangeButtons = new List<Vector2>();
     List<Vector2> hoverPieceRangeButtons = new List<Vector2>();
     bool hoverPieceIsAlly = true;
+    bool allEnemyRangeSuppressed = false;
     Vector2 currentHoverDirection = Vector2.up;
 
     public void ButtonHovered(Vector2 pos)
@@ -63,6 +64,14 @@ public partial class Board
             if (hoveredPiece != null)
             {
                 hoverPieceIsAlly = hoveredPiece.teamID == 0;
+
+                // 적군 전체 기본 범위가 켜져 있는 상태라면, 그 위에 마우스를 올린 적군의 범위만 보이도록 잠깐 꺼둔다.
+                if (hoveredPiece.teamID == 1 && enemyAlwaysOnRange.Count > 0)
+                {
+                    ClearAllEnemyRanges();
+                    allEnemyRangeSuppressed = true;
+                }
+
                 List<Vector2> offsets;
                 int teamForRange;
                 if (pendingEffects.Count > 0 && hoveredPiece.teamID == 0)
@@ -106,6 +115,11 @@ public partial class Board
         {
             casterPiece = null;
             CardCanvas.instance?.RefreshAllCardViews();
+        }
+        if (allEnemyRangeSuppressed)
+        {
+            ShowAllEnemyRanges();
+            allEnemyRangeSuppressed = false;
         }
     }
 

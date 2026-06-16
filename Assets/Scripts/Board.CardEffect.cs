@@ -365,17 +365,11 @@ public partial class Board
 
     void ApplyStatusToTarget(Vector2 targetPos, CardEffect cardEffect)
     {
-        if (cardEffect.statusEffectType == StatusEffectType.None) return;
         if (targetPos.x < 0 || targetPos.y < 0) return;
-        Piece target = GetButtonScript(targetPos).GetPieceScript();
-        if (target == null) return;
-        StatusEffect effect = CreateStatusEffect(cardEffect.statusEffectType, cardEffect.statusDuration, cardEffect.statusPower,
-            cardEffect.effectRange, cardEffect.targetlogic);
-        if (effect != null)
-            target.AddStatusEffect(effect);
+        ApplyStatusToTarget(new List<Vector2> { targetPos }, cardEffect);
     }
 
-    void ApplyStatusToTargets(List<Vector2> targets, CardEffect cardEffect)
+    void ApplyStatusToTarget(List<Vector2> targets, CardEffect cardEffect)
     {
         if (cardEffect.statusEffectType == StatusEffectType.None) return;
         foreach (Vector2 pos in targets)
@@ -385,7 +379,10 @@ public partial class Board
             StatusEffect effect = CreateStatusEffect(cardEffect.statusEffectType, cardEffect.statusDuration, cardEffect.statusPower,
                 cardEffect.effectRange, cardEffect.targetlogic);
             if (effect != null)
+            {
                 target.AddStatusEffect(effect);
+                target.TriggerAnim(effect.IsBuff ? "Buff" : "DeBuff");
+            }
         }
     }
 
@@ -520,18 +517,18 @@ public partial class Board
         {
             case EffectType.Damage:
                 AreaAttackPiece(selectedButton, targets, cardEffect.dmg + (caster?.colDamage ?? 0), cardEffect);
-                ApplyStatusToTargets(targets, cardEffect);
+                ApplyStatusToTarget(targets, cardEffect);
                 break;
             case EffectType.Shield:
                 AreaShieldPiece(targets, cardEffect.dmg, cardEffect);
-                ApplyStatusToTargets(targets, cardEffect);
+                ApplyStatusToTarget(targets, cardEffect);
                 break;
             case EffectType.Heal:
                 AreaHealPiece(targets, cardEffect.dmg, cardEffect);
-                ApplyStatusToTargets(targets, cardEffect);
+                ApplyStatusToTarget(targets, cardEffect);
                 break;
             case EffectType.ApplyStatus:
-                ApplyStatusToTargets(targets, cardEffect);
+                ApplyStatusToTarget(targets, cardEffect);
                 break;
         }
     }
