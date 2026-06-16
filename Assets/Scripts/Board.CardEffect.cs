@@ -310,7 +310,7 @@ public partial class Board
                 ApplyStatusToTarget(targetPos, cardEffect);
                 break;
             case EffectType.SelfDamage:
-                SelfDamagePiece(selectedButton, cardEffect.dmg);
+                SelfDamagePiece(selectedButton, cardEffect.dmg, cardEffect);
                 break;
             case EffectType.Draw:
                 CardCanvas.instance.DrawCard();

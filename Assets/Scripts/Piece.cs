@@ -88,6 +88,14 @@ public abstract class Piece : MonoBehaviour
         };
     }
     public virtual List<Vector2> GetMoveableButton() { return pieceInfo.RangeInfoSO.GetAbleRange(); }
+    // 설정 안 돼 있으면 중앙 1칸(부딫힌 대상만 공격)으로 폴백 — 기존 단일 타겟 이동공격 동작을 그대로 유지.
+    public virtual List<Vector2> GetMoveAttackRange()
+    {
+        return pieceInfo.MoveAttackRangeInfoSO != null
+            ? pieceInfo.MoveAttackRangeInfoSO.GetAbleRange()
+            : new List<Vector2> { Vector2.zero };
+    }
+    public RangeInfoSO MoveAttackRangeInfoSO => pieceInfo.MoveAttackRangeInfoSO;
     public int GetDamage(int damage, AttackType type)
     {
         if(shield < damage)

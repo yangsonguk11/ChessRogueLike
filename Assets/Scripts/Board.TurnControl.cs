@@ -80,7 +80,7 @@ public partial class Board
             if (card != null && !enemy.IsStunned())
             {
                 UseCard(card);
-                yield return new WaitUntil(() => pendingEffects.Count == 0 && !queuecoroutineworking && !turnEffectQueueRunning);
+                yield return new WaitUntil(() => pendingEffects.Count == 0 && !queuecoroutineworking);
                 enemy.ChangeMove();
                 enemy.ActionText();
             }

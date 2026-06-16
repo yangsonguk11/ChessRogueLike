@@ -87,6 +87,10 @@ public partial class Board
         HideButtonInfo();
     }
 
+    // FillAllMovableButtonsSilent로 채운 칸은 RangeOn을 호출하지 않았으므로,
+    // HideMovableButtons에서도 RangeOff를 호출하면 안 됨 (다른 곳에서 켜둔 같은 칸의 표시를 잘못 꺼버리게 됨).
+    bool movableButtonsSilent = false;
+
     void FillAllMovableButtonsSilent()
     {
         HideMovableButtons();
@@ -94,6 +98,7 @@ public partial class Board
         for (int x = 0; x < N; x++)
             for (int y = 0; y < M; y++)
                 selectedButtonMovable.Add(new Vector2(x, y));
+        movableButtonsSilent = true;
     }
 
     void ShowMovableButtons(GameObject p, List<Vector2> effectableButton = default)
@@ -106,9 +111,11 @@ public partial class Board
 
     void HideMovableButtons()
     {
-        foreach (Vector2 v in selectedButtonMovable)
-            GetButtonScript(v).RangeOff(selectedMovableTeam);
+        if (!movableButtonsSilent)
+            foreach (Vector2 v in selectedButtonMovable)
+                GetButtonScript(v).RangeOff(selectedMovableTeam);
         selectedButtonMovable.Clear();
+        movableButtonsSilent = false;
     }
 
     void AddMovableButtons(List<Vector2> list)

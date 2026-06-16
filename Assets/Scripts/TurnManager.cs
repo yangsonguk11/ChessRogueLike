@@ -66,7 +66,7 @@ public class TurnManager : MonoBehaviour
     IEnumerator EndPlayerTurnCoroutine()
     {
         board.SendMessage("AllyTurnEnd");
-        yield return new WaitUntil(() => !board.turnEffectQueueRunning);
+        yield return new WaitUntil(() => !board.queuecoroutineworking);
         StartEnemyTurn();
     }
 

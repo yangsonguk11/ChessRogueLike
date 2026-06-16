@@ -43,7 +43,6 @@ public partial class Board
     void ExecuteTurnEffect(Vector2 pos, Piece caster, TurnEffect effect)
     {
         CardEffect ce = effect.cardEffect;
-        Button casterButton = GetButtonScript(pos);
 
         if (ce.targetlogic == TargetLogic.AllEnemiesInRange || ce.targetlogic == TargetLogic.AllAlliesInRange)
         {
@@ -63,48 +62,44 @@ public partial class Board
 
             if (targets.Count == 0) return;
 
-            if (ce.animTrigger != null)
-                caster?.TriggerAnim(ce.animTrigger);
-            else if (ce.type == EffectType.Damage && casterButton.GetPiece() != null)
-                turnEffectQueue.Enqueue(PieceAreaAttackCor(casterButton, 0.6f));
+            // 데미지 타입은 Board.Combat의 AreaAttackPiece를 그대로 재사용 (피해 적용, 텍스트, 죽음 처리, 범위 표시까지 동일하게 처리됨)
+            if (ce.type == EffectType.Damage)
+            {
+                AreaAttackPiece(pos, targets.ConvertAll(t => t.pos), ce.dmg, ce);
+                return;
+            }
 
+            StartCoroutine(TriggerAnimCor(caster, ce.animTrigger));
             foreach (var (targetPos, target) in targets)
                 EnqueueTurnEffectOnPiece(target, ce, targetPos);
+            StartMotionQueue();
         }
         else
         {
-            if (ce.animTrigger != null)
-                caster?.TriggerAnim(ce.animTrigger);
-            else if (ce.type == EffectType.Damage && casterButton.GetPiece() != null)
-                turnEffectQueue.Enqueue(PieceAreaAttackCor(casterButton, 0.5f));
-            EnqueueTurnEffectOnPiece(caster, ce, pos);
-        }
+            // 자기 자신 대상 데미지(독/화상 등)는 SelfDamagePiece 재사용
+            if (ce.type == EffectType.Damage)
+            {
+                SelfDamagePiece(pos, ce.dmg, ce);
+                return;
+            }
 
-        if (!turnEffectQueueRunning)
-            StartCoroutine(ProcessTurnEffectQueue());
+            StartCoroutine(TriggerAnimCor(caster, ce.animTrigger));
+            EnqueueTurnEffectOnPiece(caster, ce, pos);
+            StartMotionQueue();
+        }
     }
 
     void EnqueueTurnEffectOnPiece(Piece target, CardEffect ce, Vector2 targetPos)
     {
         switch (ce.type)
         {
-            case EffectType.Damage:
-                int hpLeft = target.GetDamage(ce.dmg, AttackType.NormalAttack);
-                if (target.teamID == 0) playerDamagedThisTurn = true;
-                turnEffectQueue.Enqueue(target.DamageText(ce.dmg));
-                if (hpLeft <= 0)
-                {
-                    if (target.teamID == 1) enemyPositions.Remove(targetPos);
-                    turnEffectQueue.Enqueue(target.DeathCor());
-                }
-                break;
             case EffectType.Heal:
                 target.GetHeal(ce.dmg, AttackType.NormalAttack);
-                turnEffectQueue.Enqueue(target.HealText(ce.dmg));
+                motionQueue.Enqueue(target.HealText(ce.dmg));
                 break;
             case EffectType.Shield:
                 target.GetShield(ce.dmg, AttackType.NormalAttack);
-                turnEffectQueue.Enqueue(target.ShieldText(ce.dmg));
+                motionQueue.Enqueue(target.ShieldText(ce.dmg));
                 break;
             case EffectType.ColDamageUp:
                 target.colDamage += ce.dmg;

@@ -6,10 +6,11 @@ public class PieceInfo : ScriptableObject
     [SerializeField] string _pieceName;
     [SerializeField] int _teamID;
 
-    [Header("╫╨ех")]
+    [Header("О©╫О©╫О©╫О©╫")]
     [SerializeField] int _maxHp;
     [SerializeField] int _colDamage;
     [SerializeField] RangeInfoSO _rangeInfoSO;
+    [SerializeField] RangeInfoSO _moveAttackRangeInfoSO;
 
     public string PieceName => _pieceName;
     public int TeamID => _teamID;
@@ -17,4 +18,5 @@ public class PieceInfo : ScriptableObject
     public int MaxHp => _maxHp;
     public int ColDamage => _colDamage;
     public RangeInfoSO RangeInfoSO => _rangeInfoSO;
+    public RangeInfoSO MoveAttackRangeInfoSO => _moveAttackRangeInfoSO;
 }

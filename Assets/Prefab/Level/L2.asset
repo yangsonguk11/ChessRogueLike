@@ -15,7 +15,7 @@ MonoBehaviour:
   N: 7
   M: 7
   placements:
-  - position: {x: 5, y: 3}
+  - position: {x: 4, y: 3}
     pieceTypeIndex: 0
     isEnemy: 0
     name: 
