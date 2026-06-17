@@ -15,6 +15,7 @@ public class FlameThrowingCard : Card
             TargetLogic.self
         )
         {
+            animTrigger = "Buff",
             onTurnEndEffect = new CardEffect(
                 Board.BoardMode.Inspect,
                 EffectType.Damage,

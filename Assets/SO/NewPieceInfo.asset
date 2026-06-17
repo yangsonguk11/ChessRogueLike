@@ -17,4 +17,4 @@ MonoBehaviour:
   _maxHp: 30
   _colDamage: 3
   _rangeInfoSO: {fileID: 11400000, guid: e798bd81c0425624ead1e05779a9c275, type: 2}
-  _moveAttackRangeInfoSO: {fileID: 11400000, guid: 8740abeab92fc2d4092b99afd4563242, type: 2}
+  _moveAttackRangeInfoSO: {fileID: 11400000, guid: 88159582bbcc08e4daf911f1a52c6d21, type: 2}

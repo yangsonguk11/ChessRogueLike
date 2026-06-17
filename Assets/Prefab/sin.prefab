@@ -216,6 +216,8 @@ MonoBehaviour:
   hp: 30
   maxhp: 30
   colDamage: 3
+  baseColDamage: 0
   teamID: 0
   shield: 0
   moveableRange: {fileID: 0}
+  movedThisTurn: 0

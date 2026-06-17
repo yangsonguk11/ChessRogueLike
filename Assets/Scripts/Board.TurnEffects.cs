@@ -106,7 +106,7 @@ public partial class Board
                 break;
             case EffectType.ColDamageUp:
                 target.colDamage += ce.dmg;
-                if (ce.animTrigger != null) target.TriggerAnim(ce.animTrigger);
+                if (ce.animTrigger != null) yield return TriggerAnimCor(target, ce.animTrigger, 0.3f, false);
                 break;
         }
     }

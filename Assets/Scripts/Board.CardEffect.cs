@@ -63,7 +63,7 @@ public partial class Board
         {
             if (lockedCasterPiece != null && boardmode == BoardMode.targeting)
             {
-                ExecuteEffect(pendingEffects.Dequeue(), lockedCasterPiece);
+                ExecuteEffect(pendingEffects.Dequeue(), lockedCaster);
                 ScheduleNextCardEffect();
             }
             else
@@ -332,7 +332,8 @@ public partial class Board
                 if (p != null)
                 {
                     p.colDamage += cardEffect.dmg;
-                    p.TriggerAnim("Buff");
+                    motionQueue.Enqueue(PieceBuffCor(p, cardEffect));
+                    StartMotionQueue();
                     CardCanvas.instance?.RefreshAllCardViews();
                 }
                 break;
@@ -361,6 +362,8 @@ public partial class Board
         Piece target = GetButtonScript(targetPos).GetPieceScript();
         if (target == null) return;
         target.AddStatusEffect(new TurnEffect(cardEffect.turnPhase, cardEffect.onTurnEndEffect, cardEffect.turnDuration));
+        motionQueue.Enqueue(PieceBuffCor(target, cardEffect));
+        StartMotionQueue();
     }
 
     void ApplyStatusToTarget(Vector2 targetPos, CardEffect cardEffect)
@@ -409,61 +412,6 @@ public partial class Board
             StatusEffectType.MovementDisabled   => new MovementDisabledEffect(duration),
             _                                   => null,
         };
-    }
-
-    void ExecuteEffect(CardEffect cardEffect, Piece target)
-    {
-        if (cardEffect.lockCasterForNext && pendingEffects.Count > 0)
-            lockedCasterPiece = target;
-
-        effectApplied = true;
-        CardCanvas.instance.isCardEffecting = true;
-
-        switch (cardEffect.type)
-        {
-            case EffectType.Shield:
-            {
-                Vector2 pos = FindPiecePos(target);
-                if (pos.x >= 0) ShieldPiece(pos, pos, cardEffect.dmg, cardEffect);
-                break;
-            }
-            case EffectType.Heal:
-            {
-                Vector2 pos = FindPiecePos(target);
-                if (pos.x >= 0) HealPiece(pos, pos, cardEffect.dmg, cardEffect);
-                break;
-            }
-            case EffectType.ApplyTurnEffect:
-                if (cardEffect.onTurnEndEffect != null)
-                    target.AddStatusEffect(new TurnEffect(cardEffect.turnPhase, cardEffect.onTurnEndEffect, cardEffect.turnDuration));
-                break;
-            case EffectType.DeBuff:
-            {
-                StatusEffect effect = CreateStatusEffect(cardEffect.statusEffectType, cardEffect.statusDuration, cardEffect.statusPower,
-                    cardEffect.effectRange, cardEffect.targetlogic);
-                if (effect != null) target.AddStatusEffect(effect);
-                break;
-            }
-            case EffectType.ApplyStatus:
-            {
-                StatusEffect effect = CreateStatusEffect(cardEffect.statusEffectType, cardEffect.statusDuration, cardEffect.statusPower,
-                    cardEffect.effectRange, cardEffect.targetlogic);
-                if (effect != null) target.AddStatusEffect(effect);
-                target.TriggerAnim("ApplyStatus");
-                break;
-            }
-            case EffectType.Draw:
-                CardCanvas.instance.DrawCard();
-                break;
-            case EffectType.ColDamageUp:
-                target.colDamage += cardEffect.dmg;
-                target.TriggerAnim("Buff");
-                CardCanvas.instance?.RefreshAllCardViews();
-                break;
-            default:
-                Debug.LogWarning($"ExecuteEffect(Piece): 지원하지 않는 효과 타입 {cardEffect.type}");
-                break;
-        }
     }
 
     Vector2 FindPiecePos(Piece piece)

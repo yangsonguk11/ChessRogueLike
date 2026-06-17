@@ -117,6 +117,14 @@ public partial class Board
         yield return Parallel(coroutines.ToArray());
     }
 
+    // ColDamageUp(버프) 같은 단일 대상 자기효과용. cardEffect.targetlogic이 self라 TriggerAnimCor가 자동으로 범위를 안 보여줌.
+    IEnumerator PieceBuffCor(Piece target, CardEffect cardEffect = null, List<IEnumerator> extra = null)
+    {
+        var coroutines = new List<IEnumerator> { TriggerAnimCor(target, cardEffect?.animTrigger, cardEffect: cardEffect) };
+        if (extra != null) coroutines.AddRange(extra);
+        yield return Parallel(coroutines.ToArray());
+    }
+
     // 위치 이동(PieceMoveCor)과 이동 트리거 애니메이션(+범위 표시)을 동시에 재생.
     // MovePiece의 일반 이동과 MoveAttack의 인접 칸 접근이 공유하는 로직.
     IEnumerator MovePieceWithAnim(Button button1, Button button2, float moveDuration, string animTrigger, CardEffect cardEffect = null)
@@ -147,6 +155,7 @@ public partial class Board
     // 트리거 발동 + 애니메이션 길이만큼 범위 표시.
     // cardEffect.effectRange가 있으면 그 범위를 표시(Directional4/8이면 currentHoverDirection으로 회전),
     // 없으면 기물 기본 범위(GetMoveableButton)로 폴백.
+    // 단, cardEffect.targetlogic이 self면(Shield/Heal/Buff처럼 자기 자신 대상이라 범위 개념이 없는 효과) 폴백하지 않고 범위를 아예 표시하지 않음.
     // triggerName이 없거나 Animator/클립이 없으면 normalizedTime을 폴링하지 않고 fallbackDuration만큼만 대기
     // (animTrigger 없는 효과에도 그대로 호출해서 범위 표시용으로 쓸 수 있음).
     IEnumerator TriggerAnimCor(Piece piece, string triggerName, float fallbackDuration = 0.3f, bool showRange = true, CardEffect cardEffect = null)
@@ -154,21 +163,18 @@ public partial class Board
         if (piece == null) yield break;
 
         List<Vector2> rangeButtons = new List<Vector2>();
-        if (showRange)
+        if (showRange && cardEffect?.targetlogic != TargetLogic.self)
         {
             Vector2 piecePos = FindPiecePos(piece);
             if (piecePos.x >= 0)
             {
                 List<Vector2> offsets = cardEffect?.effectRange?.GetAbleRange();
-                Debug.Log($"[TriggerAnimCor] piece={piece.name} piecePos={piecePos} cardEffect={(cardEffect != null)} effectRange={(cardEffect?.effectRange != null)} rawOffsetsCount={offsets?.Count ?? -1} areaTargetMode={cardEffect?.areaTargetMode}");
                 if (offsets != null && (cardEffect.areaTargetMode == AreaTargetMode.Directional4 || cardEffect.areaTargetMode == AreaTargetMode.Directional8))
                     offsets = RotateOffsets(offsets, currentHoverDirection);
-                Debug.Log($"[TriggerAnimCor] currentHoverDirection={currentHoverDirection} finalOffsetsCount={offsets?.Count ?? -1} usingFallback={offsets == null}");
 
                 foreach (Vector2 offset in offsets ?? piece.GetMoveableButton())
                 {
                     Vector2 target = piecePos + offset;
-                    Debug.Log($"[TriggerAnimCor] offset={offset} -> target={target}");
                     if (target.x < 0 || target.x >= N || target.y < 0 || target.y >= M) continue;
                     GetButtonScript(target).RangeOn(piece.teamID);
                     rangeButtons.Add(target);

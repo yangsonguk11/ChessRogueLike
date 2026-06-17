@@ -111,7 +111,7 @@ public partial class Board
         ClearHoverPieceRange();
         if (!isSelectedButtonActive())
             HideButtonInfo();
-        if (casterPiece != null)
+        if (!isSelectedButtonActive() && casterPiece != null)
         {
             casterPiece = null;
             CardCanvas.instance?.RefreshAllCardViews();
