@@ -207,6 +207,28 @@ public partial class Board : MonoBehaviour
 
     public Piece GetPieceAt(Vector2 pos) => GetButtonScript(pos)?.GetPieceScript();
 
+    public void HoverPieceFromUI(Piece piece)
+    {
+        GetButtonForPiece(piece)?.MouseEnter();
+    }
+
+    public void UnhoverPieceFromUI(Piece piece)
+    {
+        GetButtonForPiece(piece)?.MouseExit();
+    }
+
+    Button GetButtonForPiece(Piece piece)
+    {
+        if (piece == null) return null;
+        for (int x = 0; x < N; x++)
+            for (int y = 0; y < M; y++)
+            {
+                Button button = GetButtonScript(new Vector2(x, y));
+                if (button.GetPieceScript() == piece) return button;
+            }
+        return null;
+    }
+
     void ResetPieceMovedThisTurn()
     {
         for (int x = 0; x < N; x++)

@@ -133,13 +133,14 @@ public partial class Board
 
     void ShowButtonInfo(Vector2 button)
     {
-        BoardUICanvas.SetActive(true);
-        BoardUICanvas.GetComponent<BoardUICanvas>().UpdateButtonInfo(GetButtonScript(button));
+        ButtonInfo buttonInfo = BoardUICanvas.GetComponent<ButtonInfo>();
+        buttonInfo.SetActive(true);
+        buttonInfo.UpdateButtonInfo(GetButtonScript(button));
     }
 
     void HideButtonInfo()
     {
-        BoardUICanvas.SetActive(false);
+        BoardUICanvas.GetComponent<ButtonInfo>().SetActive(false);
     }
 
     // 적 기준 가장 가까운 플레이어 위치 반환

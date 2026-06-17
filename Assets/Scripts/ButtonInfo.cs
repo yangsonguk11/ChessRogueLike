@@ -2,7 +2,7 @@ using System.Text;
 using TMPro;
 using UnityEngine;
 
-public class BoardUICanvas : MonoBehaviour
+public class ButtonInfo : MonoBehaviour
 {
     [SerializeField] TextMeshProUGUI piecename;
     [SerializeField] TextMeshProUGUI team;
@@ -45,6 +45,11 @@ public class BoardUICanvas : MonoBehaviour
             sb.AppendLine($"<color={color}>{effect.DisplayName}  {effect.duration}턴</color>");
         }
         return sb.ToString().TrimEnd();
+    }
+
+    public void SetActive(bool active)
+    {
+        gameObject.SetActive(active);
     }
 
     public void Clear()
