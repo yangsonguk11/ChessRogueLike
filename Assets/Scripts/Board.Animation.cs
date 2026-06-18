@@ -135,13 +135,6 @@ public partial class Board
             TriggerAnimCor(button1.GetPieceScript(), animTrigger, moveDuration, cardEffect: cardEffect));
     }
 
-    IEnumerator MoveAdjacent(Button button1, Button button2, float moveDuration, string animTrigger = null, CardEffect cardEffect = null)
-    {
-        Vector2 adjacentPos = GetAdjacentLocation(button1.GetLocation(), button2.GetLocation());
-        Button newTarget = GetButtonScript(adjacentPos);
-        yield return MovePieceWithAnim(button1, newTarget, moveDuration, animTrigger, cardEffect);
-    }
-
     // 여러 코루틴을 동시에 실행하고 전부 끝날 때까지 대기.
     IEnumerator Parallel(params IEnumerator[] coroutines)
     {

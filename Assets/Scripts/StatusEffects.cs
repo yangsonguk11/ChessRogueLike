@@ -104,7 +104,6 @@ public class ThornEffect : StatusEffect
 
     public override int OnReceiveMoveAttack(Piece self, Piece attacker)
     {
-        attacker.GetDamage(returnDamage, AttackType.MoveAttack);
         return returnDamage;
     }
 }

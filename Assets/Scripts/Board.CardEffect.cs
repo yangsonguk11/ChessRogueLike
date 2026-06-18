@@ -247,6 +247,8 @@ public partial class Board
 
         foreach (Vector2 movablePos in selectedButtonMovable)
         {
+            if (GetPieceAt(movablePos) != null) continue; // 다른 기물이 있는 칸은 이동 후보에서 제외
+
             float dist = Vector2.Distance(movablePos, globalNearestPlayer);
             if (dist < minMoveDist)
             {

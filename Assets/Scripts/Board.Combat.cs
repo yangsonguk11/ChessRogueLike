@@ -20,10 +20,10 @@ public partial class Board
             {
                 Piece p1 = button1script.GetPiece().GetComponent<Piece>();
                 Piece p2 = piece2.GetComponent<Piece>();
-                if (p1.teamID != p2.teamID && !(cardEffect?.noMoveAttack ?? false))
-                    MoveAttack(p1, p2, button1script, button2script);
-                else if (IsLockedCasterActive())
-                    lockedCaster = pos1; // 아군 충돌: 이동 실패, 원래 위치로 복구
+                bool attacked = p1.teamID != p2.teamID && !(cardEffect?.noMoveAttack ?? false)
+                    && MoveAttack(p1, p2, button1script, button2script);
+                if (!attacked && IsLockedCasterActive())
+                    lockedCaster = pos1; // 아군 충돌, 또는 이동공격 도착 칸이 없어 실패: 이동 실패, 원래 위치로 복구
             }
             else
             {
@@ -37,13 +37,16 @@ public partial class Board
         button2script.SelectedFalse();
     }
 
-    void MoveAttack(Piece pScript1, Piece pScript2, Button bScript1, Button bScript2)
+    // 이동공격 도착 칸을 찾지 못하면(후보 전부 막힘) false를 반환해 호출부가 일반 이동 실패와 동일하게 처리하게 함.
+    bool MoveAttack(Piece pScript1, Piece pScript2, Button bScript1, Button bScript2)
     {
+        Vector2 adjacentPos = GetAdjacentLocation(bScript1.GetLocation(), bScript2.GetLocation());
+        if (adjacentPos.x < 0) return false; // 도착할 칸이 없음: 공격 취소, 이동 실패로 처리
+
         int dmg = pScript1.colDamage;
         pScript2.gameObject.transform.rotation = Quaternion.LookRotation(bScript1.Piecelocation - bScript2.Piecelocation);
         bScript1.GetPiece().transform.rotation = Quaternion.LookRotation(bScript2.Piecelocation - bScript1.Piecelocation);
 
-        Vector2 adjacentPos = GetAdjacentLocation(bScript1.GetLocation(), bScript2.GetLocation());
         Vector2 attackerPos = bScript1.GetLocation();
         Vector2 impactPos = bScript2.GetLocation();
 
@@ -99,7 +102,7 @@ public partial class Board
             animCoroutines.Add(p.DamageText(dmg));
         }
 
-        motionQueue.Enqueue(MoveAdjacent(bScript1, bScript2, 1f, "Move"));
+        motionQueue.Enqueue(MovePieceWithAnim(bScript1, GetButtonScript(adjacentPos), 1f, "Move"));
         motionQueue.Enqueue(Parallel(animCoroutines.ToArray()));
 
         if (hpLeft <= 0)
@@ -137,6 +140,7 @@ public partial class Board
         }
 
         StartMotionQueue();
+        return true;
     }
 
     void AttackPiece(Vector2 pos1, Vector2 pos2, int dmg, CardEffect cardEffect = null)
