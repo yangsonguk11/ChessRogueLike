@@ -58,11 +58,27 @@ public class CardCanvas : MonoBehaviour
     public int maxenergy = 4;
     public RectTransform nowusingCard;
     public bool isCardEffecting;
-    Coroutine pendingCardCoroutine;
-    Coroutine pendingMoveCardCoroutine;
+    bool usingCardMoving;
     List<RectTransform> pendingDrawCards = new List<RectTransform>();
     Coroutine batchDrawCoroutine;
     Vector2 pendingFirstTarget = new Vector2(-1, -1);
+
+    // ── 카드 이동 애니메이션 큐 ──────────────────────────────────
+    // 큐는 0.15초마다 다음 이동을 하나씩 꺼내 시작시킨다. 각 이동은 시작되면
+    // 독립적으로 재생되며(자기 duration만큼 걸림), 큐가 빼는 속도와는 무관하다.
+    struct CardMoveRequest
+    {
+        public RectTransform card;
+        public Vector3 pos;
+        public Quaternion rot;
+        public float duration;
+        public Action onComplete;
+    }
+    const float MoveQueueGap = 0.15f;
+    Queue<CardMoveRequest> moveQueue = new Queue<CardMoveRequest>();
+    Coroutine moveQueueRoutine;
+    Dictionary<RectTransform, Coroutine> activeMoves = new Dictionary<RectTransform, Coroutine>();
+    // ────────────────────────────────────────────────────────────
     private void Awake()
     {
         if (instance == null) instance = this;
@@ -115,11 +131,8 @@ public class CardCanvas : MonoBehaviour
             AnnouncementUI.instance?.Show(card.GetCannotUseReason());
             return false;
         }
-        if (pendingCardCoroutine != null)
-        {
-            StopCoroutine(pendingCardCoroutine);
-            pendingCardCoroutine = null;
-        }
+        if (nowusingCard != null)
+            CancelCardMove(nowusingCard);
         pendingFirstTarget = new Vector2(-1, -1);
         RectTransform cardToUse = cards[handnum];
         cards.RemoveAt(handnum);
@@ -131,7 +144,21 @@ public class CardCanvas : MonoBehaviour
         if (cardComp.effects.Any(e => e.requiredMode == Board.BoardMode.command || e.requiredMode == Board.BoardMode.targeting))
             board.UseCard(cardComp);
         CardDragArrow.instance?.Show(nowusingCard);
-        pendingCardCoroutine = StartCoroutine(AnimateCardToUsingPos(nowusingCard));
+        usingCardMoving = true;
+        RectTransform usingCard = nowusingCard;
+        EnqueueMove(usingCard, CardNowUsingPos.position, Quaternion.identity, 0.35f, () =>
+        {
+            usingCardMoving = false;
+            if (nowusingCard == null) return;
+            if (board.boardmode == Board.BoardMode.Inspect)
+                board.UseCard(usingCard.GetComponent<Card>());
+            if (pendingFirstTarget.x >= 0)
+            {
+                Vector2 target = pendingFirstTarget;
+                pendingFirstTarget = new Vector2(-1, -1);
+                board.ButtonClicked(target);
+            }
+        });
         return true;
     }
 
@@ -164,6 +191,7 @@ public class CardCanvas : MonoBehaviour
 
     public void HandtoDiscard(RectTransform card)
     {
+        CancelCardMove(card);
         Discardcards.Add(card);
         card.position = DiscardZone.position;
         cards.Remove(card);
@@ -171,13 +199,8 @@ public class CardCanvas : MonoBehaviour
     }
     public void DrawTurnStartCards()
     {
-        StartCoroutine(DrawCardsWithDelay(5, 0.15f));
-    }
-
-    IEnumerator DrawCardsWithDelay(int count, float delay)
-    {
         var newCards = new List<RectTransform>();
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < 5; i++)
         {
             if (Deckcards.Count == 0) DiscardtoDeck();
             if (Deckcards.Count == 0) break;
@@ -185,26 +208,18 @@ public class CardCanvas : MonoBehaviour
             cards.Add(card);
             newCards.Add(card);
         }
-        if (newCards.Count == 0) yield break;
+        if (newCards.Count == 0) return;
 
         AlignCards();
         NotifyPileChanged();
 
-        var targetPositions = new List<Vector3>();
-        var targetRotations = new List<Quaternion>();
         foreach (var c in newCards)
         {
-            targetPositions.Add(c.position);
-            targetRotations.Add(c.localRotation);
+            Vector3 targetPos = c.position;
+            Quaternion targetRot = c.localRotation;
             c.position = DeckZone.position;
             c.localRotation = Quaternion.identity;
-        }
-
-        for (int i = 0; i < newCards.Count; i++)
-        {
-            StartCoroutine(MoveCard(newCards[i], targetPositions[i], targetRotations[i], 0.3f));
-            if (i < newCards.Count - 1)
-                yield return new WaitForSeconds(delay);
+            EnqueueMove(c, targetPos, targetRot, 0.3f);
         }
     }
     public void RefreshAllCardViews()
@@ -240,16 +255,8 @@ public class CardCanvas : MonoBehaviour
         CardDragArrow.instance?.Hide();
         if (nowusingCard == null || isCardEffecting || board.EffectApplied) return;
 
-        if (pendingMoveCardCoroutine != null)
-        {
-            StopCoroutine(pendingMoveCardCoroutine);
-            pendingMoveCardCoroutine = null;
-        }
-        if (pendingCardCoroutine != null)
-        {
-            StopCoroutine(pendingCardCoroutine);
-            pendingCardCoroutine = null;
-        }
+        CancelCardMove(nowusingCard);
+        usingCardMoving = false;
 
         RectTransform card = nowusingCard;
         nowusingCard = null;
@@ -281,11 +288,16 @@ public class CardCanvas : MonoBehaviour
             if (card.exileOnUse)
             {
                 Exilecards.Add(usedCard);
-                StartCoroutine(AnimateCardToExileAndFinish(usedCard));
+                EnqueueMove(usedCard, ExileZone.position, Quaternion.identity, 0.25f, () => isCardEffecting = false);
             }
             else
             {
-                StartCoroutine(AnimateCardToDiscard(usedCard));
+                EnqueueMove(usedCard, DiscardZone.position, Quaternion.identity, 0.15f, () =>
+                {
+                    Discardcards.Add(usedCard);
+                    isCardEffecting = false;
+                    NotifyPileChanged();
+                });
             }
         }
         else
@@ -294,54 +306,58 @@ public class CardCanvas : MonoBehaviour
         }
     }
 
-    IEnumerator AnimateCardToExileAndFinish(RectTransform card)
+    void EnqueueMove(RectTransform card, Vector3 pos, Quaternion rot, float duration, Action onComplete = null)
     {
-        yield return StartCoroutine(MoveCard(card, ExileZone.position, Quaternion.identity, 0.25f));
-        isCardEffecting = false;
+        CancelCardMove(card);
+        moveQueue.Enqueue(new CardMoveRequest { card = card, pos = pos, rot = rot, duration = duration, onComplete = onComplete });
+        if (moveQueueRoutine == null)
+            moveQueueRoutine = StartCoroutine(ProcessMoveQueue());
     }
 
-    IEnumerator AnimateCardToUsingPos(RectTransform card)
+    void CancelCardMove(RectTransform card)
     {
-        var moveCor = StartCoroutine(MoveCard(card, CardNowUsingPos.position, Quaternion.identity, 0.35f));
-        pendingMoveCardCoroutine = moveCor;
-        yield return moveCor;
-        pendingMoveCardCoroutine = null;
-        pendingCardCoroutine = null;
-        if (nowusingCard == null) yield break;
-        if (board.boardmode == Board.BoardMode.Inspect)
-            board.UseCard(card.GetComponent<Card>());
-        if (pendingFirstTarget.x >= 0)
+        if (moveQueue.Count > 0 && moveQueue.Any(r => r.card == card))
+            moveQueue = new Queue<CardMoveRequest>(moveQueue.Where(r => r.card != card));
+        if (activeMoves.TryGetValue(card, out var cor) && cor != null)
         {
-            Vector2 target = pendingFirstTarget;
-            pendingFirstTarget = new Vector2(-1, -1);
-            board.ButtonClicked(target);
+            StopCoroutine(cor);
+            activeMoves.Remove(card);
         }
     }
 
-    IEnumerator AnimateCardToDiscard(RectTransform card)
+    IEnumerator ProcessMoveQueue()
     {
-        yield return StartCoroutine(MoveCard(card, DiscardZone.position, Quaternion.identity, 0.15f));
-        Discardcards.Add(card);
-        isCardEffecting = false;
-        NotifyPileChanged();
+        while (moveQueue.Count > 0)
+        {
+            CardMoveRequest req = moveQueue.Dequeue();
+            activeMoves[req.card] = StartCoroutine(RunCardMove(req));
+
+            // 큐가 비어 있어도 무조건 대기한다. 이미 다음 while 검사 전에
+            // 같은 프레임에서 EnqueueMove가 더 호출될 수 있기 때문에, 여기서
+            // 바로 큐가 비었다고 끝내버리면 0.15초 간격이 무시된다.
+            yield return new WaitForSeconds(MoveQueueGap);
+        }
+        moveQueueRoutine = null;
     }
 
-    IEnumerator MoveCard(RectTransform card, Vector3 targetWorldPos, Quaternion targetLocalRot, float duration)
+    IEnumerator RunCardMove(CardMoveRequest req)
     {
-        Vector3 startPos = card.position;
-        Quaternion startRot = card.localRotation;
+        Vector3 startPos = req.card.position;
+        Quaternion startRot = req.card.localRotation;
         float elapsed = 0f;
-        while (elapsed < duration)
+        while (elapsed < req.duration)
         {
             elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / duration);
+            float t = Mathf.Clamp01(elapsed / req.duration);
             float smooth = 1f - Mathf.Pow(1f - t, 3f);
-            card.position = Vector3.Lerp(startPos, targetWorldPos, smooth);
-            card.localRotation = Quaternion.Lerp(startRot, targetLocalRot, smooth);
+            req.card.position = Vector3.Lerp(startPos, req.pos, smooth);
+            req.card.localRotation = Quaternion.Lerp(startRot, req.rot, smooth);
             yield return null;
         }
-        card.position = targetWorldPos;
-        card.localRotation = targetLocalRot;
+        req.card.position = req.pos;
+        req.card.localRotation = req.rot;
+        activeMoves.Remove(req.card);
+        req.onComplete?.Invoke();
     }
     private void UpdateCurrentEnergy()
     {
@@ -375,18 +391,14 @@ public class CardCanvas : MonoBehaviour
 
         AlignCards();  // 최종 손패 크기 기준으로 한 번만 정렬
 
-        var targetPositions = new List<Vector3>();
-        var targetRotations = new List<Quaternion>();
         foreach (var c in toDraw)
         {
-            targetPositions.Add(c.position);
-            targetRotations.Add(c.localRotation);
+            Vector3 targetPos = c.position;
+            Quaternion targetRot = c.localRotation;
             c.position = DeckZone.position;
             c.localRotation = Quaternion.identity;
+            EnqueueMove(c, targetPos, targetRot, 0.3f);
         }
-
-        for (int i = 0; i < toDraw.Count; i++)
-            StartCoroutine(MoveCard(toDraw[i], targetPositions[i], targetRotations[i], 0.3f));
     }
 
     void DiscardtoDeck()
@@ -489,15 +501,10 @@ public class CardCanvas : MonoBehaviour
         if (nowusingCard == card)
             nowusingCard = null;
         Exilecards.Add(card);
-        StartCoroutine(AnimateCardToExile(card));
+        EnqueueMove(card, ExileZone.position, Quaternion.identity, 0.25f);
         if (wasInHand)
             AlignCards();
         NotifyPileChanged();
-    }
-
-    IEnumerator AnimateCardToExile(RectTransform card)
-    {
-        yield return StartCoroutine(MoveCard(card, ExileZone.position, Quaternion.identity, 0.25f));
     }
 
     // ────────── 카드 선택 패널 ──────────
@@ -622,7 +629,7 @@ public class CardCanvas : MonoBehaviour
         bool wasInHand = RemoveCardFromAnyZone(card);
         card.SetParent(GetComponent<RectTransform>(), true);
         Discardcards.Add(card);
-        StartCoroutine(MoveCard(card, DiscardZone.position, Quaternion.identity, 0.3f));
+        EnqueueMove(card, DiscardZone.position, Quaternion.identity, 0.3f);
         if (wasInHand) AlignCards();
         NotifyPileChanged();
     }
@@ -635,7 +642,7 @@ public class CardCanvas : MonoBehaviour
         var newDeckList = Deckcards.ToList();
         newDeckList.Add(card);
         Deckcards = new Queue<RectTransform>(newDeckList);
-        StartCoroutine(MoveCard(card, DeckZone.position, Quaternion.identity, 0.3f));
+        EnqueueMove(card, DeckZone.position, Quaternion.identity, 0.3f);
         if (wasInHand) AlignCards();
         NotifyPileChanged();
     }
@@ -692,7 +699,7 @@ public class CardCanvas : MonoBehaviour
         }
 
         CardDragArrow.instance?.Hide();
-        if (pendingCardCoroutine == null)
+        if (!usingCardMoving)
             board.ButtonClicked(boardPos);
         else
             pendingFirstTarget = boardPos;
