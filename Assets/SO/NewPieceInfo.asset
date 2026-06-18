@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PieceInfo
   _pieceName: sin
   _teamID: 0
-  _maxHp: 30
-  _colDamage: 3
+  _maxHp: 50
+  _colDamage: 5
   _rangeInfoSO: {fileID: 11400000, guid: e798bd81c0425624ead1e05779a9c275, type: 2}
   _moveAttackRangeInfoSO: {fileID: 11400000, guid: 88159582bbcc08e4daf911f1a52c6d21, type: 2}

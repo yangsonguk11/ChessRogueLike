@@ -49,14 +49,14 @@ public class DataManager : MonoBehaviour
             {
                 "AttackCard",
                 "AttackCard",
-                "DefensiveStanceCard",
-                "TempColDamageUpCard",
-                "FlameThrowingCard",
+                "AttackCard",
+                "DefenseCard",
                 "DefenseCard",
                 "DefenseCard",
                 "MoveCard",
                 "MoveCard",
-                "DirectionalAttackCard",
+                "MoveCard",
+                "ColDamageUpCard",
             };
 
             PieceData defaultPiece = new PieceData

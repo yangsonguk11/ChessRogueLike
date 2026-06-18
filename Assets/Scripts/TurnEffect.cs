@@ -9,8 +9,19 @@ public class TurnEffect : StatusEffect
     {
         get
         {
-            string timing = phase == TurnPhase.OwnTurnStart ? "턴 시작" : "턴 종료";
-            return $"턴 효과 ({timing}, {duration}턴 남음)";
+            string timing = phase == TurnPhase.OwnTurnStart ? "턴 시작 시" : "턴 종료 시";
+            string effectDesc = cardEffect.type switch
+            {
+                EffectType.Damage => cardEffect.targetlogic == TargetLogic.AllEnemiesInRange ||
+                                      cardEffect.targetlogic == TargetLogic.AllAlliesInRange
+                    ? $"광역 피해 {cardEffect.dmg}"
+                    : $"피해 {cardEffect.dmg}",
+                EffectType.Heal        => $"회복 {cardEffect.dmg}",
+                EffectType.Shield      => $"방어막 {cardEffect.dmg}",
+                EffectType.ColDamageUp => cardEffect.dmg >= 0 ? $"이동공격력 +{cardEffect.dmg}" : $"이동공격력 {cardEffect.dmg}",
+                _                      => "효과"
+            };
+            return $"{timing} {effectDesc}";
         }
     }
     public override bool IsBuff => cardEffect.type == EffectType.Heal || cardEffect.type == EffectType.Shield;

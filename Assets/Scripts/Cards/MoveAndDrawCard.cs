@@ -13,12 +13,14 @@ public class MoveAndDrawCard : Card
             Board.BoardMode.command,
             EffectType.Move,
             0,
-            TargetLogic.NearestEnemy
+            TargetLogic.NearestEnemy,
+            null,
+            true
         )
         { animTrigger = "Move" });
 
         effects.Add(new CardEffect(
-            Board.BoardMode.Inspect,
+            Board.BoardMode.targeting,
             EffectType.Draw,
             1,
             TargetLogic.self

@@ -87,7 +87,7 @@ public abstract class Piece : MonoBehaviour
             teamID = teamID,
             hp = hp,
             maxHp = maxhp,
-            colDamage = colDamage,
+            colDamage = baseColDamage,
             rangeinfoname = moveableRange != null ? moveableRange.name : ""
         };
     }

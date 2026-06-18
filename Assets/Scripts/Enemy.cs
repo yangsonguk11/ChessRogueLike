@@ -66,13 +66,13 @@ public class Enemy : Piece
         string primary = effect.type switch
         {
             EffectType.Move        => "<sprite name=\"Move\">",
-            EffectType.Damage      => effect.useColDamageAsDmg ? "<sprite name=\"Damage\">" : $"{effect.dmg + colDamage} <sprite name=\"Damage\">",
-            EffectType.Shield      => $"{effect.dmg} <sprite name=\"Shield\">",
-            EffectType.Heal        => $"{effect.dmg} <sprite name=\"Heal\">",
-            EffectType.SelfDamage  => $"{effect.dmg} <sprite name=\"Damage\">",
+            EffectType.Damage      => effect.useColDamageAsDmg ? "<sprite name=\"Damage\">" : $"{effect.dmg + ColDamageDelta}<space=30><sprite name=\"Damage\">",
+            EffectType.Shield      => $"{effect.dmg}<space=30><sprite name=\"Shield\">",
+            EffectType.Heal        => $"{effect.dmg}<space=30><sprite name=\"Heal\">",
+            EffectType.SelfDamage  => $"{effect.dmg}<space=30><sprite name=\"Damage\">",
             EffectType.Draw        => effect.dmg > 1 ? $"{effect.dmg}" : "",
             EffectType.ApplyStatus => BuildStatusDescription(effect),
-            EffectType.ColDamageUp => $"+{effect.dmg}",
+            EffectType.ColDamageUp => $"<sprite name=\"Damage\"><space=10>+{effect.dmg}",
             _                      => ""
         };
 

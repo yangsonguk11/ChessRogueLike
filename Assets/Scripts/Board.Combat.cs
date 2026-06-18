@@ -51,7 +51,8 @@ public partial class Board
         Vector2 impactPos = bScript2.GetLocation();
 
         // DirectionalAttackCard와 동일하게, 공격자→대상 방향으로 moveAttackRange를 회전
-        Vector2 attackDir = GetSnappedDirection(attackerPos, impactPos, true);
+        // 공격은 이동 후 adjacentPos에서 일어나므로, 방향도 adjacentPos 기준으로 계산해야 함
+        Vector2 attackDir = GetSnappedDirection(adjacentPos, impactPos, true);
         List<Vector2> moveAttackOffsets = RotateOffsets(pScript1.GetMoveAttackRange(), attackDir);
         bool isAreaAttack = !(moveAttackOffsets.Count == 1 && moveAttackOffsets[0] == Vector2.zero);
         string attackTrigger = isAreaAttack ? "AreaAttack" : "Attack";
@@ -66,13 +67,13 @@ public partial class Board
         int hpLeft = pScript2.GetDamage(dmg, AttackType.MoveAttack);
         if (pScript2.teamID == 0) playerDamagedThisTurn = true;
 
-        // moveAttackRange 내 나머지 적들 수집 + 데미지 적용 (공격자 위치 기준, 주 타겟은 위에서 이미 처리했으니 제외)
+        // moveAttackRange 내 나머지 적들 수집 + 데미지 적용 (이동 후 도착 위치 기준, 주 타겟은 위에서 이미 처리했으니 제외)
         var splashResults = new List<(Vector2 pos, Piece piece, int hpLeft)>();
         if (isAreaAttack)
         {
             foreach (Vector2 offset in moveAttackOffsets)
             {
-                Vector2 pos = attackerPos + offset;
+                Vector2 pos = adjacentPos + offset;
                 if (pos == impactPos) continue;
                 if (pos.x < 0 || pos.x >= N || pos.y < 0 || pos.y >= M) continue;
                 Piece p = GetButtonScript(pos).GetPieceScript();

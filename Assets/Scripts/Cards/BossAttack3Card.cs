@@ -36,5 +36,5 @@ public class BossAttack3Card : Card
     }
 
     public override string EffectDescription =>
-        $"5x5 범위에 {effects[0].dmg} 피해를 주고, 방어도 {shieldAmount}를 획득합니다.";
+        $"5x5 범위에 {EffectiveDmg(effects[0])} 피해를 주고, 방어도 {shieldAmount}를 획득합니다.";
 }
