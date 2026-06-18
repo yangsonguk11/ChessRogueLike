@@ -128,17 +128,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b0550000000000000000000000000001, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Boss
   pieceInfo: {fileID: 11400000, guid: c7f1b2b717c1df849a3df2978d374736, type: 2}
   pieceCanvas: {fileID: 1500000}
-  name:
-  hp: 60
-  maxhp: 60
+  name: 
+  hp: 50
+  maxhp: 50
   colDamage: 5
+  baseColDamage: 0
   teamID: 1
   shield: 0
   moveableRange: {fileID: 0}
+  movedThisTurn: 0
   enemyCards:
   - {fileID: 700000}
   - {fileID: 800000}
@@ -153,18 +155,29 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b0550000000000000000000000000002, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossAttack1Card
   effectRange:
   - {fileID: 11400000, guid: b0550000000000000000000000000005, type: 2}
-  Name:
-  Description:
+  Name: 
+  Description: 
   Cost: 0
+  type: 0
   user: 1
   shieldOnMoveAttack: 0
   moveAttackShieldAmount: 0
   blocksMovementAfterUse: 0
+  requiresCasterNotMoved: 0
   exileOnUse: 0
+  dragDropTarget: 0
+  originalCost: -1
+  costDuration: 0
+  costText: {fileID: 0}
+  nameText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  typeText: {fileID: 0}
+  effectText: {fileID: 0}
+  defaultScale: {x: 0, y: 0, z: 0}
   cardCanvas: {fileID: 0}
   handNumber: 0
 --- !u!114 &800000
@@ -177,18 +190,29 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b0550000000000000000000000000003, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossAttack2Card
   effectRange:
   - {fileID: 11400000, guid: b0550000000000000000000000000006, type: 2}
-  Name:
-  Description:
+  Name: 
+  Description: 
   Cost: 0
+  type: 0
   user: 1
   shieldOnMoveAttack: 0
   moveAttackShieldAmount: 0
   blocksMovementAfterUse: 0
+  requiresCasterNotMoved: 0
   exileOnUse: 0
+  dragDropTarget: 0
+  originalCost: -1
+  costDuration: 0
+  costText: {fileID: 0}
+  nameText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  typeText: {fileID: 0}
+  effectText: {fileID: 0}
+  defaultScale: {x: 0, y: 0, z: 0}
   cardCanvas: {fileID: 0}
   handNumber: 0
 --- !u!114 &900000
@@ -201,21 +225,32 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b0550000000000000000000000000004, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossAttack3Card
   effectRange:
   - {fileID: 11400000, guid: b0550000000000000000000000000007, type: 2}
-  Name:
-  Description:
+  Name: 
+  Description: 
   Cost: 0
+  type: 0
   user: 1
   shieldOnMoveAttack: 0
   moveAttackShieldAmount: 0
   blocksMovementAfterUse: 0
+  requiresCasterNotMoved: 0
   exileOnUse: 0
-  shieldAmount: 5
+  dragDropTarget: 0
+  originalCost: -1
+  costDuration: 0
+  costText: {fileID: 0}
+  nameText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  typeText: {fileID: 0}
+  effectText: {fileID: 0}
+  defaultScale: {x: 0, y: 0, z: 0}
   cardCanvas: {fileID: 0}
   handNumber: 0
+  shieldAmount: 5
 --- !u!1 &1000000
 GameObject:
   m_ObjectHideFlags: 0
@@ -288,7 +323,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
   m_UiScaleMode: 0
   m_ReferencePixelsPerUnit: 100
@@ -311,7 +346,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
   m_IgnoreReversedGraphics: 1
   m_BlockingObjects: 0
@@ -328,7 +363,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 163b3082c87d6cf48976d33fd5a173a0, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PieceCanvas
   DamageText: {fileID: 898273830055804285, guid: ff1c09560f7a035419be5686fc95669f, type: 3}
   duration: 1

@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e4dbbf5546730bb49820b9d1b68e5d31, type: 3}
+  m_Name: RookPieceInfo
+  m_EditorClassIdentifier: Assembly-CSharp::PieceInfo
+  _pieceName: enemy
+  _teamID: 1
+  _maxHp: 10
+  _colDamage: 5
+  _rangeInfoSO: {fileID: 11400000, guid: 35d0d714c9e81e94ba8bb12c5d295a0e, type: 2}
+  _moveAttackRangeInfoSO: {fileID: 0}

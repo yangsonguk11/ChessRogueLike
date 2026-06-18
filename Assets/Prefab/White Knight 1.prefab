@@ -131,13 +131,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
   pieceInfo: {fileID: 11400000, guid: 65c68c9479f1f0c49b25b9c601062058, type: 2}
   pieceCanvas: {fileID: 6828917853103747858}
-  name: 
+  name: Knight
   hp: 15
   maxhp: 15
   colDamage: 5
+  baseColDamage: 0
   teamID: 1
   shield: 0
   moveableRange: {fileID: 0}
+  movedThisTurn: 0
   enemyCards:
   - {fileID: 54401725194517764}
   - {fileID: 5766115866947927382}
@@ -163,6 +165,7 @@ MonoBehaviour:
   shieldOnMoveAttack: 0
   moveAttackShieldAmount: 0
   blocksMovementAfterUse: 0
+  requiresCasterNotMoved: 0
   exileOnUse: 0
   dragDropTarget: 0
   originalCost: -1
@@ -197,6 +200,7 @@ MonoBehaviour:
   shieldOnMoveAttack: 0
   moveAttackShieldAmount: 0
   blocksMovementAfterUse: 0
+  requiresCasterNotMoved: 0
   exileOnUse: 0
   dragDropTarget: 0
   originalCost: -1

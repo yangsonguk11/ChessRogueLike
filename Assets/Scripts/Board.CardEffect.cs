@@ -91,6 +91,11 @@ public partial class Board
 
     void ProcessEnemyCardEffect(CardEffect nextEffect)
     {
+        // 이전 효과(예: Move)가 lockCasterForNext를 설정해뒀다면, 시전자가 이동한 새 위치를
+        // 기준으로 다음 효과(예: 자기 자신 버프)를 풀이해야 함
+        if (IsLockedCasterActive())
+            _selectedButton = lockedCaster;
+
         if (nextEffect.requiredMode == BoardMode.command)
         {
             Vector2 targetPos = ResolveEnemyTarget(nextEffect);
