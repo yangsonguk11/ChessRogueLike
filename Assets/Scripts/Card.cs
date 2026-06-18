@@ -110,10 +110,15 @@ public abstract class Card : MonoBehaviour, ISelectable
     public bool selected { get { return _selected; } set { _selected = value; if (_selected) OnSelected?.Invoke(); else OnUnSelected?.Invoke(); }}
 
 
-    protected int EffectiveDmg(CardEffect effect)
+    protected string EffectiveDmg(CardEffect effect)
     {
-        if (effect.type != EffectType.Damage || effect.useColDamageAsDmg) return effect.dmg;
-        return effect.dmg + (Board.instance?.CasterColDamage ?? 0);
+        int dmg = (effect.type != EffectType.Damage || effect.useColDamageAsDmg)
+            ? effect.dmg
+            : Mathf.Max(0, effect.dmg + (Board.instance?.CasterColDamage ?? 0));
+
+        if (dmg == effect.dmg) return dmg.ToString();
+        string color = dmg > effect.dmg ? "#4444FF" : "#FF4444";
+        return $"<color={color}>{dmg}</color>";
     }
 
     public virtual bool CanUse() => true;

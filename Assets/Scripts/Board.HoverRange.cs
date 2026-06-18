@@ -53,7 +53,7 @@ public partial class Board
             ClearHoverPieceRange();
             Piece hoveredPiece = GetButtonScript(pos).GetPieceScript();
 
-            Piece newCaster = (hoveredPiece != null && pendingEffects.Count > 0 && hoveredPiece.teamID == 0)
+            Piece newCaster = (hoveredPiece != null && hoveredPiece.teamID == 0)
                 ? hoveredPiece : null;
             if (casterPiece != newCaster)
             {

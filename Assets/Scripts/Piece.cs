@@ -13,6 +13,7 @@ public abstract class Piece : MonoBehaviour
     public int maxhp;
     public int colDamage;
     public int baseColDamage;
+    public int ColDamageDelta => colDamage - baseColDamage;
     public int teamID;
     public int shield;
     public RangeInfoSO moveableRange;

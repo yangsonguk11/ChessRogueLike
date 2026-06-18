@@ -203,7 +203,7 @@ public partial class Board : MonoBehaviour
 
     public Piece casterPiece;
 
-    public int CasterColDamage => casterPiece?.colDamage ?? 0;
+    public int CasterColDamage => casterPiece?.ColDamageDelta ?? 0;
 
     public Piece GetPieceAt(Vector2 pos) => GetButtonScript(pos)?.GetPieceScript();
 

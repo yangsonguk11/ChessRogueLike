@@ -260,6 +260,16 @@ public partial class Board
         return bestMovePos;
     }
 
+    // useColDamageAsDmg면 colDamage를 그대로 사용, Damage 타입이면 dmg에 colDamage를 가산
+    int ResolveDamageWithColDamage(CardEffect cardEffect, Piece caster)
+    {
+        int casterColDmg = caster?.ColDamageDelta ?? 0;
+        int result = cardEffect.useColDamageAsDmg
+            ? casterColDmg
+            : (cardEffect.type == EffectType.Damage ? cardEffect.dmg + casterColDmg : cardEffect.dmg);
+        return Mathf.Max(0, result);
+    }
+
     void ExecuteEffect(CardEffect cardEffect, Vector2 targetPos = default)
     {
         // lockCasterForNext가 true이고 다음 효과가 있을 때만 시전자를 고정
@@ -280,10 +290,7 @@ public partial class Board
             return;
         }
 
-        int casterColDmg = GetButtonScript(selectedButton).GetPieceScript()?.colDamage ?? 0;
-        int resolvedDmg = cardEffect.useColDamageAsDmg
-            ? casterColDmg
-            : (cardEffect.type == EffectType.Damage ? cardEffect.dmg + casterColDmg : cardEffect.dmg);
+        int resolvedDmg = ResolveDamageWithColDamage(cardEffect, GetButtonScript(selectedButton).GetPieceScript());
 
         switch (cardEffect.type)
         {
@@ -466,7 +473,7 @@ public partial class Board
         switch (cardEffect.type)
         {
             case EffectType.Damage:
-                AreaAttackPiece(selectedButton, targets, cardEffect.dmg + (caster?.colDamage ?? 0), cardEffect);
+                AreaAttackPiece(selectedButton, targets, ResolveDamageWithColDamage(cardEffect, caster), cardEffect);
                 ApplyStatusToTarget(targets, cardEffect);
                 break;
             case EffectType.Shield:
