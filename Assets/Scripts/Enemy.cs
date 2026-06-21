@@ -3,8 +3,7 @@ using UnityEngine;
 
 public class Enemy : Piece
 {
-    Card c;
-    public List<Card> enemyCards; // ���� ������ ��ų/ȿ�� ����Ʈ
+    public List<Card> enemyCards; // 순서대로 사용할 스킬/효과 리스트
 
     int Movenum;
 
@@ -30,7 +29,7 @@ public class Enemy : Piece
         return move.effects[0].effectRange?.GetAbleRange() ?? base.GetMoveableButton();
     }
 
-    // ������ AI ����: Ÿ�� ���� �� ȿ�� ��ȯ
+    // 간단한 AI 로직: 다음에 사용할 카드를 반환
     public virtual Card GetNextMove()
     {
         if (enemyCards == null || enemyCards.Count == 0) return null;

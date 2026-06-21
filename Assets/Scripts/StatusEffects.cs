@@ -15,7 +15,7 @@ public class PoisonEffect : StatusEffect
 
     public override bool OnTurnEnd(Piece piece)
     {
-        piece.GetDamage(damagePerTurn, AttackType.NormalAttack);
+        piece.GetDamage(damagePerTurn);
         return base.OnTurnEnd(piece);
     }
 }
@@ -35,7 +35,7 @@ public class BurningEffect : StatusEffect
 
     public override bool OnTurnEnd(Piece piece)
     {
-        piece.GetDamage(damagePerTurn, AttackType.NormalAttack);
+        piece.GetDamage(damagePerTurn);
         return base.OnTurnEnd(piece);
     }
 }
@@ -55,7 +55,7 @@ public class RegenEffect : StatusEffect
 
     public override bool OnTurnEnd(Piece piece)
     {
-        piece.GetHeal(healPerTurn, AttackType.NormalAttack);
+        piece.GetHeal(healPerTurn);
         return base.OnTurnEnd(piece);
     }
 }

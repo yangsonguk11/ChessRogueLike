@@ -99,7 +99,6 @@ public partial class Board
         if (nextEffect.requiredMode == BoardMode.command)
         {
             Vector2 targetPos = ResolveEnemyTarget(nextEffect);
-            Debug.Log(targetPos);
             ExecuteEffect(pendingEffects.Dequeue(), targetPos);
             ScheduleNextCardEffect();
         }

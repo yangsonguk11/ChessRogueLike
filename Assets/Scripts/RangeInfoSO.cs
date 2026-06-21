@@ -4,7 +4,7 @@ using UnityEngine;
 [System.Serializable]
 public class RangeInfo
 {
-    // �� �࿡ �� ������ (��: bool, int, float ��)
+    // 한 행에서 포함되는 칸들 (true = 범위에 포함)
     public bool[] columns = new bool[7];
 }
 
@@ -12,7 +12,7 @@ public class RangeInfo
 public class RangeInfoSO : ScriptableObject
 {
 
-    // GridRow�� �迭�� �����Ͽ� 2���� ���� ����
+    // 행(RangeInfo)을 배열로 묶어 2차원 범위를 구성
     public RangeInfo[] rows = new RangeInfo[7];
 
     public List<Vector2> GetAbleRange()

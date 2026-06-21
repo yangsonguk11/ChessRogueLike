@@ -1,19 +1,10 @@
-﻿using UnityEngine;
-
-public class EnemyMoveCard : Card
+﻿// MoveCard와 효과가 완전히 동일한, 적 전용 카드. prefab이 이 타입을 직접 참조하므로
+// 별도 클래스는 유지하되, Name만 다르게 설정.
+public class EnemyMoveCard : MoveCard
 {
-    
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     public override void Awake()
     {
         base.Awake();
         Name = "EnemyMoveCard";
-        Cost = 2;
-        type = CardType.Move;
-        CardEffect cf = new CardEffect(Board.BoardMode.command, EffectType.Move, 0, TargetLogic.NearestEnemy)
-            { animTrigger = "Move" };
-        effects.Add(cf);
     }
-    public override string EffectDescription => "이동합니다.";
 }

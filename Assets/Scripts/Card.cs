@@ -148,15 +148,7 @@ public abstract class Card : MonoBehaviour, ISelectable
     public GameObject cardCanvas;
     public int handNumber;
 
-    public IEnumerator ScaleTo(Vector3 target)
-    {
-        while (Vector3.Distance(transform.localScale, target) > 0.01f)
-        {
-            transform.localScale = Vector3.Lerp(transform.localScale, target, Time.deltaTime * speed);
-            yield return null;
-        }
-        transform.localScale = target;
-    }
+    public IEnumerator ScaleTo(Vector3 target) => ScaleAnimator.ScaleTo(transform, target, speed);
     public void ScaleDefault()
     {
         StopAllCoroutines();

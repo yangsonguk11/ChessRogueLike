@@ -22,15 +22,12 @@ public class DataManager : MonoBehaviour
         else { Destroy(gameObject); }
     }
 
-    // ���Ϸ� ����
     public void SaveToFile()
     {
         string json = JsonUtility.ToJson(currentData);
         File.WriteAllText(savePath, json);
-        Debug.Log("���� ���� �Ϸ� " + Application.persistentDataPath);
     }
 
-    // ���Ͽ��� �ҷ�����
     public void LoadFromFile()
     {
         if (File.Exists(savePath))

@@ -11,7 +11,6 @@ public class Button : MonoBehaviour, ISelectable
     GameObject board;
     Board boardScript;
     Vector2 location;
-    Vector3 piecelocation;
     public Vector3 Piecelocation
     {
         get {
@@ -32,7 +31,6 @@ public class Button : MonoBehaviour, ISelectable
     {
         SetLocation(x, y); board = _board;
         boardScript = _board.GetComponent<Board>();
-        piecelocation = boardScript.grid.GetCellCenterWorld(new Vector3Int((int)location.x, 0, (int)location.y));
     }
 
     public void OnTurnEnd()
@@ -75,9 +73,7 @@ piece.transform.parent = gameObject.transform;
 
     public bool IsSelectable()
     {
-        if (piece != null)
-            return true;
-        return false;
+        return piece != null;
     }
     public void SelectedFalse()
     {
@@ -120,15 +116,7 @@ piece.transform.parent = gameObject.transform;
     public Vector3 defaultScale;
     public float hoverScale = 1.1f;
     float speed = 10f;
-    public IEnumerator ScaleTo(Vector3 target)
-    {
-        while (Vector3.Distance(transform.localScale, target) > 0.01f)
-        {
-            transform.localScale = Vector3.Lerp(transform.localScale, target, Time.deltaTime * speed);
-            yield return null;
-        }
-        transform.localScale = target;
-    }
+    public IEnumerator ScaleTo(Vector3 target) => ScaleAnimator.ScaleTo(transform, target, speed);
     public void ScaleDefault()
     {
         StopAllCoroutines();

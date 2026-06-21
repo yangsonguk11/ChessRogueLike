@@ -23,7 +23,6 @@ public class GameManager : MonoBehaviour
     }
     private void OnEnable()
     {
-        // �� ��ȯ �̺�Ʈ ���� (����Ƽ���� ���� �ٲ�� �ڵ����� ȣ���)
         UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
     }
 

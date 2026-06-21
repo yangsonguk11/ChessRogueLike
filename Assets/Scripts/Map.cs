@@ -16,20 +16,6 @@ public class MapNode
 public class NodeRow
 {
     public List<MapNode> nodes = new List<MapNode>();
-
-    public string Info()
-    {
-        string result = "";
-
-        foreach (MapNode m in nodes) {
-            result += string.Format("{0} {1} //", m.x, m.y);
-            foreach(int i in m.nextNodes)
-            {
-                result += string.Format(" {0}", i);
-            }
-        }
-        return result;
-    }
 }
 
 public class Map : MonoBehaviour
@@ -65,14 +51,14 @@ public class Map : MonoBehaviour
         mapData.Clear();
         int totalFloors = TotalFloors;
 
-        // 1. ��� ���� (������ y: 0 ~ 4)
+        // 1. 노드 생성 (층마다 y: 0 ~ totalFloors-1)
         for (int y = 0; y < totalFloors; y++)
         {
             NodeRow row = new NodeRow();
             int nodeCount = 0;
 
-            if (y == 0 || y == totalFloors - 1) nodeCount = 1; // 1���� 5���� ��� 1��
-            else nodeCount = Random.Range(1, 3); // 2~4���� 1~4��
+            if (y == 0 || y == totalFloors - 1) nodeCount = 1; // 첫 층과 마지막 층은 노드 1개
+            else nodeCount = Random.Range(1, 3); // 중간 층은 1~2개
 
             for (int x = 0; x < nodeCount; x++)
             {
@@ -88,32 +74,32 @@ public class Map : MonoBehaviour
             mapData.Add(row);
         }
 
-        // 2. ��� ���� (�� �����)
-        for (int y = 0; y < totalFloors - 1; y++) // ������ ���� ���� ���� �����Ƿ� ����
+        // 2. 노드 간 연결 (다음 층으로)
+        for (int y = 0; y < totalFloors - 1; y++) // 마지막 층은 다음 층이 없으므로 제외
         {
             int nextRowNodeCount = mapData[y + 1].nodes.Count;
-            int lastTargetIndex = 0; // ���� ������ ���� �ε��� ���� ����
+            int lastTargetIndex = 0; // 이전 노드가 연결한 마지막 인덱스 추적 용도
 
             for (int x = 0; x < mapData[y].nodes.Count; x++)
             {
                 MapNode currentNode = mapData[y].nodes[x];
 
-                // 1��(y=0)�� ���� ���� ��� ���� ����
+                // 첫 층(y=0)은 다음 층 노드 전부와 연결
                 if (y == 0)
                 {
                     for (int i = 0; i < nextRowNodeCount; i++)
                         currentNode.nextNodes.Add(i);
                 }
-                // 4��(y=3)�� 5���� ������ ���(�ε��� 0)�� ����
+                // 마지막에서 두 번째 층은 다음 층의 유일한 노드(인덱스 0)와 연결
                 else if (y == totalFloors - 2)
                 {
                     currentNode.nextNodes.Add(0);
                 }
-                // �߰� ��(2~3��) ���� ����
+                // 중간 층은 순서대로 연결
                 else
                 {
-                    // ���� ����: ���� x��° ���� ���� x-1��° ��尡 �����ߴ� ������ �ε������� ���� ����
-                    int connectCount = Random.Range(1, 3); // 1~2�� ����
+                    // 연결 방식: 이전 x번째 노드가 이전 x-1번째 노드가 연결했던 마지막 인덱스부터 순서대로 연결
+                    int connectCount = Random.Range(1, 3); // 1~2개 연결
                     for (int i = 0; i < connectCount; i++)
                     {
                         int targetIndex = Mathf.Clamp(lastTargetIndex + i, 0, nextRowNodeCount - 1);
@@ -121,14 +107,14 @@ public class Map : MonoBehaviour
                         if (!currentNode.nextNodes.Contains(targetIndex))
                         {
                             currentNode.nextNodes.Add(targetIndex);
-                            lastTargetIndex = targetIndex; // ���� ���� �ּ� �� �ε������� ����
+                            lastTargetIndex = targetIndex; // 다음 노드 연결 시 이어서 사용
                         }
                     }
                 }
             }
 
-            // [���� ��ġ] ���� �� ��� �� �ƹ����Ե� ���ù��� ���� ��尡 �ִٸ�, 
-            // ���� ���� ���� ����� ��忡 ������ ���� (���� ����� ���� ����)
+            // [안전 장치] 연결 후 다음 층에 아무에게도 연결받지 못한 노드가 있다면,
+            // 가장 가까운 인덱스의 현재 층 노드에서 연결을 추가 (고아 노드가 생기는 것을 방지)
             for (int nextIdx = 0; nextIdx < nextRowNodeCount; nextIdx++)
             {
                 bool isTargeted = false;
@@ -139,19 +125,12 @@ public class Map : MonoBehaviour
 
                 if (!isTargeted)
                 {
-                    // ���� �ε����� ����� ���� �� ��忡�� ����
+                    // 가장 가까운 인덱스의 현재 층 노드에서 연결
                     int nearestSrc = Mathf.Clamp(nextIdx, 0, mapData[y].nodes.Count - 1);
                     mapData[y].nodes[nearestSrc].nextNodes.Add(nextIdx);
                 }
             }
         }
         DataManager.Instance.GenerateMap(mapData);
-        string output = "";
-        foreach(NodeRow data in mapData)
-        {
-            output += data.Info();
-            output += "\n";
-        }
-        Debug.Log(output);
     }
 }

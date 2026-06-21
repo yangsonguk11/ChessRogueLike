@@ -1,9 +1,3 @@
-public enum AttackType
-{
-    MoveAttack,
-    NormalAttack,
-}
-
 public enum StatusEffectType
 {
     None,

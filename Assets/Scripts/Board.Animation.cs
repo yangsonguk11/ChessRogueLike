@@ -32,7 +32,6 @@ public partial class Board
     {
         Vector3 pos1 = button1.transform.position;
         Vector3 pos2 = button2.transform.position;
-        Debug.LogFormat("{0} {1}", pos1, pos2);
         GameObject piece = button1.GetPiece();
         if (button1 == button2)
             yield break;

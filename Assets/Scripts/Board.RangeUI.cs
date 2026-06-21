@@ -232,9 +232,6 @@ public partial class Board
     {
         int index = enemyPositions.IndexOf(pos1);
         if (index != -1)
-        {
             enemyPositions[index] = pos2;
-            Debug.Log($"[리스트 업데이트] 인덱스 {index}: {pos1} -> {pos2}");
-        }
     }
 }

@@ -38,15 +38,7 @@ public class NodeButton : MonoBehaviour, ISelectable
     float hoverScale = 1.15f;
     float speed = 10f;
 
-    public IEnumerator ScaleTo(Vector3 target)
-    {
-        while (Vector3.Distance(transform.localScale, target) > 0.01f)
-        {
-            transform.localScale = Vector3.Lerp(transform.localScale, target, Time.deltaTime * speed);
-            yield return null;
-        }
-        transform.localScale = target;
-    }
+    public IEnumerator ScaleTo(Vector3 target) => ScaleAnimator.ScaleTo(transform, target, speed);
 
     public void ScaleDefault()
     {

@@ -5,15 +5,11 @@ using UnityEngine;
 public class PieceCanvas : MonoBehaviour
 {
     [SerializeField] GameObject DamageText;
-    public float duration = 1.0f;           // ǥ�� �ð�
-    [SerializeField] float moveSpeed;         // ���� �ö󰡴� �ӵ�
+    public float duration = 1.0f;             // 텍스트 표시 시간
+    [SerializeField] float moveSpeed;         // 텍스트가 위로 올라가는 속도
 
     GameObject currentText;
-    void Awake()
-    {
-    }
 
-    // Update is called once per frame
     void Update()
     {
         transform.LookAt(transform.position + Camera.main.transform.rotation * Vector3.forward,Camera.main.transform.rotation * Vector3.up);
@@ -22,7 +18,6 @@ public class PieceCanvas : MonoBehaviour
     public void ShowActionText(string text)
     {
         Destroy(currentText);
-        Debug.Log(text);
         GameObject textobj = Instantiate(DamageText, transform);
         TextMeshProUGUI tmp = textobj.GetComponent<TextMeshProUGUI>();
         tmp.text = text;

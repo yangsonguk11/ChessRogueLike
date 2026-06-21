@@ -12,20 +12,14 @@ public class CardButton : MonoBehaviour, ISelectable
 
     public bool IsSelectable()
     {
-        throw new System.NotImplementedException();
+        return true;
     }
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
     {
         defaultScale = transform.localScale;
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
     public void MouseDown(BaseEventData data)
     {
         selected = true;
@@ -53,13 +47,5 @@ public class CardButton : MonoBehaviour, ISelectable
         StopAllCoroutines();
         ScaleCor = StartCoroutine(ScaleTo(defaultScale * hoverScale));
     }
-    public IEnumerator ScaleTo(Vector3 target)
-    {
-        while (Vector3.Distance(transform.localScale, target) > 0.01f)
-        {
-            transform.localScale = Vector3.Lerp(transform.localScale, target, Time.deltaTime * speed);
-            yield return null;
-        }
-        transform.localScale = target;
-    }
+    public IEnumerator ScaleTo(Vector3 target) => ScaleAnimator.ScaleTo(transform, target, speed);
 }

@@ -6,7 +6,7 @@ public class PieceInfo : ScriptableObject
     [SerializeField] string _pieceName;
     [SerializeField] int _teamID;
 
-    [Header("����")]
+    [Header("기본")]
     [SerializeField] int _maxHp;
     [SerializeField] int _colDamage;
     [SerializeField] RangeInfoSO _rangeInfoSO;

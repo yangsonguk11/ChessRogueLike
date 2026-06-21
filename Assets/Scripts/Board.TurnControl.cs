@@ -46,7 +46,6 @@ public partial class Board
                 Piece pp = GetButtonScript(pos).GetPieceScript();
                 if (pp != null)
                 {
-                    Debug.LogFormat("{0} {1}", pp.teamID, teamid);
                     if (pp.teamID == teamid) pp.OnTurnEnd();
                     else pp.OnTurnEndOther();
 

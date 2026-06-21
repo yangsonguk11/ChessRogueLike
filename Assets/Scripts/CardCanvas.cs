@@ -13,7 +13,7 @@ public class CardCanvas : MonoBehaviour
 
     [SerializeField] CardDatabase cardData;
     [SerializeField] Board board;
-    public List<RectTransform> cards = new List<RectTransform>(); // �տ� �� ī���
+    public List<RectTransform> cards = new List<RectTransform>(); // 손에 든 카드들
     public List<RectTransform> Discardcards = new List<RectTransform>();
     public Queue<RectTransform> Deckcards = new Queue<RectTransform>();
     [SerializeField] GameObject HandZone;
@@ -23,9 +23,9 @@ public class CardCanvas : MonoBehaviour
     [SerializeField] RectTransform ExileZone;
     public List<RectTransform> Exilecards = new List<RectTransform>();
     [SerializeField] TextMeshProUGUI CurrentEnergyText;
-    [SerializeField] float radius; // ���� ������ (Ŭ���� �ϸ���)
-    [SerializeField] float angleBetween;  // ī�� ������ ����
-    [SerializeField] float heightOffset; // ��ä���� ���� ����
+    [SerializeField] float radius;        // 부채꼴 반지름 (클수록 더 펼쳐짐)
+    [SerializeField] float angleBetween;  // 카드 사이의 각도
+    [SerializeField] float heightOffset;  // 부채꼴의 수직 위치 보정
 
     // ── 카드 선택 패널 ──────────────────────────────────────────
     // Unity Inspector에서 연결 필요:
@@ -113,9 +113,6 @@ public class CardCanvas : MonoBehaviour
     }
     public bool UseCard(int handnum)
     {
-        Debug.Log(cards[handnum].GetComponent<Card>().Cost > currentenergy);
-        Debug.Log(isCardEffecting);
-        Debug.Log(TurnManager.instance.currentState != TurnState.Player);
         Card card = cards[handnum].GetComponent<Card>();
         // isCardEffecting이면서 nowusingCard가 없으면 보드가 실제 효과 처리 중 → 차단
         // nowusingCard가 있으면 아직 애니메이션/대기 중이므로 교체 허용
@@ -174,7 +171,6 @@ public class CardCanvas : MonoBehaviour
 
     public void HandtoDiscardAll()
     {
-        Debug.LogFormat("{0} ��", cards.Count);
         while(cards.Count > 0)
         {
             HandtoDiscard(0);
@@ -183,7 +179,6 @@ public class CardCanvas : MonoBehaviour
 
     public void HandtoDiscard(int num)
     {
-        Debug.LogFormat("{0} {1}", cards.Count, num);
         if (cards.Count <= num)
             return;
         HandtoDiscard(cards[num]);
@@ -367,10 +362,7 @@ public class CardCanvas : MonoBehaviour
     public void DrawCard()
     {
         if (Deckcards.Count == 0)
-        {
             DiscardtoDeck();
-            Debug.Log("nodeck");
-        }
         if (Deckcards.Count != 0)
         {
             RectTransform newCard = Deckcards.Dequeue();
@@ -743,73 +735,55 @@ public class CardCanvas : MonoBehaviour
         return new Vector2(-1, -1);
     }
 
+    // 부채꼴 배치에서 count장 중 i번째 카드의 로컬 위치/회전을 계산
+    (Vector3 pos, Quaternion rot) ComputeCardTransform(int i, int count)
+    {
+        float totalAngle = (count - 1) * angleBetween;
+        float startAngle = -totalAngle / 2f;
+        float currentAngle = startAngle + ((count - 1 - i) * angleBetween);
+
+        float radian = currentAngle * Mathf.Deg2Rad;
+        float x = Mathf.Sin(radian) * radius;
+        float y = Mathf.Cos(radian) * radius - radius;
+
+        return (new Vector3(x, y + heightOffset, 0), Quaternion.Euler(0, 0, -currentAngle));
+    }
+
     [ContextMenu("Align Cards")] // 인스펙터 메뉴에서 바로 테스트 가능
     public void AlignCards()
     {
         int count = cards.Count;
         if (count == 0) return;
 
-        float totalAngle = (count - 1) * angleBetween;
-        float startAngle = -totalAngle / 2f;
-
         for (int i = 0; i < count; i++)
         {
-            float currentAngle = startAngle + ((count - 1 - i) * angleBetween);
-
-            float radian = currentAngle * Mathf.Deg2Rad;
-
-            float x = Mathf.Sin(radian) * radius;
-            float y = Mathf.Cos(radian) * radius - radius; 
-
-            // 2. ī�� ��ǥ �� ȸ�� ����
+            var (pos, rot) = ComputeCardTransform(i, count);
             cards[i].SetSiblingIndex(i);
-            cards[i].localPosition = new Vector3(x, y + heightOffset, 0);
-            cards[i].localRotation = Quaternion.Euler(0, 0, -currentAngle);
+            cards[i].localPosition = pos;
+            cards[i].localRotation = rot;
 
             Card cardComp = cards[i].GetComponent<Card>();
             cardComp.OnUnSelected -= CardUnSelected;
             cardComp.OnUnSelected += CardUnSelected;
             cardComp.cardCanvas = gameObject;
-            cards[i].gameObject.GetComponent<Card>().handNumber = i;
+            cardComp.handNumber = i;
         }
         UpdateCardInteractability();
     }
     public void ExcludeAlignCards(int excludeCard = -1)
     {
-        int count;
-        if (excludeCard < 0)
-            count = cards.Count;
-        else
-            count = cards.Count - 1;
+        int count = excludeCard < 0 ? cards.Count : cards.Count - 1;
         if (count == 0) return;
-
-        float totalAngle = (count - 1) * angleBetween;
-        float startAngle = -totalAngle / 2f;
 
         for (int i = 0; i < count; i++)
         {
-            float currentAngle = startAngle + ((count - 1 - i) * angleBetween);
-
-            float radian = currentAngle * Mathf.Deg2Rad;
-
-            float x = Mathf.Sin(radian) * radius;
-            float y = Mathf.Cos(radian) * radius - radius; 
-
-            if (i >= excludeCard && excludeCard >= 0)
-            {
-                cards[i+1].SetSiblingIndex(i);
-                cards[i+1].localPosition = new Vector3(x, y + heightOffset, 0);
-                cards[i+1].localRotation = Quaternion.Euler(0, 0, -currentAngle);
-            }
-            else
-            {
-                cards[i].SetSiblingIndex(i);
-                cards[i].localPosition = new Vector3(x, y + heightOffset, 0);
-                cards[i].localRotation = Quaternion.Euler(0, 0, -currentAngle);
-            }
+            var (pos, rot) = ComputeCardTransform(i, count);
+            RectTransform card = (i >= excludeCard && excludeCard >= 0) ? cards[i + 1] : cards[i];
+            card.SetSiblingIndex(i);
+            card.localPosition = pos;
+            card.localRotation = rot;
         }
-        if(excludeCard >= 0)
+        if (excludeCard >= 0)
             cards[excludeCard].SetAsLastSibling();
-
     }
 }

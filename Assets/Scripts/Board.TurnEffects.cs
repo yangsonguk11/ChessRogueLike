@@ -4,12 +4,6 @@ using UnityEngine;
 
 public partial class Board
 {
-    void ProcessAllTurnEffects(TurnPhase phase)
-    {
-        ProcessTeamTurnEffects(0, phase);
-        ProcessTeamTurnEffects(1, phase);
-    }
-
     void ProcessTeamTurnEffects(int teamId, TurnPhase phase)
     {
         for (int x = 0; x < N; x++)
@@ -97,11 +91,11 @@ public partial class Board
         switch (ce.type)
         {
             case EffectType.Heal:
-                target.GetHeal(ce.dmg, AttackType.NormalAttack);
+                target.GetHeal(ce.dmg);
                 yield return target.HealText(ce.dmg);
                 break;
             case EffectType.Shield:
-                target.GetShield(ce.dmg, AttackType.NormalAttack);
+                target.GetShield(ce.dmg);
                 yield return target.ShieldText(ce.dmg);
                 break;
             case EffectType.ColDamageUp:

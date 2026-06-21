@@ -59,13 +59,6 @@ public abstract class Piece : MonoBehaviour
     public virtual void Awake()
     {
         baseColDamage = colDamage;
-        /*
-        name = pieceInfo.PieceName;
-        hp = pieceInfo.MaxHp;
-        maxhp = pieceInfo.MaxHp;
-        colDamage = pieceInfo.ColDamage;
-        teamID = pieceInfo.TeamID;
-        */
     }
     public void SetPieceData(PieceData data)
     {
@@ -100,7 +93,7 @@ public abstract class Piece : MonoBehaviour
             : new List<Vector2> { Vector2.zero };
     }
     public RangeInfoSO MoveAttackRangeInfoSO => pieceInfo.MoveAttackRangeInfoSO;
-    public int GetDamage(int damage, AttackType type)
+    public int GetDamage(int damage)
     {
         if(shield < damage)
         {
@@ -114,14 +107,14 @@ public abstract class Piece : MonoBehaviour
 
         return hp;
     }
-    public int GetHeal(int damage, AttackType type)
+    public int GetHeal(int damage)
     {
         hp += damage;
         if (hp > maxhp)
             hp = maxhp;
         return hp;
     }
-    public int GetShield(int damage, AttackType type)
+    public int GetShield(int damage)
     {
         shield += damage;
         return shield;
@@ -159,12 +152,6 @@ public abstract class Piece : MonoBehaviour
         yield return new WaitForSeconds(1f);
         if (this != null && pieceCanvas != null)
             pieceCanvas.InvokeDamageText(damage);
-    }
-
-    public bool HasAnimator()
-    {
-        Animator anim = GetComponent<Animator>();
-        return anim != null;
     }
 
     public void TriggerAnim(string triggerName)

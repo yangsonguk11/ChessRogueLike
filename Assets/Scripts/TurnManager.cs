@@ -12,11 +12,6 @@ public class TurnManager : MonoBehaviour
     [Header("References")]
     [SerializeField] Board board;
 
-    void Start()
-    {
-        //StartPlayerTurn();
-    }
-
     private void Awake()
     {
         if (instance == null)
@@ -50,10 +45,11 @@ public class TurnManager : MonoBehaviour
     IEnumerator StartPlayerTurnCoroutine()
     {
         currentState = TurnState.Player;
-        Debug.Log("플레이어 턴 시작");
         if (AnnouncementUI.instance != null)
+        {
             AnnouncementUI.instance.Show("플레이어 턴");
             yield return AnnouncementUI.instance.currentRoutine;
+        }
         board.SendMessage("TurnStart");
     }
 
@@ -78,10 +74,11 @@ public class TurnManager : MonoBehaviour
     IEnumerator StartEnemyTurnCoroutine()
     {
         currentState = TurnState.Enemy;
-        Debug.Log("적 턴 시작");
         if (AnnouncementUI.instance != null)
+        {
             AnnouncementUI.instance.Show("적 턴");
             yield return AnnouncementUI.instance.currentRoutine;
+        }
         board.SendMessage("PlayEnemyTurn");
     }
     public void EndEnemyTurn()

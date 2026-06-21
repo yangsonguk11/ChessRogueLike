@@ -66,9 +66,4 @@ public class ButtonInfo : MonoBehaviour
     {
         Clear();
     }
-
-    void Update()
-    {
-
-    }
 }
