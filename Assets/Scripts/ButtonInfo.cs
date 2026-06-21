@@ -10,16 +10,40 @@ public class ButtonInfo : MonoBehaviour
     [SerializeField] TextMeshProUGUI shield;
     [SerializeField] TextMeshProUGUI colDamage;
     [SerializeField] TextMeshProUGUI statusEffects;
+    [SerializeField] UnityEngine.UI.Button restButton;
 
     public void UpdateButtonInfo(Button button)
     {
         Piece p = button.GetPiece().GetComponent<Piece>();
+
+        if (p is RestObject)
+        {
+            piecename.text = "휴식 지점";
+            team.text = "";
+            hp.text = "";
+            shield.text = "";
+            colDamage.text = "";
+            statusEffects.text = "";
+            SetRestButtonActive(true);
+            return;
+        }
+
+        SetRestButtonActive(false);
         piecename.text = p.name;
         team.text = p.teamID == 0 ? "아군" : "적";
         hp.text = string.Format("HP: {0}/{1}", p.hp, p.maxhp);
         shield.text = "방어막: " + p.shield;
         colDamage.text = "충돌 피해: " + BuildColDamageText(p);
         statusEffects.text = BuildStatusText(p);
+    }
+
+    void SetRestButtonActive(bool active)
+    {
+        if (restButton == null) return;
+        restButton.gameObject.SetActive(active);
+        restButton.onClick.RemoveAllListeners();
+        if (active)
+            restButton.onClick.AddListener(() => Board.instance.RestHeal());
     }
 
     string BuildColDamageText(Piece p)
@@ -60,6 +84,7 @@ public class ButtonInfo : MonoBehaviour
         shield.text = "";
         colDamage.text = "";
         statusEffects.text = "";
+        SetRestButtonActive(false);
     }
 
     void Start()

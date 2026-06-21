@@ -9,8 +9,11 @@ public partial class Board
         ProcessTeamTurnEffects(0, TurnPhase.OwnTurnStart);
         playerDamagedThisTurn = false;
         ResetPieceMovedThisTurn();
-        CardCanvas.instance.DrawTurnStartCards();
-        CardCanvas.instance.GetMaxEnergy();
+        if (!IsEventLevel)
+        {
+            CardCanvas.instance.DrawTurnStartCards();
+            CardCanvas.instance.GetMaxEnergy();
+        }
         ShowAllEnemyRanges();
     }
 

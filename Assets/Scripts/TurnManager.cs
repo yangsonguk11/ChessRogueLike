@@ -12,6 +12,8 @@ public class TurnManager : MonoBehaviour
     [Header("References")]
     [SerializeField] Board board;
 
+    bool isFirstTurn = true;
+
     private void Awake()
     {
         if (instance == null)
@@ -32,6 +34,7 @@ public class TurnManager : MonoBehaviour
         AssignReferences();
         currentState = TurnState.Player;
         prevState = TurnState.Player;
+        isFirstTurn = true;
     }
     void AssignReferences()
     {
@@ -45,6 +48,15 @@ public class TurnManager : MonoBehaviour
     IEnumerator StartPlayerTurnCoroutine()
     {
         currentState = TurnState.Player;
+        if (isFirstTurn)
+        {
+            isFirstTurn = false;
+            if (!board.IsEventLevel && AnnouncementUI.instance != null)
+            {
+                AnnouncementUI.instance.Show("전투 시작");
+                yield return AnnouncementUI.instance.currentRoutine;
+            }
+        }
         if (AnnouncementUI.instance != null)
         {
             AnnouncementUI.instance.Show("플레이어 턴");

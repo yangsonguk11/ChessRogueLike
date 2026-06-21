@@ -10,9 +10,12 @@ public partial class Board : MonoBehaviour
 
     [SerializeField] GameObject Background;
     [SerializeField] GameObject ButtonPrefab;
+    [SerializeField] GameObject RestObjectPrefab;
     GameObject[,] Buttons;
     [SerializeField] GameObject BoardUICanvas;
     [SerializeField] PieceDatabase piecedatabase;
+    public bool IsEventLevel { get; private set; }
+    LevelData.EventType currentEventType;
     event Action OnButtonSelected;
     event Action OnButtonUnSelected;
     public bool boardReady = false;
@@ -74,7 +77,7 @@ public partial class Board : MonoBehaviour
 
         boardReady = true;
         InitBoard(ResolveLevelData());
-        TurnStart();
+        TurnManager.instance.StartPlayerTurn();
     }
 
     public void SavePlayerPiecesToDataManager()
@@ -119,6 +122,9 @@ public partial class Board : MonoBehaviour
         // 이전 씬에서 남은 적 목록 초기화 (DontDestroyOnLoad인 GameManager의 리스트)
         GameManager.instance?.Enemylist.Clear();
         enemyPositions.Clear();
+
+        IsEventLevel = data.levelType == LevelData.LevelType.Event;
+        currentEventType = data.eventType;
 
         N = data.N;
         M = data.M;
@@ -177,6 +183,17 @@ public partial class Board : MonoBehaviour
             GameObject piece = Instantiate(enemyPrefab);
             GetButtonScript(placement.position).SetPiece(piece);
             enemyPositions.Add(placement.position);
+        }
+
+        if (currentEventType == LevelData.EventType.Rest)
+        {
+            if (RestObjectPrefab == null)
+                Debug.LogError("[Board] 휴식 레벨이지만 RestObjectPrefab이 설정되지 않았습니다.");
+            else
+            {
+                GameObject restObj = Instantiate(RestObjectPrefab);
+                GetButtonScript(new Vector2(data.eventObjectPosition.x, data.eventObjectPosition.y)).SetPiece(restObj);
+            }
         }
 
         FinishCardUsage();
