@@ -4,16 +4,14 @@ using UnityEngine;
 
 public partial class Board
 {
+    // 이벤트 레벨에서는 TurnManager가 턴을 시작하지 않으므로 이 메서드 자체가 호출되지 않음
     void TurnStart()
     {
         ProcessTeamTurnEffects(0, TurnPhase.OwnTurnStart);
         playerDamagedThisTurn = false;
         ResetPieceMovedThisTurn();
-        if (!IsEventLevel)
-        {
-            CardCanvas.instance.DrawTurnStartCards();
-            CardCanvas.instance.GetMaxEnergy();
-        }
+        CardCanvas.instance.DrawTurnStartCards();
+        CardCanvas.instance.GetMaxEnergy();
         ShowAllEnemyRanges();
     }
 

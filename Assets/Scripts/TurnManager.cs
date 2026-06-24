@@ -45,13 +45,14 @@ public class TurnManager : MonoBehaviour
         StartCoroutine(StartPlayerTurnCoroutine());
     }
 
+    // 이벤트 레벨에서는 Board가 이 코루틴을 아예 호출하지 않음 (턴이 흐르지 않음)
     IEnumerator StartPlayerTurnCoroutine()
     {
         currentState = TurnState.Player;
         if (isFirstTurn)
         {
             isFirstTurn = false;
-            if (!board.IsEventLevel && AnnouncementUI.instance != null)
+            if (AnnouncementUI.instance != null)
             {
                 AnnouncementUI.instance.Show("전투 시작");
                 yield return AnnouncementUI.instance.currentRoutine;
@@ -67,7 +68,7 @@ public class TurnManager : MonoBehaviour
 
     public void EndPlayerTurn()
     {
-        if (currentState != TurnState.Player) return;
+        if (currentState != TurnState.Player || board.IsEventLevel) return; // 이벤트 레벨은 턴이 흐르지 않음
         StartCoroutine(EndPlayerTurnCoroutine());
     }
 

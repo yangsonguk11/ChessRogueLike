@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum NodeType { mob, unknown, chest }
+public enum NodeType { Mob, Rest, Unknown, Boss }
 
 [System.Serializable]
 public class MapNode
@@ -62,13 +62,15 @@ public class Map : MonoBehaviour
 
             for (int x = 0; x < nodeCount; x++)
             {
+                LevelData level = LevelDatabase.instance != null
+                    ? LevelDatabase.instance.GetRandomLevel(y)
+                    : null;
+
                 MapNode node = new MapNode();
                 node.x = x;
                 node.y = y;
-                node.type = (NodeType)Random.Range(0, 3);
-                node.levelDataName = LevelDatabase.instance != null
-                    ? LevelDatabase.instance.GetRandomLevelName(y)
-                    : "";
+                node.type = DetermineNodeType(level, y, totalFloors);
+                node.levelDataName = level != null ? level.name : "";
                 row.nodes.Add(node);
             }
             mapData.Add(row);
@@ -132,5 +134,17 @@ public class Map : MonoBehaviour
             }
         }
         DataManager.Instance.GenerateMap(mapData);
+    }
+
+    // LevelData의 종류(LevelType/EventType)를 보고 맵 아이콘에 쓸 NodeType을 결정
+    NodeType DetermineNodeType(LevelData level, int floor, int totalFloors)
+    {
+        if (floor == totalFloors - 1) return NodeType.Boss;
+        if (level == null) return NodeType.Unknown;
+
+        if (level.levelType == LevelData.LevelType.Event)
+            return level.eventType == LevelData.EventType.Rest ? NodeType.Rest : NodeType.Unknown;
+
+        return NodeType.Mob;
     }
 }

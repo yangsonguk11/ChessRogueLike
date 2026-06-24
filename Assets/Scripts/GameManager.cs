@@ -6,7 +6,6 @@ public class GameManager : MonoBehaviour
     public static GameManager instance;
 
     [SerializeField] GameObject Board;
-    [SerializeField] GameObject CardCanvas;
     public List<GameObject> Enemylist = new List<GameObject>();
 
     private bool isQuitting = false;
@@ -38,9 +37,15 @@ public class GameManager : MonoBehaviour
     void AssignReferences()
     {
         Board = GameObject.Find("Board");
-        CardCanvas = GameObject.Find("CardCanvas");
-
     }
+    // Board가 레벨을 초기화할 때 호출. 이벤트 레벨에서 꺼야 할 UI들을 한곳에서 관리한다.
+    public void SetEventLevelUI(bool isEventLevel)
+    {
+        bool combatUIVisible = !isEventLevel;
+        MainCanvas.instance?.SetCombatUIVisible(combatUIVisible);
+        CardCanvas.instance?.SetCombatUIVisible(combatUIVisible);
+    }
+
     public void AddEnemy(GameObject obj)
     {
         Enemylist.Add(obj);
@@ -50,51 +55,41 @@ public class GameManager : MonoBehaviour
     {
         Enemylist.Remove(obj);
         if (Enemylist.Count == 0 && !isQuitting)
-            EndBattle();
-    }
-
-    void EndBattle()
-    {
-        bool isLastFloor = FinishCurrentLevel();
-        if (isLastFloor)
-        {
-            if (MapCanvas.instance != null)
-                MapCanvas.instance.ShowRunComplete();
-            else
-                Debug.LogError("[EndBattle] MapCanvas.instance가 null입니다.");
-        }
-        else
-        {
-            if (ResultCanvas.Instance != null)
-                ResultCanvas.Instance.EnableCanvas();
-            else
-                Debug.LogError("[EndBattle] ResultCanvas.Instance가 null입니다.");
-        }
+            FinishLevel();
     }
 
     // 휴식 등 이벤트 레벨의 '나가기' 버튼에서 호출. 전투 레벨에서는 호출되어선 안 됨.
-    public void LeaveEventLevel()
+    public void FinishEventLevel()
     {
         if (isQuitting) return;
 
         global::Board boardScript = this.Board?.GetComponent<global::Board>();
         if (boardScript == null || !boardScript.IsEventLevel)
         {
-            Debug.LogWarning("[GameManager] 전투 레벨에서는 LeaveEventLevel을 호출할 수 없습니다.");
+            Debug.LogWarning("[GameManager] 전투 레벨에서는 FinishEventLevel을 호출할 수 없습니다.");
             return;
         }
 
+        FinishLevel();
+    }
+
+    // 전투 종료와 이벤트 레벨 종료가 공유하는 흐름: 카드 보상 선택 후 맵으로 복귀(마지막 층이면 런 클리어 화면)
+    void FinishLevel()
+    {
         bool isLastFloor = FinishCurrentLevel();
         if (isLastFloor)
         {
             if (MapCanvas.instance != null)
                 MapCanvas.instance.ShowRunComplete();
             else
-                Debug.LogError("[LeaveEventLevel] MapCanvas.instance가 null입니다.");
+                Debug.LogError("[FinishLevel] MapCanvas.instance가 null입니다.");
         }
         else
         {
-            MapCanvas.instance.Show();
+            if (ResultCanvas.Instance != null)
+                ResultCanvas.Instance.EnableCanvas();
+            else
+                Debug.LogError("[FinishLevel] ResultCanvas.Instance가 null입니다.");
         }
     }
 

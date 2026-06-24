@@ -14,6 +14,8 @@ public partial class Board : MonoBehaviour
     GameObject[,] Buttons;
     [SerializeField] GameObject BoardUICanvas;
     [SerializeField] PieceDatabase piecedatabase;
+    [SerializeField] GameObject EventExitButtonObj;
+    [SerializeField] DialogueUI dialogueUI;
     public bool IsEventLevel { get; private set; }
     LevelData.EventType currentEventType;
     event Action OnButtonSelected;
@@ -44,7 +46,6 @@ public partial class Board : MonoBehaviour
         Inspect,
         command,
         targeting,
-        enemy,
         cardSelecting   // 카드 선택 패널 대기 중
     }
 
@@ -77,7 +78,8 @@ public partial class Board : MonoBehaviour
 
         boardReady = true;
         InitBoard(ResolveLevelData());
-        TurnManager.instance.StartPlayerTurn();
+        if (!IsEventLevel)
+            TurnManager.instance.StartPlayerTurn(); // 이벤트 레벨은 턴이 흐르지 않음 — TurnManager는 기본 Player 상태로 둠
     }
 
     public void SavePlayerPiecesToDataManager()
@@ -125,6 +127,9 @@ public partial class Board : MonoBehaviour
 
         IsEventLevel = data.levelType == LevelData.LevelType.Event;
         currentEventType = data.eventType;
+        EventExitButtonObj?.SetActive(false); // 전투 중이거나 이벤트가 아직 끝나지 않았으면 항상 숨김
+        dialogueUI?.Hide();
+        GameManager.instance?.SetEventLevelUI(IsEventLevel);
 
         N = data.N;
         M = data.M;
@@ -147,10 +152,10 @@ public partial class Board : MonoBehaviour
             }
         }
 
-        // isEnemy == false 배치를 플레이어 스폰 위치로 사용
+        // name이 비어있는 배치를 플레이어 스폰 위치로 사용
         List<Vector2> playerSpawns = new List<Vector2>();
         foreach (var p in data.placements)
-            if (!p.isEnemy) playerSpawns.Add(new Vector2(p.position.x, p.position.y));
+            if (string.IsNullOrEmpty(p.name)) playerSpawns.Add(new Vector2(p.position.x, p.position.y));
 
         int spawnIdx = 0;
         foreach (PieceData piecedata in DataManager.Instance.currentData.pieceData)
@@ -172,17 +177,20 @@ public partial class Board : MonoBehaviour
         ClearSelectedButton();
         foreach (var placement in data.placements)
         {
-            if (!placement.isEnemy) continue; // 플레이어 스폰 마커는 건너뜀
+            if (string.IsNullOrEmpty(placement.name)) continue; // 플레이어 스폰 마커는 건너뜀
 
-            GameObject enemyPrefab = piecedatabase.GetPiece(placement.name);
-            if (enemyPrefab == null)
+            GameObject prefab = piecedatabase.GetPiece(placement.name);
+            if (prefab == null)
             {
-                Debug.LogError($"[Board] 적 기물 스폰 실패: '{placement.name}' 을(를) PieceDatabase에서 찾을 수 없습니다. (pos={placement.position})");
+                Debug.LogError($"[Board] 기물 스폰 실패: '{placement.name}' 을(를) PieceDatabase에서 찾을 수 없습니다. (pos={placement.position})");
                 continue;
             }
-            GameObject piece = Instantiate(enemyPrefab);
+            GameObject piece = Instantiate(prefab);
             GetButtonScript(placement.position).SetPiece(piece);
-            enemyPositions.Add(placement.position);
+
+            // teamID==1(적)인 기물만 enemyPositions에 등록해 적 턴 AI 대상이 되게 함
+            if (piece.GetComponent<Piece>().teamID == 1)
+                enemyPositions.Add(placement.position);
         }
 
         if (currentEventType == LevelData.EventType.Rest)
@@ -194,6 +202,10 @@ public partial class Board : MonoBehaviour
                 GameObject restObj = Instantiate(RestObjectPrefab);
                 GetButtonScript(new Vector2(data.eventObjectPosition.x, data.eventObjectPosition.y)).SetPiece(restObj);
             }
+        }
+        else if (currentEventType == LevelData.EventType.Unknown)
+        {
+            dialogueUI?.Show(data.dialogueLines);
         }
 
         FinishCardUsage();

@@ -11,6 +11,7 @@ public class NodeButton : MonoBehaviour, ISelectable
     public bool selectable;
 
     [SerializeField] Image nodeImage;
+    [SerializeField] Image iconImage;
 
     public bool IsSelectable() => selectable;
 
@@ -19,6 +20,19 @@ public class NodeButton : MonoBehaviour, ISelectable
         defaultScale = transform.localScale;
         if (nodeImage == null)
             nodeImage = GetComponent<Image>();
+        if (iconImage == null)
+        {
+            Transform iconTransform = transform.Find("Icon");
+            if (iconTransform != null)
+                iconImage = iconTransform.GetComponent<Image>();
+        }
+    }
+
+    public void SetIcon(Sprite icon)
+    {
+        if (iconImage == null) return;
+        iconImage.sprite = icon;
+        iconImage.enabled = icon != null;
     }
 
     public void SetVisualState(bool isSelectable, bool isCurrent, bool isVisited = false)

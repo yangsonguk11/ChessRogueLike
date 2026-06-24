@@ -59,6 +59,7 @@ public abstract class Piece : MonoBehaviour
     public virtual void Awake()
     {
         baseColDamage = colDamage;
+        teamID = pieceInfo.TeamID;
     }
     public void SetPieceData(PieceData data)
     {

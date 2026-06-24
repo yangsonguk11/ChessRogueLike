@@ -24,10 +24,20 @@ public partial class Board
                 textCoroutines.Add(p.HealText(healAmount));
             }
 
-        if (healedPieces.Count == 0) return;
+        if (healedPieces.Count > 0)
+        {
+            Piece caster = GetButtonScript(selectedButton).GetPieceScript();
+            motionQueue.Enqueue(PieceAreaHealCor(caster, healedPieces, null, null, textCoroutines));
+            StartMotionQueue();
+        }
 
-        Piece caster = GetButtonScript(selectedButton).GetPieceScript();
-        motionQueue.Enqueue(PieceAreaHealCor(caster, healedPieces, null, null, textCoroutines));
-        StartMotionQueue();
+        // 휴식을 사용했으면(회복할 게 없어도) 이벤트에서 할 일이 끝난 것으로 보고 나가기 버튼을 표시
+        EventExitButtonObj?.SetActive(true);
+    }
+
+    // DialogueUI의 확인 버튼에서 호출: 대화가 끝났으니 나가기 버튼을 표시
+    public void OnDialogueClosed()
+    {
+        EventExitButtonObj?.SetActive(true);
     }
 }

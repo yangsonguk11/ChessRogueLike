@@ -4,13 +4,31 @@ using UnityEngine.UI;
 
 public class MapUI : MonoBehaviour
 {
+    [System.Serializable]
+    public class NodeIcon
+    {
+        public NodeType type;
+        public Sprite icon;
+    }
+
     public Map mapGenerator;
     public GameObject nodePrefab;
     public GameObject linePrefab;
     public RectTransform contentParent;
 
+    [Tooltip("노드 종류(NodeType)별로 표시할 아이콘")]
+    public List<NodeIcon> nodeIcons = new List<NodeIcon>();
+
     public float xSpacing = 100f;
     public float ySpacing = 300f;
+
+    Sprite GetIcon(NodeType type)
+    {
+        foreach (var entry in nodeIcons)
+            if (entry.type == type)
+                return entry.icon;
+        return null;
+    }
 
     private List<List<RectTransform>> instantiatedNodes = new List<List<RectTransform>>();
 
@@ -54,6 +72,7 @@ public class MapUI : MonoBehaviour
                 {
                     btn.nodeData = rowData.nodes[x];
                     btn.nodeFloor = y;
+                    btn.SetIcon(GetIcon(rowData.nodes[x].type));
                 }
 
                 rowNodes.Add(rect);

@@ -88,6 +88,7 @@ public class DataManager : MonoBehaviour
     public void GenerateMap(List<NodeRow> mapdata)
     {
         currentData.mapData = mapdata;
+        SaveToFile();
     }
 
     public bool LoadMap()

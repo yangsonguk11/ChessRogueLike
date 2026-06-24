@@ -13,6 +13,7 @@ public class CardCanvas : MonoBehaviour
 
     [SerializeField] CardDatabase cardData;
     [SerializeField] Board board;
+    [SerializeField] GameObject UnSeenEvent; // 이벤트 레벨에서 숨길 카드 관련 UI를 모아둔 부모
     public List<RectTransform> cards = new List<RectTransform>(); // 손에 든 카드들
     public List<RectTransform> Discardcards = new List<RectTransform>();
     public Queue<RectTransform> Deckcards = new Queue<RectTransform>();
@@ -412,6 +413,12 @@ public class CardCanvas : MonoBehaviour
     public void GetMaxEnergy()
     {
         currentenergy = maxenergy;
+    }
+
+    // 이벤트 레벨처럼 카드를 쓰지 않는 레벨에서는 카드 관련 UI를 숨김
+    public void SetCombatUIVisible(bool visible)
+    {
+        UnSeenEvent?.SetActive(visible);
     }
 
     // count장을 손패에서 무작위로 뽑아 반환 (count <= 0이면 전부)

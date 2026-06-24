@@ -4,6 +4,6 @@ public class EventExitButton : MonoBehaviour
 {
     public void OnClickLeave()
     {
-        GameManager.instance.LeaveEventLevel();
+        GameManager.instance.FinishEventLevel();
     }
 }
