@@ -7,6 +7,8 @@ public class PieceCanvas : MonoBehaviour
     [SerializeField] GameObject DamageText;
     public float duration = 1.0f;             // 텍스트 표시 시간
     [SerializeField] float moveSpeed;         // 텍스트가 위로 올라가는 속도
+    [SerializeField] Color buffColor = new Color(0f, 1f, 0.53f);    // #00FF88
+    [SerializeField] Color debuffColor = new Color(1f, 0.27f, 0.27f); // #FF4444
 
     GameObject currentText;
 
@@ -31,7 +33,19 @@ public class PieceCanvas : MonoBehaviour
     {
         GameObject textobj = Instantiate(DamageText, transform);
         BringToFrontOfRangeHatch(textobj.GetComponent<TextMeshProUGUI>());
-        StartCoroutine(DamageCoroutine(dmg, textobj));
+        textobj.GetComponent<TextMeshProUGUI>().text = dmg.ToString();
+        StartCoroutine(FloatAndFadeCoroutine(textobj));
+    }
+
+    // 버프/디버프가 적용될 때 어떤 효과인지(예: "독 (2/턴)") 데미지 텍스트와 같은 자리에 띄움
+    public void InvokeStatusText(string text, bool isBuff)
+    {
+        GameObject textobj = Instantiate(DamageText, transform);
+        TextMeshProUGUI tmp = textobj.GetComponent<TextMeshProUGUI>();
+        BringToFrontOfRangeHatch(tmp);
+        tmp.text = text;
+        tmp.color = isBuff ? buffColor : debuffColor;
+        StartCoroutine(FloatAndFadeCoroutine(textobj));
     }
 
     // RangeHatch 셰이더가 Queue=Transparent+1로 그려져서 기본 Transparent(3000) 큐인
@@ -42,10 +56,10 @@ public class PieceCanvas : MonoBehaviour
         foreach (Material mat in tmp.fontMaterials)
             mat.renderQueue = 3002;
     }
-    IEnumerator DamageCoroutine(int dmg, GameObject textobj)
+    IEnumerator FloatAndFadeCoroutine(GameObject textobj)
     {
         TextMeshProUGUI text = textobj.GetComponent<TextMeshProUGUI>();
-        text.text = dmg.ToString();
+        Color baseColor = text.color;
 
         Vector3 startPos = new Vector3(0, 2.0f, 0);
         float time = 0f;
@@ -56,8 +70,8 @@ public class PieceCanvas : MonoBehaviour
             time += Time.deltaTime;
             float t = time / duration;
             textobj.transform.localPosition = startPos + (v * t);
-            Color c = text.color;
-            c.a = 1f - t;
+            Color c = baseColor;
+            c.a = baseColor.a * (1f - t);
             text.color = c;
             yield return null;
         }

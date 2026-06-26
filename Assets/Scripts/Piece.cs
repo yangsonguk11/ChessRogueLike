@@ -15,11 +15,22 @@ public abstract class Piece : MonoBehaviour
     public int baseColDamage;
     public int ColDamageDelta => colDamage - baseColDamage;
     public int teamID;
-    public int shield;
+    int _shield;
+    public int shield
+    {
+        get => _shield;
+        set
+        {
+            _shield = value;
+            UpdateShieldVisual();
+        }
+    }
     public RangeInfoSO moveableRange;
 
     public List<StatusEffect> activeEffects = new List<StatusEffect>();
     public bool movedThisTurn;
+
+    OrbitRotator orbitRotator;
 
     public void AddStatusEffect(StatusEffect effect)
     {
@@ -60,6 +71,13 @@ public abstract class Piece : MonoBehaviour
     {
         baseColDamage = colDamage;
         teamID = pieceInfo.TeamID;
+        orbitRotator = GetComponent<OrbitRotator>();
+        UpdateShieldVisual();
+    }
+
+    void UpdateShieldVisual()
+    {
+        if (orbitRotator != null) orbitRotator.SetVisible(shield > 0);
     }
     public void SetPieceData(PieceData data)
     {
@@ -159,6 +177,12 @@ public abstract class Piece : MonoBehaviour
     {
         Animator anim = GetComponent<Animator>();
         if (anim != null) anim.SetTrigger(triggerName);
+    }
+
+    public void ShowStatusText(string text, bool isBuff)
+    {
+        if (pieceCanvas != null)
+            pieceCanvas.InvokeStatusText(text, isBuff);
     }
 
     public IEnumerator DeathCor()

@@ -878,7 +878,7 @@ MonoBehaviour:
   - type: 0
     icon: {fileID: 21300000, guid: b1891edbbbeec504a8689b5acd025ed7, type: 3}
   - type: 1
-    icon: {fileID: 0}
+    icon: {fileID: 21300000, guid: a25bd163e91d9bd45a1a9e9095619a35, type: 3}
   xSpacing: 150
   ySpacing: 100
 --- !u!1 &201299288
