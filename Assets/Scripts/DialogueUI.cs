@@ -13,13 +13,23 @@ public class DialogueUI : MonoBehaviour
     [SerializeField] string confirmButtonText = "확인";
     [SerializeField] float charInterval = 0.03f;     // 한 글자가 나오는 간격(초)
 
-    List<LevelData.DialogueLine> lines;
+    List<DialogueSO.Line> lines;
     int currentIndex;
     readonly List<GameObject> spawnedButtons = new List<GameObject>();
     Coroutine typingRoutine;
 
-    public void Show(List<LevelData.DialogueLine> dialogueLines)
+    public void Show(DialogueSO dialogue)
     {
+        if (dialogue == null) return;
+        Show(dialogue.lines);
+    }
+
+    public bool IsShowing => gameObject.activeSelf;
+
+    public void Show(List<DialogueSO.Line> dialogueLines)
+    {
+        if (IsShowing) return; // 이미 대화 중이면 새 대화로 덮어쓰지 않음
+
         lines = dialogueLines;
         currentIndex = 0;
         gameObject.SetActive(true);
@@ -37,13 +47,13 @@ public class DialogueUI : MonoBehaviour
             return;
         }
 
-        LevelData.DialogueLine line = lines[currentIndex];
+        DialogueSO.Line line = lines[currentIndex];
         if (speakerText != null) speakerText.text = line.speaker;
 
         typingRoutine = StartCoroutine(TypeText(line));
     }
 
-    IEnumerator TypeText(LevelData.DialogueLine line)
+    IEnumerator TypeText(DialogueSO.Line line)
     {
         if (dialogueText != null) dialogueText.text = "";
 
@@ -56,7 +66,7 @@ public class DialogueUI : MonoBehaviour
 
         typingRoutine = null;
 
-        bool isChoice = line.type == LevelData.DialogueLineType.Choice && line.choices != null && line.choices.Count > 0;
+        bool isChoice = line.type == DialogueSO.LineType.Choice && line.choices != null && line.choices.Count > 0;
         if (isChoice)
             SpawnChoiceButtons(line.choices);
         else
@@ -75,12 +85,12 @@ public class DialogueUI : MonoBehaviour
         SpawnButton(confirmButtonText, OnClickConfirm);
     }
 
-    void SpawnChoiceButtons(List<LevelData.DialogueChoice> choices)
+    void SpawnChoiceButtons(List<DialogueSO.Choice> choices)
     {
         foreach (var choice in choices)
         {
-            int nextLineIndex = choice.nextLineIndex;
-            SpawnButton(choice.choiceText, () => OnChoiceSelected(nextLineIndex));
+            DialogueSO.Choice c = choice;
+            SpawnButton(c.choiceText, () => OnChoiceSelected(c));
         }
     }
 
@@ -99,14 +109,21 @@ public class DialogueUI : MonoBehaviour
         spawnedButtons.Add(buttonObj);
     }
 
-    void OnChoiceSelected(int nextLineIndex)
+    void OnChoiceSelected(DialogueSO.Choice choice)
     {
-        if (nextLineIndex < 0)
+        if (choice.triggerCombat != null)
+        {
+            Hide();
+            Board.instance?.EnterCombat(choice.triggerCombat);
+            return;
+        }
+
+        if (choice.nextLineIndex < 0)
         {
             FinishDialogue();
             return;
         }
-        currentIndex = nextLineIndex;
+        currentIndex = choice.nextLineIndex;
         DisplayCurrentLine();
     }
 

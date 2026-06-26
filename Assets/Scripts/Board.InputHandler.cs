@@ -24,6 +24,12 @@ public partial class Board
         switch (boardmode)
         {
             case BoardMode.Inspect:
+                if (GetButtonScript(pos).GetPieceScript() is NPC npc && npc.dialogue != null)
+                {
+                    dialogueUI?.Show(npc.dialogue);
+                    return;
+                }
+
                 if (selectedButton == pos)
                 {
                     ClearSelectedButton();

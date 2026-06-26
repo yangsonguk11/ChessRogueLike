@@ -28,33 +28,6 @@ public class LevelData : ScriptableObject
     [Tooltip("eventType이 Rest일 때, 휴식 오브젝트를 놓을 위치")]
     public Vector2Int eventObjectPosition;
 
-    public enum DialogueLineType { Line, Choice }
-
-    [System.Serializable]
-    public class DialogueChoice
-    {
-        public string choiceText;
-
-        [Tooltip("이 선택지를 고른 후 진행할 dialogueLines의 인덱스 (-1이면 대화 종료)")]
-        public int nextLineIndex = -1;
-    }
-
-    [System.Serializable]
-    public class DialogueLine
-    {
-        public DialogueLineType type = DialogueLineType.Line;
-
-        [Tooltip("화자 이름")]
-        public string speaker;
-
-        [Tooltip("대사 내용")]
-        [TextArea]
-        public string text;
-
-        [Tooltip("type이 Choice일 때만 사용하는 선택지 목록 (2개 이상 가능)")]
-        public List<DialogueChoice> choices;
-    }
-
-    [Tooltip("eventType이 Unknown일 때 사용할 대화 내용")]
-    public List<DialogueLine> dialogueLines;
+    [Tooltip("eventType이 Unknown일 때 레벨 시작과 동시에 보여줄 대화. 비어있으면 시작 시 대화를 띄우지 않는다.")]
+    public DialogueSO dialogue;
 }

@@ -2,11 +2,15 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public partial class Board : MonoBehaviour
 {
     public static Board instance;
     public static bool playerDamagedThisTurn;
+
+    // 대화 선택지 등에서 강제로 진입시킬 전투. 씬 재로드 전에 채워두고, Start()에서 한 번 소비된다.
+    public static LevelData pendingLevel;
 
     [SerializeField] GameObject Background;
     [SerializeField] GameObject ButtonPrefab;
@@ -77,9 +81,18 @@ public partial class Board : MonoBehaviour
         }
 
         boardReady = true;
-        InitBoard(ResolveLevelData());
+        InitBoard(ResolveLevelData(pendingLevel));
+        pendingLevel = null;
         if (!IsEventLevel)
             TurnManager.instance.StartPlayerTurn(); // 이벤트 레벨은 턴이 흐르지 않음 — TurnManager는 기본 Player 상태로 둠
+    }
+
+    // 대화 선택지 등에서 호출: 지정한 전투 레벨로 즉시 진입시키기 위해 씬을 재로드한다.
+    public void EnterCombat(LevelData level)
+    {
+        if (level == null) return;
+        pendingLevel = level;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     public void SavePlayerPiecesToDataManager()
@@ -97,6 +110,12 @@ public partial class Board : MonoBehaviour
         }
         DataManager.Instance.currentData.pieceData = surviving;
         DataManager.Instance.SaveToFile();
+    }
+
+    // 씬 재로드 너머로 직접 넘겨받은 LevelData가 있으면 그걸 우선 사용한다 (대화 선택지로 강제 진입하는 전투 등).
+    LevelData ResolveLevelData(LevelData explicitLevel)
+    {
+        return explicitLevel != null ? explicitLevel : ResolveLevelData();
     }
 
     LevelData ResolveLevelData()
@@ -205,7 +224,7 @@ public partial class Board : MonoBehaviour
         }
         else if (currentEventType == LevelData.EventType.Unknown)
         {
-            dialogueUI?.Show(data.dialogueLines);
+            dialogueUI?.Show(data.dialogue);
         }
 
         FinishCardUsage();

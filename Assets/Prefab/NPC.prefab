@@ -124,8 +124,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6e29a5bc6d6404d44a268390a4e34d7e, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::NPC
+  dialogue: {fileID: 11400000, guid: e0e4a97b62b8417c97fc8dc28cf52961, type: 2}
   pieceInfo: {fileID: 11400000, guid: 299a250d94f3b21499e6430a87c95d61, type: 2}
   pieceCanvas: {fileID: 0}
   name: 

@@ -22,20 +22,4 @@ MonoBehaviour:
   levelType: 1
   eventType: 2
   eventObjectPosition: {x: 1, y: 3}
-  dialogueLines:
-  - type: 0
-    speaker: ...
-    text: "\uC74C"
-    choices: []
-  - type: 0
-    speaker: 
-    text: "\uC88B\uAD6C\uB9CC"
-    choices: []
-  - type: 1
-    speaker: 
-    text: 
-    choices:
-    - choiceText: "\u3139\u3139\u3139\u3139"
-      nextLineIndex: -1
-    - choiceText: "\u3141\u3141\u3141\u3141"
-      nextLineIndex: -1
+  dialogue: {fileID: 0}

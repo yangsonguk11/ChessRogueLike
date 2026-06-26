@@ -5,6 +5,9 @@ using UnityEngine;
 // teamID는 pieceInfo(예: NPCPieceInfo)에서 가져오므로 0/1과 다른 값(예: 2)으로 설정해둬야 한다.
 public class NPC : Piece
 {
+    [Tooltip("이 NPC를 클릭했을 때 보여줄 대화. 비어있으면 클릭해도 대화가 뜨지 않는다.")]
+    public DialogueSO dialogue;
+
     public override void Awake()
     {
         base.Awake();
