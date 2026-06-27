@@ -421,20 +421,33 @@ public class CardCanvas : MonoBehaviour
         UnSeenEvent?.SetActive(visible);
     }
 
-    // 전투 중 새 카드를 버린 더미에 실제로 추가하고, 추가되는 모습을 보여주는 연출을 함께 재생한다.
+    // 전투 중 새 카드를 실제로 추가한다. 화면 중심에 나타나 1초 머물다 targetZone으로 날아가는
+    // 카드 자체가 그대로 targetZone의 더미/손패에 들어가는 실제 카드이며, 별도의 연출용 인스턴스는 만들지 않는다.
+    // Hand로 추가하는 경우는 부채꼴 슬롯에 바로 맞춰 넣어야 해서 AlignCards로 즉시 배치한다.
     public void AddCardDuringCombat(string cardname, CardPositionZone targetZone = CardPositionZone.Discard)
     {
         GameObject obj = cardData.SpawnCard(GetComponent<RectTransform>(), cardname);
         if (obj == null) return;
 
-        Vector3 finalPos = GetZonePosition(targetZone);
-
         RectTransform rt = obj.GetComponent<RectTransform>();
-        rt.position = finalPos;
-        Discardcards.Add(rt);
+        rt.position = GetZonePosition(CardPositionZone.Center);
+        rt.localRotation = Quaternion.identity;
+
+        if (targetZone == CardPositionZone.Hand)
+        {
+            cards.Add(rt);
+            AlignCards();
+            NotifyPileChanged();
+            return;
+        }
+
+        if (targetZone == CardPositionZone.Deck)
+            Deckcards.Enqueue(rt);
+        else
+            Discardcards.Add(rt);
         NotifyPileChanged();
 
-        ShowAddedCard(cardname, targetZone);
+        StartCoroutine(ShowAddedCardRoutine(rt, GetZonePosition(targetZone)));
     }
 
     // 덱에 카드가 추가됐을 때 화면 중심에 잠깐 보여준 뒤 targetZone 위치로 이동시키는 연출용 카드.
@@ -448,13 +461,13 @@ public class CardCanvas : MonoBehaviour
         rt.position = GetZonePosition(CardPositionZone.Center);
         rt.localRotation = Quaternion.identity;
 
-        StartCoroutine(ShowAddedCardRoutine(rt, GetZonePosition(targetZone)));
+        StartCoroutine(ShowAddedCardRoutine(rt, GetZonePosition(targetZone), () => Destroy(rt.gameObject)));
     }
 
-    IEnumerator ShowAddedCardRoutine(RectTransform rt, Vector3 targetPos)
+    IEnumerator ShowAddedCardRoutine(RectTransform rt, Vector3 targetPos, Action onComplete = null)
     {
         yield return new WaitForSeconds(1f);
-        EnqueueMove(rt, targetPos, Quaternion.identity, 0.3f, () => Destroy(rt.gameObject));
+        EnqueueMove(rt, targetPos, Quaternion.identity, 0.3f, onComplete);
     }
 
     // count장을 손패에서 무작위로 뽑아 반환 (count <= 0이면 전부)
@@ -838,8 +851,9 @@ public class CardCanvas : MonoBehaviour
         CardPositionZone.Exile => ExileZone.position,
         CardPositionZone.NowUsing => CardNowUsingPos.position,
         CardPositionZone.Center => GetComponent<RectTransform>().position,
+        CardPositionZone.Hand => HandZone.GetComponent<RectTransform>().position,
         _ => DiscardZone.position
     };
 }
 
-public enum CardPositionZone { Deck, Discard, Exile, NowUsing, Center }
+public enum CardPositionZone { Deck, Discard, Exile, NowUsing, Center, Hand }

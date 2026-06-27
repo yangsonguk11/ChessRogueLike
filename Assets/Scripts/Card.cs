@@ -237,7 +237,7 @@ public enum CardZone { Hand, Deck, Discard, Any }
 /// <summary>코스트 변경 효과의 지속 시간</summary>
 public enum CostDuration { Permanent, ThisTurnOnly, OneUse }
 
-public enum EffectType { Move, Damage, Shield, Buff, DeBuff, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop, SelectAndDiscard, SelectAndChangeCost, SelectAndReturnToDeck }
+public enum EffectType { Move, Damage, Shield, Buff, DeBuff, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop, SelectAndDiscard, SelectAndChangeCost, SelectAndReturnToDeck, AddCard }
 public class CardEffect
 {
     public Board.BoardMode requiredMode;
@@ -270,6 +270,10 @@ public class CardEffect
     public int selectCount = 1;                 // 선택할 카드 수 (0 = 제한 없음)
     public int costChange = 0;                  // 코스트 변화량 (SelectAndChangeCost용)
     public CostDuration costDuration = CostDuration.Permanent; // 코스트 지속 시간
+
+    // AddCard 타입에서 사용: 추가할 카드와 추가될 위치 (CardCanvas.CardPositionZone 재사용)
+    public string addCardID;
+    public CardPositionZone addCardZone = CardPositionZone.Discard;
 
     public CardEffect(Board.BoardMode _requiredMode, EffectType _type, int _dmg, TargetLogic _targetlogic,
         RangeInfoSO _effectRange = null, bool _lockCasterForNext = false,

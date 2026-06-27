@@ -7127,7 +7127,7 @@ PrefabInstance:
       objectReference: {fileID: 11400000, guid: d564be8c8e84a494d8475bc69cc69160, type: 2}
     - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
       propertyPath: cardPrefabs.Array.size
-      value: 21
+      value: 22
       objectReference: {fileID: 0}
     - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
       propertyPath: 'cardPrefabs.Array.data[0]'
@@ -7220,7 +7220,7 @@ PrefabInstance:
     - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
       propertyPath: 'cardPrefabs.Array.data[21]'
       value: 
-      objectReference: {fileID: 8950236184682274632, guid: a678b4aa97d044cc9422d17e3c90adb9, type: 3}
+      objectReference: {fileID: 8950236184682274632, guid: 05cc7faf4ebac094e8a00dca055c4c40, type: 3}
     - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
       propertyPath: 'spritesPrefabs.Array.data[10]'
       value: 

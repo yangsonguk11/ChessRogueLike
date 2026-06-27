@@ -294,8 +294,6 @@ public partial class Board
             return;
         }
 
-        int resolvedDmg = ResolveDamageWithColDamage(cardEffect, GetButtonScript(selectedButton).GetPieceScript());
-
         switch (cardEffect.type)
         {
             case EffectType.Move:
@@ -311,17 +309,26 @@ public partial class Board
                 break;
             }
             case EffectType.Damage:
+            {
+                int resolvedDmg = ResolveDamageWithColDamage(cardEffect, GetButtonScript(selectedButton).GetPieceScript());
                 AttackPiece(selectedButton, targetPos, resolvedDmg, cardEffect);
                 ApplyStatusToTarget(targetPos, cardEffect);
                 break;
+            }
             case EffectType.Heal:
+            {
+                int resolvedDmg = ResolveDamageWithColDamage(cardEffect, GetButtonScript(selectedButton).GetPieceScript());
                 HealPiece(selectedButton, targetPos, resolvedDmg, cardEffect);
                 ApplyStatusToTarget(targetPos, cardEffect);
                 break;
+            }
             case EffectType.Shield:
+            {
+                int resolvedDmg = ResolveDamageWithColDamage(cardEffect, GetButtonScript(selectedButton).GetPieceScript());
                 ShieldPiece(selectedButton, targetPos, resolvedDmg, cardEffect);
                 ApplyStatusToTarget(targetPos, cardEffect);
                 break;
+            }
             case EffectType.SelfDamage:
                 SelfDamagePiece(selectedButton, cardEffect.dmg, cardEffect);
                 break;
@@ -362,6 +369,9 @@ public partial class Board
                 break;
             case EffectType.HandToDeckTop:
                 CardCanvas.instance.HandtoDeckTop(cardEffect.dmg);
+                break;
+            case EffectType.AddCard:
+                CardCanvas.instance.AddCardDuringCombat(cardEffect.addCardID, cardEffect.addCardZone);
                 break;
             default:
                 Debug.LogError("효과 타입을 찾지 못했습니다");
