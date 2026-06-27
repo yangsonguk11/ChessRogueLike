@@ -256,6 +256,38 @@ public partial class Board
         StartMotionQueue();
     }
 
+    // 캐스터(시전자) 없이 여러 기물에게 동시에 피해를 준다. 대화 선택지처럼 보드 위에 시전자가 없는 상황에 사용.
+    void AreaAttackPiece(List<Vector2> targets, int dmg, CardEffect cardEffect = null)
+    {
+        if (targets.Count == 0) return;
+
+        var hitTargets = new List<(Piece piece, bool died)>();
+        var textCoroutines = new List<IEnumerator>();
+        var deathCoroutines = new List<IEnumerator>();
+
+        foreach (Vector2 pos in targets)
+        {
+            Piece p = GetButtonScript(pos).GetPieceScript();
+            if (p == null) continue;
+            int hpLeft = p.GetDamage(dmg);
+            if (p.teamID == 0) playerDamagedThisTurn = true;
+            bool died = hpLeft <= 0;
+            hitTargets.Add((p, died));
+            textCoroutines.Add(p.DamageText(dmg));
+            if (died)
+            {
+                if (p.teamID == 1) enemyPositions.Remove(pos);
+                deathCoroutines.Add(p.DeathCor());
+            }
+        }
+
+        motionQueue.Enqueue(PieceAreaAttackCor(null, hitTargets, cardEffect?.animTrigger, cardEffect, textCoroutines));
+        foreach (var d in deathCoroutines)
+            motionQueue.Enqueue(d);
+
+        StartMotionQueue();
+    }
+
     void AreaShieldPiece(List<Vector2> targets, int dmg, CardEffect cardEffect = null)
     {
         Button casterBtn = GetButtonScript(selectedButton);

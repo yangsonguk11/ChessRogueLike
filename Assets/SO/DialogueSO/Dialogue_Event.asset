@@ -28,6 +28,10 @@ MonoBehaviour:
     - choiceText: "\u3139\u3139\u3139\u3139"
       nextLineIndex: -1
       triggerCombat: {fileID: 11400000, guid: 19387901c67acba43a1c093a9bdcb7e8, type: 2}
+      healAmount: 0
+      damageAmount: 2
     - choiceText: "\u3141\u3141\u3141\u3141"
       nextLineIndex: -1
       triggerCombat: {fileID: 0}
+      healAmount: 3
+      damageAmount: 0

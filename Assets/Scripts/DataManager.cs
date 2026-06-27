@@ -83,6 +83,7 @@ public class DataManager : MonoBehaviour
     {
         currentData.deckCardIDs.Add(cardname);
         SaveToFile();
+        CardCanvas.instance?.ShowAddedCard(cardname, CardPositionZone.Discard);
     }
 
     public void GenerateMap(List<NodeRow> mapdata)

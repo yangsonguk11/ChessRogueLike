@@ -16,7 +16,7 @@ public class ButtonInfo : MonoBehaviour
     {
         Piece p = button.GetPiece().GetComponent<Piece>();
 
-        if (p is RestObject)
+        if (p is RestObject restObject)
         {
             piecename.text = "휴식 지점";
             team.text = "";
@@ -24,7 +24,7 @@ public class ButtonInfo : MonoBehaviour
             shield.text = "";
             colDamage.text = "";
             statusEffects.text = "";
-            SetRestButtonActive(true);
+            SetRestButtonActive(!restObject.used);
             return;
         }
 

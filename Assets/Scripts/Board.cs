@@ -91,8 +91,52 @@ public partial class Board : MonoBehaviour
     public void EnterCombat(LevelData level)
     {
         if (level == null) return;
+        SavePlayerPiecesToDataManager(); // 대화 중 받은 피해/회복이 다음 씬에 그대로 이어지도록 먼저 저장
         pendingLevel = level;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    // teamID==0인 모든 기물을 회복시킨다. amount가 음수면 각자의 최대 HP까지(풀힐), 0 이상이면 그 수치만큼만 회복시킨다.
+    // caster는 힐 애니메이션의 시전자로만 쓰이며 없어도(null) 동작한다 (대화 선택지 등 보드에 선택된 기물이 없는 상황 포함).
+    public void HealAllAllies(Piece caster = null, int amount = -1)
+    {
+        var healedPieces = new List<Piece>();
+        var textCoroutines = new List<IEnumerator>();
+
+        for (int x = 0; x < N; x++)
+            for (int y = 0; y < M; y++)
+            {
+                Piece p = GetPieceAt(new Vector2(x, y));
+                if (p == null || p.teamID != 0) continue;
+
+                int healAmount = amount < 0 ? p.maxhp - p.hp : Mathf.Min(amount, p.maxhp - p.hp);
+
+                p.GetHeal(healAmount);
+                healedPieces.Add(p);
+                textCoroutines.Add(p.HealText(healAmount));
+            }
+
+        if (healedPieces.Count == 0) return;
+
+        motionQueue.Enqueue(PieceAreaHealCor(caster, healedPieces, null, null, textCoroutines));
+        StartMotionQueue();
+    }
+
+    // teamID==0인 모든 기물에게 amount만큼 피해를 준다. 시전자가 없는 AreaAttackPiece 오버로드를 사용한다.
+    public void DamageAllAllies(int amount)
+    {
+        if (amount <= 0) return;
+
+        var targets = new List<Vector2>();
+        for (int x = 0; x < N; x++)
+            for (int y = 0; y < M; y++)
+            {
+                Piece p = GetPieceAt(new Vector2(x, y));
+                if (p != null && p.teamID == 0)
+                    targets.Add(new Vector2(x, y));
+            }
+
+        AreaAttackPiece(targets, amount);
     }
 
     public void SavePlayerPiecesToDataManager()

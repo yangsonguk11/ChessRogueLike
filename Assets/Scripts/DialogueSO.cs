@@ -17,6 +17,15 @@ public class DialogueSO : ScriptableObject
 
         [Tooltip("설정하면 이 선택지를 고르는 즉시 대화를 닫고 지정한 전투 레벨로 진입한다 (씬을 다시 로드함).")]
         public LevelData triggerCombat;
+
+        [Tooltip("0이면 회복 없음, 양수면 그 수치만큼, 음수(예: -1)면 아군 전체를 최대 HP까지(풀힐) 회복시킨다.")]
+        public int healAmount;
+
+        [Tooltip("0보다 크면 이 선택지를 고르는 즉시 아군 전체에 이 수치만큼 피해를 준다.")]
+        public int damageAmount;
+
+        [Tooltip("비어있지 않으면 이 목록 중 하나를 무작위로 골라 덱에 추가한다 (CardDatabase에 등록된 카드 이름).")]
+        public List<string> cardPool;
     }
 
     [System.Serializable]

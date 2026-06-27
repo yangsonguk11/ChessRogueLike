@@ -29,6 +29,12 @@ public class PieceCanvas : MonoBehaviour
         currentText = textobj;
 
     }
+    public void ClearActionText()
+    {
+        Destroy(currentText);
+        currentText = null;
+    }
+
     public void InvokeDamageText(int dmg)
     {
         GameObject textobj = Instantiate(DamageText, transform);

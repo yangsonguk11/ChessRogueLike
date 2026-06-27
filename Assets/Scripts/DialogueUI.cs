@@ -111,6 +111,18 @@ public class DialogueUI : MonoBehaviour
 
     void OnChoiceSelected(DialogueSO.Choice choice)
     {
+        if (choice.damageAmount > 0)
+            Board.instance?.DamageAllAllies(choice.damageAmount);
+
+        if (choice.healAmount != 0)
+            Board.instance?.HealAllAllies(amount: choice.healAmount);
+
+        if (choice.cardPool != null && choice.cardPool.Count > 0)
+        {
+            string cardName = choice.cardPool[Random.Range(0, choice.cardPool.Count)];
+            DataManager.Instance.AddCardOnDeck(cardName);
+        }
+
         if (choice.triggerCombat != null)
         {
             Hide();

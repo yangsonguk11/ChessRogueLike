@@ -24,10 +24,14 @@ public partial class Board
         switch (boardmode)
         {
             case BoardMode.Inspect:
-                if (GetButtonScript(pos).GetPieceScript() is NPC npc && npc.dialogue != null)
+                if (GetButtonScript(pos).GetPieceScript() is NPC npc)
                 {
-                    dialogueUI?.Show(npc.dialogue);
-                    return;
+                    DialogueSO npcDialogue = npc.Dialogue; // Dialogue는 읽을 때마다 클릭 횟수를 올리므로 한 번만 읽는다
+                    if (npcDialogue != null)
+                    {
+                        dialogueUI?.Show(npcDialogue);
+                        return;
+                    }
                 }
 
                 if (selectedButton == pos)

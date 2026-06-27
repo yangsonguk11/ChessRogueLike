@@ -91,7 +91,7 @@ public class CardCanvas : MonoBehaviour
             {
                 var rt = obj.GetComponent<RectTransform>();
                 Discardcards.Add(rt);
-                rt.position = DeckZone.position;
+                rt.position = GetZonePosition(CardPositionZone.Deck);
             }
         }
         AlignCards();
@@ -144,7 +144,7 @@ public class CardCanvas : MonoBehaviour
         CardDragArrow.instance?.Show(nowusingCard);
         usingCardMoving = true;
         RectTransform usingCard = nowusingCard;
-        EnqueueMove(usingCard, CardNowUsingPos.position, Quaternion.identity, 0.35f, () =>
+        EnqueueMove(usingCard, GetZonePosition(CardPositionZone.NowUsing), Quaternion.identity, 0.35f, () =>
         {
             usingCardMoving = false;
             if (nowusingCard == null) return;
@@ -189,7 +189,7 @@ public class CardCanvas : MonoBehaviour
     {
         CancelCardMove(card);
         Discardcards.Add(card);
-        card.position = DiscardZone.position;
+        card.position = GetZonePosition(CardPositionZone.Discard);
         cards.Remove(card);
         NotifyPileChanged();
     }
@@ -213,7 +213,7 @@ public class CardCanvas : MonoBehaviour
         {
             Vector3 targetPos = c.position;
             Quaternion targetRot = c.localRotation;
-            c.position = DeckZone.position;
+            c.position = GetZonePosition(CardPositionZone.Deck);
             c.localRotation = Quaternion.identity;
             EnqueueMove(c, targetPos, targetRot, 0.3f);
         }
@@ -284,11 +284,11 @@ public class CardCanvas : MonoBehaviour
             if (card.exileOnUse)
             {
                 Exilecards.Add(usedCard);
-                EnqueueMove(usedCard, ExileZone.position, Quaternion.identity, 0.25f, () => isCardEffecting = false);
+                EnqueueMove(usedCard, GetZonePosition(CardPositionZone.Exile), Quaternion.identity, 0.25f, () => isCardEffecting = false);
             }
             else
             {
-                EnqueueMove(usedCard, DiscardZone.position, Quaternion.identity, 0.15f, () =>
+                EnqueueMove(usedCard, GetZonePosition(CardPositionZone.Discard), Quaternion.identity, 0.15f, () =>
                 {
                     Discardcards.Add(usedCard);
                     isCardEffecting = false;
@@ -388,7 +388,7 @@ public class CardCanvas : MonoBehaviour
         {
             Vector3 targetPos = c.position;
             Quaternion targetRot = c.localRotation;
-            c.position = DeckZone.position;
+            c.position = GetZonePosition(CardPositionZone.Deck);
             c.localRotation = Quaternion.identity;
             EnqueueMove(c, targetPos, targetRot, 0.3f);
         }
@@ -402,7 +402,7 @@ public class CardCanvas : MonoBehaviour
 
         foreach (var card in shuffledCards)
         {
-            card.position = DeckZone.position;
+            card.position = GetZonePosition(CardPositionZone.Deck);
             Deckcards.Enqueue(card);
         }
 
@@ -419,6 +419,42 @@ public class CardCanvas : MonoBehaviour
     public void SetCombatUIVisible(bool visible)
     {
         UnSeenEvent?.SetActive(visible);
+    }
+
+    // 전투 중 새 카드를 버린 더미에 실제로 추가하고, 추가되는 모습을 보여주는 연출을 함께 재생한다.
+    public void AddCardDuringCombat(string cardname, CardPositionZone targetZone = CardPositionZone.Discard)
+    {
+        GameObject obj = cardData.SpawnCard(GetComponent<RectTransform>(), cardname);
+        if (obj == null) return;
+
+        Vector3 finalPos = GetZonePosition(targetZone);
+
+        RectTransform rt = obj.GetComponent<RectTransform>();
+        rt.position = finalPos;
+        Discardcards.Add(rt);
+        NotifyPileChanged();
+
+        ShowAddedCard(cardname, targetZone);
+    }
+
+    // 덱에 카드가 추가됐을 때 화면 중심에 잠깐 보여준 뒤 targetZone 위치로 이동시키는 연출용 카드.
+    // 실제 손패/덱/버린 더미 풀에는 들어가지 않는 시각 효과 전용 인스턴스라 애니메이션이 끝나면 파괴한다.
+    public void ShowAddedCard(string cardname, CardPositionZone targetZone)
+    {
+        GameObject obj = cardData.SpawnCard(GetComponent<RectTransform>(), cardname);
+        if (obj == null) return;
+
+        RectTransform rt = obj.GetComponent<RectTransform>();
+        rt.position = GetZonePosition(CardPositionZone.Center);
+        rt.localRotation = Quaternion.identity;
+
+        StartCoroutine(ShowAddedCardRoutine(rt, GetZonePosition(targetZone)));
+    }
+
+    IEnumerator ShowAddedCardRoutine(RectTransform rt, Vector3 targetPos)
+    {
+        yield return new WaitForSeconds(1f);
+        EnqueueMove(rt, targetPos, Quaternion.identity, 0.3f, () => Destroy(rt.gameObject));
     }
 
     // count장을 손패에서 무작위로 뽑아 반환 (count <= 0이면 전부)
@@ -448,7 +484,7 @@ public class CardCanvas : MonoBehaviour
         foreach (var card in PickRandomCardsFromHand(count))
         {
             cards.Remove(card);
-            card.position = DeckZone.position;
+            card.position = GetZonePosition(CardPositionZone.Deck);
             Deckcards.Enqueue(card);
         }
         var list = Deckcards.ToList().OrderBy(_ => UnityEngine.Random.value).ToList();
@@ -469,7 +505,7 @@ public class CardCanvas : MonoBehaviour
         foreach (var card in toReturn)
         {
             cards.Remove(card);
-            card.position = DeckZone.position;
+            card.position = GetZonePosition(CardPositionZone.Deck);
         }
         var newDeck = toReturn.Concat(Deckcards.ToList()).ToList();
         Deckcards = new Queue<RectTransform>(newDeck);
@@ -500,7 +536,7 @@ public class CardCanvas : MonoBehaviour
         if (nowusingCard == card)
             nowusingCard = null;
         Exilecards.Add(card);
-        EnqueueMove(card, ExileZone.position, Quaternion.identity, 0.25f);
+        EnqueueMove(card, GetZonePosition(CardPositionZone.Exile), Quaternion.identity, 0.25f);
         if (wasInHand)
             AlignCards();
         NotifyPileChanged();
@@ -628,7 +664,7 @@ public class CardCanvas : MonoBehaviour
         bool wasInHand = RemoveCardFromAnyZone(card);
         card.SetParent(GetComponent<RectTransform>(), true);
         Discardcards.Add(card);
-        EnqueueMove(card, DiscardZone.position, Quaternion.identity, 0.3f);
+        EnqueueMove(card, GetZonePosition(CardPositionZone.Discard), Quaternion.identity, 0.3f);
         if (wasInHand) AlignCards();
         NotifyPileChanged();
     }
@@ -641,7 +677,7 @@ public class CardCanvas : MonoBehaviour
         var newDeckList = Deckcards.ToList();
         newDeckList.Add(card);
         Deckcards = new Queue<RectTransform>(newDeckList);
-        EnqueueMove(card, DeckZone.position, Quaternion.identity, 0.3f);
+        EnqueueMove(card, GetZonePosition(CardPositionZone.Deck), Quaternion.identity, 0.3f);
         if (wasInHand) AlignCards();
         NotifyPileChanged();
     }
@@ -793,4 +829,17 @@ public class CardCanvas : MonoBehaviour
         if (excludeCard >= 0)
             cards[excludeCard].SetAsLastSibling();
     }
+
+    // 카드가 화면상에 존재할 수 있는 위치. enum으로 받아 GetZonePosition으로 실제 Vector3를 얻는다.
+    Vector3 GetZonePosition(CardPositionZone zone) => zone switch
+    {
+        CardPositionZone.Deck => DeckZone.position,
+        CardPositionZone.Discard => DiscardZone.position,
+        CardPositionZone.Exile => ExileZone.position,
+        CardPositionZone.NowUsing => CardNowUsingPos.position,
+        CardPositionZone.Center => GetComponent<RectTransform>().position,
+        _ => DiscardZone.position
+    };
 }
+
+public enum CardPositionZone { Deck, Discard, Exile, NowUsing, Center }
