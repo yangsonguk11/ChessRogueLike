@@ -125,6 +125,9 @@ public abstract class Card : MonoBehaviour, ISelectable
     public virtual string GetCannotUseReason() => "사용할 수 없습니다";
     public virtual void Execute() { }
 
+    // 첫 번째 CardEffect의 requiredMode로 보드/기물 타겟팅이 필요한 카드인지 판단
+    public bool NeedsTargeting() => effects.Count > 0 && effects[0].requiredMode != Board.BoardMode.Inspect;
+
     public bool IsSelectable()
     {
         return true;
@@ -189,7 +192,6 @@ public abstract class Card : MonoBehaviour, ISelectable
         }
         if (!selected)
         {
-            CardDragArrow.instance?.Show(GetComponent<RectTransform>());
             CardCanvas.instance.CardSelected(handNumber);
             _canvasGroup.blocksRaycasts = false;
         }

@@ -141,15 +141,14 @@ public class CardCanvas : MonoBehaviour
         Card cardComp = nowusingCard.GetComponent<Card>();
         if (cardComp.effects.Any(e => e.requiredMode == Board.BoardMode.command || e.requiredMode == Board.BoardMode.targeting))
             board.UseCard(cardComp);
-        CardDragArrow.instance?.Show(nowusingCard);
+        if (cardComp.NeedsTargeting())
+            CardDragArrow.instance?.Show(nowusingCard);
         usingCardMoving = true;
         RectTransform usingCard = nowusingCard;
         EnqueueMove(usingCard, GetZonePosition(CardPositionZone.NowUsing), Quaternion.identity, 0.35f, () =>
         {
             usingCardMoving = false;
             if (nowusingCard == null) return;
-            if (board.boardmode == Board.BoardMode.Inspect)
-                board.UseCard(usingCard.GetComponent<Card>());
             if (pendingFirstTarget.x >= 0)
             {
                 Vector2 target = pendingFirstTarget;
@@ -718,7 +717,12 @@ public class CardCanvas : MonoBehaviour
         Card card = nowusingCard.GetComponent<Card>();
         bool needsTargeting = card.effects.Any(e =>
             e.requiredMode == Board.BoardMode.command || e.requiredMode == Board.BoardMode.targeting);
-        if (!needsTargeting) return;
+        if (!needsTargeting)
+        {
+            if (board.boardmode == Board.BoardMode.Inspect)
+                board.UseCard(card);
+            return;
+        }
 
         Vector2 boardPos = FindBoardPosAtScreen(screenPos);
 
