@@ -16,8 +16,8 @@ public class LifeDrainCard : Card
             TargetLogic.AllEnemiesInRange,
             effectRange[0]
         )
-        { healOnHit = 2, animTrigger = "AreaAttack" });
+        { healOnHit = true, animTrigger = "AreaAttack" });
     }
 
-    public override string EffectDescription => $"범위 내 적에게 {EffectiveDmg(effects[0])} 피해를 주고, 적중한 적마다 {effects[0].healOnHit}를 회복합니다.";
+    public override string EffectDescription => $"범위 내 적에게 {EffectiveDmg(effects[0])} 피해를 주고, 적중한 적마다 입힌 피해만큼 회복합니다.";
 }

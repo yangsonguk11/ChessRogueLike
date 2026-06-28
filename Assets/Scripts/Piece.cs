@@ -126,12 +126,12 @@ public abstract class Piece : MonoBehaviour
 
         return hp;
     }
-    public int GetHeal(int damage)
+    // 실제로 회복된 양(최대 체력 클램프 적용)을 반환한다. 호출부는 이 반환값을 회복 텍스트 표시에 그대로 써야 한다.
+    public int GetHeal(int amount)
     {
-        hp += damage;
-        if (hp > maxhp)
-            hp = maxhp;
-        return hp;
+        int healed = Mathf.Clamp(amount, 0, Mathf.Max(0, maxhp - hp));
+        hp += healed;
+        return healed;
     }
     public int GetShield(int damage)
     {

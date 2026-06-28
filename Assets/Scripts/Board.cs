@@ -109,11 +109,10 @@ public partial class Board : MonoBehaviour
                 Piece p = GetPieceAt(new Vector2(x, y));
                 if (p == null || p.teamID != 0) continue;
 
-                int healAmount = amount < 0 ? p.maxhp - p.hp : Mathf.Min(amount, p.maxhp - p.hp);
-
-                p.GetHeal(healAmount);
+                int requestedAmount = amount < 0 ? p.maxhp - p.hp : amount;
+                int healed = p.GetHeal(requestedAmount);
                 healedPieces.Add(p);
-                textCoroutines.Add(p.HealText(healAmount));
+                textCoroutines.Add(p.HealText(healed));
             }
 
         if (healedPieces.Count == 0) return;

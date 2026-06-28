@@ -21,7 +21,7 @@ public partial class Board
                 Piece p1 = button1script.GetPiece().GetComponent<Piece>();
                 Piece p2 = piece2.GetComponent<Piece>();
                 bool attacked = p1.teamID != p2.teamID && !(cardEffect?.noMoveAttack ?? false)
-                    && MoveAttack(p1, p2, button1script, button2script);
+                    && MoveAttack(p1, p2, button1script, button2script, cardEffect);
                 if (!attacked && IsLockedCasterActive())
                     lockedCaster = pos1; // 아군 충돌, 또는 이동공격 도착 칸이 없어 실패: 이동 실패, 원래 위치로 복구
             }
@@ -38,7 +38,7 @@ public partial class Board
     }
 
     // 이동공격 도착 칸을 찾지 못하면(후보 전부 막힘) false를 반환해 호출부가 일반 이동 실패와 동일하게 처리하게 함.
-    bool MoveAttack(Piece pScript1, Piece pScript2, Button bScript1, Button bScript2)
+    bool MoveAttack(Piece pScript1, Piece pScript2, Button bScript1, Button bScript2, CardEffect cardEffect = null)
     {
         Vector2 adjacentPos = GetAdjacentLocation(bScript1.GetLocation(), bScript2.GetLocation());
         if (adjacentPos.x < 0) return false; // 도착할 칸이 없음: 공격 취소, 이동 실패로 처리
@@ -140,6 +140,16 @@ public partial class Board
             motionQueue.Enqueue(pScript1.ShieldText(currentActiveCard.moveAttackShieldAmount));
         }
 
+        if (cardEffect != null && cardEffect.healOnHit)
+        {
+            int totalDmgDealt = dmg * (1 + splashResults.Count);
+            if (totalDmgDealt > 0)
+            {
+                int healed = pScript1.GetHeal(totalDmgDealt);
+                motionQueue.Enqueue(pScript1.HealText(healed));
+            }
+        }
+
         StartMotionQueue();
         return true;
     }
@@ -169,6 +179,11 @@ public partial class Board
                 if (pScript2.teamID == 1) enemyPositions.Remove(pos2);
                 motionQueue.Enqueue(pScript2.DeathCor());
             }
+            if (cardEffect != null && cardEffect.healOnHit && dmg > 0)
+            {
+                int healed = pScript1.GetHeal(dmg);
+                motionQueue.Enqueue(pScript1.HealText(healed));
+            }
         }
         StartMotionQueue();
     }
@@ -177,12 +192,10 @@ public partial class Board
     {
         if (TryGetCasterAndTarget(pos1, pos2, out Piece pScript1, out Piece pScript2))
         {
-            int hpLeft = pScript2.GetHeal(dmg);
+            int healed = pScript2.GetHeal(dmg);
 
             motionQueue.Enqueue(PieceHealCor(pScript1, pScript2, cardEffect,
-                new List<IEnumerator> { pScript2.HealText(dmg) }));
-            if (hpLeft <= 0)
-                motionQueue.Enqueue(pScript2.DeathCor());
+                new List<IEnumerator> { pScript2.HealText(healed) }));
         }
         StartMotionQueue();
     }
@@ -239,8 +252,8 @@ public partial class Board
                 if (p.teamID == 1) enemyPositions.Remove(pos);
                 deathCoroutines.Add(p.DeathCor());
             }
-            if (cardEffect != null && cardEffect.healOnHit > 0)
-                totalHeal += cardEffect.healOnHit;
+            if (cardEffect != null && cardEffect.healOnHit)
+                totalHeal += dmg;
         }
 
         motionQueue.Enqueue(PieceAreaAttackCor(caster, hitTargets, cardEffect?.animTrigger, cardEffect, textCoroutines));
@@ -249,8 +262,8 @@ public partial class Board
 
         if (totalHeal > 0 && caster != null)
         {
-            caster.GetHeal(totalHeal);
-            motionQueue.Enqueue(caster.HealText(totalHeal));
+            int healed = caster.GetHeal(totalHeal);
+            motionQueue.Enqueue(caster.HealText(healed));
         }
 
         StartMotionQueue();
@@ -320,9 +333,9 @@ public partial class Board
         {
             Piece p = GetButtonScript(pos).GetPieceScript();
             if (p == null) continue;
-            p.GetHeal(dmg);
+            int healed = p.GetHeal(dmg);
             healedPieces.Add(p);
-            textCoroutines.Add(p.HealText(dmg));
+            textCoroutines.Add(p.HealText(healed));
         }
 
         motionQueue.Enqueue(PieceAreaHealCor(caster, healedPieces, cardEffect?.animTrigger, cardEffect, textCoroutines));

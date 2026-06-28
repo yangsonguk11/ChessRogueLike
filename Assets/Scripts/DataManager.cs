@@ -45,9 +45,9 @@ public class DataManager : MonoBehaviour
             currentData.deckCardIDs = new List<string>()
             {
                 "AttackCard",
-                "AttackCard",
+                "BloodChargeCard",
                 "DrawCard",
-                "DefenseCard",
+                "LifeDrainCard",
                 "FetchAttackCard",
             };
 

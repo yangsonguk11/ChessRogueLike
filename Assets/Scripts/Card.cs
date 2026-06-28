@@ -259,7 +259,7 @@ public class CardEffect
 
     public bool useColDamageAsDmg;           // true면 dmg 대신 시전자의 colDamage 사용
     public bool noMoveAttack;               // true면 이동 시 충돌 공격 불가
-    public int healOnHit;                   // 적을 공격할 때마다 시전자 회복량
+    public bool healOnHit;                  // true면 적중 시 입힌 피해만큼 시전자 회복 (일반 공격/이동공격 모두 적용)
     public string animTrigger;              // 효과 시전 시 재생할 Animator 트리거 (null이면 기본 코루틴 애니메이션 사용)
 
     // ApplyTurnEffect 타입에서 사용: 지정한 타이밍에 실행할 CardEffect와 지속 턴 수

@@ -91,8 +91,8 @@ public partial class Board
         switch (ce.type)
         {
             case EffectType.Heal:
-                target.GetHeal(ce.dmg);
-                yield return target.HealText(ce.dmg);
+                int healed = target.GetHeal(ce.dmg);
+                yield return target.HealText(healed);
                 break;
             case EffectType.Shield:
                 target.GetShield(ce.dmg);
