@@ -11,6 +11,7 @@ public class AreaHealCard : Card
         Name = "AreaHealCard";
         Cost = 2;
         type = CardType.Skill;
+        dragDropTarget = DragDropTarget.AnyTile; // 마우스로 지정한 칸을 중심으로 즉시 발동 (캐스터 선택 불필요)
 
         RangeInfoSO targetRange = effectRange.Count > 1 ? effectRange[1] : null;
         bool useMovement = targetRange == null;

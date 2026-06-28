@@ -44,7 +44,7 @@ public class DataManager : MonoBehaviour
             if (currentData.visitedNodeX == null) currentData.visitedNodeX = new List<int>();
             currentData.deckCardIDs = new List<string>()
             {
-                "AttackCard",
+                "ImmobilizeCard",
                 "BloodChargeCard",
                 "DrawCard",
                 "LifeDrainCard",

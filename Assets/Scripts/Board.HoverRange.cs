@@ -11,8 +11,11 @@ public partial class Board
 
     public void ButtonHovered(Vector2 pos)
     {
-        // AoE 카드 범위 미리보기 (시전자 선택 후)
-        if (pendingEffects.Count > 0 && isSelectedButtonActive())
+        // AoE 카드 범위 미리보기. MouseCentered는 캐스터를 선택하지 않고 targeting 클릭 한 번으로 바로 발동하므로
+        // 캐스터 선택 전에도 마우스 위치 기준으로 미리보기를 보여줘야 함
+        bool previewableWithoutCaster = pendingEffects.Count > 0 &&
+            pendingEffects.Peek().areaTargetMode == AreaTargetMode.MouseCentered;
+        if (pendingEffects.Count > 0 && (isSelectedButtonActive() || previewableWithoutCaster))
         {
             CardEffect effect = pendingEffects.Peek();
             if (effect.areaTargetMode != AreaTargetMode.Fixed)

@@ -60,6 +60,7 @@ public class CardCanvas : MonoBehaviour
     public RectTransform nowusingCard;
     public bool isCardEffecting;
     bool usingCardMoving;
+    bool nowUsingCardHeld; // true면 nowusingCard가 보드 커밋 없이 마우스에 들려있는 상태
     List<RectTransform> pendingDrawCards = new List<RectTransform>();
     Coroutine batchDrawCoroutine;
     Vector2 pendingFirstTarget = new Vector2(-1, -1);
@@ -138,6 +139,15 @@ public class CardCanvas : MonoBehaviour
         nowusingCard = cardToUse;
         AlignCards();
         HandZone.GetComponent<Image>().raycastTarget = false;
+        CommitNowUsingCard();
+        return true;
+    }
+
+    // nowusingCard를 보드 사용(타겟팅 카드면 board.UseCard)과 NowUsing 위치 이동 애니메이션으로 커밋.
+    // 최초 사용 시와, HandZone으로 되돌아와 재커밋할 때 공통으로 쓰인다.
+    void CommitNowUsingCard()
+    {
+        nowUsingCardHeld = false;
         Card cardComp = nowusingCard.GetComponent<Card>();
         if (cardComp.effects.Any(e => e.requiredMode == Board.BoardMode.command || e.requiredMode == Board.BoardMode.targeting))
             board.UseCard(cardComp);
@@ -156,7 +166,47 @@ public class CardCanvas : MonoBehaviour
                 board.ButtonClicked(target);
             }
         });
-        return true;
+    }
+
+    // 이미 커밋된 nowusingCard를 매 드래그 프레임 처리. HandZone의 raycastTarget은 꺼진 채로 유지해야
+    // 보드가 호버를 인식할 수 있으므로, hovered 목록이 아니라 HandZone의 RectTransform 영역으로 직접 판정한다.
+    public void HandleCommittedCardDrag(Vector2 screenPos)
+    {
+        bool overHandZone = IsScreenPointInHandZone(screenPos);
+
+        if (!nowUsingCardHeld)
+        {
+            if (!overHandZone)
+                RevertNowUsingCardToHeld();
+        }
+        else
+        {
+            // NowUsing 위치에서 마우스로 날아오는 애니메이션이 끝난 뒤에만 직접 마우스를 따라가게 함
+            if (!usingCardMoving)
+                nowusingCard.position = screenPos;
+            if (overHandZone)
+                CommitNowUsingCard();
+        }
+    }
+
+    bool IsScreenPointInHandZone(Vector2 screenPos)
+    {
+        return RectTransformUtility.RectangleContainsScreenPoint(HandZone.GetComponent<RectTransform>(), screenPos, null);
+    }
+
+    // nowusingCard의 보드 사용 커밋을 취소하고, cards 리스트를 거치지 않고 NowUsing 위치에서 마우스로
+    // 날아오는 애니메이션을 거쳐 마우스에 들린 상태로 되돌린다.
+    void RevertNowUsingCardToHeld()
+    {
+        if (isCardEffecting || board.EffectApplied) return;
+
+        pendingFirstTarget = new Vector2(-1, -1);
+        board.CancelCardUsage(); // Board.UseCard가 한 일을 그대로 반대로 되돌림
+        CardDragArrow.instance?.Hide();
+        nowUsingCardHeld = true;
+
+        usingCardMoving = true;
+        EnqueueMove(nowusingCard, Mouse.current.position.ReadValue(), Quaternion.identity, 0.35f, () => usingCardMoving = false);
     }
 
     public void ClearnowusingCard()         
@@ -255,6 +305,7 @@ public class CardCanvas : MonoBehaviour
 
         RectTransform card = nowusingCard;
         nowusingCard = null;
+        nowUsingCardHeld = false;
         int originalIndex = card.GetComponent<Card>().handNumber;
         cards.Insert(Mathf.Clamp(originalIndex, 0, cards.Count), card);
         AlignCards();
@@ -714,6 +765,11 @@ public class CardCanvas : MonoBehaviour
     public void OnDragCardReleased(Vector2 screenPos)
     {
         if (nowusingCard == null) return;
+        if (nowUsingCardHeld)
+        {
+            CancelCardUsage();
+            return;
+        }
         Card card = nowusingCard.GetComponent<Card>();
         bool needsTargeting = card.effects.Any(e =>
             e.requiredMode == Board.BoardMode.command || e.requiredMode == Board.BoardMode.targeting);

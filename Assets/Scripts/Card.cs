@@ -210,9 +210,15 @@ public abstract class Card : MonoBehaviour, ISelectable
 
     public void MouseDrag(BaseEventData data)
     {
-        if (CardCanvas.instance.nowusingCard == GetComponent<RectTransform>() || handNumber < 0 || !selected)
+        if (handNumber < 0 || !selected)
             return;
         PointerEventData pointerData = (PointerEventData)data;
+
+        if (CardCanvas.instance.nowusingCard == GetComponent<RectTransform>())
+        {
+            CardCanvas.instance.HandleCommittedCardDrag(pointerData.position);
+            return;
+        }
 
         this.transform.position = pointerData.position;
 

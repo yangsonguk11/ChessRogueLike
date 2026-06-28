@@ -12,7 +12,7 @@ public class DirectionalAttackCard : Card
         Cost = 2;
         type = CardType.Attack;
         CardEffect cf = new CardEffect(
-            Board.BoardMode.targeting,
+            Board.BoardMode.command,
             EffectType.Damage,
             5,
             TargetLogic.AllEnemiesInRange,
