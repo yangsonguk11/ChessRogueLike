@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 2300604}
   - component: {fileID: 6438220}
   - component: {fileID: -6897683505439938422}
+  - component: {fileID: 5301824008612482765}
   m_Layer: 0
   m_Name: RestObject
   m_TagString: Untagged
@@ -134,6 +135,24 @@ MonoBehaviour:
   colDamage: 0
   baseColDamage: 0
   teamID: 0
-  shield: 0
   moveableRange: {fileID: 0}
   movedThisTurn: 0
+  used: 0
+--- !u!114 &5301824008612482765
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 119820}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 75170816855fcb04c924aedc2c413dad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PieceEffect
+  orbitPrefab: {fileID: 919132149155446097, guid: d4412e435bce5234295d898704e3db2e, type: 3}
+  count: 1
+  radius: 1
+  heightOffset: 0.5
+  degreesPerSecond: 180
+  axis: {x: 0, y: 0, z: 1}

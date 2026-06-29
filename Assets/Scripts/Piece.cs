@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
+[RequireComponent(typeof(PieceEffect))]
 public abstract class Piece : MonoBehaviour
 {
     [SerializeField] PieceInfo pieceInfo;
@@ -30,7 +31,7 @@ public abstract class Piece : MonoBehaviour
     public List<StatusEffect> activeEffects = new List<StatusEffect>();
     public bool movedThisTurn;
 
-    OrbitRotator orbitRotator;
+    PieceEffect pieceEffect;
 
     public void AddStatusEffect(StatusEffect effect)
     {
@@ -71,13 +72,13 @@ public abstract class Piece : MonoBehaviour
     {
         baseColDamage = colDamage;
         teamID = pieceInfo.TeamID;
-        orbitRotator = GetComponent<OrbitRotator>();
+        pieceEffect = GetComponent<PieceEffect>();
         UpdateShieldVisual();
     }
 
     void UpdateShieldVisual()
     {
-        if (orbitRotator != null) orbitRotator.SetVisible(shield > 0);
+        if (pieceEffect != null) pieceEffect.SetVisible(shield > 0);
     }
     public void SetPieceData(PieceData data)
     {
@@ -163,6 +164,8 @@ public abstract class Piece : MonoBehaviour
     {
         if (this != null && pieceCanvas != null)
             pieceCanvas.InvokeDamageText(damage);
+        if (this != null && pieceEffect != null)
+            pieceEffect.PlayHealEffect();
         yield return null;
     }
 
@@ -183,6 +186,8 @@ public abstract class Piece : MonoBehaviour
     {
         if (pieceCanvas != null)
             pieceCanvas.InvokeStatusText(text, isBuff);
+        if (!isBuff && pieceEffect != null)
+            pieceEffect.PlayDebuffEffect();
     }
 
     public IEnumerator DeathCor()

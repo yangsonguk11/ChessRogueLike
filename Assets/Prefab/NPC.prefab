@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 2309778}
   - component: {fileID: 6410760}
   - component: {fileID: 6411731302939070017}
+  - component: {fileID: 6372770104708495281}
   m_Layer: 0
   m_Name: NPC
   m_TagString: Untagged
@@ -142,6 +143,25 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 26523390e63d4a84da0fe014f3c7993f, type: 2}
   dialogueTriggered: 0
   dialogueClickCount: 0
+--- !u!114 &6372770104708495281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 138226}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 75170816855fcb04c924aedc2c413dad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PieceEffect
+  orbitPrefab: {fileID: 4361218346547452735, guid: 6faf0af0322d8b343aa06ddbb550307e, type: 3}
+  count: 1
+  radius: 1
+  heightOffset: 0.5
+  degreesPerSecond: 180
+  axis: {x: 0, y: 0, z: 1}
+  healEffectPrefab: {fileID: 7829987916877201295, guid: c3a52f289f31ded45a05df03faab4738, type: 3}
 --- !u!1 &194753708454373315
 GameObject:
   m_ObjectHideFlags: 0

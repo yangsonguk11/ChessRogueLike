@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 2211220569692418932}
   - component: {fileID: 54401725194517764}
   - component: {fileID: 5766115866947927382}
+  - component: {fileID: 6454231998147946657}
   m_Layer: 0
   m_Name: White Knight 1
   m_TagString: Untagged
@@ -137,7 +138,6 @@ MonoBehaviour:
   colDamage: 5
   baseColDamage: 0
   teamID: 1
-  shield: 0
   moveableRange: {fileID: 0}
   movedThisTurn: 0
   enemyCards:
@@ -213,6 +213,25 @@ MonoBehaviour:
   defaultScale: {x: 0, y: 0, z: 0}
   cardCanvas: {fileID: 0}
   handNumber: 0
+--- !u!114 &6454231998147946657
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 107724}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 75170816855fcb04c924aedc2c413dad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PieceEffect
+  orbitPrefab: {fileID: 4361218346547452735, guid: 6faf0af0322d8b343aa06ddbb550307e, type: 3}
+  count: 1
+  radius: 1
+  heightOffset: 0.5
+  degreesPerSecond: 180
+  axis: {x: 0, y: 0, z: 1}
+  healEffectPrefab: {fileID: 7829987916877201295, guid: c3a52f289f31ded45a05df03faab4738, type: 3}
 --- !u!1 &2736271924342697781
 GameObject:
   m_ObjectHideFlags: 0
@@ -330,3 +349,5 @@ MonoBehaviour:
   DamageText: {fileID: 898273830055804285, guid: ff1c09560f7a035419be5686fc95669f, type: 3}
   duration: 1
   moveSpeed: 200
+  buffColor: {r: 0, g: 1, b: 0.53, a: 1}
+  debuffColor: {r: 1, g: 0.27, b: 0.27, a: 1}

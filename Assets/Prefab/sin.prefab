@@ -226,7 +226,6 @@ MonoBehaviour:
   colDamage: 5
   baseColDamage: 0
   teamID: 0
-  shield: 0
   moveableRange: {fileID: 0}
   movedThisTurn: 0
 --- !u!114 &807287318352452457
@@ -240,7 +239,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 75170816855fcb04c924aedc2c413dad, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::OrbitRotator
+  m_EditorClassIdentifier: Assembly-CSharp::PieceEffect
   orbitPrefab: {fileID: 919132149155446097, guid: d4412e435bce5234295d898704e3db2e, type: 3}
   count: 2
   radius: 0.4

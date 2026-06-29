@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 3973567015829007392}
   - component: {fileID: 3181729770140103546}
   - component: {fileID: 5845322441005520208}
+  - component: {fileID: 6601234567890123456}
   m_Layer: 0
   m_Name: Database
   m_TagString: Untagged
@@ -48,27 +49,35 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardDatabase
   cardPrefabs:
-  - {fileID: 8950236184682274632, guid: 8390a38db968c2844b07cc7b0329065b, type: 3}
-  - {fileID: 8950236184682274632, guid: 5cf6dfdf369d79745aedd1b98d2f3a3e, type: 3}
-  - {fileID: 8950236184682274632, guid: f830a35da65c76041bfef88e54df7c14, type: 3}
-  - {fileID: 8950236184682274632, guid: ec2607d0132174d4c89b1a884f9d3131, type: 3}
-  - {fileID: 8950236184682274632, guid: 50cbf277ea309e24995a5285cfd6fe97, type: 3}
-  - {fileID: 8950236184682274632, guid: ff5c7349cde0c0644aa0ec0c1cd160b9, type: 3}
-  - {fileID: 8950236184682274632, guid: 8d80e9818aa3eb6478ecdb9d5107bdd4, type: 3}
-  - {fileID: 8950236184682274632, guid: 7c890ac272383c743a0b7a29891a9f49, type: 3}
-  - {fileID: 8950236184682274632, guid: 97f38d0230af3844b942a5ee11e61fcc, type: 3}
-  - {fileID: 8950236184682274632, guid: f7da18452d83938429bc4f2e4554f0de, type: 3}
+  - {fileID: 8950236184682274632, guid: 90c1842efb7145469c37281a82615a06, type: 3}
+  - {fileID: 8950236184682274632, guid: 38553affb47d42c2ad258b265e639c2f, type: 3}
+  - {fileID: 8950236184682274632, guid: 345ce166569e452586b6d93e79516a07, type: 3}
+  - {fileID: 8950236184682274632, guid: 8ea22c0342af4373ab70c09187dcdb84, type: 3}
+  - {fileID: 8950236184682274632, guid: 4953067e8e554c9d90750d9efe908d73, type: 3}
+  - {fileID: 8950236184682274632, guid: 41825161956a4b8d9fca06f37b1a170b, type: 3}
+  - {fileID: 8950236184682274632, guid: 91543713b588485e88db9dc3df6a89b0, type: 3}
+  - {fileID: 8950236184682274632, guid: 081872241f5749419ab6ba746ddbbbc3, type: 3}
+  - {fileID: 8950236184682274632, guid: 46a2d346b73c4be386be4bdb9e192c5f, type: 3}
+  - {fileID: 8950236184682274632, guid: f7b45382ef4e4dc2b02207c24d8a1c7d, type: 3}
+  - {fileID: 8950236184682274632, guid: 78c287f80048457fb053b20ecf865c4e, type: 3}
+  - {fileID: 8950236184682274632, guid: 4ae66274405843b1a5a46b7a5a14f48b, type: 3}
+  - {fileID: 8950236184682274632, guid: f818e1180bba4e5484416cdd0ff2c603, type: 3}
+  - {fileID: 8950236184682274632, guid: 450292ca54d74a24850dd64493d0b325, type: 3}
+  - {fileID: 8950236184682274632, guid: 830d7b8908804a30a65e3607663db631, type: 3}
+  - {fileID: 8950236184682274632, guid: 49a14f06594c42aa82af0b2d8fa4269e, type: 3}
+  - {fileID: 8950236184682274632, guid: f1bffd0319e64db491fe18be9a0ac219, type: 3}
+  - {fileID: 8950236184682274632, guid: 5bb3360ae02b4960b6facbd88503d308, type: 3}
+  - {fileID: 8950236184682274632, guid: 979c3d70bbea4545b9752ffe66dfb0e1, type: 3}
+  - {fileID: 8950236184682274632, guid: a678b4aa97d044cc9422d17e3c90adb9, type: 3}
+  - {fileID: 8950236184682274632, guid: 13fdaf93a82bd7e4fb695fdaa7231c1a, type: 3}
+  - {fileID: 8950236184682274632, guid: 05cc7faf4ebac094e8a00dca055c4c40, type: 3}
+  - {fileID: 8950236184682274632, guid: 130671b5c8fc49bf8e07ad47ff4e5a28, type: 3}
+  - {fileID: 8950236184682274632, guid: eb6a179285b94cd4bfe677a2892b6212, type: 3}
   spritesPrefabs:
   - {fileID: 8983308741282738250, guid: 4cd8a850886c3d84192f6b9fe63b7103, type: 3}
   - {fileID: 8983308741282738250, guid: acfd85d4bfd6ed04789af40e579bad12, type: 3}
   - {fileID: 8983308741282738250, guid: c4ef5cce834770c4b9a92d5fbd271002, type: 3}
   - {fileID: 8983308741282738250, guid: d6ec7fa0cc5931446b424c4004d3e957, type: 3}
-  - {fileID: 8983308741282738250, guid: 00d96774c4886c74da22f64c884decb8, type: 3}
-  - {fileID: 8983308741282738250, guid: 394003bc21369ba42b8542e952472ddb, type: 3}
-  - {fileID: 8950236184682274632, guid: 8d80e9818aa3eb6478ecdb9d5107bdd4, type: 3}
-  - {fileID: 8983308741282738250, guid: fc64129e0fdbabc4a840729d0874e1fb, type: 3}
-  - {fileID: 8983308741282738250, guid: 6208e53ee2c33fc4e90e611e73aaed63, type: 3}
-  - {fileID: 8983308741282738250, guid: 3b473eb0a7ddeeb46a4faaf681e451a2, type: 3}
 --- !u!114 &3973567015829007392
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -82,11 +91,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PieceDatabase
   PiecePrefabs:
-  - {fileID: 196802, guid: 8b7908f48c3331c4d9476763edc435c6, type: 3}
+  - {fileID: 782353561853643713, guid: a880e1da517670843aadc5015f2e2d9a, type: 3}
   - {fileID: 107724, guid: 1bae5e056ac375b46a1158f8b09b1f7f, type: 3}
-  - {fileID: 107724, guid: a6c81ec23ba21934d8b9b426d6346406, type: 3}
-  - {fileID: 107724, guid: dddbd189b3c883441abbe09a3edf3d3d, type: 3}
   - {fileID: 2961803386712819093, guid: 5987a34a765db874dba26aa478b09d26, type: 3}
+  - {fileID: 100000, guid: b0550000000000000000000000000008, type: 3}
+  - {fileID: 138226, guid: dc15f517405996445b9c4c84c99842fc, type: 3}
 --- !u!114 &3181729770140103546
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -115,12 +124,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelDatabase
   floorPools:
   - levels:
-    - {fileID: 11400000, guid: 19387901c67acba43a1c093a9bdcb7e8, type: 2}
+    - {fileID: 11400000, guid: 6b3cdb12bfc48314abf2126e8c18621f, type: 2}
+  - levels:
+    - {fileID: 11400000, guid: 4c2f5deb5e169364f8814f291f6f4911, type: 2}
   - levels:
     - {fileID: 11400000, guid: 19387901c67acba43a1c093a9bdcb7e8, type: 2}
-  - levels:
-    - {fileID: 11400000, guid: d564be8c8e84a494d8475bc69cc69160, type: 2}
   - levels:
     - {fileID: 11400000, guid: d564be8c8e84a494d8475bc69cc69160, type: 2}
   - levels:
     - {fileID: 11400000, guid: 5f4a354edaae2d840bd0efa6f53a65ce, type: 2}
+--- !u!114 &6601234567890123456
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1924541253940516919}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a4f6e2c8b3d4a59ac1d7e9f02b4c6a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PieceEffectDatabase
+  healEffectPrefab: {fileID: 5100941364825399842, guid: 8b318a7b3f13e7948a60613b8b96153b, type: 3}
+  statusEffectPrefab: {fileID: 5100941364825399842, guid: 8b318a7b3f13e7948a60613b8b96153b, type: 3}
