@@ -1,7 +1,10 @@
+using UnityEngine;
+
 public abstract class StatusEffect
 {
     public abstract string DisplayName { get; }
     public abstract bool IsBuff { get; }
+    public virtual Color EffectColor => new Color(1f, 0.27f, 0.27f); // 기본 디버프 색 (#FF4444)
     public int duration;
 
     public virtual void OnApply(Piece piece) { }

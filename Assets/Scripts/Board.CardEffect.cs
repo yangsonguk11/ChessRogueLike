@@ -386,7 +386,7 @@ public partial class Board
         if (target == null) return;
         TurnEffect turnEffect = new TurnEffect(cardEffect.turnPhase, cardEffect.onTurnEndEffect, cardEffect.turnDuration);
         target.AddStatusEffect(turnEffect);
-        target.ShowStatusText(turnEffect.DisplayName, turnEffect.IsBuff);
+        target.ShowStatusText(turnEffect.DisplayName, turnEffect.IsBuff, turnEffect.EffectColor);
         motionQueue.Enqueue(PieceBuffCor(target, cardEffect));
         StartMotionQueue();
     }
@@ -410,7 +410,7 @@ public partial class Board
             {
                 target.AddStatusEffect(effect);
                 target.TriggerAnim(effect.IsBuff ? "Buff" : "DeBuff");
-                target.ShowStatusText(effect.DisplayName, effect.IsBuff);
+                target.ShowStatusText(effect.DisplayName, effect.IsBuff, effect.EffectColor);
             }
         }
     }

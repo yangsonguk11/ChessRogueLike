@@ -11,29 +11,15 @@ public class TempColDamageUpCard : Card
 
         effects.Add(new CardEffect(
             Board.BoardMode.targeting,
-            EffectType.ColDamageUp,
-            2,
-            TargetLogic.self,
-            null,
-            true
-        )
-        { animTrigger = "Buff" });
-
-        effects.Add(new CardEffect(
-            Board.BoardMode.targeting,
-            EffectType.ApplyTurnEffect,
+            EffectType.ApplyStatus,
             0,
             TargetLogic.self
         )
         {
-            onTurnEndEffect = new CardEffect(
-                Board.BoardMode.Inspect,
-                EffectType.ColDamageUp,
-                -2,
-                TargetLogic.self
-            ),
-            turnDuration = 1,
-            turnPhase = TurnPhase.OwnTurnStart
+            statusEffectType = StatusEffectType.Strengthen,
+            statusDuration = 1,
+            statusPower = 2,
+            animTrigger = "Buff"
         });
     }
 

@@ -91,6 +91,7 @@ public partial class Board : MonoBehaviour
     public void EnterCombat(LevelData level)
     {
         if (level == null) return;
+        DataManager.Instance.currentData.nextLevelName = level.name; // 껐다 켜도 전투 레벨로 복귀하도록 저장
         SavePlayerPiecesToDataManager(); // 대화 중 받은 피해/회복이 다음 씬에 그대로 이어지도록 먼저 저장
         pendingLevel = level;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);

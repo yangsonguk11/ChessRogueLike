@@ -35,12 +35,6 @@ public abstract class Piece : MonoBehaviour
 
     public void AddStatusEffect(StatusEffect effect)
     {
-        StatusEffect existing = activeEffects.Find(e => e.GetType() == effect.GetType());
-        if (existing != null)
-        {
-            existing.duration = Mathf.Max(existing.duration, effect.duration);
-            return;
-        }
         effect.OnApply(this);
         activeEffects.Add(effect);
     }
@@ -182,12 +176,12 @@ public abstract class Piece : MonoBehaviour
         if (anim != null) anim.SetTrigger(triggerName);
     }
 
-    public void ShowStatusText(string text, bool isBuff)
+    public void ShowStatusText(string text, bool isBuff, Color effectColor)
     {
         if (pieceCanvas != null)
-            pieceCanvas.InvokeStatusText(text, isBuff);
+            pieceCanvas.InvokeStatusText(text, isBuff, effectColor);
         if (!isBuff && pieceEffect != null)
-            pieceEffect.PlayDebuffEffect();
+            pieceEffect.PlayDebuffEffect(effectColor);
     }
 
     public IEnumerator DeathCor()

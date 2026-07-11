@@ -49,6 +49,7 @@ public class DataManager : MonoBehaviour
                 "DrawCard",
                 "LifeDrainCard",
                 "FetchAttackCard",
+                "TempColDamageUpCard",
             };
 
             PieceData defaultPiece = new PieceData

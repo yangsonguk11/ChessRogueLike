@@ -8,7 +8,6 @@ public class PieceCanvas : MonoBehaviour
     public float duration = 1.0f;             // 텍스트 표시 시간
     [SerializeField] float moveSpeed;         // 텍스트가 위로 올라가는 속도
     [SerializeField] Color buffColor = new Color(0f, 1f, 0.53f);    // #00FF88
-    [SerializeField] Color debuffColor = new Color(1f, 0.27f, 0.27f); // #FF4444
 
     GameObject currentText;
 
@@ -44,13 +43,14 @@ public class PieceCanvas : MonoBehaviour
     }
 
     // 버프/디버프가 적용될 때 어떤 효과인지(예: "독 (2/턴)") 데미지 텍스트와 같은 자리에 띄움
-    public void InvokeStatusText(string text, bool isBuff)
+    // 디버프는 효과 종류별 색(effectColor)을 그대로 쓰고, 버프는 공통 buffColor를 쓴다.
+    public void InvokeStatusText(string text, bool isBuff, Color effectColor)
     {
         GameObject textobj = Instantiate(DamageText, transform);
         TextMeshProUGUI tmp = textobj.GetComponent<TextMeshProUGUI>();
         BringToFrontOfRangeHatch(tmp);
         tmp.text = text;
-        tmp.color = isBuff ? buffColor : debuffColor;
+        tmp.color = isBuff ? buffColor : effectColor;
         StartCoroutine(FloatAndFadeCoroutine(textobj));
     }
 

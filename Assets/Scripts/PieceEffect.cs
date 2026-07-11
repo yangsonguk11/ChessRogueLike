@@ -94,19 +94,25 @@ public class PieceEffect : MonoBehaviour
 
     // 디버프가 적용될 때 캐릭터 제일 위쪽에서, 위에서 아래로 뿌려지는 파티클 이펙트.
     // heal과 같은 종류의 prefab을 180도 뒤집어서 방향만 반대로 재사용한다.
-    public void PlayDebuffEffect()
+    // color는 효과 종류별로 파티클을 다르게 물들이는 데 쓴다(독=초록, 화상=주황 등).
+    public void PlayDebuffEffect(Color color)
     {
         GameObject prefab = PieceEffectDatabase.instance?.statusEffectPrefab;
         if (prefab == null) return;
 
-        StartCoroutine(PlayBurstCoroutine(prefab, Top, Quaternion.Euler(180f, 0f, 0f)));
+        StartCoroutine(PlayBurstCoroutine(prefab, Top, Quaternion.Euler(180f, 0f, 0f), color));
     }
 
     // 코루틴으로 따로 돌기 때문에, 짧은 시간에 여러 번 트리거되어도 각 파티클이 자기 수명을 끝까지 채우고 사라진다.
-    IEnumerator PlayBurstCoroutine(GameObject prefab, Vector3 position, Quaternion rotation)
+    IEnumerator PlayBurstCoroutine(GameObject prefab, Vector3 position, Quaternion rotation, Color? tint = null)
     {
         GameObject instance = Instantiate(prefab, position, rotation, transform);
         ParticleSystem ps = instance.GetComponent<ParticleSystem>();
+        if (tint.HasValue && ps != null)
+        {
+            ParticleSystem.MainModule main = ps.main;
+            main.startColor = tint.Value;
+        }
         float lifetime = ps != null ? ps.main.duration + ps.main.startLifetime.constantMax : 2f;
 
         yield return new WaitForSeconds(lifetime);
