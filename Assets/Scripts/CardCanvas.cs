@@ -45,10 +45,15 @@ public class CardCanvas : MonoBehaviour
     public static event Action OnPileChanged;
     void NotifyPileChanged() => OnPileChanged?.Invoke();
 
+    // SavedDeck 패널에서 선택 확정 시 어떤 동작을 할지
+    public enum SavedDeckAction { Remove }
+
     public static bool cardSelectionMode = false;
     List<RectTransform> panelCardPool = new List<RectTransform>();
     HashSet<RectTransform> selectedInPanel = new HashSet<RectTransform>();
     int panelRequiredCount;
+    bool panelIsSavedDeck; // true면 panelCardPool이 deckCardIDs로부터 임시 스폰된 것 (확인 시 원래 자리로 되돌리지 않고 savedDeckAction에 따라 처리)
+    SavedDeckAction panelSavedDeckAction;
     Action<List<RectTransform>> panelCallback;
     Dictionary<RectTransform, (Transform parent, Vector3 worldPos)> savedCardStates
         = new Dictionary<RectTransform, (Transform, Vector3)>();
@@ -520,6 +525,36 @@ public class CardCanvas : MonoBehaviour
         EnqueueMove(rt, targetPos, Quaternion.identity, 0.3f, onComplete);
     }
 
+    // 덱에서 카드가 제거됐을 때 화면 중심에 잠깐 보여준 뒤 fade out시키는 연출용 카드.
+    // 실제 손패/덱/버린 더미 풀에는 들어가지 않는 시각 효과 전용 인스턴스라 애니메이션이 끝나면 파괴한다.
+    public void ShowRemovedCard(string cardname)
+    {
+        GameObject obj = cardData.SpawnCard(GetComponent<RectTransform>(), cardname);
+        if (obj == null) return;
+
+        RectTransform rt = obj.GetComponent<RectTransform>();
+        rt.position = GetZonePosition(CardPositionZone.Center);
+        rt.localRotation = Quaternion.identity;
+
+        StartCoroutine(ShowRemovedCardRoutine(rt));
+    }
+
+    IEnumerator ShowRemovedCardRoutine(RectTransform rt)
+    {
+        yield return new WaitForSeconds(1f);
+
+        CanvasGroup cg = rt.GetComponent<CanvasGroup>();
+        const float duration = 0.3f;
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            if (cg != null) cg.alpha = 1f - elapsed / duration;
+            yield return null;
+        }
+        Destroy(rt.gameObject);
+    }
+
     // count장을 손패에서 무작위로 뽑아 반환 (count <= 0이면 전부)
     List<RectTransform> PickRandomCardsFromHand(int count)
     {
@@ -612,6 +647,7 @@ public class CardCanvas : MonoBehaviour
     {
         panelRequiredCount = count;
         panelCallback = onConfirm;
+        panelIsSavedDeck = (zone == CardZone.SavedDeck);
         selectedInPanel.Clear();
         savedCardStates.Clear();
 
@@ -619,6 +655,14 @@ public class CardCanvas : MonoBehaviour
         if (zone == CardZone.Hand   || zone == CardZone.Any) panelCardPool.AddRange(cards);
         if (zone == CardZone.Discard || zone == CardZone.Any) panelCardPool.AddRange(Discardcards);
         if (zone == CardZone.Deck   || zone == CardZone.Any) panelCardPool.AddRange(Deckcards);
+        if (zone == CardZone.SavedDeck)
+        {
+            foreach (string cardName in DataManager.Instance.currentData.deckCardIDs)
+            {
+                GameObject obj = cardData.SpawnCard(GetComponent<RectTransform>(), cardName);
+                if (obj != null) panelCardPool.Add(obj.GetComponent<RectTransform>());
+            }
+        }
 
         // 선택 가능한 카드가 없으면 즉시 빈 목록으로 콜백
         if (panelCardPool.Count == 0)
@@ -639,7 +683,31 @@ public class CardCanvas : MonoBehaviour
         cardSelectionMode = true;
 
         // 안내 문구
-        string verb = effect.type == EffectType.SelectAndDiscard ? "버릴" : "코스트를 변경할";
+        string verb;
+        if (panelIsSavedDeck)
+        {
+            switch (panelSavedDeckAction)
+            {
+                case SavedDeckAction.Remove:
+                    verb = "영구히 제거할";
+                    break;
+                default:
+                    verb = "선택할";
+                    break;
+            }
+        }
+        else
+        {
+            switch (effect.type)
+            {
+                case EffectType.SelectAndDiscard:
+                    verb = "버릴";
+                    break;
+                default:
+                    verb = "코스트를 변경할";
+                    break;
+            }
+        }
         int max = count > 0 ? Mathf.Min(count, panelCardPool.Count) : panelCardPool.Count;
         if (selectionPromptText != null)
             selectionPromptText.text = $"{verb} 카드를 {max}장 선택하세요";
@@ -705,6 +773,15 @@ public class CardCanvas : MonoBehaviour
 
         var selected = new List<RectTransform>(selectedInPanel);
 
+        if (panelIsSavedDeck)
+        {
+            ApplySavedDeckSelection(selected);
+            panelCallback?.Invoke(selected);
+            foreach (var card in panelCardPool)
+                if (card != null) Destroy(card.gameObject);
+            return;
+        }
+
         foreach (var card in panelCardPool)
         {
             var (originalParent, worldPos) = savedCardStates[card];
@@ -717,6 +794,26 @@ public class CardCanvas : MonoBehaviour
         AlignCards(); // 손패 아크 레이아웃 복구
 
         panelCallback?.Invoke(selected);
+    }
+
+    // SavedDeck 패널 확인 시 호출: panelSavedDeckAction에 따라 선택된 카드를 처리한다.
+    // panelCardPool은 deckCardIDs와 같은 순서로 스폰됐으므로 IndexOf가 곧 deckCardIDs상의 인덱스다.
+    void ApplySavedDeckSelection(List<RectTransform> selected)
+    {
+        switch (panelSavedDeckAction)
+        {
+            case SavedDeckAction.Remove:
+            {
+                // 여러 장을 한 번에 선택했을 때 먼저 지운 항목이 뒤 인덱스를 당기지 않도록 큰 인덱스부터 제거
+                var indices = selected.Select(card => panelCardPool.IndexOf(card))
+                                       .Where(i => i >= 0)
+                                       .OrderByDescending(i => i);
+                foreach (int index in indices)
+                    DataManager.Instance.RemoveCardFromDeck(index);
+                break;
+            }
+            // 나중에 SavedDeck 관련 다른 액션이 생기면 여기에 case 추가
+        }
     }
 
     // ────────────────────────────────────

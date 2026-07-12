@@ -240,7 +240,7 @@ public abstract class Card : MonoBehaviour, ISelectable
 
 }
 /// <summary>카드 선택 패널에서 선택할 존</summary>
-public enum CardZone { Hand, Deck, Discard, Any }
+public enum CardZone { Hand, Deck, Discard, Any, SavedDeck }
 
 /// <summary>코스트 변경 효과의 지속 시간</summary>
 public enum CostDuration { Permanent, ThisTurnOnly, OneUse }

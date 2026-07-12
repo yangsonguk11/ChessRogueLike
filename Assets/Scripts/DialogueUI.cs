@@ -123,6 +123,19 @@ public class DialogueUI : MonoBehaviour
             DataManager.Instance.AddCardOnDeck(cardName);
         }
 
+        if (choice.removeCardCount > 0)
+        {
+            CardCanvas.instance.ShowCardSelectionPanel(
+                CardZone.SavedDeck, choice.removeCardCount, null,
+                _ => ApplyChoiceContinue(choice));
+            return;
+        }
+
+        ApplyChoiceContinue(choice);
+    }
+
+    void ApplyChoiceContinue(DialogueSO.Choice choice)
+    {
         if (choice.triggerCombat != null)
         {
             Hide();

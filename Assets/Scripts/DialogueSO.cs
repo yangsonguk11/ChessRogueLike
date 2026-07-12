@@ -26,6 +26,9 @@ public class DialogueSO : ScriptableObject
 
         [Tooltip("비어있지 않으면 이 목록 중 하나를 무작위로 골라 덱에 추가한다 (CardDatabase에 등록된 카드 이름).")]
         public List<string> cardPool;
+
+        [Tooltip("0보다 크면 플레이어가 덱에서 이 수치만큼 카드를 영구 제거하는 선택 패널이 열린다.")]
+        public int removeCardCount;
     }
 
     [System.Serializable]

@@ -50,6 +50,7 @@ public class DataManager : MonoBehaviour
                 "LifeDrainCard",
                 "FetchAttackCard",
                 "TempColDamageUpCard",
+                "SacrificeShieldCard",
             };
 
             PieceData defaultPiece = new PieceData
@@ -80,6 +81,17 @@ public class DataManager : MonoBehaviour
         currentData.deckCardIDs.Add(cardname);
         SaveToFile();
         CardCanvas.instance?.ShowAddedCard(cardname, CardPositionZone.Discard);
+    }
+
+    // 지정한 위치의 카드 1장을 덱에서 영구히 제거
+    public bool RemoveCardFromDeck(int index)
+    {
+        if (index < 0 || index >= currentData.deckCardIDs.Count) return false;
+        string cardname = currentData.deckCardIDs[index];
+        currentData.deckCardIDs.RemoveAt(index);
+        SaveToFile();
+        CardCanvas.instance?.ShowRemovedCard(cardname);
+        return true;
     }
 
     public void GenerateMap(List<NodeRow> mapdata)

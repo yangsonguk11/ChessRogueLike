@@ -107,6 +107,6 @@ public class Enemy : Piece
 
     private void OnDestroy()
     {
-        GameManager.instance.RemoveEnemy(gameObject);
+        GameManager.instance?.RemoveEnemy(gameObject);
     }
 }
