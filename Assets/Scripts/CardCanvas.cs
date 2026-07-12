@@ -51,6 +51,7 @@ public class CardCanvas : MonoBehaviour
     public static bool cardSelectionMode = false;
     List<RectTransform> panelCardPool = new List<RectTransform>();
     HashSet<RectTransform> selectedInPanel = new HashSet<RectTransform>();
+    public bool IsSelectedInPanel(RectTransform card) => selectedInPanel.Contains(card);
     int panelRequiredCount;
     bool panelIsSavedDeck; // true면 panelCardPool이 deckCardIDs로부터 임시 스폰된 것 (확인 시 원래 자리로 되돌리지 않고 savedDeckAction에 따라 처리)
     SavedDeckAction panelSavedDeckAction;

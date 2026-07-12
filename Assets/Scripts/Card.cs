@@ -107,7 +107,16 @@ public abstract class Card : MonoBehaviour, ISelectable
     public event Action OnUnSelected;
 
     bool _selected;
-    public bool selected { get { return _selected; } set { _selected = value; if (_selected) OnSelected?.Invoke(); else OnUnSelected?.Invoke(); }}
+    public bool selected
+    {
+        get { return _selected; }
+        set
+        {
+            _selected = value;
+            if (CardCanvas.cardSelectionMode) return;
+            if (_selected) OnSelected?.Invoke(); else OnUnSelected?.Invoke();
+        }
+    }
 
 
     protected string EffectiveDmg(CardEffect effect)
@@ -169,7 +178,9 @@ public abstract class Card : MonoBehaviour, ISelectable
 
     public void MouseExit()
     {
-        if (!selected) ScaleDefault();
+        if (selected) return;
+        if (CardCanvas.cardSelectionMode && CardCanvas.instance.IsSelectedInPanel(GetComponent<RectTransform>())) return;
+        ScaleDefault();
     }
     public System.Action<string> onClickOverride;
 
