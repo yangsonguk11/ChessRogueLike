@@ -274,6 +274,14 @@ public partial class Board
         return Mathf.Max(0, result);
     }
 
+    // Shield 타입이면 dmg에 시전자의 shieldBonus를 가산 (colDamage와 같은 구조의 별개 스탯)
+    int ResolveShieldWithBonus(CardEffect cardEffect, Piece caster)
+    {
+        int casterShieldBonus = caster?.ShieldBonusDelta ?? 0;
+        int result = cardEffect.type == EffectType.Shield ? cardEffect.dmg + casterShieldBonus : cardEffect.dmg;
+        return Mathf.Max(0, result);
+    }
+
     void ExecuteEffect(CardEffect cardEffect, Vector2 targetPos = default)
     {
         // lockCasterForNext가 true이고 다음 효과가 있을 때만 시전자를 고정
@@ -324,7 +332,7 @@ public partial class Board
             }
             case EffectType.Shield:
             {
-                int resolvedDmg = ResolveDamageWithColDamage(cardEffect, GetButtonScript(selectedButton).GetPieceScript());
+                int resolvedDmg = ResolveShieldWithBonus(cardEffect, GetButtonScript(selectedButton).GetPieceScript());
                 ShieldPiece(selectedButton, targetPos, resolvedDmg, cardEffect);
                 ApplyStatusToTarget(targetPos, cardEffect);
                 break;
@@ -352,6 +360,20 @@ public partial class Board
                 if (p != null)
                 {
                     p.colDamage += cardEffect.dmg;
+                    p.ShowStatChangeEffect(cardEffect.dmg);
+                    motionQueue.Enqueue(PieceBuffCor(p, cardEffect));
+                    StartMotionQueue();
+                    CardCanvas.instance?.RefreshAllCardViews();
+                }
+                break;
+            }
+            case EffectType.ShieldBonusUp:
+            {
+                Piece p = GetButtonScript(targetPos).GetPieceScript();
+                if (p != null)
+                {
+                    p.shieldBonus += cardEffect.dmg;
+                    p.ShowStatChangeEffect(cardEffect.dmg);
                     motionQueue.Enqueue(PieceBuffCor(p, cardEffect));
                     StartMotionQueue();
                     CardCanvas.instance?.RefreshAllCardViews();
@@ -494,7 +516,7 @@ public partial class Board
                 ApplyStatusToTarget(targets, cardEffect);
                 break;
             case EffectType.Shield:
-                AreaShieldPiece(targets, cardEffect.dmg, cardEffect);
+                AreaShieldPiece(targets, ResolveShieldWithBonus(cardEffect, caster), cardEffect);
                 ApplyStatusToTarget(targets, cardEffect);
                 break;
             case EffectType.Heal:

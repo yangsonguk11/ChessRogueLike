@@ -15,6 +15,9 @@ public abstract class Piece : MonoBehaviour
     public int colDamage;
     public int baseColDamage;
     public int ColDamageDelta => colDamage - baseColDamage;
+    public int shieldBonus;
+    public int baseShieldBonus;
+    public int ShieldBonusDelta => shieldBonus - baseShieldBonus;
     public int teamID;
     int _shield;
     public int shield
@@ -65,6 +68,7 @@ public abstract class Piece : MonoBehaviour
     public virtual void Awake()
     {
         baseColDamage = colDamage;
+        baseShieldBonus = shieldBonus;
         teamID = pieceInfo.TeamID;
         pieceEffect = GetComponent<PieceEffect>();
         UpdateShieldVisual();
@@ -81,6 +85,8 @@ public abstract class Piece : MonoBehaviour
         maxhp = data.maxHp;
         colDamage = data.colDamage;
         baseColDamage = data.colDamage;
+        shieldBonus = data.shieldBonus;
+        baseShieldBonus = data.shieldBonus;
         teamID = data.teamID;
         shield = 0;
         moveableRange = RangeInfoSODatabase.instance.GetRangeInfoSO(data.rangeinfoname);
@@ -95,6 +101,7 @@ public abstract class Piece : MonoBehaviour
             hp = hp,
             maxHp = maxhp,
             colDamage = baseColDamage,
+            shieldBonus = baseShieldBonus,
             rangeinfoname = moveableRange != null ? moveableRange.name : ""
         };
     }
@@ -182,6 +189,18 @@ public abstract class Piece : MonoBehaviour
             pieceCanvas.InvokeStatusText(text, isBuff, effectColor);
         if (!isBuff && pieceEffect != null)
             pieceEffect.PlayDebuffEffect(effectColor);
+        else if (isBuff && pieceEffect != null)
+            pieceEffect.PlayBuffEffect();
+    }
+
+    // 스탯 증감량(amount)의 부호로 버프/디버프 파티클을 재생. amount가 0이면 아무 이펙트도 재생하지 않는다.
+    public void ShowStatChangeEffect(int amount)
+    {
+        if (pieceEffect == null || amount == 0) return;
+        if (amount > 0)
+            pieceEffect.PlayBuffEffect();
+        else
+            pieceEffect.PlayDebuffEffect(new Color(1f, 0.27f, 0.27f));
     }
 
     public IEnumerator DeathCor()

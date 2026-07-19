@@ -19,6 +19,7 @@ public class TurnEffect : StatusEffect
                 EffectType.Heal        => $"회복 {cardEffect.dmg}",
                 EffectType.Shield      => $"방어막 {cardEffect.dmg}",
                 EffectType.ColDamageUp => cardEffect.dmg >= 0 ? $"이동공격력 +{cardEffect.dmg}" : $"이동공격력 {cardEffect.dmg}",
+                EffectType.ShieldBonusUp => cardEffect.dmg >= 0 ? $"방어막 보너스 +{cardEffect.dmg}" : $"방어막 보너스 {cardEffect.dmg}",
                 _                      => "효과"
             };
             return $"{timing} {effectDesc}";

@@ -9,6 +9,7 @@ public class PieceInfo : ScriptableObject
     [Header("기본")]
     [SerializeField] int _maxHp;
     [SerializeField] int _colDamage;
+    [SerializeField] int _shieldBonus;
     [SerializeField] RangeInfoSO _rangeInfoSO;
     [SerializeField] RangeInfoSO _moveAttackRangeInfoSO;
 
@@ -17,6 +18,7 @@ public class PieceInfo : ScriptableObject
 
     public int MaxHp => _maxHp;
     public int ColDamage => _colDamage;
+    public int ShieldBonus => _shieldBonus;
     public RangeInfoSO RangeInfoSO => _rangeInfoSO;
     public RangeInfoSO MoveAttackRangeInfoSO => _moveAttackRangeInfoSO;
 }

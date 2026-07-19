@@ -130,6 +130,17 @@ public abstract class Card : MonoBehaviour, ISelectable
         return $"<color={color}>{dmg}</color>";
     }
 
+    protected string EffectiveShield(CardEffect effect)
+    {
+        int amount = effect.type != EffectType.Shield
+            ? effect.dmg
+            : Mathf.Max(0, effect.dmg + (Board.instance?.CasterShieldBonus ?? 0));
+
+        if (amount == effect.dmg) return amount.ToString();
+        string color = amount > effect.dmg ? "#4444FF" : "#FF4444";
+        return $"<color={color}>{amount}</color>";
+    }
+
     public virtual bool CanUse() => true;
     public virtual string GetCannotUseReason() => "사용할 수 없습니다";
     public virtual void Execute() { }
@@ -256,7 +267,7 @@ public enum CardZone { Hand, Deck, Discard, Any, SavedDeck }
 /// <summary>코스트 변경 효과의 지속 시간</summary>
 public enum CostDuration { Permanent, ThisTurnOnly, OneUse }
 
-public enum EffectType { Move, Damage, Shield, Buff, DeBuff, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop, SelectAndDiscard, SelectAndChangeCost, SelectAndReturnToDeck, AddCard }
+public enum EffectType { Move, Damage, Shield, Buff, DeBuff, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, BaseColDamageUp, ShieldBonusUp, BaseShieldBonusUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop, SelectAndDiscard, SelectAndChangeCost, SelectAndReturnToDeck, AddCard }
 public class CardEffect
 {
     public Board.BoardMode requiredMode;
@@ -283,6 +294,9 @@ public class CardEffect
     public CardEffect onTurnEndEffect;
     public int turnDuration;
     public TurnPhase turnPhase = TurnPhase.OwnTurnEnd;
+
+    // Damage 계열 효과가 대상을 처치했을 때 시전자를 대상으로 실행할 CardEffect (예: 처치 시 ColDamageUp)
+    public CardEffect onKillEffect;
 
     // SelectAndDiscard / SelectAndChangeCost 타입에서 사용
     public CardZone cardZone = CardZone.Hand;   // 선택 대상 존

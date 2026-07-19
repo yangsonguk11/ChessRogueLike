@@ -24,7 +24,7 @@ public partial class Board
         {
             if (piece.activeEffects[i] is not TurnEffect te || te.phase != phase) continue;
 
-            ExecuteTurnEffect(pos, piece, te);
+            ExecuteCardEffectOnPiece(pos, piece, te.cardEffect);
 
             te.duration--;
             if (te.duration <= 0)
@@ -35,10 +35,9 @@ public partial class Board
         }
     }
 
-    void ExecuteTurnEffect(Vector2 pos, Piece caster, TurnEffect effect)
+    // 시전자(caster) 기준으로 임의의 CardEffect 하나를 즉시 실행. TurnEffect(턴 효과)와 onKillEffect(처치 시 효과)가 공유해서 사용.
+    void ExecuteCardEffectOnPiece(Vector2 pos, Piece caster, CardEffect ce)
     {
-        CardEffect ce = effect.cardEffect;
-
         if (ce.targetlogic == TargetLogic.AllEnemiesInRange || ce.targetlogic == TargetLogic.AllAlliesInRange)
         {
             if (ce.effectRange == null) return;
@@ -66,7 +65,7 @@ public partial class Board
 
             var animCoroutines = new List<IEnumerator> { TriggerAnimCor(caster, ce.animTrigger, cardEffect: ce) };
             foreach (var (targetPos, target) in targets)
-                animCoroutines.Add(EnqueueTurnEffectOnPiece(target, ce));
+                animCoroutines.Add(EnqueueCardEffectOnPiece(target, ce));
             motionQueue.Enqueue(Parallel(animCoroutines.ToArray()));
             StartMotionQueue();
         }
@@ -81,12 +80,12 @@ public partial class Board
 
             motionQueue.Enqueue(Parallel(
                 TriggerAnimCor(caster, ce.animTrigger, cardEffect: ce),
-                EnqueueTurnEffectOnPiece(caster, ce)));
+                EnqueueCardEffectOnPiece(caster, ce)));
             StartMotionQueue();
         }
     }
 
-    IEnumerator EnqueueTurnEffectOnPiece(Piece target, CardEffect ce)
+    IEnumerator EnqueueCardEffectOnPiece(Piece target, CardEffect ce)
     {
         switch (ce.type)
         {
@@ -100,6 +99,26 @@ public partial class Board
                 break;
             case EffectType.ColDamageUp:
                 target.colDamage += ce.dmg;
+                CardCanvas.instance?.RefreshAllCardViews();
+                if (ce.animTrigger != null) yield return TriggerAnimCor(target, ce.animTrigger, 0.3f, false);
+                break;
+            case EffectType.BaseColDamageUp:
+                // baseColDamage도 함께 올려 이번 전투뿐 아니라 다음 전투로도 이어지게 함 (GetPieceData가 baseColDamage를 저장)
+                target.colDamage += ce.dmg;
+                target.baseColDamage += ce.dmg;
+                CardCanvas.instance?.RefreshAllCardViews();
+                if (ce.animTrigger != null) yield return TriggerAnimCor(target, ce.animTrigger, 0.3f, false);
+                break;
+            case EffectType.ShieldBonusUp:
+                target.shieldBonus += ce.dmg;
+                CardCanvas.instance?.RefreshAllCardViews();
+                if (ce.animTrigger != null) yield return TriggerAnimCor(target, ce.animTrigger, 0.3f, false);
+                break;
+            case EffectType.BaseShieldBonusUp:
+                // baseShieldBonus도 함께 올려 이번 전투뿐 아니라 다음 전투로도 이어지게 함 (GetPieceData가 baseShieldBonus를 저장)
+                target.shieldBonus += ce.dmg;
+                target.baseShieldBonus += ce.dmg;
+                CardCanvas.instance?.RefreshAllCardViews();
                 if (ce.animTrigger != null) yield return TriggerAnimCor(target, ce.animTrigger, 0.3f, false);
                 break;
         }

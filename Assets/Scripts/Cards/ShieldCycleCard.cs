@@ -28,5 +28,5 @@ public class ShieldCycleCard : Card
     }
 
     public override string EffectDescription =>
-        $"방어도 {effects[0].dmg}를 부여하고, 손의 카드 {effects[1].dmg}장을 무작위로 덱 맨 위로 되돌립니다.";
+        $"방어도 {EffectiveShield(effects[0])}를 부여하고, 손의 카드 {effects[1].dmg}장을 무작위로 덱 맨 위로 되돌립니다.";
 }

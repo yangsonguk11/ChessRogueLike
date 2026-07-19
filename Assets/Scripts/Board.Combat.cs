@@ -111,6 +111,7 @@ public partial class Board
             if (pScript2.teamID == 1) enemyPositions.Remove(impactPos);
             motionQueue.Enqueue(pScript2.DeathCor());
             motionQueue.Enqueue(PieceMoveCor(GetButtonScript(adjacentPos), bScript2, 1f));
+            TriggerOnKillEffect(impactPos, pScript1, cardEffect);
         }
         foreach (var (pos, p, splashHpLeft) in splashResults)
         {
@@ -118,6 +119,7 @@ public partial class Board
             {
                 if (p.teamID == 1) enemyPositions.Remove(pos);
                 motionQueue.Enqueue(p.DeathCor());
+                TriggerOnKillEffect(hpLeft <= 0 ? impactPos : adjacentPos, pScript1, cardEffect);
             }
         }
 
@@ -162,6 +164,13 @@ public partial class Board
         return caster != null && target != null;
     }
 
+    // cardEffect에 onKillEffect가 설정돼 있으면, 처치가 확정된 시점에 시전자를 대상으로 그 효과를 실행 (예: 처치 시 ColDamageUp)
+    void TriggerOnKillEffect(Vector2 casterPos, Piece caster, CardEffect cardEffect)
+    {
+        if (caster == null || cardEffect?.onKillEffect == null) return;
+        ExecuteCardEffectOnPiece(casterPos, caster, cardEffect.onKillEffect);
+    }
+
     void AttackPiece(Vector2 pos1, Vector2 pos2, int dmg, CardEffect cardEffect = null)
     {
         if (TryGetCasterAndTarget(pos1, pos2, out Piece pScript1, out Piece pScript2))
@@ -178,6 +187,7 @@ public partial class Board
             {
                 if (pScript2.teamID == 1) enemyPositions.Remove(pos2);
                 motionQueue.Enqueue(pScript2.DeathCor());
+                TriggerOnKillEffect(pos1, pScript1, cardEffect);
             }
             if (cardEffect != null && cardEffect.healOnHit && dmg > 0)
             {
@@ -251,6 +261,7 @@ public partial class Board
             {
                 if (p.teamID == 1) enemyPositions.Remove(pos);
                 deathCoroutines.Add(p.DeathCor());
+                TriggerOnKillEffect(casterPos, caster, cardEffect);
             }
             if (cardEffect != null && cardEffect.healOnHit)
                 totalHeal += dmg;

@@ -103,6 +103,16 @@ public class PieceEffect : MonoBehaviour
         StartCoroutine(PlayBurstCoroutine(prefab, Top, Quaternion.Euler(180f, 0f, 0f), color));
     }
 
+    // 버프가 적용될 때 캐릭터 중심에서 위로 뿜어 올라가는 파티클 이펙트.
+    // PlayDebuffEffect와 같은 prefab을 뒤집지 않고 재사용하며, 색은 버프 텍스트와 같은 초록(#00FF88)을 쓴다.
+    public void PlayBuffEffect()
+    {
+        GameObject prefab = PieceEffectDatabase.instance?.statusEffectPrefab;
+        if (prefab == null) return;
+
+        StartCoroutine(PlayBurstCoroutine(prefab, Center, Quaternion.identity, new Color(0f, 1f, 0.53f)));
+    }
+
     // 코루틴으로 따로 돌기 때문에, 짧은 시간에 여러 번 트리거되어도 각 파티클이 자기 수명을 끝까지 채우고 사라진다.
     IEnumerator PlayBurstCoroutine(GameObject prefab, Vector3 position, Quaternion rotation, Color? tint = null)
     {

@@ -724,9 +724,9 @@ GameObject:
   - component: {fileID: 8654070928178778172}
   - component: {fileID: 8749563859263172920}
   - component: {fileID: 827117756608949290}
-  - component: {fileID: 4605075703935084367}
+  - component: {fileID: 5473452768917983486}
   m_Layer: 5
-  m_Name: SacrificeShieldCard
+  m_Name: ExecutionerCard
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -782,8 +782,8 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 4605075703935084367}
-          m_TargetAssemblyTypeName: SacrificeShieldCard, Assembly-CSharp
+        - m_Target: {fileID: 5473452768917983486}
+          m_TargetAssemblyTypeName: ExecutionerCard, Assembly-CSharp
           m_MethodName: MouseEnter
           m_Mode: 1
           m_Arguments:
@@ -798,8 +798,8 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 4605075703935084367}
-          m_TargetAssemblyTypeName: SacrificeShieldCard, Assembly-CSharp
+        - m_Target: {fileID: 5473452768917983486}
+          m_TargetAssemblyTypeName: ExecutionerCard, Assembly-CSharp
           m_MethodName: MouseDown
           m_Mode: 0
           m_Arguments:
@@ -814,8 +814,8 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 4605075703935084367}
-          m_TargetAssemblyTypeName: SacrificeShieldCard, Assembly-CSharp
+        - m_Target: {fileID: 5473452768917983486}
+          m_TargetAssemblyTypeName: ExecutionerCard, Assembly-CSharp
           m_MethodName: MouseExit
           m_Mode: 1
           m_Arguments:
@@ -830,8 +830,8 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 4605075703935084367}
-          m_TargetAssemblyTypeName: SacrificeShieldCard, Assembly-CSharp
+        - m_Target: {fileID: 5473452768917983486}
+          m_TargetAssemblyTypeName: ExecutionerCard, Assembly-CSharp
           m_MethodName: MouseUp
           m_Mode: 0
           m_Arguments:
@@ -846,8 +846,8 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 4605075703935084367}
-          m_TargetAssemblyTypeName: SacrificeShieldCard, Assembly-CSharp
+        - m_Target: {fileID: 5473452768917983486}
+          m_TargetAssemblyTypeName: ExecutionerCard, Assembly-CSharp
           m_MethodName: MouseDrag
           m_Mode: 0
           m_Arguments:
@@ -870,7 +870,7 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!114 &4605075703935084367
+--- !u!114 &5473452768917983486
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -879,10 +879,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 8950236184682274632}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2212d3977ab45444f87da863f9522aba, type: 3}
+  m_Script: {fileID: 11500000, guid: aa936f698e1bddf4ba59eca1544d097e, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SacrificeShieldCard
-  effectRange: []
+  m_EditorClassIdentifier: Assembly-CSharp::ExecutionerCard
+  effectRange:
+  - {fileID: 11400000, guid: e798bd81c0425624ead1e05779a9c275, type: 2}
   Name: 
   Description: 
   Cost: 0

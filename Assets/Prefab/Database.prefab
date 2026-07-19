@@ -73,6 +73,8 @@ MonoBehaviour:
   - {fileID: 8950236184682274632, guid: 05cc7faf4ebac094e8a00dca055c4c40, type: 3}
   - {fileID: 8950236184682274632, guid: 130671b5c8fc49bf8e07ad47ff4e5a28, type: 3}
   - {fileID: 8950236184682274632, guid: eb6a179285b94cd4bfe677a2892b6212, type: 3}
+  - {fileID: 8950236184682274632, guid: 92e7b72d61de31442b7240d863f8cbad, type: 3}
+  - {fileID: 8950236184682274632, guid: dcb706fb78634bf1bc09920b933cb289, type: 3}
   spritesPrefabs:
   - {fileID: 8983308741282738250, guid: 4cd8a850886c3d84192f6b9fe63b7103, type: 3}
   - {fileID: 8983308741282738250, guid: acfd85d4bfd6ed04789af40e579bad12, type: 3}

@@ -6,7 +6,7 @@ public class SacrificeShieldCard : Card
     {
         base.Awake();
         Name = "SacrificeShieldCard";
-        Description = "손의 카드 1장을 버린다.\n방어도 6을 얻는다.";
+        Description = "손의 카드 1장을 버리고 방어도를 얻는다.";
         Cost = 1;
         type = CardType.Skill;
 
@@ -23,6 +23,6 @@ public class SacrificeShieldCard : Card
     }
 
     public override string EffectDescription =>
-        $"손의 카드 1장을 버린 후\n방어도 {effects[0].dmg}를 얻습니다.";
+        $"손의 카드 1장을 버린 후\n방어도 {EffectiveShield(effects[0])}를 얻습니다.";
 
 }

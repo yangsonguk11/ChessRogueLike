@@ -898,9 +898,9 @@ MonoBehaviour:
   costDuration: 0
   costText: {fileID: 2862588554528518992}
   nameText: {fileID: 5468822281476004002}
-  descriptionText: {fileID: 4963360868332497921}
+  descriptionText: {fileID: 0}
   typeText: {fileID: 4703223959074853788}
-  effectText: {fileID: 0}
+  effectText: {fileID: 4963360868332497921}
   defaultScale: {x: 0, y: 0, z: 0}
   cardCanvas: {fileID: 0}
   handNumber: 0

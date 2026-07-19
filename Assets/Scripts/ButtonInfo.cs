@@ -8,6 +8,7 @@ public class ButtonInfo : MonoBehaviour
     [SerializeField] TextMeshProUGUI team;
     [SerializeField] TextMeshProUGUI hp;
     [SerializeField] TextMeshProUGUI shield;
+    [SerializeField] TextMeshProUGUI shieldBonus;
     [SerializeField] TextMeshProUGUI colDamage;
     [SerializeField] TextMeshProUGUI statusEffects;
     [SerializeField] UnityEngine.UI.Button restButton;
@@ -22,6 +23,7 @@ public class ButtonInfo : MonoBehaviour
             team.text = "";
             hp.text = "";
             shield.text = "";
+            shieldBonus.text = "";
             colDamage.text = "";
             statusEffects.text = "";
             SetRestButtonActive(!restObject.used);
@@ -33,6 +35,7 @@ public class ButtonInfo : MonoBehaviour
         team.text = p.teamID == 0 ? "아군" : "적";
         hp.text = string.Format("HP: {0}/{1}", p.hp, p.maxhp);
         shield.text = "방어막: " + p.shield;
+        shieldBonus.text = "방어막 보너스: " + BuildShieldBonusText(p);
         colDamage.text = "충돌 피해: " + BuildColDamageText(p);
         statusEffects.text = BuildStatusText(p);
     }
@@ -55,6 +58,17 @@ public class ButtonInfo : MonoBehaviour
         string color = diff < 0 ? "#FF4444" : "#4444FF";
         string sign = diff < 0 ? "-" : "+";
         return $"{p.colDamage} <color={color}>({sign}{Mathf.Abs(diff)})</color>";
+    }
+
+    string BuildShieldBonusText(Piece p)
+    {
+        int diff = p.shieldBonus - p.baseShieldBonus;
+        if (diff == 0)
+            return p.shieldBonus.ToString();
+
+        string color = diff < 0 ? "#FF4444" : "#4444FF";
+        string sign = diff < 0 ? "-" : "+";
+        return $"{p.shieldBonus} <color={color}>({sign}{Mathf.Abs(diff)})</color>";
     }
 
     string BuildStatusText(Piece p)
@@ -82,6 +96,7 @@ public class ButtonInfo : MonoBehaviour
         team.text = "";
         hp.text = "";
         shield.text = "";
+        shieldBonus.text = "";
         colDamage.text = "";
         statusEffects.text = "";
         SetRestButtonActive(false);

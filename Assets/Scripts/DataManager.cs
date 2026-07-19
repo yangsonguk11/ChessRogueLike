@@ -51,6 +51,8 @@ public class DataManager : MonoBehaviour
                 "FetchAttackCard",
                 "TempColDamageUpCard",
                 "SacrificeShieldCard",
+                "ExecutionerCard",
+                "ShieldBonusUpCard",                
             };
 
             PieceData defaultPiece = new PieceData
@@ -60,6 +62,7 @@ public class DataManager : MonoBehaviour
                 hp = basicPieceinfo.MaxHp,
                 maxHp = basicPieceinfo.MaxHp,
                 colDamage = basicPieceinfo.ColDamage,
+                shieldBonus = basicPieceinfo.ShieldBonus,
                 rangeinfoname = basicPieceinfo.RangeInfoSO != null ? basicPieceinfo.RangeInfoSO.name : ""
             };
 
@@ -162,6 +165,7 @@ public struct PieceData
 
     public int maxHp;
     public int colDamage;
+    public int shieldBonus;
     public string rangeinfoname;
 
 }

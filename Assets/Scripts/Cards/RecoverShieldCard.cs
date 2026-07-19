@@ -6,7 +6,7 @@ public class RecoverShieldCard : Card
     {
         base.Awake();
         Name = "RecoverShieldCard";
-        Description = "방어도 4를 얻는다.\n버린 카드 1장을 덱으로 되돌린다.";
+        Description = "방어도를 얻고 버린 카드 1장을 덱으로 되돌린다.";
         Cost = 1;
         type = CardType.Skill;
 
@@ -21,5 +21,5 @@ public class RecoverShieldCard : Card
     }
 
     public override string EffectDescription =>
-        $"방어도 {effects[0].dmg}를 얻고\n버린 카드 1장을 덱으로 되돌립니다.";
+        $"방어도 {EffectiveShield(effects[0])}를 얻고\n버린 카드 1장을 덱으로 되돌립니다.";
 }

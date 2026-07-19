@@ -18,7 +18,7 @@ public partial class Board
 
     // targeting에서 시전자(selectedButton)를 쓰지 않고 targetPos만으로 동작하는 효과 타입 — 클릭한 기물 1개로 즉시 적용 가능
     static bool IsSingleEntityEffect(EffectType type) =>
-        type is EffectType.DeBuff or EffectType.ApplyStatus or EffectType.ApplyTurnEffect or EffectType.ColDamageUp;
+        type is EffectType.DeBuff or EffectType.ApplyStatus or EffectType.ApplyTurnEffect or EffectType.ColDamageUp or EffectType.ShieldBonusUp;
 
     public void ButtonClicked(Vector2 pos)
     {
