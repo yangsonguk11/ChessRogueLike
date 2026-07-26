@@ -56,6 +56,16 @@ public partial class Board
 
         if (boardmode != BoardMode.command && boardmode != BoardMode.targeting)
         {
+            if (nextEffect.pieceSelectCount > 0)
+            {
+                CardEffect effect = pendingEffects.Dequeue();
+                RequestPieceSelection(
+                    effect.pieceSelectCount,
+                    (selected) => ApplyPieceSelectionEffect(effect, selected),
+                    PieceSelectFilters.Team(0));
+                return;
+            }
+
             ExecuteEffect(pendingEffects.Dequeue());
             ScheduleNextCardEffect();
         }
@@ -545,6 +555,7 @@ public partial class Board
         lockedCaster = new Vector2(-1, -1);
         lockedCasterPiece = null;
         ClearSelectedButton();
+        CancelPieceSelection();
     }
 
     void FinishCardUsage()
@@ -580,6 +591,14 @@ public partial class Board
                     CardCanvas.instance.MoveCardToDeck(card);
                 break;
         }
+        ScheduleNextCardEffect();
+    }
+
+    // RequestPieceSelection으로 보드에서 직접 고른 기물들 각각에게 effect를 적용한다.
+    void ApplyPieceSelectionEffect(CardEffect effect, List<Piece> selected)
+    {
+        foreach (var piece in selected)
+            ExecuteCardEffectOnPiece(FindPiecePos(piece), piece, effect);
         ScheduleNextCardEffect();
     }
 }

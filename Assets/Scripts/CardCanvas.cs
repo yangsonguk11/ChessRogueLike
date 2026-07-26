@@ -137,7 +137,10 @@ public class CardCanvas : MonoBehaviour
             return false;
         }
         if (nowusingCard != null)
+        {
             CancelCardMove(nowusingCard);
+            board.CancelCardUsage();
+        }
         pendingFirstTarget = new Vector2(-1, -1);
         RectTransform cardToUse = cards[handnum];
         cards.RemoveAt(handnum);

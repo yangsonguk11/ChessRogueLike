@@ -52,7 +52,7 @@ public class DataManager : MonoBehaviour
                 "TempColDamageUpCard",
                 "SacrificeShieldCard",
                 "ExecutionerCard",
-                "ShieldBonusUpCard",                
+                "SquadTrainingCard",              
             };
 
             PieceData defaultPiece = new PieceData

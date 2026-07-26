@@ -127,7 +127,25 @@ public class DialogueUI : MonoBehaviour
         {
             CardCanvas.instance.ShowCardSelectionPanel(
                 CardZone.SavedDeck, choice.removeCardCount, null,
-                _ => ApplyChoiceContinue(choice));
+                _ => ApplyPermanentStatStep(choice));
+            return;
+        }
+
+        ApplyPermanentStatStep(choice);
+    }
+
+    void ApplyPermanentStatStep(DialogueSO.Choice choice)
+    {
+        if (choice.permanentStatSelectCount > 0)
+        {
+            Board.instance?.RequestPieceSelection(
+                choice.permanentStatSelectCount,
+                selected =>
+                {
+                    Board.instance?.ApplyPermanentStatBuff(selected, choice.permanentColDamageBonus, choice.permanentShieldBonusBonus);
+                    ApplyChoiceContinue(choice);
+                },
+                PieceSelectFilters.Team(0));
             return;
         }
 

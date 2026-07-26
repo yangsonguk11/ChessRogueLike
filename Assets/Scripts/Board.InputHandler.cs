@@ -25,6 +25,13 @@ public partial class Board
         if (!boardReady) return;
         if (TurnManager.instance.currentState != TurnState.Player) return;
 
+        // 기물 다중 선택 대기 중이면 boardmode(targeting)의 기존 분기보다 우선 처리한다.
+        if (PieceSelectionActive)
+        {
+            HandlePieceSelectionClick(pos);
+            return;
+        }
+
         switch (boardmode)
         {
             case BoardMode.Inspect:

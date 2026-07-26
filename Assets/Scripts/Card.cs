@@ -301,6 +301,11 @@ public class CardEffect
     // SelectAndDiscard / SelectAndChangeCost 타입에서 사용
     public CardZone cardZone = CardZone.Hand;   // 선택 대상 존
     public int selectCount = 1;                 // 선택할 카드 수 (0 = 제한 없음)
+
+    // 0보다 크면 (requiredMode는 보통 Inspect) UseCard 이후 카드 효과 처리 중에 보드에서 아군 기물을
+    // 이 수치만큼 직접 클릭해 고르게 한다(Board.RequestPieceSelection). 고른 기물 각각에게 이 CardEffect
+    // 자신이 그대로 적용된다 (ExecuteCardEffectOnPiece가 지원하는 타입만: Heal/Shield/ColDamageUp류 등).
+    public int pieceSelectCount;
     public int costChange = 0;                  // 코스트 변화량 (SelectAndChangeCost용)
     public CostDuration costDuration = CostDuration.Permanent; // 코스트 지속 시간
 
