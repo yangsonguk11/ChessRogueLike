@@ -22,6 +22,24 @@ public partial class Board
         return true;
     }
 
+    // filters를 만족하는 기물이 있는 칸 전체에 RangeOn 하이라이트를 켜고, 어떤 칸에 어떤 팀으로 켰는지
+    // 기록해 반환한다. RequestPieceSelection과 카드 픽업 시점 미리보기(ShowUseEligibilityPreview)가 공용으로 쓴다.
+    List<(Vector2 pos, int teamID)> HighlightMatchingPieces(PieceSelectFilter[] filters)
+    {
+        var result = new List<(Vector2, int)>();
+        for (int x = 0; x < N; x++)
+            for (int y = 0; y < M; y++)
+            {
+                Vector2 pos = new Vector2(x, y);
+                Piece p = GetPieceAt(pos);
+                if (p == null || !MatchesFilters(pos, p, filters)) continue;
+
+                GetButtonScript(pos).RangeOn(p.teamID);
+                result.Add((pos, p.teamID));
+            }
+        return result;
+    }
+
     // filters를 만족하는 기물이 count보다 적으면 있는 만큼으로 줄어든다.
     // 필터는 PieceSelectFilters의 팩토리들을 원하는 만큼 조합해서 넘기면 된다 (예: Team(0), WithinRange(pos, 2)).
     public void RequestPieceSelection(int count, Action<List<Piece>> onConfirm, params PieceSelectFilter[] filters)
@@ -48,14 +66,7 @@ public partial class Board
         pieceSelectCallback = onConfirm;
         boardmode = BoardMode.targeting;
 
-        for (int x = 0; x < N; x++)
-            for (int y = 0; y < M; y++)
-            {
-                Vector2 pos = new Vector2(x, y);
-                Piece p = GetPieceAt(pos);
-                if (p != null && MatchesFilters(pos, p, filters))
-                    GetButtonScript(pos).RangeOn(p.teamID);
-            }
+        HighlightMatchingPieces(filters);
     }
 
     // 카드 사용이 취소/종료될 때 진행 중이던 기물 선택을 무효화한다. RequestPieceSelection에서

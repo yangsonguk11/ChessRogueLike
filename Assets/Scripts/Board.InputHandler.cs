@@ -20,6 +20,13 @@ public partial class Board
     static bool IsSingleEntityEffect(EffectType type) =>
         type is EffectType.DeBuff or EffectType.ApplyStatus or EffectType.ApplyTurnEffect or EffectType.ColDamageUp or EffectType.ShieldBonusUp;
 
+    // effect가 캐스터(selectedButton) 선택 단계를 필요로 하는지. self 타겟이거나, 마우스 위치만으로
+    // 발동하는 MouseCentered AoE가 아니면서 단일 대상 효과도 아니면 캐스터를 먼저 골라야 한다.
+    // ButtonClicked의 targeting 분기와 ShowUseEligibilityPreview가 동일한 기준을 공유하기 위해 분리.
+    static bool EffectNeedsCaster(CardEffect effect) =>
+        effect == null || effect.targetlogic == TargetLogic.self
+        || (effect.areaTargetMode != AreaTargetMode.MouseCentered && !IsSingleEntityEffect(effect.type));
+
     public void ButtonClicked(Vector2 pos)
     {
         if (!boardReady) return;
@@ -88,8 +95,7 @@ public partial class Board
                 // targeting은 기물(또는 위치) 1개만 지정하면 발동해야 함. self는 캐스터 선택 자체가 곧 대상 지정이라
                 // 기존 OnSelectBoard 경로를 그대로 쓴다. 그 외에 시전자를 쓰지 않는 타입(DeBuff/ApplyStatus 등)이거나
                 // 마우스로 위치만 지정하는 MouseCentered AoE는 캐스터 선택 없이 클릭 한 번으로 바로 적용한다.
-                bool needsCaster = currentEffect == null || currentEffect.targetlogic == TargetLogic.self
-                    || (currentEffect.areaTargetMode != AreaTargetMode.MouseCentered && !IsSingleEntityEffect(currentEffect.type));
+                bool needsCaster = EffectNeedsCaster(currentEffect);
 
                 if (selectedButton.x < 0 || selectedButton.y < 0)
                 {

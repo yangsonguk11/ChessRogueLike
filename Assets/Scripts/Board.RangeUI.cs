@@ -9,6 +9,7 @@ public partial class Board
 
     void OnSelectBoard()
     {
+        ClearUseEligibilityPreview();
         casterPiece = GetButtonScript(selectedButton).GetPieceScript();
         CardCanvas.instance?.RefreshAllCardViews();
         // 자기 자신 대상 효과: 시전자 클릭 즉시 실행 (두 번째 클릭 불필요)

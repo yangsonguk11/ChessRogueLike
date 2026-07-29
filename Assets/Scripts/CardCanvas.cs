@@ -158,7 +158,7 @@ public class CardCanvas : MonoBehaviour
     {
         nowUsingCardHeld = false;
         Card cardComp = nowusingCard.GetComponent<Card>();
-        if (cardComp.effects.Any(e => e.requiredMode == Board.BoardMode.command || e.requiredMode == Board.BoardMode.targeting))
+        if (cardComp.NeedsTargeting() || cardComp.effects[0].pieceSelectCount > 0)
             board.UseCard(cardComp);
         if (cardComp.NeedsTargeting())
             CardDragArrow.instance?.Show(nowusingCard);
@@ -872,9 +872,12 @@ public class CardCanvas : MonoBehaviour
             return;
         }
         Card card = nowusingCard.GetComponent<Card>();
-        bool needsTargeting = card.effects.Any(e =>
-            e.requiredMode == Board.BoardMode.command || e.requiredMode == Board.BoardMode.targeting);
-        if (!needsTargeting)
+        // pieceSelectCount 카드는 board.UseCard()가 이미 픽업(CommitNowUsingCard) 시점에 호출됐고, 이후
+        // 상호작용은 드롭 위치가 아니라 보드 클릭(HandlePieceSelectionClick)으로 진행되므로 여기선 아무것도 안 한다.
+        if (card.effects[0].pieceSelectCount > 0)
+            return;
+
+        if (!card.NeedsTargeting())
         {
             if (board.boardmode == Board.BoardMode.Inspect)
                 board.UseCard(card);

@@ -15,7 +15,10 @@ public partial class Board
     public void UseCard(Card card)
     {
         if (card.user == User.Ally)
+        {
             ClearSelectedButton();
+            ShowUseEligibilityPreview(card);
+        }
         lockedCaster = new Vector2(-1, -1);
         effectApplied = false;
         currentActiveCard = card;
@@ -556,6 +559,7 @@ public partial class Board
         lockedCasterPiece = null;
         ClearSelectedButton();
         CancelPieceSelection();
+        ClearUseEligibilityPreview();
     }
 
     void FinishCardUsage()
