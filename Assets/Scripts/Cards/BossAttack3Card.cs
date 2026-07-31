@@ -14,7 +14,7 @@ public class BossAttack3Card : Card
         RangeInfoSO range = effectRange.Count > 0 ? effectRange[0] : null;
 
         CardEffect damage = new CardEffect(
-            Board.BoardMode.targeting,
+            Board.BoardMode.command,
             EffectType.Damage,
             5,
             TargetLogic.AllEnemiesInRange,

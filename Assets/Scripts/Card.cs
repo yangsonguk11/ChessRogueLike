@@ -43,7 +43,8 @@ public enum TargetLogic
     LowestHP,
     self,
     AllEnemiesInRange,
-    AllAlliesInRange
+    AllAlliesInRange,
+    AllPiecesInRange
 }
 
 public enum AreaTargetMode

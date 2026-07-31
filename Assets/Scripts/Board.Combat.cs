@@ -156,14 +156,6 @@ public partial class Board
         return true;
     }
 
-    // pos1의 시전자와 pos2의 대상 기물을 가져온다. 둘 다 있어야 true.
-    bool TryGetCasterAndTarget(Vector2 pos1, Vector2 pos2, out Piece caster, out Piece target)
-    {
-        caster = GetButtonScript(pos1).GetPieceScript();
-        target = GetButtonScript(pos2).GetPieceScript();
-        return caster != null && target != null;
-    }
-
     // cardEffect에 onKillEffect가 설정돼 있으면, 처치가 확정된 시점에 시전자를 대상으로 그 효과를 실행 (예: 처치 시 ColDamageUp)
     void TriggerOnKillEffect(Vector2 casterPos, Piece caster, CardEffect cardEffect)
     {
@@ -173,40 +165,82 @@ public partial class Board
 
     void AttackPiece(Vector2 pos1, Vector2 pos2, int dmg, CardEffect cardEffect = null)
     {
-        if (TryGetCasterAndTarget(pos1, pos2, out Piece pScript1, out Piece pScript2))
+        // pos1 == pos2: 캐스터 선택 없이 즉시발동하는 단일 대상 Damage 카드 (예: MagicAttackCard).
+        // 공격자가 따로 없으므로 회전/공격 애니메이션 없이 피격자의 Hit/Die 반응만 재생한다.
+        if (pos1 == pos2)
         {
-            int hpLeft = pScript2.GetDamage(dmg);
-            if (pScript2.teamID == 0) playerDamagedThisTurn = true;
+            Piece target = GetButtonScript(pos2).GetPieceScript();
+            if (target == null) { StartMotionQueue(); return; }
 
-            pScript2.transform.rotation = Quaternion.LookRotation(GetButtonScript(pos1).Piecelocation - GetButtonScript(pos2).Piecelocation);
-            pScript1.transform.rotation = Quaternion.LookRotation(GetButtonScript(pos2).Piecelocation - GetButtonScript(pos1).Piecelocation);
+            int hpLeftDirect = target.GetDamage(dmg);
+            if (target.teamID == 0) playerDamagedThisTurn = true;
 
-            motionQueue.Enqueue(PieceAttackCor(pScript1, pScript2, cardEffect?.animTrigger, hpLeft <= 0 ? "Die" : "Hit", cardEffect,
-                new List<IEnumerator> { pScript2.DamageText(dmg) }));
-            if (hpLeft <= 0)
+            motionQueue.Enqueue(Parallel(
+                TriggerAnimCor(target, hpLeftDirect <= 0 ? "Die" : "Hit", 0.3f, false),
+                target.DamageText(dmg)));
+            if (hpLeftDirect <= 0)
             {
-                if (pScript2.teamID == 1) enemyPositions.Remove(pos2);
-                motionQueue.Enqueue(pScript2.DeathCor());
-                TriggerOnKillEffect(pos1, pScript1, cardEffect);
+                if (target.teamID == 1) enemyPositions.Remove(pos2);
+                motionQueue.Enqueue(target.DeathCor());
             }
-            if (cardEffect != null && cardEffect.healOnHit && dmg > 0)
-            {
-                int healed = pScript1.GetHeal(dmg);
-                motionQueue.Enqueue(pScript1.HealText(healed));
-            }
+            StartMotionQueue();
+            return;
         }
+
+        Piece pScript1 = GetButtonScript(pos1).GetPieceScript();
+        if (pScript1 == null) { StartMotionQueue(); return; }
+
+        Piece pScript2 = GetButtonScript(pos2).GetPieceScript();
+        if (pScript2 == null)
+        {
+            // 피격자가 없는 헛스윙: 시전자 공격 애니메이션만 재생하고 실제 효과는 적용하지 않음 (카드는 정상 소모됨)
+            motionQueue.Enqueue(TriggerAnimCor(pScript1, cardEffect?.animTrigger, cardEffect: cardEffect));
+            StartMotionQueue();
+            return;
+        }
+
+        int hpLeft = pScript2.GetDamage(dmg);
+        if (pScript2.teamID == 0) playerDamagedThisTurn = true;
+
+        pScript2.transform.rotation = Quaternion.LookRotation(GetButtonScript(pos1).Piecelocation - GetButtonScript(pos2).Piecelocation);
+        pScript1.transform.rotation = Quaternion.LookRotation(GetButtonScript(pos2).Piecelocation - GetButtonScript(pos1).Piecelocation);
+
+        motionQueue.Enqueue(PieceAttackCor(pScript1, pScript2, cardEffect?.animTrigger, hpLeft <= 0 ? "Die" : "Hit", cardEffect,
+            new List<IEnumerator> { pScript2.DamageText(dmg) }));
+        if (hpLeft <= 0)
+        {
+            if (pScript2.teamID == 1) enemyPositions.Remove(pos2);
+            motionQueue.Enqueue(pScript2.DeathCor());
+            TriggerOnKillEffect(pos1, pScript1, cardEffect);
+        }
+        if (cardEffect != null && cardEffect.healOnHit && dmg > 0)
+        {
+            int healed = pScript1.GetHeal(dmg);
+            motionQueue.Enqueue(pScript1.HealText(healed));
+        }
+
         StartMotionQueue();
     }
 
     void HealPiece(Vector2 pos1, Vector2 pos2, int dmg, CardEffect cardEffect = null)
     {
-        if (TryGetCasterAndTarget(pos1, pos2, out Piece pScript1, out Piece pScript2))
-        {
-            int healed = pScript2.GetHeal(dmg);
+        Piece pScript1 = GetButtonScript(pos1).GetPieceScript();
+        if (pScript1 == null) { StartMotionQueue(); return; }
 
-            motionQueue.Enqueue(PieceHealCor(pScript1, pScript2, cardEffect,
-                new List<IEnumerator> { pScript2.HealText(healed) }));
+        Piece pScript2 = GetButtonScript(pos2).GetPieceScript();
+        if (pScript2 == null)
+        {
+            // 대상이 없는 헛스윙: 시전자 애니메이션만 재생
+            motionQueue.Enqueue(TriggerAnimCor(pScript1, cardEffect?.animTrigger, cardEffect: cardEffect));
+            StartMotionQueue();
+            return;
         }
+
+        int healed = pScript2.GetHeal(dmg);
+
+        motionQueue.Enqueue(PieceHealCor(pScript1, pScript2, cardEffect,
+            new List<IEnumerator> { pScript2.HealText(healed) }));
+
         StartMotionQueue();
     }
 
@@ -356,15 +390,25 @@ public partial class Board
 
     void ShieldPiece(Vector2 pos1, Vector2 pos2, int dmg, CardEffect cardEffect = null)
     {
-        if (TryGetCasterAndTarget(pos1, pos2, out Piece pScript1, out Piece pScript2))
-        {
-            int hpLeft = pScript2.GetShield(dmg);
+        Piece pScript1 = GetButtonScript(pos1).GetPieceScript();
+        if (pScript1 == null) { StartMotionQueue(); return; }
 
-            motionQueue.Enqueue(PieceShieldCor(pScript1, pScript2, cardEffect,
-                new List<IEnumerator> { pScript2.ShieldText(dmg) }));
-            if (hpLeft <= 0)
-                motionQueue.Enqueue(pScript2.DeathCor());
+        Piece pScript2 = GetButtonScript(pos2).GetPieceScript();
+        if (pScript2 == null)
+        {
+            // 대상이 없는 헛스윙: 시전자 애니메이션만 재생
+            motionQueue.Enqueue(TriggerAnimCor(pScript1, cardEffect?.animTrigger, cardEffect: cardEffect));
+            StartMotionQueue();
+            return;
         }
+
+        int hpLeft = pScript2.GetShield(dmg);
+
+        motionQueue.Enqueue(PieceShieldCor(pScript1, pScript2, cardEffect,
+            new List<IEnumerator> { pScript2.ShieldText(dmg) }));
+        if (hpLeft <= 0)
+            motionQueue.Enqueue(pScript2.DeathCor());
+
         StartMotionQueue();
     }
 }

@@ -12,7 +12,7 @@ public class FetchAttackCard : Card
         effects.Add(new CardEffect(Board.BoardMode.Inspect, EffectType.AddCard, 0, TargetLogic.self)
         {
             addCardID = "AttackCard",
-            addCardZone = CardPositionZone.Deck
+            addCardZone = CardPositionZone.Hand
         });
     }
 

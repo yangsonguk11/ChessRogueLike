@@ -10,7 +10,7 @@ public class LifeDrainCard : Card
         type = CardType.Attack;
 
         effects.Add(new CardEffect(
-            Board.BoardMode.targeting,
+            Board.BoardMode.command,
             EffectType.Damage,
             2,
             TargetLogic.AllEnemiesInRange,

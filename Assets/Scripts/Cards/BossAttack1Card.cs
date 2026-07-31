@@ -10,7 +10,7 @@ public class BossAttack1Card : Card
         Cost = 0;
         type = CardType.Attack;
         CardEffect cf = new CardEffect(
-            Board.BoardMode.targeting,
+            Board.BoardMode.command,
             EffectType.Damage,
             6,
             TargetLogic.AllEnemiesInRange,

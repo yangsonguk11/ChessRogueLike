@@ -21,6 +21,7 @@ public partial class Board : MonoBehaviour
     [SerializeField] GameObject EventExitButtonObj;
     [SerializeField] DialogueUI dialogueUI;
     public bool IsEventLevel { get; private set; }
+    public LevelData currentLevelData { get; private set; }
     LevelData.EventType currentEventType;
     event Action OnButtonSelected;
     event Action OnButtonUnSelected;
@@ -188,6 +189,7 @@ public partial class Board : MonoBehaviour
         GameManager.instance?.Enemylist.Clear();
         enemyPositions.Clear();
 
+        currentLevelData = data;
         IsEventLevel = data.levelType == LevelData.LevelType.Event;
         currentEventType = data.eventType;
         EventExitButtonObj?.SetActive(false); // 전투 중이거나 이벤트가 아직 끝나지 않았으면 항상 숨김

@@ -8,7 +8,7 @@ public class AreaAttackCard : Card
         Name = "AreaAttackCard";
         Cost = 2;
         type = CardType.Attack;
-        CardEffect cf = new CardEffect(Board.BoardMode.targeting, EffectType.Damage, 2, TargetLogic.AllEnemiesInRange, effectRange[0])
+        CardEffect cf = new CardEffect(Board.BoardMode.command, EffectType.Damage, 2, TargetLogic.AllEnemiesInRange, effectRange[0])
             { animTrigger = "AreaAttack" };
         effects.Add(cf);
     }

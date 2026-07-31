@@ -160,6 +160,7 @@ public partial class Board
                 return ResolveLowestHPTarget(effect);
             case TargetLogic.AllEnemiesInRange:
             case TargetLogic.AllAlliesInRange:
+            case TargetLogic.AllPiecesInRange:
                 return selectedButton;
             default:
                 return new Vector2(-1, -1);
@@ -309,7 +310,8 @@ public partial class Board
         CardCanvas.instance.isCardEffecting = true;
 
         if (cardEffect.targetlogic == TargetLogic.AllEnemiesInRange ||
-            cardEffect.targetlogic == TargetLogic.AllAlliesInRange)
+            cardEffect.targetlogic == TargetLogic.AllAlliesInRange ||
+            cardEffect.targetlogic == TargetLogic.AllPiecesInRange)
         {
             ExecuteAreaEffect(cardEffect, targetPos);
             return;
@@ -331,7 +333,9 @@ public partial class Board
             }
             case EffectType.Damage:
             {
-                int resolvedDmg = ResolveDamageWithColDamage(cardEffect, GetButtonScript(selectedButton).GetPieceScript());
+                // selectedButton == targetPos면 캐스터 없이 즉시발동하는 경우라 보너스 없이 그대로 적용
+                Piece caster = selectedButton != targetPos ? GetButtonScript(selectedButton).GetPieceScript() : null;
+                int resolvedDmg = ResolveDamageWithColDamage(cardEffect, caster);
                 AttackPiece(selectedButton, targetPos, resolvedDmg, cardEffect);
                 ApplyStatusToTarget(targetPos, cardEffect);
                 break;
@@ -491,11 +495,17 @@ public partial class Board
     {
         if (cardEffect.effectRange == null) return;
 
-        Piece caster = GetButtonScript(selectedButton).GetPieceScript();
-        int casterTeam = caster != null ? caster.teamID : 0;
+        // MouseCentered는 클릭한 칸을 중심으로 삼을 뿐 캐스터 개념이 없음 — selectedButton이 우연히
+        // 어떤 기물의 칸과 겹치더라도 그 기물을 캐스터로 오인하면 안 되므로 caster를 아예 null로 둔다.
+        bool hasCaster = cardEffect.areaTargetMode != AreaTargetMode.MouseCentered;
+        Piece caster = hasCaster ? GetButtonScript(selectedButton).GetPieceScript() : null;
+
+        // 아군/적 판정은 caster 기물의 teamID가 아니라 카드 자체의 user(Ally/Enemy)를 기준으로 한다.
+        // caster 기물이 없는 MouseCentered 카드도 이 카드를 누가 쓰는 카드인지로 정확히 판정할 수 있다.
+        int userTeam = currentActiveCard.user == User.Ally ? 0 : 1;
         int targetTeam = cardEffect.targetlogic == TargetLogic.AllEnemiesInRange
-            ? (casterTeam == 0 ? 1 : 0)
-            : casterTeam;
+            ? (userTeam == 0 ? 1 : 0)
+            : userTeam;
         var targets = new List<Vector2>();
 
         List<Vector2> offsets = cardEffect.effectRange.GetAbleRange();
@@ -518,14 +528,18 @@ public partial class Board
             if (pos.x < 0 || pos.x >= N || pos.y < 0 || pos.y >= M) continue;
 
             Piece p = GetButtonScript(pos).GetPieceScript();
-            if (p == null || p.teamID != targetTeam) continue;
+            if (p == null) continue;
+            if (cardEffect.targetlogic != TargetLogic.AllPiecesInRange && p.teamID != targetTeam) continue;
             targets.Add(pos);
         }
 
         switch (cardEffect.type)
         {
             case EffectType.Damage:
-                AreaAttackPiece(selectedButton, targets, ResolveDamageWithColDamage(cardEffect, caster), cardEffect);
+                if (hasCaster)
+                    AreaAttackPiece(selectedButton, targets, ResolveDamageWithColDamage(cardEffect, caster), cardEffect);
+                else
+                    AreaAttackPiece(targets, ResolveDamageWithColDamage(cardEffect, caster), cardEffect);
                 ApplyStatusToTarget(targets, cardEffect);
                 break;
             case EffectType.Shield:

@@ -47,11 +47,10 @@ public class DataManager : MonoBehaviour
                 "ImmobilizeCard",
                 "BloodChargeCard",
                 "DrawCard",
-                "LifeDrainCard",
+                "MagicAttackCard",
                 "FetchAttackCard",
-                "TempColDamageUpCard",
-                "SacrificeShieldCard",
-                "ExecutionerCard",
+                "LifeDrainCard",
+                "ZoneAttackCard",
                 "SquadTrainingCard",              
             };
 

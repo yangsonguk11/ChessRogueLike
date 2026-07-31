@@ -12,10 +12,18 @@ public class ButtonInfo : MonoBehaviour
     [SerializeField] TextMeshProUGUI colDamage;
     [SerializeField] TextMeshProUGUI statusEffects;
     [SerializeField] UnityEngine.UI.Button restButton;
+    [SerializeField] UnityEngine.UI.Button upgradeButton;
 
     public void UpdateButtonInfo(Button button)
     {
-        Piece p = button.GetPiece().GetComponent<Piece>();
+        GameObject pieceObj = button.GetPiece();
+        if (pieceObj == null)
+        {
+            Clear();
+            return;
+        }
+
+        Piece p = pieceObj.GetComponent<Piece>();
 
         if (p is RestObject restObject)
         {
@@ -26,11 +34,11 @@ public class ButtonInfo : MonoBehaviour
             shieldBonus.text = "";
             colDamage.text = "";
             statusEffects.text = "";
-            SetRestButtonActive(!restObject.used);
+            SetRestActionsActive(!restObject.used);
             return;
         }
 
-        SetRestButtonActive(false);
+        SetRestActionsActive(false);
         piecename.text = p.name;
         team.text = p.teamID == 0 ? "아군" : "적";
         hp.text = string.Format("HP: {0}/{1}", p.hp, p.maxhp);
@@ -40,13 +48,23 @@ public class ButtonInfo : MonoBehaviour
         statusEffects.text = BuildStatusText(p);
     }
 
-    void SetRestButtonActive(bool active)
+    void SetRestActionsActive(bool active)
     {
-        if (restButton == null) return;
-        restButton.gameObject.SetActive(active);
-        restButton.onClick.RemoveAllListeners();
-        if (active)
-            restButton.onClick.AddListener(() => Board.instance.RestHeal());
+        if (restButton != null)
+        {
+            restButton.gameObject.SetActive(active);
+            restButton.onClick.RemoveAllListeners();
+            if (active)
+                restButton.onClick.AddListener(() => Board.instance.RestHeal());
+        }
+
+        if (upgradeButton != null)
+        {
+            upgradeButton.gameObject.SetActive(active);
+            upgradeButton.onClick.RemoveAllListeners();
+            if (active)
+                upgradeButton.onClick.AddListener(() => Board.instance.RestUpgrade());
+        }
     }
 
     string BuildColDamageText(Piece p)
@@ -99,7 +117,7 @@ public class ButtonInfo : MonoBehaviour
         shieldBonus.text = "";
         colDamage.text = "";
         statusEffects.text = "";
-        SetRestButtonActive(false);
+        SetRestActionsActive(false);
     }
 
     void Start()

@@ -86,10 +86,11 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            if (ResultCanvas.Instance != null)
-                ResultCanvas.Instance.EnableCanvas();
+            global::Board boardScript = this.Board?.GetComponent<global::Board>();
+            if (boardScript != null)
+                boardScript.GrantLevelReward();
             else
-                Debug.LogError("[FinishLevel] ResultCanvas.Instance가 null입니다.");
+                Debug.LogError("[FinishLevel] Board를 찾을 수 없습니다.");
         }
     }
 

@@ -13,7 +13,8 @@ public class TurnEffect : StatusEffect
             string effectDesc = cardEffect.type switch
             {
                 EffectType.Damage => cardEffect.targetlogic == TargetLogic.AllEnemiesInRange ||
-                                      cardEffect.targetlogic == TargetLogic.AllAlliesInRange
+                                      cardEffect.targetlogic == TargetLogic.AllAlliesInRange ||
+                                      cardEffect.targetlogic == TargetLogic.AllPiecesInRange
                     ? $"광역 피해 {cardEffect.dmg}"
                     : $"피해 {cardEffect.dmg}",
                 EffectType.Heal        => $"회복 {cardEffect.dmg}",

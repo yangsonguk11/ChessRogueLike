@@ -38,7 +38,8 @@ public partial class Board
     // 시전자(caster) 기준으로 임의의 CardEffect 하나를 즉시 실행. TurnEffect(턴 효과)와 onKillEffect(처치 시 효과)가 공유해서 사용.
     void ExecuteCardEffectOnPiece(Vector2 pos, Piece caster, CardEffect ce)
     {
-        if (ce.targetlogic == TargetLogic.AllEnemiesInRange || ce.targetlogic == TargetLogic.AllAlliesInRange)
+        if (ce.targetlogic == TargetLogic.AllEnemiesInRange || ce.targetlogic == TargetLogic.AllAlliesInRange
+            || ce.targetlogic == TargetLogic.AllPiecesInRange)
         {
             if (ce.effectRange == null) return;
 
