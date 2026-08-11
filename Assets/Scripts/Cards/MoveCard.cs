@@ -9,6 +9,7 @@ public class MoveCard : Card
         Name = "MoveCard";
         Cost = 2;
         type = CardType.Move;
+        dragDropTarget = DragDropTarget.AnyTile;
         CardEffect cf = new CardEffect(Board.BoardMode.command, EffectType.Move, 0, TargetLogic.NearestEnemy)
             { animTrigger = "Move" };
         effects.Add(cf);

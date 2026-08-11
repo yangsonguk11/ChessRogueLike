@@ -88,6 +88,35 @@ public partial class Board
         }
     }
 
+    // 카드를 실제로 드롭(놓음)한 시점에 CardCanvas.OnDragCardReleased가 호출: 캐스터 선택이 필요한
+    // 카드라면(원래 여기서 플레이어가 자기 기물을 클릭해야 했던 것을) 카드를 낸 기물로 바로 확정한다.
+    // self 타겟 효과는 이 호출 안에서 OnSelectBoard를 통해 곧바로 실행될 수 있다 — 호출부는 그 후
+    // nowusingCard가 비었는지 확인해서 카드 사용이 이미 끝났는지 판단해야 한다.
+    public void ConfirmCasterOnDrop()
+    {
+        if (pendingEffects.Count == 0 || currentActiveCard == null || currentActiveCard.user != User.Ally) return;
+        if (isSelectedButtonActive() || IsLockedCasterActive()) return;
+
+        CardEffect nextEffect = pendingEffects.Peek();
+        if (boardmode == BoardMode.command || (boardmode == BoardMode.targeting && EffectNeedsCaster(nextEffect)))
+            AutoSelectCardOwnerAsCaster();
+    }
+
+    // CardCanvas에 표시 중인(카드를 낸) 기물을 캐스터로 즉시 선택 처리한다.
+    // Board.InputHandler.cs의 "아군 기물을 클릭해 캐스터로 선택" 로직과 동일한 결과를 만든다.
+    void AutoSelectCardOwnerAsCaster()
+    {
+        Piece owner = CardCanvas.instance != null ? CardCanvas.instance.ActivePiece : null;
+        Button ownerButton = GetButtonForPiece(owner);
+        if (ownerButton == null) return;
+
+        selectedButton = ownerButton.GetLocation();
+        // 위 대입이 self 타겟 효과의 즉시 실행(OnSelectBoard)까지 그 자리에서 끝내버렸을 수 있어
+        // selectedButton이 이미 초기화(-1,-1)됐을 수 있다 — 그 상태로 GetButtonScript를 호출하면 안 된다.
+        if (isSelectedButtonActive())
+            GetButtonScript(selectedButton).SelectedTrue();
+    }
+
     void ScheduleNextCardEffect()
     {
         if (queuecoroutineworking)
@@ -214,7 +243,7 @@ public partial class Board
         Piece caster = GetButtonScript(selectedButton).GetPieceScript();
         int targetTeam = caster != null ? (caster.teamID == 0 ? 1 : 0) : 1;
 
-        AddMovableButtons(effect.effectRange.GetAbleRange());
+        AddMovableButtons(selectedButton, effect.effectRange.GetAbleRange());
 
         int lowestHP = int.MaxValue;
         Vector2 target = new Vector2(-1, -1);
@@ -236,7 +265,7 @@ public partial class Board
     {
         List<Vector2> movableRange = GetButtonScript(selectedButton).GetPiece()?.GetComponent<Piece>().GetMoveableButton()
             ?? new List<Vector2>();
-        AddMovableButtons(movableRange);
+        AddMovableButtons(selectedButton, movableRange);
 
         float minDistance = float.MaxValue;
         Vector2 bestTargetPos = new Vector2(-1, -1);
@@ -574,6 +603,7 @@ public partial class Board
         ClearSelectedButton();
         CancelPieceSelection();
         ClearUseEligibilityPreview();
+        SetCasterIndicator(CardCanvas.instance?.ActivePiece, false);
     }
 
     void FinishCardUsage()

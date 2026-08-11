@@ -7,6 +7,10 @@ public partial class Board
     List<Vector2> selectedButtonMovable = new List<Vector2>();
     int selectedMovableTeam = 0;
 
+    // 카드를 들고 있는 동안(usecard 진입~사용/취소) 시전자 칸에 표시를 켜고 끈다. 종류 상관없이 카드를
+    // 든 시점부터 무조건 켜지고, ResetBoardAfterCardUse에서 끈다.
+    public void SetCasterIndicator(Piece piece, bool active) => GetButtonForPiece(piece)?.SetCasterIndicator(active);
+
     void OnSelectBoard()
     {
         ClearUseEligibilityPreview();
@@ -21,51 +25,52 @@ public partial class Board
             return;
         }
 
-        if (pendingEffects.Count > 0)
+        ShowCasterEffectRange(selectedButton, pendingEffects.Count > 0 ? pendingEffects.Peek() : null);
+    }
+
+    // 캐스터(casterPos)가 이번 카드 효과로 이동/공격/AoE 중심 지정 등에 쓸 수 있는 칸을 하이라이트한다.
+    // selectedButton(캐스터 확정 + self 즉시실행까지 트리거하는 프로퍼티)에 의존하지 않는 순수 미리보기용
+    // 함수라서, 카드를 픽업한 시점처럼 아직 캐스터를 "확정"하기 전에도 안전하게 호출할 수 있다.
+    void ShowCasterEffectRange(Vector2 casterPos, CardEffect currentEffect)
+    {
+        if (currentEffect != null &&
+            currentEffect.type != EffectType.Move &&
+            currentEffect.effectRange != null &&
+            currentEffect.areaTargetMode != AreaTargetMode.Fixed)
         {
-            CardEffect currentEffect = pendingEffects.Peek();
-            if (currentEffect.type != EffectType.Move &&
-                currentEffect.effectRange != null &&
-                currentEffect.areaTargetMode != AreaTargetMode.Fixed)
+            if (currentEffect.targetingUsesMovement)
             {
-                if (currentEffect.targetingUsesMovement)
-                {
-                    // 캐릭터 이동 범위 내에서만 AoE 중심 선택 가능 (시각적 표시 O)
-                    ShowMovableButtons(GetButtonScript(selectedButton).GetPiece(), null);
-                }
-                else if (currentEffect.targetingRange != null)
-                {
-                    // 지정된 사거리 내에서만 AoE 중심 선택 가능 (시각적 표시 O)
-                    AddMovableButtons(currentEffect.targetingRange.GetAbleRange());
-                }
-                else
-                {
-                    // 제한 없음: 전체 보드, 시각적 표시 없음
-                    FillAllMovableButtonsSilent();
-                }
-                ShowButtonInfo(selectedButton);
-                return;
+                // 캐릭터 이동 범위 내에서만 AoE 중심 선택 가능 (시각적 표시 O)
+                ShowMovableButtons(casterPos, GetButtonScript(casterPos).GetPiece(), null);
             }
+            else if (currentEffect.targetingRange != null)
+            {
+                // 지정된 사거리 내에서만 AoE 중심 선택 가능 (시각적 표시 O)
+                AddMovableButtons(casterPos, currentEffect.targetingRange.GetAbleRange());
+            }
+            else
+            {
+                // 제한 없음: 전체 보드, 시각적 표시 없음
+                FillAllMovableButtonsSilent(casterPos);
+            }
+            ShowButtonInfo(casterPos);
+            return;
         }
 
         List<Vector2> effectRange = null;
-        if (pendingEffects.Count > 0)
-        {
-            CardEffect currentEffect = pendingEffects.Peek();
-            if (currentEffect.type != EffectType.Move && currentEffect.effectRange != null)
-                effectRange = currentEffect.effectRange.GetAbleRange();
-        }
-        ShowMovableButtons(GetButtonScript(selectedButton).GetPiece(), effectRange);
+        if (currentEffect != null && currentEffect.type != EffectType.Move && currentEffect.effectRange != null)
+            effectRange = currentEffect.effectRange.GetAbleRange();
+        ShowMovableButtons(casterPos, GetButtonScript(casterPos).GetPiece(), effectRange);
 
-        if (pendingEffects.Count > 0 && pendingEffects.Peek().type == EffectType.Move && pendingEffects.Peek().noMoveAttack)
-            FilterEnemyOccupiedFromMovable();
+        if (currentEffect != null && currentEffect.type == EffectType.Move && currentEffect.noMoveAttack)
+            FilterEnemyOccupiedFromMovable(casterPos);
 
-        ShowButtonInfo(selectedButton);
+        ShowButtonInfo(casterPos);
     }
 
-    void FilterEnemyOccupiedFromMovable()
+    void FilterEnemyOccupiedFromMovable(Vector2 casterPos)
     {
-        Piece caster = GetButtonScript(selectedButton).GetPieceScript();
+        Piece caster = GetButtonScript(casterPos).GetPieceScript();
         if (caster == null) return;
         for (int i = selectedButtonMovable.Count - 1; i >= 0; i--)
         {
@@ -92,22 +97,22 @@ public partial class Board
     // HideMovableButtons에서도 RangeOff를 호출하면 안 됨 (다른 곳에서 켜둔 같은 칸의 표시를 잘못 꺼버리게 됨).
     bool movableButtonsSilent = false;
 
-    void FillAllMovableButtonsSilent()
+    void FillAllMovableButtonsSilent(Vector2 casterPos)
     {
         HideMovableButtons();
-        selectedMovableTeam = GetButtonScript(selectedButton).GetPieceScript()?.teamID ?? 0;
+        selectedMovableTeam = GetButtonScript(casterPos).GetPieceScript()?.teamID ?? 0;
         for (int x = 0; x < N; x++)
             for (int y = 0; y < M; y++)
                 selectedButtonMovable.Add(new Vector2(x, y));
         movableButtonsSilent = true;
     }
 
-    void ShowMovableButtons(GameObject p, List<Vector2> effectableButton = default)
+    void ShowMovableButtons(Vector2 casterPos, GameObject p, List<Vector2> effectableButton = default)
     {
         if (p == null) return;
 
         List<Vector2> list = effectableButton ?? p.GetComponent<Piece>().GetMoveableButton();
-        AddMovableButtons(list);
+        AddMovableButtons(casterPos, list);
     }
 
     void HideMovableButtons()
@@ -119,13 +124,13 @@ public partial class Board
         movableButtonsSilent = false;
     }
 
-    void AddMovableButtons(List<Vector2> list)
+    void AddMovableButtons(Vector2 casterPos, List<Vector2> list)
     {
         HideMovableButtons();
-        selectedMovableTeam = GetButtonScript(selectedButton).GetPieceScript()?.teamID ?? 0;
+        selectedMovableTeam = GetButtonScript(casterPos).GetPieceScript()?.teamID ?? 0;
         foreach (Vector2 v in list)
         {
-            Vector2 m = selectedButton + v;
+            Vector2 m = casterPos + v;
             if (m.x < 0 || m.x >= N || m.y < 0 || m.y >= M) continue;
             GetButtonScript(m).RangeOn(selectedMovableTeam);
             selectedButtonMovable.Add(m);

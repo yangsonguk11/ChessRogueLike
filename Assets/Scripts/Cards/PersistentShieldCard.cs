@@ -8,6 +8,7 @@ public class PersistentShieldCard : Card
         Name = "PersistentShieldCard";
         Cost = 2;
         type = CardType.Skill;
+        dragDropTarget = DragDropTarget.Self;
 
         // 즉시 방어도 부여
         effects.Add(new CardEffect(

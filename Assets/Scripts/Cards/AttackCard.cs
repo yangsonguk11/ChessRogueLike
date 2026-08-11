@@ -9,6 +9,7 @@ public class AttackCard : Card
         Name = "AttackCard";
         Cost = 1;
         type = CardType.Attack;
+        dragDropTarget = DragDropTarget.Enemy;
         CardEffect cf = new CardEffect(Board.BoardMode.command, EffectType.Damage, 3, TargetLogic.LowestHP, effectRange[0])
             { animTrigger = "Attack" };
         effects.Add(cf);

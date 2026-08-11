@@ -118,7 +118,6 @@ MonoBehaviour:
   duration: 1
   moveSpeed: 200
   buffColor: {r: 0, g: 1, b: 0.53, a: 1}
-  debuffColor: {r: 1, g: 0.27, b: 0.27, a: 1}
 --- !u!1001 &439685606344324752
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -225,6 +224,8 @@ MonoBehaviour:
   maxhp: 50
   colDamage: 5
   baseColDamage: 0
+  shieldBonus: 0
+  baseShieldBonus: 0
   teamID: 0
   moveableRange: {fileID: 0}
   movedThisTurn: 0

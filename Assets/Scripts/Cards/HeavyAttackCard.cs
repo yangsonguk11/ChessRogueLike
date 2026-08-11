@@ -8,6 +8,7 @@ public class HeavyAttackCard : Card
         Name = "HeavyAttackCard";
         Cost = 2;
         type = CardType.Attack;
+        dragDropTarget = DragDropTarget.Enemy;
         // 효과 1: 선택한 적에게 강한 피해 (서서 공격 애니메이션)
         effects.Add(new CardEffect(Board.BoardMode.command, EffectType.Damage, 6, TargetLogic.LowestHP, effectRange[0])
             { animTrigger = "Attack" });

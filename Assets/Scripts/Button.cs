@@ -8,6 +8,8 @@ public class Button : MonoBehaviour, ISelectable
     [SerializeField] GameObject AllyRangeObj;
     [SerializeField] GameObject EnemyRangeObj;
     [SerializeField] GameObject SelectedObj;
+    [SerializeField] GameObject DeckActiveObj; // CardCanvas가 이 기물의 덱을 보여주고 있을 때 표시
+    [SerializeField] GameObject CasterIndicatorObj; // 이 기물이 지금 든 카드의 시전자일 때 표시
     GameObject board;
     Board boardScript;
     Vector2 location;
@@ -55,6 +57,9 @@ public class Button : MonoBehaviour, ISelectable
         board.GetComponent<Board>().ButtonClicked(location);
     }
 
+
+    public void SetDeckActive(bool active) => DeckActiveObj?.SetActive(active);
+    public void SetCasterIndicator(bool active) => CasterIndicatorObj?.SetActive(active);
 
     public GameObject GetPiece() { if (piece) return piece; else return null; }
     public Piece GetPieceScript() { if (piece) return piece.GetComponent<Piece>(); else return null; }

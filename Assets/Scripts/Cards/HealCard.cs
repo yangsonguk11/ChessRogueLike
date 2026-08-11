@@ -9,6 +9,7 @@ public class HealCard : Card
         Name = "HealCard";
         Cost = 2;
         type = CardType.Skill;
+        dragDropTarget = DragDropTarget.Self;
         CardEffect cf = new CardEffect(Board.BoardMode.targeting, EffectType.Heal, 2, TargetLogic.self)
             { animTrigger = "Heal" };
         effects.Add(cf);

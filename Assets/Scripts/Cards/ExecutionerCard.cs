@@ -8,6 +8,7 @@ public class ExecutionerCard : Card
         Name = "ExecutionerCard";
         Cost = 1;
         type = CardType.Attack;
+        dragDropTarget = DragDropTarget.Enemy;
 
         effects.Add(new CardEffect(Board.BoardMode.command, EffectType.Damage, 3, TargetLogic.LowestHP, effectRange[0])
         {

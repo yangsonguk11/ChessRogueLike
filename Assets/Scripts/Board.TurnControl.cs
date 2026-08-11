@@ -10,8 +10,7 @@ public partial class Board
         ProcessTeamTurnEffects(0, TurnPhase.OwnTurnStart);
         playerDamagedThisTurn = false;
         ResetPieceMovedThisTurn();
-        CardCanvas.instance.DrawTurnStartCards();
-        CardCanvas.instance.GetMaxEnergy();
+        CardCanvas.instance.ProcessTurnStartForAllAllies(GetAllAllyPieces());
         ShowAllEnemyRanges();
     }
 
@@ -24,7 +23,7 @@ public partial class Board
         FinishCardUsage();
         ClearSelectedButton();
         CardCanvas.instance.RestoreThisTurnCosts(); // ThisTurnOnly 코스트 복구
-        CardCanvas.instance.HandtoDiscardAll();
+        CardCanvas.instance.ResetAllAllyHands(GetAllAllyPieces());
     }
 
     public void EnemyTurnEnd()

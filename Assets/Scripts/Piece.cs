@@ -31,6 +31,9 @@ public abstract class Piece : MonoBehaviour
     }
     public RangeInfoSO moveableRange;
 
+    // teamID==0(아군)일 때만 SetPieceData에서 생성됨. 적/NPC는 null로 유지.
+    public PieceDeck pieceDeck;
+
     public List<StatusEffect> activeEffects = new List<StatusEffect>();
     public bool movedThisTurn;
 
@@ -90,6 +93,32 @@ public abstract class Piece : MonoBehaviour
         teamID = data.teamID;
         shield = 0;
         moveableRange = RangeInfoSODatabase.instance.GetRangeInfoSO(data.rangeinfoname);
+
+        if (teamID == 0)
+        {
+            pieceDeck = new PieceDeck();
+            CardCanvas.instance?.SpawnDeckForPiece(this, data.deckCardIDs ?? new List<string>());
+        }
+    }
+
+    // Hand+Discard+Deck(소멸더미 제외 — 소멸은 이번 전투에서만 사라지는 것이므로 다음 전투로 넘어가지 않는다)
+    // 에 있는 카드들의 cardID를 모아 저장용 deckCardIDs로 되돌린다.
+    List<string> CollectDeckCardIDs()
+    {
+        var result = new List<string>();
+        if (pieceDeck == null) return result;
+
+        foreach (var rt in pieceDeck.Hand) AddCardID(result, rt);
+        foreach (var rt in pieceDeck.Discard) AddCardID(result, rt);
+        foreach (var rt in pieceDeck.Deck) AddCardID(result, rt);
+        return result;
+    }
+
+    static void AddCardID(List<string> result, RectTransform rt)
+    {
+        Card card = rt != null ? rt.GetComponent<Card>() : null;
+        if (card != null && !string.IsNullOrEmpty(card.cardID))
+            result.Add(card.cardID);
     }
 
     public PieceData GetPieceData()
@@ -102,7 +131,8 @@ public abstract class Piece : MonoBehaviour
             maxHp = maxhp,
             colDamage = baseColDamage,
             shieldBonus = baseShieldBonus,
-            rangeinfoname = moveableRange != null ? moveableRange.name : ""
+            rangeinfoname = moveableRange != null ? moveableRange.name : "",
+            deckCardIDs = CollectDeckCardIDs()
         };
     }
     public virtual List<Vector2> GetMoveableButton() { return pieceInfo.RangeInfoSO.GetAbleRange(); }

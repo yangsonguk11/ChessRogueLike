@@ -8,6 +8,7 @@ public class SafeMoveCard : Card
         Name = "SafeMoveCard";
         Cost = 1;
         type = CardType.Move;
+        dragDropTarget = DragDropTarget.AnyTile;
 
         effects.Add(new CardEffect(
             Board.BoardMode.command,

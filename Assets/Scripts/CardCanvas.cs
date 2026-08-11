@@ -14,15 +14,27 @@ public class CardCanvas : MonoBehaviour
     [SerializeField] CardDatabase cardData;
     [SerializeField] Board board;
     [SerializeField] GameObject UnSeenEvent; // 이벤트 레벨에서 숨길 카드 관련 UI를 모아둔 부모
-    public List<RectTransform> cards = new List<RectTransform>(); // 손에 든 카드들
-    public List<RectTransform> Discardcards = new List<RectTransform>();
-    public Queue<RectTransform> Deckcards = new Queue<RectTransform>();
+
+    // 현재 화면에 표시 중인 아군 기물. 아래 손패/덱/버림/소멸 더미는 전부 이 기물의 PieceDeck을 가리키는
+    // 위임 프로퍼티다 — 기물마다 카드 자원이 완전히 분리돼 있고, CardCanvas는 그중 하나를 보여주는 뷰일 뿐이다.
+    Piece activePiece;
+    public Piece ActivePiece => activePiece;
+    static readonly List<RectTransform> EmptyCardList = new List<RectTransform>();
+    static readonly Queue<RectTransform> EmptyCardQueue = new Queue<RectTransform>();
+
+    public List<RectTransform> cards => activePiece?.pieceDeck?.Hand ?? EmptyCardList; // 손에 든 카드들
+    public List<RectTransform> Discardcards => activePiece?.pieceDeck?.Discard ?? EmptyCardList;
+    public Queue<RectTransform> Deckcards
+    {
+        get => activePiece?.pieceDeck?.Deck ?? EmptyCardQueue;
+        set { if (activePiece?.pieceDeck != null) activePiece.pieceDeck.Deck = value; }
+    }
     [SerializeField] GameObject HandZone;
     [SerializeField] RectTransform CardNowUsingPos;
     [SerializeField] RectTransform DiscardZone;
     [SerializeField] RectTransform DeckZone;
     [SerializeField] RectTransform ExileZone;
-    public List<RectTransform> Exilecards = new List<RectTransform>();
+    public List<RectTransform> Exilecards => activePiece?.pieceDeck?.Exile ?? EmptyCardList;
     [SerializeField] TextMeshProUGUI CurrentEnergyText;
     [SerializeField] float radius;        // 부채꼴 반지름 (클수록 더 펼쳐짐)
     [SerializeField] float angleBetween;  // 카드 사이의 각도
@@ -55,14 +67,29 @@ public class CardCanvas : MonoBehaviour
     int panelRequiredCount;
     bool panelIsSavedDeck; // true면 panelCardPool이 deckCardIDs로부터 임시 스폰된 것 (확인 시 원래 자리로 되돌리지 않고 savedDeckAction에 따라 처리)
     SavedDeckAction panelSavedDeckAction;
+    int panelPieceIndex = -1; // SavedDeck 패널이 어느 기물의 deckCardIDs를 대상으로 하는지
     Action<List<RectTransform>> panelCallback;
     Dictionary<RectTransform, (Transform parent, Vector3 worldPos)> savedCardStates
         = new Dictionary<RectTransform, (Transform, Vector3)>();
     // ────────────────────────────────────────────────────────────
 
-    int _currentenergy;
-    public int currentenergy { get { return _currentenergy; } set { _currentenergy = value; UpdateCurrentEnergy(); UpdateCardInteractability(); } }
-    public int maxenergy = 4;
+    // 에너지는 기물별이 아니라 아군 전체가 공유. 최대치는 아군 기물 수에 따라 늘어난다
+    // (기물 1명이면 baseMaxEnergy, 이후 1명 늘 때마다 +1 — 예: 4 → 5 → 6...).
+    int _currentenergy = 3;
+    public int currentenergy
+    {
+        get => _currentenergy;
+        set { _currentenergy = value; UpdateCurrentEnergy(); UpdateCardInteractability(); }
+    }
+    [SerializeField] int baseMaxEnergy = 4; // 아군 1명 기준 최대 에너지
+    public int maxenergy
+    {
+        get
+        {
+            int allyCount = board != null ? board.GetAllAllyPieces().Count : 1;
+            return baseMaxEnergy + Mathf.Max(0, allyCount - 1);
+        }
+    }
     public RectTransform nowusingCard;
     public bool isCardEffecting;
     bool usingCardMoving;
@@ -90,19 +117,69 @@ public class CardCanvas : MonoBehaviour
     private void Awake()
     {
         if (instance == null) instance = this;
-        currentenergy = 3;
-        foreach(string cardName in DataManager.Instance.currentData.deckCardIDs)
+        HandZone.GetComponent<Image>().raycastTarget = false;
+    }
+
+    // 기물 1명분의 카드를 스폰해 그 기물의 버림더미(초기 덱)에 채운다. 화면에는 활성 기물일 때만 보이도록
+    // 비활성 상태로 만들어두고, SetActivePiece가 실제로 보여줄 때 활성화한다.
+    public void SpawnDeckForPiece(Piece piece, List<string> deckCardIDs)
+    {
+        if (piece?.pieceDeck == null) return;
+
+        foreach (string cardName in deckCardIDs)
         {
             GameObject obj = cardData.SpawnCard(GetComponent<RectTransform>(), cardName);
-            if(obj != null)
-            {
-                var rt = obj.GetComponent<RectTransform>();
-                Discardcards.Add(rt);
-                rt.position = GetZonePosition(CardPositionZone.Deck);
-            }
+            if (obj == null) continue;
+
+            var rt = obj.GetComponent<RectTransform>();
+            piece.pieceDeck.Discard.Add(rt);
+            rt.position = GetZonePosition(CardPositionZone.Deck);
+            obj.SetActive(piece == activePiece);
         }
+    }
+
+    // 보드에서 아군 기물을 클릭(또는 hover 미리보기)했을 때 호출: 화면에 보이는 손패/덱/버림/소멸 더미를
+    // 해당 기물의 것으로 전환한다(에너지는 아군 공유라 전환 대상이 아님). 카드 사용/애니메이션이 진행 중일
+    // 때는 전환을 막는다 — silent가 true면(hover 미리보기) 안내 메시지 없이 조용히 무시한다.
+    public void SetActivePiece(Piece piece, bool silent = false)
+    {
+        if (piece == null || piece.pieceDeck == null || piece == activePiece) return;
+
+        if (isCardEffecting || nowusingCard != null)
+        {
+            if (!silent)
+                AnnouncementUI.instance?.Show("카드 사용 중에는 기물을 전환할 수 없습니다");
+            return;
+        }
+
+        board?.SetPieceDeckIndicator(activePiece, false);
+        SetPileActive(activePiece, false);
+        activePiece = piece;
+        SetPileActive(activePiece, true);
+        board?.SetPieceDeckIndicator(activePiece, true);
+
+        SnapPilesToZones();
+        UpdateCurrentEnergy();
+        UpdateCardInteractability();
+        NotifyPileChanged();
+    }
+
+    static void SetPileActive(Piece piece, bool active)
+    {
+        if (piece?.pieceDeck == null) return;
+        foreach (var rt in piece.pieceDeck.Hand) rt.gameObject.SetActive(active);
+        foreach (var rt in piece.pieceDeck.Discard) rt.gameObject.SetActive(active);
+        foreach (var rt in piece.pieceDeck.Deck) rt.gameObject.SetActive(active);
+        foreach (var rt in piece.pieceDeck.Exile) rt.gameObject.SetActive(active);
+    }
+
+    // 새로 활성화된 기물의 더미들을 각자의 Zone 위치로 즉시 스냅(애니메이션 없음)하고 손패는 부채꼴로 정렬
+    void SnapPilesToZones()
+    {
+        foreach (var rt in Discardcards) rt.position = GetZonePosition(CardPositionZone.Discard);
+        foreach (var rt in Deckcards) rt.position = GetZonePosition(CardPositionZone.Deck);
+        foreach (var rt in Exilecards) rt.position = GetZonePosition(CardPositionZone.Exile);
         AlignCards();
-        HandZone.GetComponent<Image>().raycastTarget = false;
     }
 
     public void CardSelected(int handNum)   
@@ -162,6 +239,7 @@ public class CardCanvas : MonoBehaviour
             board.UseCard(cardComp);
         if (cardComp.NeedsTargeting())
             CardDragArrow.instance?.Show(nowusingCard);
+        board.SetCasterIndicator(activePiece, true); // 카드 종류 상관없이 들고 있는 동안 시전자 칸 표시
         usingCardMoving = true;
         RectTransform usingCard = nowusingCard;
         EnqueueMove(usingCard, GetZonePosition(CardPositionZone.NowUsing), Quaternion.identity, 0.35f, () =>
@@ -236,6 +314,24 @@ public class CardCanvas : MonoBehaviour
         }
     }
 
+    // 턴 종료 시 아군 기물 전원의 손패를 각자의 버림더미로 보낸다. 활성 기물은 기존 애니메이션 경로를
+    // 그대로 쓰고, 화면에 없는(비활성) 기물은 카드 오브젝트가 비활성화돼 있으므로 데이터만 즉시 옮긴다.
+    public void ResetAllAllyHands(List<Piece> allies)
+    {
+        foreach (var piece in allies)
+        {
+            if (piece?.pieceDeck == null) continue;
+            if (piece == activePiece)
+                HandtoDiscardAll();
+            else
+            {
+                piece.pieceDeck.Discard.AddRange(piece.pieceDeck.Hand);
+                piece.pieceDeck.Hand.Clear();
+            }
+        }
+        NotifyPileChanged();
+    }
+
     public void HandtoDiscard(int num)
     {
         if (cards.Count <= num)
@@ -276,10 +372,53 @@ public class CardCanvas : MonoBehaviour
             EnqueueMove(c, targetPos, targetRot, 0.3f);
         }
     }
+    // 턴 시작 시 아군 기물 전원을 처리: 각자 5장 드로우. 활성 기물은 기존 애니메이션 경로
+    // (DrawTurnStartCards)를 그대로 쓰고, 비활성 기물은 데이터만 즉시 갱신한다.
+    // 에너지는 기물별이 아니라 아군 전체가 공유하므로 루프 밖에서 한 번만 최대치로 리셋한다.
+    public void ProcessTurnStartForAllAllies(List<Piece> allies)
+    {
+        foreach (var piece in allies)
+        {
+            if (piece?.pieceDeck == null) continue;
+            if (piece == activePiece)
+                DrawTurnStartCards();
+            else
+                DrawCardsDataOnly(piece.pieceDeck, 5);
+        }
+        GetMaxEnergy();
+        NotifyPileChanged();
+    }
+
+    // 비활성 기물용: 애니메이션 없이 덱에서 count장을 손패로 옮긴다. 덱이 부족하면 버림더미를 셔플해 보충.
+    void DrawCardsDataOnly(PieceDeck pd, int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            if (pd.Deck.Count == 0) ShuffleDiscardIntoDeckDataOnly(pd);
+            if (pd.Deck.Count == 0) break;
+            pd.Hand.Add(pd.Deck.Dequeue());
+        }
+    }
+
+    void ShuffleDiscardIntoDeckDataOnly(PieceDeck pd)
+    {
+        if (pd.Discard.Count == 0) return;
+        var shuffled = pd.Discard.OrderBy(_ => UnityEngine.Random.value).ToList();
+        foreach (var card in shuffled) pd.Deck.Enqueue(card);
+        pd.Discard.Clear();
+    }
+
     public void RefreshAllCardViews()
     {
-        foreach (var rt in cards.Concat(Discardcards).Concat(Deckcards))
-            rt.GetComponent<Card>()?.RefreshView();
+        if (board != null)
+        {
+            foreach (var piece in board.GetAllAllyPieces())
+            {
+                if (piece?.pieceDeck == null) continue;
+                foreach (var rt in piece.pieceDeck.Hand.Concat(piece.pieceDeck.Discard).Concat(piece.pieceDeck.Deck))
+                    rt.GetComponent<Card>()?.RefreshView();
+            }
+        }
         if (nowusingCard != null) nowusingCard.GetComponent<Card>()?.RefreshView();
         UpdateCardInteractability();
     }
@@ -646,12 +785,14 @@ public class CardCanvas : MonoBehaviour
 
     // ────────── 카드 선택 패널 ──────────
 
-    /// <summary>카드 선택 패널을 열어 플레이어가 카드를 선택하도록 합니다.</summary>
-    public void ShowCardSelectionPanel(CardZone zone, int count, CardEffect effect, Action<List<RectTransform>> onConfirm)
+    /// <summary>카드 선택 패널을 열어 플레이어가 카드를 선택하도록 합니다.
+    /// zone이 SavedDeck이면 pieceIndex로 어느 기물의 deckCardIDs를 대상으로 할지 지정해야 합니다.</summary>
+    public void ShowCardSelectionPanel(CardZone zone, int count, CardEffect effect, Action<List<RectTransform>> onConfirm, int pieceIndex = -1)
     {
         panelRequiredCount = count;
         panelCallback = onConfirm;
         panelIsSavedDeck = (zone == CardZone.SavedDeck);
+        panelPieceIndex = pieceIndex;
         selectedInPanel.Clear();
         savedCardStates.Clear();
 
@@ -661,11 +802,14 @@ public class CardCanvas : MonoBehaviour
         if (zone == CardZone.Deck   || zone == CardZone.Any) panelCardPool.AddRange(Deckcards);
         if (zone == CardZone.SavedDeck)
         {
-            foreach (string cardName in DataManager.Instance.currentData.deckCardIDs)
-            {
-                GameObject obj = cardData.SpawnCard(GetComponent<RectTransform>(), cardName);
-                if (obj != null) panelCardPool.Add(obj.GetComponent<RectTransform>());
-            }
+            var pieces = DataManager.Instance.currentData.pieceData;
+            List<string> ids = (pieceIndex >= 0 && pieceIndex < pieces.Count) ? pieces[pieceIndex].deckCardIDs : null;
+            if (ids != null)
+                foreach (string cardName in ids)
+                {
+                    GameObject obj = cardData.SpawnCard(GetComponent<RectTransform>(), cardName);
+                    if (obj != null) panelCardPool.Add(obj.GetComponent<RectTransform>());
+                }
         }
 
         // 선택 가능한 카드가 없으면 즉시 빈 목록으로 콜백
@@ -813,7 +957,7 @@ public class CardCanvas : MonoBehaviour
                                        .Where(i => i >= 0)
                                        .OrderByDescending(i => i);
                 foreach (int index in indices)
-                    DataManager.Instance.RemoveCardFromDeck(index);
+                    DataManager.Instance.RemoveCardFromDeck(panelPieceIndex, index);
                 break;
             }
             // 나중에 SavedDeck 관련 다른 액션이 생기면 여기에 case 추가
@@ -849,17 +993,24 @@ public class CardCanvas : MonoBehaviour
     /// <summary>코스트가 ThisTurnOnly로 변경된 카드들을 원래 코스트로 복구합니다.</summary>
     public void RestoreThisTurnCosts()
     {
-        var allCards = cards
-            .Concat(Discardcards)
-            .Concat(Deckcards)
-            .Select(rt => rt.GetComponent<Card>())
-            .Where(c => c != null && c.originalCost >= 0 && c.costDuration == CostDuration.ThisTurnOnly);
+        if (board == null) return;
 
-        foreach (var card in allCards.ToList())
+        foreach (var piece in board.GetAllAllyPieces())
         {
-            card.Cost = card.originalCost;
-            card.originalCost = -1;
-            card.RefreshView();
+            if (piece?.pieceDeck == null) continue;
+
+            var allCards = piece.pieceDeck.Hand
+                .Concat(piece.pieceDeck.Discard)
+                .Concat(piece.pieceDeck.Deck)
+                .Select(rt => rt.GetComponent<Card>())
+                .Where(c => c != null && c.originalCost >= 0 && c.costDuration == CostDuration.ThisTurnOnly);
+
+            foreach (var card in allCards.ToList())
+            {
+                card.Cost = card.originalCost;
+                card.originalCost = -1;
+                card.RefreshView();
+            }
         }
     }
 
@@ -877,38 +1028,51 @@ public class CardCanvas : MonoBehaviour
         if (card.effects[0].pieceSelectCount > 0)
             return;
 
+        // 캐스터는 항상 카드를 낸 기물(activePiece)로 고정이므로, 어떤 카드든 실제로 뭔가 실행되기 전에
+        // 제일 먼저 캐스터 상태 제약을 검사한다. self 타겟 카드는 캐스터가 확정되는 순간 바로 실행되기
+        // 때문에, 이 체크가 그 뒤에 있으면 이미 늦는다 — 그래서 맨 앞으로 옮겨뒀다.
+        if (!CheckCasterStatusRestrictions(card))
+        {
+            CancelCardUsage();
+            return;
+        }
+
         if (!card.NeedsTargeting())
         {
             if (board.boardmode == Board.BoardMode.Inspect)
+            {
                 board.UseCard(card);
+                // self 타겟 카드는 위치 계산 없이 여기서 곧바로 캐스터(카드 주인)를 확정해 실행한다.
+                if (card.dragDropTarget == DragDropTarget.Self)
+                    board.ConfirmCasterOnDrop();
+            }
             return;
         }
 
         Vector2 boardPos = FindBoardPosAtScreen(screenPos);
 
-        // 보드 밖이거나 카드의 dragDropTarget 조건을 만족하지 않으면 즉시 취소
-        if (boardPos.x < 0 || !board.IsValidDragTarget(boardPos, card.dragDropTarget))
+        if (boardPos.x < 0)
         {
-            if (boardPos.x >= 0)
-            {
-                string reason = card.dragDropTarget switch
-                {
-                    DragDropTarget.Ally => "아군 기물에 사용해야 합니다",
-                    DragDropTarget.Enemy => "적 기물에 사용해야 합니다",
-                    DragDropTarget.AnyPiece => "기물이 있는 칸에 사용해야 합니다",
-                    _ => "올바른 위치가 아닙니다"
-                };
-                AnnouncementUI.instance?.Show(reason);
-            }
             CancelCardUsage();
             return;
         }
 
-        if (!CheckCasterStatusRestrictions(boardPos, card))
+        if (!board.IsValidDragTarget(boardPos, card.dragDropTarget))
         {
+            string reason = card.dragDropTarget switch
+            {
+                DragDropTarget.Ally => "아군 기물에 사용해야 합니다",
+                DragDropTarget.Enemy => "적 기물에 사용해야 합니다",
+                DragDropTarget.AnyPiece => "기물이 있는 칸에 사용해야 합니다",
+                _ => "올바른 위치가 아닙니다"
+            };
+            AnnouncementUI.instance?.Show(reason);
             CancelCardUsage();
             return;
         }
+
+        board.ConfirmCasterOnDrop();
+        if (nowusingCard == null) return;
 
         CardDragArrow.instance?.Hide();
         if (!usingCardMoving)
@@ -917,9 +1081,10 @@ public class CardCanvas : MonoBehaviour
             pendingFirstTarget = boardPos;
     }
 
-    bool CheckCasterStatusRestrictions(Vector2 casterPos, Card card)
+    // 캐스터는 항상 카드를 낸 기물(activePiece)이므로 드롭 위치와 무관하게 곧바로 검사할 수 있다.
+    bool CheckCasterStatusRestrictions(Card card)
     {
-        Piece caster = board.GetPieceAt(casterPos);
+        Piece caster = activePiece;
         if (caster == null) return true;
 
         if (card.requiresCasterNotMoved && caster.movedThisTurn)

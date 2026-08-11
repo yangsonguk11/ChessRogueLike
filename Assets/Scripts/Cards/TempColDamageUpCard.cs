@@ -8,6 +8,7 @@ public class TempColDamageUpCard : Card
         Name = "TempColDamageUpCard";
         Cost = 0;
         type = CardType.Skill;
+        dragDropTarget = DragDropTarget.Self;
 
         effects.Add(new CardEffect(
             Board.BoardMode.targeting,

@@ -18,6 +18,7 @@ public enum DragDropTarget
     Enemy,      // teamID != 0 인 적 기물
     AnyPiece,   // 아군/적 관계없이 기물이 있는 칸
     AnyTile,    // 보드 위 어느 칸이든
+    Self,       // 대상이 항상 카드를 낸 기물 자신이라 드롭 위치가 의미 없음 — 화살표도, 위치 검증도 생략
 }
 
 public static class CardTypeExtensions
@@ -69,6 +70,10 @@ public abstract class Card : MonoBehaviour, ISelectable
     public bool requiresCasterNotMoved;   // 사용자가 이번 턴에 이동하지 않았어야 사용 가능
     public bool exileOnUse;             // 사용 후 소멸
     public DragDropTarget dragDropTarget = DragDropTarget.Ally;
+
+    // CardDatabase.SpawnCard가 스폰 직후 채워주는 원본 프리팹 이름. 기물의 덱 구성을 저장 데이터로
+    // 되돌릴 때(Piece.GetPieceData) 이 값으로 어떤 카드였는지 복원한다.
+    public string cardID;
 
     // 코스트 임시 변경 추적 (-1이면 미변경)
     public int originalCost = -1;
@@ -146,8 +151,10 @@ public abstract class Card : MonoBehaviour, ISelectable
     public virtual string GetCannotUseReason() => "사용할 수 없습니다";
     public virtual void Execute() { }
 
-    // 첫 번째 CardEffect의 requiredMode로 보드/기물 타겟팅이 필요한 카드인지 판단
-    public bool NeedsTargeting() => effects.Count > 0 && effects[0].requiredMode != Board.BoardMode.Inspect;
+    // 첫 번째 CardEffect의 requiredMode로 보드/기물 타겟팅이 필요한 카드인지 판단.
+    // self 타겟 카드는 대상이 항상 카드를 낸 기물 자신이라 실질적으로 타겟팅할 게 없으므로 제외한다.
+    public bool NeedsTargeting() => effects.Count > 0 && effects[0].requiredMode != Board.BoardMode.Inspect
+        && dragDropTarget != DragDropTarget.Self;
 
     public bool IsSelectable()
     {

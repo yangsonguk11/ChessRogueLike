@@ -8,6 +8,7 @@ public class MoveAndDrawCard : Card
         Name = "MoveAndDrawCard";
         Cost = 2;
         type = CardType.Move;
+        dragDropTarget = DragDropTarget.AnyTile;
 
         effects.Add(new CardEffect(
             Board.BoardMode.command,

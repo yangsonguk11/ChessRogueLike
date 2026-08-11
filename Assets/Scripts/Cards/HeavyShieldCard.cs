@@ -8,6 +8,7 @@ public class HeavyShieldCard : Card
         Name = "HeavyShieldCard";
         Cost = 2;
         type = CardType.Skill;
+        dragDropTarget = DragDropTarget.Self;
         exileOnUse = true;
 
         effects.Add(new CardEffect(

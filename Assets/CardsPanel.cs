@@ -15,6 +15,16 @@ public class CardsPanel : MonoBehaviour
     ViewMode currentMode = ViewMode.SavedDeck;
     readonly List<GameObject> spawnedCards = new List<GameObject>();
 
+    // SavedDeck 뷰가 어느 기물의 deckCardIDs를 보여줄지. 기물별 고유 덱 도입 이후 필요해짐 —
+    // 이 패널을 여는 UI(탭/버튼 등)가 SetViewedPieceIndex를 호출해 지정해줘야 한다.
+    int viewedPieceIndex = 0;
+    public void SetViewedPieceIndex(int index)
+    {
+        viewedPieceIndex = index;
+        if (rootPanel != null && rootPanel.activeSelf && currentMode == ViewMode.SavedDeck)
+            Refresh();
+    }
+
     // 미리보기 상태
     GameObject dimOverlay;
     RectTransform previewCard;
@@ -66,11 +76,14 @@ public class CardsPanel : MonoBehaviour
         switch (currentMode)
         {
             case ViewMode.SavedDeck:
-                foreach (string cardName in DataManager.Instance.currentData.deckCardIDs)
-                {
-                    GameObject obj = cardDatabase.SpawnCard(container, cardName);
-                    if (obj != null) { spawnedCards.Add(obj); RegisterPreview(obj); }
-                }
+                var pieces = DataManager.Instance.currentData.pieceData;
+                List<string> ids = (viewedPieceIndex >= 0 && viewedPieceIndex < pieces.Count) ? pieces[viewedPieceIndex].deckCardIDs : null;
+                if (ids != null)
+                    foreach (string cardName in ids)
+                    {
+                        GameObject obj = cardDatabase.SpawnCard(container, cardName);
+                        if (obj != null) { spawnedCards.Add(obj); RegisterPreview(obj); }
+                    }
                 break;
 
             case ViewMode.RuntimeDeck:

@@ -9,6 +9,7 @@ public class RecoverShieldCard : Card
         Description = "방어도를 얻고 버린 카드 1장을 덱으로 되돌린다.";
         Cost = 1;
         type = CardType.Skill;
+        dragDropTarget = DragDropTarget.Self;
 
         effects.Add(new CardEffect(Board.BoardMode.targeting, EffectType.Shield, 4, TargetLogic.self)
             { animTrigger = "Shield" });

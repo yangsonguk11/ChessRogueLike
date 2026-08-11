@@ -120,14 +120,29 @@ public class DialogueUI : MonoBehaviour
         if (choice.cardPool != null && choice.cardPool.Count > 0)
         {
             string cardName = choice.cardPool[Random.Range(0, choice.cardPool.Count)];
-            DataManager.Instance.AddCardOnDeck(cardName);
+            PieceTargetPickerUI.instance.Show(DataManager.Instance.currentData.pieceData, pieceIndex =>
+            {
+                DataManager.Instance.AddCardToPieceDeck(pieceIndex, cardName);
+                ContinueAfterCardReward(choice);
+            });
+            return;
         }
 
+        ContinueAfterCardReward(choice);
+    }
+
+    // 카드 획득(있다면) 이후 이어지는 단계: 영구 제거 → 영구 스탯 버프 → 나머지 대화 진행
+    void ContinueAfterCardReward(DialogueSO.Choice choice)
+    {
         if (choice.removeCardCount > 0)
         {
-            CardCanvas.instance.ShowCardSelectionPanel(
-                CardZone.SavedDeck, choice.removeCardCount, null,
-                _ => ApplyPermanentStatStep(choice));
+            PieceTargetPickerUI.instance.Show(
+                DataManager.Instance.currentData.pieceData,
+                pieceIndex => CardCanvas.instance.ShowCardSelectionPanel(
+                    CardZone.SavedDeck, choice.removeCardCount, null,
+                    _ => ApplyPermanentStatStep(choice),
+                    pieceIndex),
+                "영구히 제거할 카드를 가진 기물을 선택하세요");
             return;
         }
 

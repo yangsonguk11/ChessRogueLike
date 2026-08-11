@@ -96,8 +96,11 @@ public class ResultCanvas : MonoBehaviour
 
     public void GetCardOnDeck(string cardname)
     {
-        DataManager.Instance.AddCardOnDeck(cardname);
-        StartCoroutine(FadeOutThenShowMap());
+        PieceTargetPickerUI.instance.Show(DataManager.Instance.currentData.pieceData, pieceIndex =>
+        {
+            DataManager.Instance.AddCardToPieceDeck(pieceIndex, cardname);
+            StartCoroutine(FadeOutThenShowMap());
+        });
     }
 
     IEnumerator FadeOutThenShowMap()

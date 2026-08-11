@@ -8,6 +8,7 @@ public class BloodChargeCard : Card
         Name = "BloodChargeCard";
         Cost = 2;
         type = CardType.Move;
+        dragDropTarget = DragDropTarget.AnyTile;
 
         effects.Add(new CardEffect(Board.BoardMode.command, EffectType.Move, 0, TargetLogic.NearestEnemy)
             { animTrigger = "Move", healOnHit = true });

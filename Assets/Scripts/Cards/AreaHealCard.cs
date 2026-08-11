@@ -9,6 +9,7 @@ public class AreaHealCard : Card
         Name = "AreaHealCard";
         Cost = 2;
         type = CardType.Skill;
+        dragDropTarget = DragDropTarget.AnyTile; // 범위 회복: 특정 기물이 아니라 발동 기준점(칸)을 지정
 
         CardEffect cf = new CardEffect(Board.BoardMode.command, EffectType.Heal, 5, TargetLogic.AllAlliesInRange, effectRange[0])
             { animTrigger = "Heal" };

@@ -12,6 +12,7 @@ public class DefensiveStanceCard : Card
         Name = "DefensiveStanceCard";
         Cost = 1;
         type = CardType.Skill;
+        dragDropTarget = DragDropTarget.Self;
         blocksMovementAfterUse = true;
         requiresCasterNotMoved = true;
 

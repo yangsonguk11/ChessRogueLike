@@ -8,6 +8,7 @@ public class ShieldBonusUpCard : Card
         Name = "ShieldBonusUpCard";
         Cost = 1;
         type = CardType.Skill;
+        dragDropTarget = DragDropTarget.Self;
 
         effects.Add(new CardEffect(
             Board.BoardMode.targeting,

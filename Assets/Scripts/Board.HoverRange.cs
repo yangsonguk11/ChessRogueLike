@@ -64,6 +64,10 @@ public partial class Board
                 CardCanvas.instance?.RefreshAllCardViews();
             }
 
+            // 아군 기물 hover: CardCanvas에 그 기물의 손패/덱을 미리 보여준다
+            if (newCaster != null && CardCanvas.instance != null && newCaster != CardCanvas.instance.ActivePiece)
+                CardCanvas.instance.SetActivePiece(newCaster, silent: true);
+
             if (hoveredPiece != null)
             {
                 hoverPieceIsAlly = hoveredPiece.teamID == 0;
@@ -118,6 +122,14 @@ public partial class Board
         {
             casterPiece = null;
             CardCanvas.instance?.RefreshAllCardViews();
+        }
+        // 좌클릭으로 선택 중인(selectedButton) 아군 기물이 있을 때만 그 기물로 되돌린다.
+        // 선택이 없으면(예: 같은 기물을 다시 클릭해 선택 해제한 경우) 방금 hover했던 기물이 그대로 보인다.
+        if (isSelectedButtonActive())
+        {
+            Piece selectedPiece = GetPieceAt(selectedButton);
+            if (selectedPiece != null && selectedPiece.teamID == 0)
+                CardCanvas.instance?.SetActivePiece(selectedPiece, silent: true);
         }
         if (allEnemyRangeSuppressed)
         {

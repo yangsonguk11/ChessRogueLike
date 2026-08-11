@@ -8,6 +8,7 @@ public class FlameThrowingCard : Card
         Name = "FlameThrowingCard";
         Cost = 1;
         type = CardType.Skill;
+        dragDropTarget = DragDropTarget.Self;
         CardEffect cf = new CardEffect(
             Board.BoardMode.targeting,
             EffectType.ApplyTurnEffect,

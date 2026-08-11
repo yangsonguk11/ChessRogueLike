@@ -8,6 +8,7 @@ public class ChargeCard : Card
         Name = "ChargeCard";
         Cost = 2;
         type = CardType.Move;
+        dragDropTarget = DragDropTarget.AnyTile;
         shieldOnMoveAttack = true;
         moveAttackShieldAmount = 3;
 

@@ -16,22 +16,28 @@ public partial class Board
         // BoardMode.command는 ButtonClicked에서 항상 캐스터 선택을 먼저 요구하므로 EffectNeedsCaster와 무관하게 캐스터형으로 취급.
         bool needsCaster = first.requiredMode == BoardMode.command || EffectNeedsCaster(first);
 
-        PieceSelectFilter filter;
         if (needsCaster)
         {
-            // 캐스터 선택형 카드: 캐스터로 고를 수 있는 내 기물 전체
-            filter = PieceSelectFilters.Team(0);
-        }
-        else
-        {
-            // 드래그로 바로 타겟에 꽂는 카드: dragDropTarget이 허용하는 대상
-            switch (card.dragDropTarget)
+            // self 타겟 효과는 대상이 항상 캐스터 자신이라 보여줄 의미 있는 범위가 없다.
+            // 그 외(Move/Attack 등)는 카드를 낸 기물 기준 실제 이동/공격 가능 칸을 미리 보여준다.
+            // ShowCasterEffectRange는 selectedButton을 건드리지 않으므로 캐스터가 "확정"되지 않고
+            // (self 즉시실행도 트리거되지 않음), 드롭 시점에 Board.ConfirmCasterOnDrop이 별도로 확정한다.
+            if (first.targetlogic != TargetLogic.self)
             {
-                case DragDropTarget.Ally: filter = PieceSelectFilters.Team(0); break;
-                case DragDropTarget.Enemy: filter = (pos, piece) => piece.teamID != 0; break;
-                case DragDropTarget.AnyPiece: filter = (pos, piece) => true; break;
-                default: return; // AnyTile: 보여줄 의미 있는 하이라이트가 없음
+                Button ownerButton = GetButtonForPiece(CardCanvas.instance?.ActivePiece);
+                if (ownerButton != null)
+                    ShowCasterEffectRange(ownerButton.GetLocation(), first);
             }
+            return;
+        }
+
+        PieceSelectFilter filter;
+        switch (card.dragDropTarget)
+        {
+            case DragDropTarget.Ally: filter = PieceSelectFilters.Team(0); break;
+            case DragDropTarget.Enemy: filter = (pos, piece) => piece.teamID != 0; break;
+            case DragDropTarget.AnyPiece: filter = (pos, piece) => true; break;
+            default: return; // AnyTile: 보여줄 의미 있는 하이라이트가 없음
         }
 
         useEligibilityHighlights = HighlightMatchingPieces(new[] { filter });

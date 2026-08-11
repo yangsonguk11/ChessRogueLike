@@ -223,6 +223,7 @@ public partial class Board : MonoBehaviour
             if (string.IsNullOrEmpty(p.name)) playerSpawns.Add(new Vector2(p.position.x, p.position.y));
 
         int spawnIdx = 0;
+        Piece firstAlly = null;
         foreach (PieceData piecedata in DataManager.Instance.currentData.pieceData)
         {
             Vector2 spawnPos = spawnIdx < playerSpawns.Count ? playerSpawns[spawnIdx] : new Vector2(2, 2);
@@ -235,7 +236,9 @@ public partial class Board : MonoBehaviour
             }
             GameObject piece = Instantiate(prefab);
             GetButtonScript(spawnPos).SetPiece(piece);
-            piece.GetComponent<Piece>().SetPieceData(piecedata);
+            Piece pieceScript = piece.GetComponent<Piece>();
+            pieceScript.SetPieceData(piecedata);
+            if (firstAlly == null) firstAlly = pieceScript;
             spawnIdx++;
         }
 
@@ -273,9 +276,26 @@ public partial class Board : MonoBehaviour
             dialogueUI?.Show(data.dialogue);
         }
 
+        if (firstAlly != null)
+            CardCanvas.instance.SetActivePiece(firstAlly);
+
         FinishCardUsage();
         ClearSelectedButton();
-        CardCanvas.instance.HandtoDiscardAll();
+        CardCanvas.instance.ResetAllAllyHands(GetAllAllyPieces());
+    }
+
+    // 보드 위 teamID==0(아군) 기물 전체를 수집한다. 기물별 손패/덱 처리(턴 시작/종료, 카드 뷰 갱신 등)에 쓰인다.
+    public List<Piece> GetAllAllyPieces()
+    {
+        var result = new List<Piece>();
+        for (int x = 0; x < N; x++)
+            for (int y = 0; y < M; y++)
+            {
+                Piece p = GetPieceAt(new Vector2(x, y));
+                if (p != null && p.teamID == 0)
+                    result.Add(p);
+            }
+        return result;
     }
 
     Button GetButtonScript(Vector2 pos)
@@ -310,6 +330,12 @@ public partial class Board : MonoBehaviour
     public void UnhoverPieceFromUI(Piece piece)
     {
         GetButtonForPiece(piece)?.MouseExit();
+    }
+
+    // CardCanvas가 이 기물의 덱을 보여주고 있음을 그 기물이 놓인 칸 아래에 표시/해제한다.
+    public void SetPieceDeckIndicator(Piece piece, bool active)
+    {
+        GetButtonForPiece(piece)?.SetDeckActive(active);
     }
 
     Button GetButtonForPiece(Piece piece)

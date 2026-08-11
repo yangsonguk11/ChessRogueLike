@@ -9,6 +9,7 @@ public class SacrificeShieldCard : Card
         Description = "손의 카드 1장을 버리고 방어도를 얻는다.";
         Cost = 1;
         type = CardType.Skill;
+        dragDropTarget = DragDropTarget.Self;
 
         // 효과 1: 자신에게 방어도 부여 (DefenseCard와 동일 패턴)
         effects.Add(new CardEffect(Board.BoardMode.targeting, EffectType.Shield, 6, TargetLogic.self)

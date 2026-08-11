@@ -22,7 +22,10 @@ public class CardDatabase : MonoBehaviour
             Debug.LogError($"[CardDatabase] 카드를 찾을 수 없습니다: \"{cardName}\"\n등록된 카드: {available}");
             return null;
         }
-        return Instantiate(c, handParent);
+        GameObject obj = Instantiate(c, handParent);
+        Card card = obj.GetComponent<Card>();
+        if (card != null) card.cardID = cardName;
+        return obj;
     }
     public GameObject SpawnSprite(RectTransform handParent, string cardName)
     {

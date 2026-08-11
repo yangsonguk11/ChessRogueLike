@@ -12,6 +12,7 @@ public partial class Board
             DragDropTarget.Enemy    => piece != null && piece.teamID != 0,
             DragDropTarget.AnyPiece => piece != null,
             DragDropTarget.AnyTile  => true,
+            DragDropTarget.Self     => true, // 위치와 무관하게 항상 카드 주인이 대상 — CardCanvas가 보통 이 검사 자체를 건너뜀
             _                       => false,
         };
     }
@@ -68,6 +69,12 @@ public partial class Board
                     selectedButton = pos;
                     GetButtonScript(pos).SelectedTrue();
                 }
+
+                // 아군 기물을 클릭하면 그 기물의 손패/덱으로 화면을 전환한다. 이 선택(selectedButton)이
+                // 유지되는 동안은 Board.HoverRange.cs의 ButtonUnhovered가 hover 종료 시 이 기물로 되돌린다.
+                Piece clickedAlly = GetButtonScript(pos).GetPieceScript();
+                if (clickedAlly != null && clickedAlly.teamID == 0)
+                    CardCanvas.instance.SetActivePiece(clickedAlly);
                 break;
 
             case BoardMode.command:
