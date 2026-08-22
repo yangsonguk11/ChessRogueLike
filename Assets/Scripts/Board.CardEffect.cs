@@ -442,6 +442,9 @@ public partial class Board
             case EffectType.AddCard:
                 CardCanvas.instance.AddCardDuringCombat(cardEffect.addCardID, cardEffect.addCardZone);
                 break;
+            case EffectType.Cleanse:
+                CleanseTarget(targetPos, cardEffect);
+                break;
             default:
                 Debug.LogError("효과 타입을 찾지 못했습니다");
                 break;
@@ -481,6 +484,26 @@ public partial class Board
                 target.TriggerAnim(effect.IsBuff ? "Buff" : "DeBuff");
                 target.ShowStatusText(effect.DisplayName, effect.IsBuff, effect.EffectColor);
             }
+        }
+    }
+
+    void CleanseTarget(Vector2 targetPos, CardEffect cardEffect)
+    {
+        Piece target = GetButtonScript(targetPos)?.GetPieceScript();
+        if (target == null) return;
+        bool removedAny = false;
+        for (int i = target.activeEffects.Count - 1; i >= 0; i--)
+        {
+            StatusEffect effect = target.activeEffects[i];
+            if (effect.IsBuff != cardEffect.cleanseBuffs) continue;
+            effect.OnRemove(target);
+            target.activeEffects.RemoveAt(i);
+            removedAny = true;
+        }
+        if (removedAny)
+        {
+            target.TriggerAnim(cardEffect.cleanseBuffs ? "DeBuff" : "Buff");
+            target.ShowStatusText(cardEffect.cleanseBuffs ? "무효화" : "정화", cardEffect.cleanseBuffs, new Color(0.6f, 0.85f, 1f));
         }
     }
 

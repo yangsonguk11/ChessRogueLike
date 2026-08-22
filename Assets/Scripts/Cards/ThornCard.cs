@@ -6,7 +6,7 @@ public class ThornCard : Card
         Name = "ThornCard";
         Cost = 1;
         type = CardType.Skill;
-        dragDropTarget = DragDropTarget.Ally;
+        dragDropTarget = DragDropTarget.Self;
         effects.Add(new CardEffect(
             Board.BoardMode.command,
             EffectType.ApplyStatus,

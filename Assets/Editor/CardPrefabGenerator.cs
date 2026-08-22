@@ -9,7 +9,8 @@ using UnityEngine;
 /// <summary>
 /// 카드 프리펩을 자동 생성하는 에디터 툴.
 /// 기존 프리펩(템플릿)을 텍스트 그대로 복제한 뒤, 이름 관련 부분만 새 카드 이름으로 치환한다.
-/// 실제 카드 스크립트(Card 컴포넌트)는 비워서(Missing Script) 생성하므로,
+/// 카드 스크립트(Card 컴포넌트)는 동일한 이름의 스크립트가 이미 존재하면 자동으로 연결하고,
+/// 아직 스크립트를 작성하지 않았다면 비워서(Missing Script) 생성한다 - 이 경우에만
 /// 유니티 에디터에서 해당 컴포넌트의 Script 필드에 직접 스크립트를 드래그해 넣어야 한다.
 /// (같은 컴포넌트 슬롯을 유지하므로 EventTrigger 등 다른 참조는 그대로 살아있다)
 /// </summary>
@@ -148,9 +149,14 @@ public class CardPrefabGenerator : EditorWindow
             return null;
         }
 
+        // 같은 이름의 카드 스크립트가 이미 존재하면 자동으로 연결하고, 없으면 비워서(Missing Script) 생성
+        string scriptGuid = FindScriptGuid(cardName);
+        string newScriptLine = scriptGuid != null
+            ? $"m_Script: {{fileID: 11500000, guid: {scriptGuid}, type: 3}}"
+            : "m_Script: {fileID: 0}";
+
         string newText = text
-            // 카드 스크립트 컴포넌트는 비워서(Missing Script) 생성 - 유니티에서 직접 드래그해 채워야 함
-            .Replace($"m_Script: {{fileID: 11500000, guid: {templateGuid}, type: 3}}", "m_Script: {fileID: 0}")
+            .Replace($"m_Script: {{fileID: 11500000, guid: {templateGuid}, type: 3}}", newScriptLine)
             .Replace($"Assembly-CSharp::{templateClassName}", $"Assembly-CSharp::{cardName}")
             .Replace($"{templateClassName}, Assembly-CSharp", $"{cardName}, Assembly-CSharp")
             .Replace($"m_Name: {templateClassName}\n", $"m_Name: {cardName}\n");
@@ -160,9 +166,25 @@ public class CardPrefabGenerator : EditorWindow
         AssetDatabase.ImportAsset(outputPath);
         AssetDatabase.Refresh();
 
-        Debug.Log($"[CardPrefabGenerator] 생성 완료: {outputPath} (템플릿: {templatePath}) - Card 스크립트를 직접 드래그해 넣어주세요.");
+        if (scriptGuid != null)
+            Debug.Log($"[CardPrefabGenerator] 생성 완료: {outputPath} (템플릿: {templatePath}) - {cardName} 스크립트를 자동으로 연결했습니다.");
+        else
+            Debug.LogWarning($"[CardPrefabGenerator] 생성 완료: {outputPath} (템플릿: {templatePath}) - {cardName} 스크립트를 찾지 못해 Card 컴포넌트를 비워뒀습니다. 스크립트 작성 후 직접 드래그해 넣어주세요.");
         EditorGUIUtility.PingObject(AssetDatabase.LoadAssetAtPath<GameObject>(outputPath));
         return outputPath;
+    }
+
+    /// <summary>cardName과 클래스 이름이 정확히 일치하는 MonoScript를 찾아 GUID를 반환한다. 없으면 null.</summary>
+    static string FindScriptGuid(string cardName)
+    {
+        foreach (string guid in AssetDatabase.FindAssets($"t:MonoScript {cardName}"))
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            var script = AssetDatabase.LoadAssetAtPath<MonoScript>(path);
+            if (script != null && script.GetClass()?.Name == cardName)
+                return guid;
+        }
+        return null;
     }
 
     /// <summary>새로 만든 카드 프리펩을 Database.prefab의 cardPrefabs 목록에 추가한다.</summary>

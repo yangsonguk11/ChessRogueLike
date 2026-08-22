@@ -4,7 +4,7 @@ using UnityEngine;
 public class PoisonEffect : StatusEffect
 {
     public readonly int damagePerTurn;
-    public override string DisplayName => $"독 ({damagePerTurn}/턴)";
+    public override string DisplayName => $"독 ({damagePerTurn})";
     public override bool IsBuff => false;
     public override Color EffectColor => new Color(0.4f, 0.9f, 0.2f); // 독성 초록
 
@@ -14,11 +14,8 @@ public class PoisonEffect : StatusEffect
         this.damagePerTurn = damagePerTurn;
     }
 
-    public override bool OnTurnEnd(Piece piece)
-    {
-        piece.GetDamage(damagePerTurn);
-        return base.OnTurnEnd(piece);
-    }
+    // 실제 피해 적용은 Piece.ProcessStatusEffects가 같은 종류끼리 damagePerTurn을 누적해서 한 번만 처리한다.
+    // 여기서는 지속시간만 감소시키면 되므로 base.OnTurnEnd 그대로 사용(override 불필요).
     public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
 }
 
@@ -26,7 +23,7 @@ public class PoisonEffect : StatusEffect
 public class BurningEffect : StatusEffect
 {
     public readonly int damagePerTurn;
-    public override string DisplayName => $"화상 ({damagePerTurn}/턴)";
+    public override string DisplayName => $"화상 ({damagePerTurn})";
     public override bool IsBuff => false;
     public override Color EffectColor => new Color(1f, 0.5f, 0f); // 화상 주황
 
@@ -36,11 +33,7 @@ public class BurningEffect : StatusEffect
         this.damagePerTurn = damagePerTurn;
     }
 
-    public override bool OnTurnEnd(Piece piece)
-    {
-        piece.GetDamage(damagePerTurn);
-        return base.OnTurnEnd(piece);
-    }
+    // 실제 피해 적용은 Piece.ProcessStatusEffects가 같은 종류끼리 damagePerTurn을 누적해서 한 번만 처리한다.
     public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
 }
 
@@ -48,7 +41,7 @@ public class BurningEffect : StatusEffect
 public class RegenEffect : StatusEffect
 {
     public readonly int healPerTurn;
-    public override string DisplayName => $"재생 ({healPerTurn}/턴)";
+    public override string DisplayName => $"재생 ({healPerTurn})";
     public override bool IsBuff => true;
 
     public RegenEffect(int duration, int healPerTurn)
@@ -57,11 +50,7 @@ public class RegenEffect : StatusEffect
         this.healPerTurn = healPerTurn;
     }
 
-    public override bool OnTurnEnd(Piece piece)
-    {
-        piece.GetHeal(healPerTurn);
-        return base.OnTurnEnd(piece);
-    }
+    // 실제 회복 적용은 Piece.ProcessStatusEffects가 같은 종류끼리 healPerTurn을 누적해서 한 번만 처리한다.
     public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
 }
 

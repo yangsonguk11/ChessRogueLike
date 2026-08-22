@@ -279,7 +279,7 @@ public enum CardZone { Hand, Deck, Discard, Any, SavedDeck }
 /// <summary>코스트 변경 효과의 지속 시간</summary>
 public enum CostDuration { Permanent, ThisTurnOnly, OneUse }
 
-public enum EffectType { Move, Damage, Shield, Buff, DeBuff, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, BaseColDamageUp, ShieldBonusUp, BaseShieldBonusUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop, SelectAndDiscard, SelectAndChangeCost, SelectAndReturnToDeck, AddCard, RestoreEnergy }
+public enum EffectType { Move, Damage, Shield, Buff, DeBuff, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, BaseColDamageUp, ShieldBonusUp, BaseShieldBonusUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop, SelectAndDiscard, SelectAndChangeCost, SelectAndReturnToDeck, AddCard, RestoreEnergy, Cleanse }
 public class CardEffect
 {
     public Board.BoardMode requiredMode;
@@ -296,6 +296,9 @@ public class CardEffect
     public StatusEffectType statusEffectType;
     public int statusDuration;
     public int statusPower;                 // 독/화상/재생의 턴당 수치, 강화/약화의 수치
+
+    // Cleanse 타입에서 사용: false면 디버프 전체 제거(정화), true면 버프 전체 제거(디스펠)
+    public bool cleanseBuffs = false;
 
     public bool useColDamageAsDmg;           // true면 dmg 대신 시전자의 colDamage 사용
     public bool hasCaster = true;            // false면 캐스터(카드를 낸 기물) 없이 targetPos만으로 즉시 발동

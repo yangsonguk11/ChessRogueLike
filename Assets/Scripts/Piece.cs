@@ -64,15 +64,41 @@ public abstract class Piece : MonoBehaviour
 
     void ProcessStatusEffects()
     {
+        // 같은 종류의 상태이상(독/화상/재생)이 여러 개 걸려 있어도 OnTurnEnd에서 곧바로 적용하지 않고
+        // 종류별로 수치를 누적해뒀다가, 순회가 끝난 뒤 한 번에 적용 + 텍스트도 한 번만 띄운다.
+        int poisonTotal = 0, burningTotal = 0, regenTotal = 0;
+
         for (int i = activeEffects.Count - 1; i >= 0; i--)
         {
-            if (activeEffects[i] is TurnEffect) continue; // Board가 처리
-            bool stillActive = activeEffects[i].OnTurnEnd(this);
+            StatusEffect effect = activeEffects[i];
+            if (effect is TurnEffect) continue; // Board가 처리
+
+            if (effect is PoisonEffect poison) poisonTotal += poison.damagePerTurn;
+            else if (effect is BurningEffect burning) burningTotal += burning.damagePerTurn;
+            else if (effect is RegenEffect regen) regenTotal += regen.healPerTurn;
+
+            bool stillActive = effect.OnTurnEnd(this); // 지속시간 감소만 수행(피해/회복은 아래에서 합산 적용)
             if (!stillActive)
             {
-                activeEffects[i].OnRemove(this);
+                effect.OnRemove(this);
                 activeEffects.RemoveAt(i);
             }
+        }
+
+        if (poisonTotal > 0)
+        {
+            GetDamage(poisonTotal);
+            if (Board.instance != null) Board.instance.StartCoroutine(DamageText(poisonTotal));
+        }
+        if (burningTotal > 0)
+        {
+            GetDamage(burningTotal);
+            if (Board.instance != null) Board.instance.StartCoroutine(DamageText(burningTotal));
+        }
+        if (regenTotal > 0)
+        {
+            int healed = GetHeal(regenTotal);
+            if (healed > 0 && Board.instance != null) Board.instance.StartCoroutine(HealText(healed));
         }
     }
     public virtual void Awake()
