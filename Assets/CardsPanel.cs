@@ -12,17 +12,34 @@ public class CardsPanel : MonoBehaviour
     [SerializeField] GameObject rootPanel;
     [SerializeField] TextMeshProUGUI titleText;
 
+    // SavedDeck 뷰 안에서 기물을 전환하는 이전/다음 버튼. 에디터에서 만들어 연결한다.
+    // UnityEngine.UI.Button으로 완전한 이름을 쓰는 이유: 이 프로젝트에 보드용 커스텀 Button 클래스가 따로 있어서
+    // using UnityEngine.UI만으로는 이름이 그쪽으로 가려진다.
+    [SerializeField] UnityEngine.UI.Button prevPieceButton;
+    [SerializeField] UnityEngine.UI.Button nextPieceButton;
+
     ViewMode currentMode = ViewMode.SavedDeck;
     readonly List<GameObject> spawnedCards = new List<GameObject>();
 
-    // SavedDeck 뷰가 어느 기물의 deckCardIDs를 보여줄지. 기물별 고유 덱 도입 이후 필요해짐 —
-    // 이 패널을 여는 UI(탭/버튼 등)가 SetViewedPieceIndex를 호출해 지정해줘야 한다.
+    // SavedDeck 뷰가 어느 기물의 deckCardIDs를 보여줄지. 기물별 고유 덱 도입 이후 필요해짐.
+    // prevPieceButton/nextPieceButton으로도 바꿀 수 있고, 외부 UI가 SetViewedPieceIndex를 호출해도 된다.
     int viewedPieceIndex = 0;
     public void SetViewedPieceIndex(int index)
     {
         viewedPieceIndex = index;
         if (rootPanel != null && rootPanel.activeSelf && currentMode == ViewMode.SavedDeck)
             Refresh();
+    }
+
+    public void PrevPiece() => ShiftViewedPiece(-1);
+    public void NextPiece() => ShiftViewedPiece(1);
+
+    void ShiftViewedPiece(int delta)
+    {
+        var pieces = DataManager.Instance.currentData.pieceData;
+        if (pieces == null || pieces.Count == 0) return;
+        viewedPieceIndex = (viewedPieceIndex + delta + pieces.Count) % pieces.Count;
+        Refresh();
     }
 
     // 미리보기 상태
@@ -34,7 +51,12 @@ public class CardsPanel : MonoBehaviour
     Vector3 previewOriginalLocalScale;
     Coroutine previewCoroutine;
 
-    void Awake()    => CardCanvas.OnPileChanged += OnPileChanged;
+    void Awake()
+    {
+        CardCanvas.OnPileChanged += OnPileChanged;
+        prevPieceButton?.onClick.AddListener(PrevPiece);
+        nextPieceButton?.onClick.AddListener(NextPiece);
+    }
     void OnDestroy() => CardCanvas.OnPileChanged -= OnPileChanged;
 
     void OnPileChanged()
@@ -72,11 +94,12 @@ public class CardsPanel : MonoBehaviour
     {
         ClearCards();
         RectTransform container = GetComponent<RectTransform>();
+        var pieces = DataManager.Instance.currentData.pieceData;
 
         switch (currentMode)
         {
             case ViewMode.SavedDeck:
-                var pieces = DataManager.Instance.currentData.pieceData;
+                if (viewedPieceIndex < 0 || viewedPieceIndex >= pieces.Count) viewedPieceIndex = 0;
                 List<string> ids = (viewedPieceIndex >= 0 && viewedPieceIndex < pieces.Count) ? pieces[viewedPieceIndex].deckCardIDs : null;
                 if (ids != null)
                     foreach (string cardName in ids)
@@ -97,9 +120,20 @@ public class CardsPanel : MonoBehaviour
                 break;
         }
 
+        bool showSwitcher = currentMode == ViewMode.SavedDeck && pieces != null && pieces.Count > 1;
+        prevPieceButton?.gameObject.SetActive(showSwitcher);
+        nextPieceButton?.gameObject.SetActive(showSwitcher);
+
         if (titleText != null)
         {
-            string label = currentMode == ViewMode.Discard ? "버린 카드" : "덱";
+            string label;
+            if (currentMode == ViewMode.Discard) label = "버린 카드";
+            else if (currentMode == ViewMode.SavedDeck)
+            {
+                string pieceName = (viewedPieceIndex >= 0 && viewedPieceIndex < pieces.Count) ? pieces[viewedPieceIndex].pieceName : "";
+                label = string.IsNullOrEmpty(pieceName) ? "덱" : $"{pieceName}의 덱";
+            }
+            else label = "덱";
             titleText.text = $"{label} ({spawnedCards.Count}장)";
         }
     }

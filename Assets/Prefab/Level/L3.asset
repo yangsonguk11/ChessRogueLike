@@ -15,11 +15,17 @@ MonoBehaviour:
   N: 7
   M: 7
   placements:
-  - position: {x: 5, y: 3}
-    pieceTypeIndex: 0
-    isEnemy: 0
+  - position: {x: 5, y: 2}
+    name: 
+  - position: {x: 5, y: 4}
     name: 
   - position: {x: 3, y: 3}
-    pieceTypeIndex: 2
-    isEnemy: 1
     name: Boss
+  levelType: 0
+  eventType: 0
+  eventObjectPosition: {x: 0, y: 0}
+  dialogue: {fileID: 0}
+  rewardType: 0
+  rewardUpgradeSelectCount: 1
+  rewardUpgradeColDamageBonus: 1
+  rewardUpgradeShieldBonusBonus: 0

@@ -47,6 +47,8 @@ public partial class Board
         piece.transform.position = pos2;
         button2.SetPiece(button1.GetPiece());
         button1.RemovePiece();
+        RelocateCasterIndicator(button1, button2);
+        RelocatePieceDeckIndicator(button1, button2);
 
         Piece pScript = piece.GetComponent<Piece>();
         if (pScript != null && pScript.teamID == 1)

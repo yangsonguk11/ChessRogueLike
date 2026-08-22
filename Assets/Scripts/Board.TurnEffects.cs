@@ -99,27 +99,31 @@ public partial class Board
                 yield return target.ShieldText(ce.dmg);
                 break;
             case EffectType.ColDamageUp:
-                target.colDamage += ce.dmg;
+                target.AddColDamage(ce.dmg);
                 CardCanvas.instance?.RefreshAllCardViews();
                 if (ce.animTrigger != null) yield return TriggerAnimCor(target, ce.animTrigger, 0.3f, false);
                 break;
             case EffectType.BaseColDamageUp:
-                // baseColDamage도 함께 올려 이번 전투뿐 아니라 다음 전투로도 이어지게 함 (GetPieceData가 baseColDamage를 저장)
-                target.colDamage += ce.dmg;
-                target.baseColDamage += ce.dmg;
+                // colDamageBonus도 함께 올려 이번 전투뿐 아니라 다음 전투로도 이어지게 함 (GetPieceData가 colDamageBonus를 저장)
+                target.AddColDamage(ce.dmg, permanent: true);
                 CardCanvas.instance?.RefreshAllCardViews();
                 if (ce.animTrigger != null) yield return TriggerAnimCor(target, ce.animTrigger, 0.3f, false);
                 break;
             case EffectType.ShieldBonusUp:
-                target.shieldBonus += ce.dmg;
+                target.AddShieldBonus(ce.dmg);
                 CardCanvas.instance?.RefreshAllCardViews();
                 if (ce.animTrigger != null) yield return TriggerAnimCor(target, ce.animTrigger, 0.3f, false);
                 break;
             case EffectType.BaseShieldBonusUp:
-                // baseShieldBonus도 함께 올려 이번 전투뿐 아니라 다음 전투로도 이어지게 함 (GetPieceData가 baseShieldBonus를 저장)
-                target.shieldBonus += ce.dmg;
-                target.baseShieldBonus += ce.dmg;
+                // shieldBonusBonus도 함께 올려 이번 전투뿐 아니라 다음 전투로도 이어지게 함 (GetPieceData가 shieldBonusBonus를 저장)
+                target.AddShieldBonus(ce.dmg, permanent: true);
                 CardCanvas.instance?.RefreshAllCardViews();
+                if (ce.animTrigger != null) yield return TriggerAnimCor(target, ce.animTrigger, 0.3f, false);
+                break;
+            case EffectType.RestoreEnergy:
+                // 코스트(에너지)는 기물별이 아니라 아군 전체가 공유하는 자원이라 target 대신 CardCanvas의 currentenergy를 직접 갱신
+                if (CardCanvas.instance != null)
+                    CardCanvas.instance.currentenergy = Mathf.Min(CardCanvas.instance.currentenergy + ce.dmg, CardCanvas.instance.maxenergy);
                 if (ce.animTrigger != null) yield return TriggerAnimCor(target, ce.animTrigger, 0.3f, false);
                 break;
         }

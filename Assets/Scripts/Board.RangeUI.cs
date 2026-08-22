@@ -9,7 +9,32 @@ public partial class Board
 
     // 카드를 들고 있는 동안(usecard 진입~사용/취소) 시전자 칸에 표시를 켜고 끈다. 종류 상관없이 카드를
     // 든 시점부터 무조건 켜지고, ResetBoardAfterCardUse에서 끈다.
-    public void SetCasterIndicator(Piece piece, bool active) => GetButtonForPiece(piece)?.SetCasterIndicator(active);
+    // 끌 때 피스의 "현재" 위치를 다시 찾으면 그 사이 피스가 이동한 경우 엉뚱한 칸을 끄게 되어(원래 칸은 계속
+    // 켜진 채로 남음) 켰던 버튼 자체를 기억해뒀다가 그대로 끈다. 이동은 PieceMoveCor에서 같이 옮겨준다.
+    Button casterIndicatorButton;
+
+    public void SetCasterIndicator(Piece piece, bool active)
+    {
+        if (active)
+        {
+            casterIndicatorButton = GetButtonForPiece(piece);
+            casterIndicatorButton?.SetCasterIndicator(true);
+        }
+        else
+        {
+            casterIndicatorButton?.SetCasterIndicator(false);
+            casterIndicatorButton = null;
+        }
+    }
+
+    // 시전자 표시가 켜진 버튼(button1)에서 다른 칸(button2)으로 피스가 실제로 이동했을 때 표시도 함께 옮긴다.
+    void RelocateCasterIndicator(Button button1, Button button2)
+    {
+        if (casterIndicatorButton != button1) return;
+        button1.SetCasterIndicator(false);
+        button2.SetCasterIndicator(true);
+        casterIndicatorButton = button2;
+    }
 
     void OnSelectBoard()
     {

@@ -117,6 +117,9 @@ public class DialogueUI : MonoBehaviour
         if (choice.healAmount != 0)
             Board.instance?.HealAllAllies(amount: choice.healAmount);
 
+        if (choice.addPieceInfo != null)
+            Board.instance?.SpawnPiece(choice.addPieceInfo);
+
         if (choice.cardPool != null && choice.cardPool.Count > 0)
         {
             string cardName = choice.cardPool[Random.Range(0, choice.cardPool.Count)];

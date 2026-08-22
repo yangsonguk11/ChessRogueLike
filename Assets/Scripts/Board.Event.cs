@@ -33,8 +33,8 @@ public partial class Board
             PieceSelectFilters.Team(0));
     }
 
-    // GameManager.FinishLevel에서 호출: currentLevelData.rewardType에 따라 카드 보상(기존 방식) 또는
-    // 기물 영구 강화 보상(RestUpgrade/DialogueUI와 동일한 RequestPieceSelection 방식)을 지급한다.
+    // GameManager.FinishLevel에서 호출: currentLevelData.rewardType에 따라 카드 보상(기존 방식),
+    // 기물 영구 강화 보상(RestUpgrade/DialogueUI와 동일한 RequestPieceSelection 방식), 또는 보상 없음을 처리한다.
     public void GrantLevelReward()
     {
         if (currentLevelData != null && currentLevelData.rewardType == LevelData.RewardType.PieceUpgrade)
@@ -47,6 +47,12 @@ public partial class Board
                     MapCanvas.instance.Show();
                 },
                 PieceSelectFilters.Team(0));
+            return;
+        }
+
+        if (currentLevelData != null && currentLevelData.rewardType == LevelData.RewardType.None)
+        {
+            MapCanvas.instance.Show();
             return;
         }
 

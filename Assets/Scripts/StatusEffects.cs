@@ -92,7 +92,7 @@ public class StrengthenEffect : StatusEffect
         this.bonusDamage = bonusDamage;
     }
 
-    public override void OnApply(Piece piece) => piece.colDamage += bonusDamage;
+    public override void OnApply(Piece piece) => piece.AddColDamage(bonusDamage);
     public override void OnRemove(Piece piece)
     {
         piece.colDamage -= bonusDamage;
@@ -152,7 +152,7 @@ public class WeakenEffect : StatusEffect
     public override void OnApply(Piece piece)
     {
         actualReduction = Mathf.Min(reducedDamage, piece.colDamage);
-        piece.colDamage -= actualReduction;
+        piece.AddColDamage(-actualReduction);
     }
     public override void OnRemove(Piece piece)
     {

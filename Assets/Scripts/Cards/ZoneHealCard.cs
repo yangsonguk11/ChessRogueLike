@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// 범위 회복 카드: 마우스를 올린 위치를 중심으로 범위 내 아군을 회복
+// 범위 회복 카드: 마우스를 올린 위치를 중심으로 범위 내 모든 기물(아군/적 무관)을 회복
 // effectRange[0] = AoE 회복 범위 (필수)
 // effectRange[1] = AoE 중심 배치 가능 사거리 (선택, 없으면 이동 범위 사용)
 public class ZoneHealCard : Card
@@ -27,9 +27,9 @@ public class ZoneHealCard : Card
             targetRange,
             useMovement
         )
-        { animTrigger = "Heal" };
+        { animTrigger = "Heal", hasCaster = false };
         effects.Add(cf);
     }
 
-    public override string EffectDescription => $"범위 내 모든 아군을 {effects[0].dmg} 회복합니다.";
+    public override string EffectDescription => $"범위 내 모든 기물을 {effects[0].dmg} 회복합니다.";
 }

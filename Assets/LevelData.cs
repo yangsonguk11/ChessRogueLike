@@ -31,10 +31,10 @@ public class LevelData : ScriptableObject
     [Tooltip("eventType이 Unknown일 때 레벨 시작과 동시에 보여줄 대화. 비어있으면 시작 시 대화를 띄우지 않는다.")]
     public DialogueSO dialogue;
 
-    public enum RewardType { Card, PieceUpgrade }
+    public enum RewardType { Card, PieceUpgrade, None }
 
     [Header("종료 보상")]
-    [Tooltip("이 레벨을 클리어(전투 승리 또는 이벤트 종료)했을 때 어떤 보상을 줄지")]
+    [Tooltip("이 레벨을 클리어(전투 승리 또는 이벤트 종료)했을 때 어떤 보상을 줄지. None이면 보상 없이 바로 맵으로 돌아간다.")]
     public RewardType rewardType = RewardType.Card;
 
     [Tooltip("rewardType이 PieceUpgrade일 때 강화 대상으로 선택할 아군 수")]

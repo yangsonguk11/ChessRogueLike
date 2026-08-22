@@ -14,6 +14,7 @@ public partial class Board
 
     public void UseCard(Card card)
     {
+        Debug.Log($"UseCard: {card.name} (user: {card.user}, effects: {card.effects.Count})");
         if (card.user == User.Ally)
         {
             ClearSelectedButton();
@@ -98,7 +99,7 @@ public partial class Board
         if (isSelectedButtonActive() || IsLockedCasterActive()) return;
 
         CardEffect nextEffect = pendingEffects.Peek();
-        if (boardmode == BoardMode.command || (boardmode == BoardMode.targeting && EffectNeedsCaster(nextEffect)))
+        if (boardmode == BoardMode.command || (boardmode == BoardMode.targeting && nextEffect.hasCaster))
             AutoSelectCardOwnerAsCaster();
     }
 
@@ -307,13 +308,15 @@ public partial class Board
         return bestMovePos;
     }
 
-    // useColDamageAsDmg면 colDamage를 그대로 사용, Damage 타입이면 dmg에 colDamage를 가산
+    // useColDamageAsDmg면 이동공격력 전체 수치를 그대로 사용(이동공격 충돌 데미지와 동일 기준),
+    // Damage 타입이면 dmg에 콜대미지 Delta(영구 강화분 + 이번 전투 임시 버프분)를 가산
     int ResolveDamageWithColDamage(CardEffect cardEffect, Piece caster)
     {
+        if (cardEffect.useColDamageAsDmg)
+            return Mathf.Max(0, caster?.colDamage ?? 0);
+
         int casterColDmg = caster?.ColDamageDelta ?? 0;
-        int result = cardEffect.useColDamageAsDmg
-            ? casterColDmg
-            : (cardEffect.type == EffectType.Damage ? cardEffect.dmg + casterColDmg : cardEffect.dmg);
+        int result = cardEffect.type == EffectType.Damage ? cardEffect.dmg + casterColDmg : cardEffect.dmg;
         return Mathf.Max(0, result);
     }
 
@@ -362,8 +365,8 @@ public partial class Board
             }
             case EffectType.Damage:
             {
-                // selectedButton == targetPos면 캐스터 없이 즉시발동하는 경우라 보너스 없이 그대로 적용
-                Piece caster = selectedButton != targetPos ? GetButtonScript(selectedButton).GetPieceScript() : null;
+                // hasCaster가 false인 카드(예: MagicAttackCard)는 캐스터 없이 즉시발동하는 경우라 보너스 없이 그대로 적용
+                Piece caster = cardEffect.hasCaster ? GetButtonScript(selectedButton).GetPieceScript() : null;
                 int resolvedDmg = ResolveDamageWithColDamage(cardEffect, caster);
                 AttackPiece(selectedButton, targetPos, resolvedDmg, cardEffect);
                 ApplyStatusToTarget(targetPos, cardEffect);
@@ -405,8 +408,7 @@ public partial class Board
                 Piece p = GetButtonScript(targetPos).GetPieceScript();
                 if (p != null)
                 {
-                    p.colDamage += cardEffect.dmg;
-                    p.ShowStatChangeEffect(cardEffect.dmg);
+                    p.AddColDamage(cardEffect.dmg);
                     motionQueue.Enqueue(PieceBuffCor(p, cardEffect));
                     StartMotionQueue();
                     CardCanvas.instance?.RefreshAllCardViews();
@@ -418,8 +420,7 @@ public partial class Board
                 Piece p = GetButtonScript(targetPos).GetPieceScript();
                 if (p != null)
                 {
-                    p.shieldBonus += cardEffect.dmg;
-                    p.ShowStatChangeEffect(cardEffect.dmg);
+                    p.AddShieldBonus(cardEffect.dmg);
                     motionQueue.Enqueue(PieceBuffCor(p, cardEffect));
                     StartMotionQueue();
                     CardCanvas.instance?.RefreshAllCardViews();
@@ -524,10 +525,9 @@ public partial class Board
     {
         if (cardEffect.effectRange == null) return;
 
-        // MouseCentered는 클릭한 칸을 중심으로 삼을 뿐 캐스터 개념이 없음 — selectedButton이 우연히
+        // hasCaster가 false인 카드(예: MouseCentered AoE)는 캐스터 개념이 없음 — selectedButton이 우연히
         // 어떤 기물의 칸과 겹치더라도 그 기물을 캐스터로 오인하면 안 되므로 caster를 아예 null로 둔다.
-        bool hasCaster = cardEffect.areaTargetMode != AreaTargetMode.MouseCentered;
-        Piece caster = hasCaster ? GetButtonScript(selectedButton).GetPieceScript() : null;
+        Piece caster = cardEffect.hasCaster ? GetButtonScript(selectedButton).GetPieceScript() : null;
 
         // 아군/적 판정은 caster 기물의 teamID가 아니라 카드 자체의 user(Ally/Enemy)를 기준으로 한다.
         // caster 기물이 없는 MouseCentered 카드도 이 카드를 누가 쓰는 카드인지로 정확히 판정할 수 있다.
@@ -565,7 +565,7 @@ public partial class Board
         switch (cardEffect.type)
         {
             case EffectType.Damage:
-                if (hasCaster)
+                if (cardEffect.hasCaster)
                     AreaAttackPiece(selectedButton, targets, ResolveDamageWithColDamage(cardEffect, caster), cardEffect);
                 else
                     AreaAttackPiece(targets, ResolveDamageWithColDamage(cardEffect, caster), cardEffect);

@@ -13,8 +13,8 @@ public partial class Board
         CardEffect first = card.effects[0];
         if (first.pieceSelectCount > 0) return;
 
-        // BoardMode.command는 ButtonClicked에서 항상 캐스터 선택을 먼저 요구하므로 EffectNeedsCaster와 무관하게 캐스터형으로 취급.
-        bool needsCaster = first.requiredMode == BoardMode.command || EffectNeedsCaster(first);
+        // BoardMode.command는 ButtonClicked에서 항상 캐스터 선택을 먼저 요구하므로 first.hasCaster와 무관하게 캐스터형으로 취급.
+        bool needsCaster = first.requiredMode == BoardMode.command || first.hasCaster;
 
         if (needsCaster)
         {

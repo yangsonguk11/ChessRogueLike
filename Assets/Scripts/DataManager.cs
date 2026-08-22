@@ -22,10 +22,25 @@ public class DataManager : MonoBehaviour
         else { Destroy(gameObject); }
     }
 
+    // 실제 파일 기록은 SetNextLevel(맵에서 다음 노드를 골라 다음 전투로 넘어가는 시점)에서만 호출된다.
+    // 그 외의 currentData 변경(카드 획득/제거, 기물 추가, 생존 기물 동기화 등)은 메모리에만 반영되고
+    // 다음 노드를 선택할 때 한 번에 저장된다.
     public void SaveToFile()
     {
         string json = JsonUtility.ToJson(currentData);
         File.WriteAllText(savePath, json);
+        LogPieceDecks();
+    }
+
+    void LogPieceDecks()
+    {
+        if (currentData.pieceData == null) return;
+        for (int i = 0; i < currentData.pieceData.Count; i++)
+        {
+            PieceData piece = currentData.pieceData[i];
+            string deck = piece.deckCardIDs != null ? string.Join(", ", piece.deckCardIDs) : "";
+            Debug.Log($"[DataManager] 저장: {i}번 기물({piece.pieceName})의 덱 [{deck}]");
+        }
     }
 
     public void LoadFromFile()
@@ -43,59 +58,24 @@ public class DataManager : MonoBehaviour
             if (currentData.nextLevelName == null) currentData.nextLevelName = "";
             if (currentData.visitedNodeX == null) currentData.visitedNodeX = new List<int>();
 
-            PieceData defaultPiece = new PieceData
+            List<string> defaultDeck = new List<string>()
             {
-                pieceName = basicPieceinfo.PieceName,
-                teamID = basicPieceinfo.TeamID,
-                hp = basicPieceinfo.MaxHp,
-                maxHp = basicPieceinfo.MaxHp,
-                colDamage = basicPieceinfo.ColDamage,
-                shieldBonus = basicPieceinfo.ShieldBonus,
-                rangeinfoname = basicPieceinfo.RangeInfoSO != null ? basicPieceinfo.RangeInfoSO.name : "",
-                deckCardIDs = new List<string>()
-                {
-                    "ImmobilizeCard",
-                    "BloodChargeCard",
-                    "DrawCard",
-                    "MagicAttackCard",
-                    "FetchAttackCard",
-                    "LifeDrainCard",
-                    "ZoneAttackCard",
-                    "SquadTrainingCard",
-                }
-            };
-
-             PieceData defaultPiece2 = new PieceData
-            {
-                pieceName = basicPieceinfo.PieceName,
-                teamID = basicPieceinfo.TeamID,
-                hp = basicPieceinfo.MaxHp,
-                maxHp = basicPieceinfo.MaxHp,
-                colDamage = basicPieceinfo.ColDamage,
-                shieldBonus = basicPieceinfo.ShieldBonus,
-                rangeinfoname = basicPieceinfo.RangeInfoSO != null ? basicPieceinfo.RangeInfoSO.name : "",
-                deckCardIDs = new List<string>()
-                {
-                    "ImmobilizeCard",
-                    "BloodChargeCard",
-                    "DrawCard",
-                    "MagicAttackCard",
-                    "FetchAttackCard",
-                    "LifeDrainCard",
-                    "ZoneAttackCard",
-                    "SquadTrainingCard",
-                }
+                "AttackCard",
+                "AttackCard",
+                "AttackCard",
+                "DefenseCard",
+                "DefenseCard",
+                "DefenseCard",
+                "MoveCard",
+                "MoveCard",
             };
 
             currentData.pieceData.Clear();
-            currentData.pieceData.Add(defaultPiece);
-            currentData.pieceData.Add(defaultPiece2);
+            currentData.pieceData.Add(BuildPieceData(basicPieceinfo, defaultDeck));
 
             currentData.nextLevelName = "";
             currentData.currentFloor = 0;
             currentData.currentNodeX = -1;
-
-            SaveToFile();
         }
     }
 
@@ -112,7 +92,30 @@ public class DataManager : MonoBehaviour
         currentData.pieceData[0] = first;
 
         currentData.deckCardIDs.Clear();
-        SaveToFile();
+    }
+
+    // PieceInfo + 시작 덱으로 PieceData를 조립 (기본 스탯 그대로, hp는 만피로 시작)
+    public PieceData BuildPieceData(PieceInfo info, List<string> deckCardIDs)
+    {
+        return new PieceData
+        {
+            pieceName = info.PieceName,
+            teamID = info.TeamID,
+            hp = info.MaxHp,
+            maxHp = info.MaxHp,
+            colDamage = info.ColDamage,
+            shieldBonus = info.ShieldBonus,
+            rangeinfoname = info.RangeInfoSO != null ? info.RangeInfoSO.name : "",
+            deckCardIDs = deckCardIDs != null ? new List<string>(deckCardIDs) : new List<string>()
+        };
+    }
+
+    // 새 기물을 세이브에 영구히 추가 (전투 밖 이벤트로 즉시 영입하거나, 전투 중 합류한 기물을 별도로 등록할 때 사용).
+    // deckCardIDs를 생략하면 PieceInfo에 지정된 기본 덱을 사용한다.
+    public void AddPiece(PieceInfo info, List<string> deckCardIDs = null)
+    {
+        if (info == null) return;
+        currentData.pieceData.Add(BuildPieceData(info, deckCardIDs ?? info.DefaultDeckCardIDs));
     }
 
     // cardname을 지정한 기물의 덱에 영구히 추가
@@ -123,7 +126,6 @@ public class DataManager : MonoBehaviour
         if (piece.deckCardIDs == null) piece.deckCardIDs = new List<string>();
         piece.deckCardIDs.Add(cardname);
         currentData.pieceData[pieceIndex] = piece;
-        SaveToFile();
         CardCanvas.instance?.ShowAddedCard(cardname, CardPositionZone.Discard);
     }
 
@@ -137,7 +139,6 @@ public class DataManager : MonoBehaviour
         string cardname = piece.deckCardIDs[cardIndex];
         piece.deckCardIDs.RemoveAt(cardIndex);
         currentData.pieceData[pieceIndex] = piece;
-        SaveToFile();
         CardCanvas.instance?.ShowRemovedCard(cardname);
         return true;
     }
@@ -145,7 +146,6 @@ public class DataManager : MonoBehaviour
     public void GenerateMap(List<NodeRow> mapdata)
     {
         currentData.mapData = mapdata;
-        SaveToFile();
     }
 
     public bool LoadMap()
@@ -177,7 +177,6 @@ public class DataManager : MonoBehaviour
         currentData.currentNodeX = -1;
         currentData.mapData = new List<NodeRow>();
         currentData.visitedNodeX = new List<int>();
-        SaveToFile();
     }
 
     // 세이브 파일 삭제 후 기본값으로 초기화
@@ -212,7 +211,9 @@ public struct PieceData
 
     public int maxHp;
     public int colDamage;
+    public int colDamageBonus;
     public int shieldBonus;
+    public int shieldBonusBonus;
     public string rangeinfoname;
     public List<string> deckCardIDs;
 

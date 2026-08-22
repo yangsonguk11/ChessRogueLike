@@ -139,7 +139,7 @@ public partial class Board
         callback?.Invoke(result);
     }
 
-    // targets에게 영구 스탯 버프를 적용한다. colDamage/shieldBonus와 baseColDamage/baseShieldBonus를 함께 올려
+    // targets에게 영구 스탯 버프를 적용한다. colDamage/shieldBonus와 colDamageBonus/shieldBonusBonus를 함께 올려
     // 이번 전투뿐 아니라 GetPieceData 저장을 거쳐 다음 전투로도 이어지게 한다 (EffectType.BaseColDamageUp과 동일한 방식).
     public void ApplyPermanentStatBuff(List<Piece> targets, int colDamageDelta, int shieldBonusDelta)
     {
@@ -148,8 +148,8 @@ public partial class Board
         foreach (var p in targets)
         {
             if (p == null) continue;
-            if (colDamageDelta != 0) { p.colDamage += colDamageDelta; p.baseColDamage += colDamageDelta; }
-            if (shieldBonusDelta != 0) { p.shieldBonus += shieldBonusDelta; p.baseShieldBonus += shieldBonusDelta; }
+            if (colDamageDelta != 0) p.AddColDamage(colDamageDelta, permanent: true);
+            if (shieldBonusDelta != 0) p.AddShieldBonus(shieldBonusDelta, permanent: true);
         }
 
         CardCanvas.instance?.RefreshAllCardViews();

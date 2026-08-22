@@ -19,7 +19,8 @@ public class ImmobilizeCard : Card
         {
             statusEffectType = StatusEffectType.MovementDisabled,
             statusDuration = 2,
-            animTrigger = "DeBuff"
+            animTrigger = "DeBuff",
+            hasCaster = false
         });
     }
 

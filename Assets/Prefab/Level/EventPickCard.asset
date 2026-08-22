@@ -10,16 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0bd6631b7b10bc147bc0c85bb4b0003d, type: 3}
-  m_Name: RestLevel
+  m_Name: EventPickCard
   m_EditorClassIdentifier: Assembly-CSharp::LevelData
   N: 7
   M: 7
   placements:
   - position: {x: 4, y: 3}
-    pieceTypeIndex: 0
-    isEnemy: 0
-    name: 
+    name:
   levelType: 1
-  eventType: 1
-  eventObjectPosition: {x: 1, y: 3}
-  rewardType: 2
+  eventType: 2
+  eventObjectPosition: {x: 0, y: 0}
+  dialogue: {fileID: 11400000, guid: 9c005f9c5616be2c32e63c52478d4ba1, type: 2}
+  rewardType: 0
+  rewardUpgradeSelectCount: 1
+  rewardUpgradeColDamageBonus: 1
+  rewardUpgradeShieldBonusBonus: 0

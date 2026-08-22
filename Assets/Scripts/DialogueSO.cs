@@ -27,6 +27,9 @@ public class DialogueSO : ScriptableObject
         [Tooltip("비어있지 않으면 이 목록 중 하나를 무작위로 골라 덱에 추가한다 (CardDatabase에 등록된 카드 이름).")]
         public List<string> cardPool;
 
+        [Tooltip("설정하면 이 선택지를 고르는 즉시 새 기물을 세이브에 영구히 추가한다 (만피 상태로 합류, PieceInfo에 지정된 기본 덱 사용).")]
+        public PieceInfo addPieceInfo;
+
         [Tooltip("0보다 크면 플레이어가 덱에서 이 수치만큼 카드를 영구 제거하는 선택 패널이 열린다.")]
         public int removeCardCount;
 

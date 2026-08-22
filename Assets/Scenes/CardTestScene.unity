@@ -3208,7 +3208,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardsPanel
   cardDatabase: {fileID: 1458612080}
   rootPanel: {fileID: 661990360}
-  titleText: {fileID: 0}
+  titleText: {fileID: 1229140364}
 --- !u!1 &992647663
 GameObject:
   m_ObjectHideFlags: 0
@@ -3429,6 +3429,7 @@ MonoBehaviour:
   radius: 1000
   angleBetween: 10
   heightOffset: -400
+  baseMaxEnergy: 999
   cardSelectionPanel: {fileID: 9001000001}
   cardSelectionContent: {fileID: 9001000021}
   selectionCountText: {fileID: 9001000033}

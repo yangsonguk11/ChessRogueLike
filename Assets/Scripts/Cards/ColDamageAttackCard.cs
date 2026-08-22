@@ -20,5 +20,5 @@ public class ColDamageAttackCard : Card
         { useColDamageAsDmg = true, animTrigger = "Attack" });
     }
 
-    public override string EffectDescription => "이동 범위 내 적에게 이동공격력만큼 피해를 줍니다.";
+    public override string EffectDescription => $"이동 범위 내 적에게 {EffectiveDmg(effects[0])} 피해를 줍니다.";
 }

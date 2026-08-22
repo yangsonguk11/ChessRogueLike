@@ -127,9 +127,13 @@ public abstract class Card : MonoBehaviour, ISelectable
 
     protected string EffectiveDmg(CardEffect effect)
     {
-        int dmg = (effect.type != EffectType.Damage || effect.useColDamageAsDmg)
+        int dmg = effect.type != EffectType.Damage
             ? effect.dmg
-            : Mathf.Max(0, effect.dmg + (Board.instance?.CasterColDamage ?? 0));
+            : effect.useColDamageAsDmg
+                ? Mathf.Max(0, Board.instance?.CasterFullColDamage ?? 0)
+                : effect.hasCaster
+                    ? Mathf.Max(0, effect.dmg + (Board.instance?.CasterColDamage ?? 0))
+                    : effect.dmg;
 
         if (dmg == effect.dmg) return dmg.ToString();
         string color = dmg > effect.dmg ? "#4444FF" : "#FF4444";
@@ -275,7 +279,7 @@ public enum CardZone { Hand, Deck, Discard, Any, SavedDeck }
 /// <summary>코스트 변경 효과의 지속 시간</summary>
 public enum CostDuration { Permanent, ThisTurnOnly, OneUse }
 
-public enum EffectType { Move, Damage, Shield, Buff, DeBuff, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, BaseColDamageUp, ShieldBonusUp, BaseShieldBonusUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop, SelectAndDiscard, SelectAndChangeCost, SelectAndReturnToDeck, AddCard }
+public enum EffectType { Move, Damage, Shield, Buff, DeBuff, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, BaseColDamageUp, ShieldBonusUp, BaseShieldBonusUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop, SelectAndDiscard, SelectAndChangeCost, SelectAndReturnToDeck, AddCard, RestoreEnergy }
 public class CardEffect
 {
     public Board.BoardMode requiredMode;
@@ -294,6 +298,7 @@ public class CardEffect
     public int statusPower;                 // 독/화상/재생의 턴당 수치, 강화/약화의 수치
 
     public bool useColDamageAsDmg;           // true면 dmg 대신 시전자의 colDamage 사용
+    public bool hasCaster = true;            // false면 캐스터(카드를 낸 기물) 없이 targetPos만으로 즉시 발동
     public bool noMoveAttack;               // true면 이동 시 충돌 공격 불가
     public bool healOnHit;                  // true면 적중 시 입힌 피해만큼 시전자 회복 (일반 공격/이동공격 모두 적용)
     public string animTrigger;              // 효과 시전 시 재생할 Animator 트리거 (null이면 기본 코루틴 애니메이션 사용)

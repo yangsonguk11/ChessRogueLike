@@ -160,7 +160,7 @@ public class CardCanvas : MonoBehaviour
 
         SnapPilesToZones();
         UpdateCurrentEnergy();
-        UpdateCardInteractability();
+        RefreshAllCardViews();
         NotifyPileChanged();
     }
 
@@ -235,7 +235,8 @@ public class CardCanvas : MonoBehaviour
     {
         nowUsingCardHeld = false;
         Card cardComp = nowusingCard.GetComponent<Card>();
-        if (cardComp.NeedsTargeting() || cardComp.effects[0].pieceSelectCount > 0)
+        if (cardComp.NeedsTargeting() || cardComp.effects[0].pieceSelectCount > 0
+            || cardComp.dragDropTarget == DragDropTarget.Self)
             board.UseCard(cardComp);
         if (cardComp.NeedsTargeting())
             CardDragArrow.instance?.Show(nowusingCard);
@@ -1037,23 +1038,25 @@ public class CardCanvas : MonoBehaviour
             return;
         }
 
-        if (!card.NeedsTargeting())
-        {
-            if (board.boardmode == Board.BoardMode.Inspect)
-            {
-                board.UseCard(card);
-                // self 타겟 카드는 위치 계산 없이 여기서 곧바로 캐스터(카드 주인)를 확정해 실행한다.
-                if (card.dragDropTarget == DragDropTarget.Self)
-                    board.ConfirmCasterOnDrop();
-            }
-            return;
-        }
-
+        // 보드 밖에 놓으면(카드 종류 상관없이) 취소 — self/targeting/command 카드가 모두 공유하는 판정.
         Vector2 boardPos = FindBoardPosAtScreen(screenPos);
-
         if (boardPos.x < 0)
         {
             CancelCardUsage();
+            return;
+        }
+
+        if (!card.NeedsTargeting())
+        {
+            if (card.dragDropTarget == DragDropTarget.Self)
+            {
+                // CommitNowUsingCard에서 이미 board.UseCard()로 무장 완료 — 캐스터(카드 주인)만 확정하면 즉시 실행된다.
+                board.ConfirmCasterOnDrop();
+            }
+            else if (board.boardmode == Board.BoardMode.Inspect)
+            {
+                board.UseCard(card);
+            }
             return;
         }
 

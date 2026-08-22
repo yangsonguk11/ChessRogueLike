@@ -49,7 +49,12 @@ public class MapUI : MonoBehaviour
         // currentNodeX가 미설정(-1)이면 첫 번째 노드(0)를 현재 위치로 간주
         int displayNodeX = (currentNodeX < 0 && currentFloor >= 0) ? 0 : currentNodeX;
         var visited = DataManager.Instance.currentData.visitedNodeX;
-        float mapHeight = mapGenerator.mapData.Count * ySpacing;
+        int floorCount = mapGenerator.mapData.Count;
+        // 노드 중심점들이 실제로 차지하는 범위(0층~마지막 층)
+        float nodeSpan = (floorCount - 1) * ySpacing;
+        // 위아래에 남길 여백 (10 * floorCount)
+        float margin = floorCount * ySpacing * 0.1f;
+        float mapHeight = nodeSpan + margin * 2f;
 
         // 노드 생성 및 초기화
         for (int y = 0; y < mapGenerator.mapData.Count; y++)
@@ -64,7 +69,7 @@ public class MapUI : MonoBehaviour
 
                 float totalWidth = (rowData.nodes.Count - 1) * xSpacing;
                 float posX = (x * xSpacing) - (totalWidth * 0.5f);
-                float posY = y * ySpacing - (mapHeight * 0.25f);
+                float posY = y * ySpacing - (nodeSpan * 0.5f);
                 rect.anchoredPosition = new Vector2(posX, posY);
 
                 NodeButton btn = nodeObj.GetComponent<NodeButton>();
@@ -81,7 +86,11 @@ public class MapUI : MonoBehaviour
         }
 
         contentParent.sizeDelta = new Vector2(contentParent.sizeDelta.x, mapHeight);
-        contentParent.anchoredPosition = Vector2.zero;
+
+        // 현재 위치한 층의 노드가 뷰포트 중앙에 오도록 Content를 이동
+        int focusFloor = Mathf.Clamp(currentFloor, 0, floorCount - 1);
+        float focusY = focusFloor * ySpacing - nodeSpan * 0.5f;
+        contentParent.anchoredPosition = new Vector2(0, -focusY);
 
         // 연결선 그리기
         for (int y = 0; y < mapGenerator.mapData.Count - 1; y++)

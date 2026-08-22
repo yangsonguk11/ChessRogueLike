@@ -13,10 +13,12 @@ public abstract class Piece : MonoBehaviour
     public int hp;
     public int maxhp;
     public int colDamage;
-    public int baseColDamage;
+    public int baseColDamage; // 기물의 강화 전(영입 시점) 이동공격력. 영구 강화로는 변하지 않는다.
+    public int colDamageBonus; // 영구 강화로 누적된 이동공격력 보너스. 전투 시작 시 colDamage에 합산된다.
     public int ColDamageDelta => colDamage - baseColDamage;
     public int shieldBonus;
-    public int baseShieldBonus;
+    public int baseShieldBonus; // 기물의 강화 전(영입 시점) 방어막 보너스. 영구 강화로는 변하지 않는다.
+    public int shieldBonusBonus; // 영구 강화로 누적된 방어막 보너스. 전투 시작 시 shieldBonus에 합산된다.
     public int ShieldBonusDelta => shieldBonus - baseShieldBonus;
     public int teamID;
     int _shield;
@@ -33,6 +35,11 @@ public abstract class Piece : MonoBehaviour
 
     // teamID==0(아군)일 때만 SetPieceData에서 생성됨. 적/NPC는 null로 유지.
     public PieceDeck pieceDeck;
+
+    // DataManager.currentData.pieceData에서 이 기물에 해당하는 인덱스. 덱은 더 이상 손패/버림/덱 더미를
+    // 스캔해서 만들지 않고 이 인덱스로 저장된 deckCardIDs를 그대로 이어받는다(Board.SavePlayerPiecesToDataManager
+    // 가 매번 다시 채워준다). 스폰 경로 밖에서 만들어진 경우 -1로 남아 저장에 반영되지 않는다.
+    public int pieceDataIndex = -1;
 
     public List<StatusEffect> activeEffects = new List<StatusEffect>();
     public bool movedThisTurn;
@@ -86,10 +93,12 @@ public abstract class Piece : MonoBehaviour
         name = data.pieceName;
         hp = data.hp;
         maxhp = data.maxHp;
-        colDamage = data.colDamage;
         baseColDamage = data.colDamage;
-        shieldBonus = data.shieldBonus;
+        colDamageBonus = data.colDamageBonus;
+        colDamage = baseColDamage + colDamageBonus;
         baseShieldBonus = data.shieldBonus;
+        shieldBonusBonus = data.shieldBonusBonus;
+        shieldBonus = baseShieldBonus + shieldBonusBonus;
         teamID = data.teamID;
         shield = 0;
         moveableRange = RangeInfoSODatabase.instance.GetRangeInfoSO(data.rangeinfoname);
@@ -101,24 +110,15 @@ public abstract class Piece : MonoBehaviour
         }
     }
 
-    // Hand+Discard+Deck(소멸더미 제외 — 소멸은 이번 전투에서만 사라지는 것이므로 다음 전투로 넘어가지 않는다)
-    // 에 있는 카드들의 cardID를 모아 저장용 deckCardIDs로 되돌린다.
-    List<string> CollectDeckCardIDs()
+    // deckCardIDs는 손패/버림/덱 더미를 스캔해 만드는 대신, 저장돼 있던 값을 그대로 이어받는다.
+    // 전투 중 카드를 얻는 효과(FetchAttackCard 등)로 손패에 잠깐 들어온 카드는 이번 전투에서만 쓰이고
+    // 저장에는 반영되지 않는다 — 영구 획득은 항상 DataManager.AddCardToPieceDeck을 통해서만 이뤄진다.
+    List<string> SavedDeckCardIDs()
     {
-        var result = new List<string>();
-        if (pieceDeck == null) return result;
-
-        foreach (var rt in pieceDeck.Hand) AddCardID(result, rt);
-        foreach (var rt in pieceDeck.Discard) AddCardID(result, rt);
-        foreach (var rt in pieceDeck.Deck) AddCardID(result, rt);
-        return result;
-    }
-
-    static void AddCardID(List<string> result, RectTransform rt)
-    {
-        Card card = rt != null ? rt.GetComponent<Card>() : null;
-        if (card != null && !string.IsNullOrEmpty(card.cardID))
-            result.Add(card.cardID);
+        var pieces = DataManager.Instance?.currentData.pieceData;
+        if (pieces == null || pieceDataIndex < 0 || pieceDataIndex >= pieces.Count) return new List<string>();
+        List<string> saved = pieces[pieceDataIndex].deckCardIDs;
+        return saved != null ? new List<string>(saved) : new List<string>();
     }
 
     public PieceData GetPieceData()
@@ -130,9 +130,11 @@ public abstract class Piece : MonoBehaviour
             hp = hp,
             maxHp = maxhp,
             colDamage = baseColDamage,
+            colDamageBonus = colDamageBonus,
             shieldBonus = baseShieldBonus,
+            shieldBonusBonus = shieldBonusBonus,
             rangeinfoname = moveableRange != null ? moveableRange.name : "",
-            deckCardIDs = CollectDeckCardIDs()
+            deckCardIDs = SavedDeckCardIDs()
         };
     }
     public virtual List<Vector2> GetMoveableButton() { return pieceInfo.RangeInfoSO.GetAbleRange(); }
@@ -169,6 +171,25 @@ public abstract class Piece : MonoBehaviour
     {
         shield += damage;
         return shield;
+    }
+    // colDamage를 변경하고 버프/디버프 텍스트+파티클을 함께 재생한다. permanent가 true면 colDamageBonus도 같이 올려
+    // GetPieceData 저장을 거쳐 다음 전투로도 이어지게 한다(영구 강화용). baseColDamage는 건드리지 않는다.
+    public int AddColDamage(int delta, bool permanent = false)
+    {
+        colDamage += delta;
+        if (permanent) colDamageBonus += delta;
+        if (delta != 0)
+            ShowStatusText(delta > 0 ? $"이동공격력 +{delta}" : $"이동공격력 {delta}", delta > 0, new Color(1f, 0.27f, 0.27f));
+        return colDamage;
+    }
+    // shieldBonus를 변경하고 버프/디버프 텍스트+파티클을 함께 재생한다. permanent 의미는 AddColDamage와 동일.
+    public int AddShieldBonus(int delta, bool permanent = false)
+    {
+        shieldBonus += delta;
+        if (permanent) shieldBonusBonus += delta;
+        if (delta != 0)
+            ShowStatusText(delta > 0 ? $"방어막 보너스 +{delta}" : $"방어막 보너스 {delta}", delta > 0, new Color(1f, 0.27f, 0.27f));
+        return shieldBonus;
     }
     public virtual void OnTurnEnd()
     {
@@ -223,15 +244,6 @@ public abstract class Piece : MonoBehaviour
             pieceEffect.PlayBuffEffect();
     }
 
-    // 스탯 증감량(amount)의 부호로 버프/디버프 파티클을 재생. amount가 0이면 아무 이펙트도 재생하지 않는다.
-    public void ShowStatChangeEffect(int amount)
-    {
-        if (pieceEffect == null || amount == 0) return;
-        if (amount > 0)
-            pieceEffect.PlayBuffEffect();
-        else
-            pieceEffect.PlayDebuffEffect(new Color(1f, 0.27f, 0.27f));
-    }
 
     public IEnumerator DeathCor()
     {

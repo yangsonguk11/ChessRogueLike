@@ -12,9 +12,14 @@ public partial class Board
     public void ButtonHovered(Vector2 pos)
     {
         // AoE 카드 범위 미리보기. MouseCentered는 캐스터를 선택하지 않고 targeting 클릭 한 번으로 바로 발동하므로
-        // 캐스터 선택 전에도 마우스 위치 기준으로 미리보기를 보여줘야 함
-        bool previewableWithoutCaster = pendingEffects.Count > 0 &&
-            pendingEffects.Peek().areaTargetMode == AreaTargetMode.MouseCentered;
+        // 캐스터 선택 전에도 마우스 위치 기준으로 미리보기를 보여줘야 함.
+        // Directional4/8도 마찬가지로, 캐스터 확정(드롭)은 아직 안 됐어도 카드를 든 채로 보드를 훑는 동안
+        // 방향 미리보기가 나와야 하므로, 카드 소유 기물(activePiece) 위치를 캐스터 삼아 미리 보여준다.
+        CardEffect pendingEffect = pendingEffects.Count > 0 ? pendingEffects.Peek() : null;
+        bool previewableWithoutCaster = pendingEffect != null &&
+            (pendingEffect.areaTargetMode == AreaTargetMode.MouseCentered ||
+             pendingEffect.areaTargetMode == AreaTargetMode.Directional4 ||
+             pendingEffect.areaTargetMode == AreaTargetMode.Directional8);
         if (pendingEffects.Count > 0 && (isSelectedButtonActive() || previewableWithoutCaster))
         {
             CardEffect effect = pendingEffects.Peek();
@@ -32,8 +37,11 @@ public partial class Board
                     }
                     else
                     {
-                        center = selectedButton;
-                        Vector2 dir = GetSnappedDirection(selectedButton, pos, effect.areaTargetMode == AreaTargetMode.Directional8);
+                        Button ownerButton = GetButtonForPiece(CardCanvas.instance?.ActivePiece);
+                        Vector2 casterPos = isSelectedButtonActive() ? selectedButton
+                            : (ownerButton != null ? ownerButton.GetLocation() : pos);
+                        center = casterPos;
+                        Vector2 dir = GetSnappedDirection(casterPos, pos, effect.areaTargetMode == AreaTargetMode.Directional8);
                         currentHoverDirection = dir;
                         offsets = RotateOffsets(offsets, dir);
                     }

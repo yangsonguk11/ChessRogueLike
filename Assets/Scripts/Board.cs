@@ -140,6 +140,9 @@ public partial class Board : MonoBehaviour
         AreaAttackPiece(targets, amount);
     }
 
+    // 보드 위 생존 기물들의 스탯을 currentData.pieceData로 동기화한다. 덱(deckCardIDs)은 손패/버림/덱 더미를
+    // 다시 스캔하지 않고 pieceDataIndex로 이전 저장값을 그대로 이어받으므로(Piece.GetPieceData 참고),
+    // 새로 채워질 리스트에서의 위치로 각 기물의 pieceDataIndex를 갱신해줘야 다음 저장에서도 계속 맞물린다.
     public void SavePlayerPiecesToDataManager()
     {
         if (!boardReady) return;
@@ -149,12 +152,14 @@ public partial class Board : MonoBehaviour
             for (int y = 0; y < M; y++)
             {
                 Piece p = GetButtonScript(new Vector2(x, y)).GetPieceScript();
-                if (p != null && p.teamID == 0)
-                    surviving.Add(p.GetPieceData());
+                if (p == null || p.teamID != 0) continue;
+
+                PieceData data = p.GetPieceData(); // 이전 pieceDataIndex로 저장된 덱을 읽어온다
+                p.pieceDataIndex = surviving.Count; // 새 리스트에서 자기가 놓일 위치로 갱신
+                surviving.Add(data);
             }
         }
         DataManager.Instance.currentData.pieceData = surviving;
-        DataManager.Instance.SaveToFile();
     }
 
     // 씬 재로드 너머로 직접 넘겨받은 LevelData가 있으면 그걸 우선 사용한다 (대화 선택지로 강제 진입하는 전투 등).
@@ -237,6 +242,7 @@ public partial class Board : MonoBehaviour
             GameObject piece = Instantiate(prefab);
             GetButtonScript(spawnPos).SetPiece(piece);
             Piece pieceScript = piece.GetComponent<Piece>();
+            pieceScript.pieceDataIndex = spawnIdx;
             pieceScript.SetPieceData(piecedata);
             if (firstAlly == null) firstAlly = pieceScript;
             spawnIdx++;
@@ -298,6 +304,47 @@ public partial class Board : MonoBehaviour
         return result;
     }
 
+    // 대화 선택지 등에서 새 기물을 보드에 즉시 스폰한다 (합류가 바로 보이도록).
+    // 덱이 더 이상 스캔으로 세이브에 반영되지 않으므로, 여기서 currentData.pieceData에 직접 등록한다.
+    public bool SpawnPiece(PieceInfo info, List<string> deckCardIDs = null)
+    {
+        if (info == null) return false;
+
+        Vector2? spawnPos = FindEmptyCell();
+        if (spawnPos == null)
+        {
+            Debug.LogError("[Board] 새 기물을 스폰할 빈 칸이 없습니다.");
+            return false;
+        }
+
+        GameObject prefab = piecedatabase.GetPiece(info.PieceName);
+        if (prefab == null)
+        {
+            Debug.LogError($"[Board] 기물 스폰 실패: '{info.PieceName}' 을(를) PieceDatabase에서 찾을 수 없습니다.");
+            return false;
+        }
+
+        PieceData data = DataManager.Instance.BuildPieceData(info, deckCardIDs ?? info.DefaultDeckCardIDs);
+        DataManager.Instance.currentData.pieceData.Add(data);
+        int dataIndex = DataManager.Instance.currentData.pieceData.Count - 1;
+
+        GameObject piece = Instantiate(prefab);
+        GetButtonScript(spawnPos.Value).SetPiece(piece);
+        Piece pieceScript = piece.GetComponent<Piece>();
+        pieceScript.pieceDataIndex = dataIndex;
+        pieceScript.SetPieceData(data);
+        return true;
+    }
+
+    Vector2? FindEmptyCell()
+    {
+        for (int x = 0; x < N; x++)
+            for (int y = 0; y < M; y++)
+                if (GetPieceAt(new Vector2(x, y)) == null)
+                    return new Vector2(x, y);
+        return null;
+    }
+
     Button GetButtonScript(Vector2 pos)
     {
         return Buttons[(int)pos.x, (int)pos.y].GetComponent<Button>();
@@ -317,8 +364,11 @@ public partial class Board : MonoBehaviour
 
     public Piece casterPiece;
 
-    public int CasterColDamage => casterPiece?.ColDamageDelta ?? 0;
-    public int CasterShieldBonus => casterPiece?.ShieldBonusDelta ?? 0;
+    // baseColDamage(강화 전 수치)를 뺀 나머지 — 영구 강화분(colDamageBonus)과 이번 전투의 임시 버프를 합친 값
+    public int CasterColDamage => CardCanvas.instance?.ActivePiece?.ColDamageDelta ?? 0;
+    public int CasterShieldBonus => CardCanvas.instance?.ActivePiece?.ShieldBonusDelta ?? 0;
+    // useColDamageAsDmg 카드(예: ColDamageAttackCard)용 — 강화 전 기본치까지 포함한 이동공격력 전체 수치
+    public int CasterFullColDamage => CardCanvas.instance?.ActivePiece?.colDamage ?? 0;
 
     public Piece GetPieceAt(Vector2 pos) => GetButtonScript(pos)?.GetPieceScript();
 
@@ -333,9 +383,32 @@ public partial class Board : MonoBehaviour
     }
 
     // CardCanvas가 이 기물의 덱을 보여주고 있음을 그 기물이 놓인 칸 아래에 표시/해제한다.
+    // 끌 때 피스의 "현재" 위치를 다시 찾으면 그 사이 피스가 이동한 경우 엉뚱한 칸을 끄게 되어(원래 칸은 계속
+    // 켜진 채로 남음) 켰던 버튼 자체를 기억해뒀다가 그대로 끈다. 이동은 PieceMoveCor에서 같이 옮겨준다.
+    Button pieceDeckIndicatorButton;
+
     public void SetPieceDeckIndicator(Piece piece, bool active)
     {
-        GetButtonForPiece(piece)?.SetDeckActive(active);
+        if (active)
+        {
+            pieceDeckIndicatorButton = GetButtonForPiece(piece);
+            pieceDeckIndicatorButton?.SetDeckActive(true);
+        }
+        else
+        {
+            pieceDeckIndicatorButton?.SetDeckActive(false);
+            pieceDeckIndicatorButton = null;
+        }
+    }
+
+    // 시전자 표시와 마찬가지로, 덱 표시가 켜진 버튼(button1)에서 다른 칸(button2)으로 피스가 실제로
+    // 이동했을 때 표시도 함께 옮긴다.
+    void RelocatePieceDeckIndicator(Button button1, Button button2)
+    {
+        if (pieceDeckIndicatorButton != button1) return;
+        button1.SetDeckActive(false);
+        button2.SetDeckActive(true);
+        pieceDeckIndicatorButton = button2;
     }
 
     Button GetButtonForPiece(Piece piece)
