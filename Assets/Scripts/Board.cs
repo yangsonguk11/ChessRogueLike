@@ -15,6 +15,7 @@ public partial class Board : MonoBehaviour
     [SerializeField] GameObject Background;
     [SerializeField] GameObject ButtonPrefab;
     [SerializeField] GameObject RestObjectPrefab;
+    [SerializeField] GameObject ShopObjectPrefab;
     GameObject[,] Buttons;
     [SerializeField] GameObject BoardUICanvas;
     [SerializeField] PieceDatabase piecedatabase;
@@ -276,6 +277,19 @@ public partial class Board : MonoBehaviour
                 GameObject restObj = Instantiate(RestObjectPrefab);
                 GetButtonScript(new Vector2(data.eventObjectPosition.x, data.eventObjectPosition.y)).SetPiece(restObj);
             }
+        }
+        else if (currentEventType == LevelData.EventType.Shop)
+        {
+            if (ShopObjectPrefab == null)
+                Debug.LogError("[Board] 상점 레벨이지만 ShopObjectPrefab이 설정되지 않았습니다.");
+            else
+            {
+                GameObject shopObj = Instantiate(ShopObjectPrefab);
+                GetButtonScript(new Vector2(data.eventObjectPosition.x, data.eventObjectPosition.y)).SetPiece(shopObj);
+            }
+            // 아직 팔 물건이 없어 상호작용할 게 없으므로, Rest처럼 뭔가 사용해야 나가기 버튼이 뜨는 방식 대신
+            // 진입 즉시 나갈 수 있게 한다(소프트락 방지). 실제 구매 기능이 생기면 이 부분을 재검토.
+            EventExitButtonObj?.SetActive(true);
         }
         else if (currentEventType == LevelData.EventType.Unknown)
         {

@@ -5,7 +5,7 @@ using UnityEngine;
 public class LevelData : ScriptableObject
 {
     public enum LevelType { Combat, Event }
-    public enum EventType { None, Rest, Unknown }
+    public enum EventType { None, Rest, Unknown, Shop }
 
     public int N; // ���� ũ��
     public int M; // ���� ũ��

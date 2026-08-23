@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum NodeType { Mob, Rest, Unknown, Boss }
+public enum NodeType { Mob, Rest, Unknown, Boss, Shop }
 
 [System.Serializable]
 public class MapNode
@@ -143,7 +143,11 @@ public class Map : MonoBehaviour
         if (level == null) return NodeType.Unknown;
 
         if (level.levelType == LevelData.LevelType.Event)
-            return level.eventType == LevelData.EventType.Rest ? NodeType.Rest : NodeType.Unknown;
+        {
+            if (level.eventType == LevelData.EventType.Rest) return NodeType.Rest;
+            if (level.eventType == LevelData.EventType.Shop) return NodeType.Shop;
+            return NodeType.Unknown;
+        }
 
         return NodeType.Mob;
     }

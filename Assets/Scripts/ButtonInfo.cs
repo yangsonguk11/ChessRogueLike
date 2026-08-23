@@ -38,6 +38,19 @@ public class ButtonInfo : MonoBehaviour
             return;
         }
 
+        if (p is ShopObject)
+        {
+            piecename.text = "상점";
+            team.text = "";
+            hp.text = "";
+            shield.text = "";
+            shieldBonus.text = "";
+            colDamage.text = "";
+            statusEffects.text = "";
+            SetRestActionsActive(false);
+            return;
+        }
+
         SetRestActionsActive(false);
         piecename.text = p.name;
         team.text = p.teamID == 0 ? "아군" : "적";

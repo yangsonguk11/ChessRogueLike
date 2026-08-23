@@ -174,6 +174,9 @@ public partial class Board
         BoardUICanvas.GetComponent<ButtonInfo>().SetActive(false);
     }
 
+    // ShopCanvas.Show()에서 호출: 상점 캔버스가 대신 나타나므로 ButtonInfo(호버 정보창)는 숨긴다.
+    public void HideButtonInfoForShop() => HideButtonInfo();
+
     // 적 기준 가장 가까운 플레이어 위치 반환
     Vector2 GetNearestPlayerPos(Vector2 enemyPos)
     {

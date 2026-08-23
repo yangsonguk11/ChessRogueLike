@@ -42,6 +42,12 @@ public partial class Board
                     }
                 }
 
+                if (GetButtonScript(pos).GetPieceScript() is ShopObject)
+                {
+                    ShopCanvas.instance?.Show();
+                    return;
+                }
+
                 if (selectedButton == pos)
                 {
                     ClearSelectedButton();

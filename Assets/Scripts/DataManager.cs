@@ -143,6 +143,22 @@ public class DataManager : MonoBehaviour
         return true;
     }
 
+    // gold를 지급한다. 호출부는 아직 없음 — 언제 얼마나 지급할지는 이후 결정.
+    public void AddGold(int amount)
+    {
+        if (amount <= 0) return;
+        currentData.gold += amount;
+    }
+
+    // gold가 충분하면 차감하고 true, 부족하면 아무 것도 하지 않고 false를 반환한다.
+    public bool SpendGold(int amount)
+    {
+        if (amount < 0) return false;
+        if (currentData.gold < amount) return false;
+        currentData.gold -= amount;
+        return true;
+    }
+
     public void GenerateMap(List<NodeRow> mapdata)
     {
         currentData.mapData = mapdata;
