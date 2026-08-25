@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class LevelDatabase : MonoBehaviour
+public class LevelDatabase : MonoBehaviour, ILevelDatabase
 {
     public static LevelDatabase instance;
+
+    public int FloorCount => floorPools.Count;
 
     [System.Serializable]
     public class FloorPool

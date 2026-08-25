@@ -29,7 +29,7 @@ public class MapCanvas : MonoBehaviour
     IEnumerator Start()
     {
         yield return null;
-        if ((DataManager.Instance?.currentData.currentFloor ?? -1) < 0)
+        if ((DataManager.Instance?.CurrentFloor ?? -1) < 0)
             Show();
     }
 

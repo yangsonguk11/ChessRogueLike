@@ -24,7 +24,7 @@ public class PieceTargetPickerUI : MonoBehaviour
         panelRoot?.SetActive(false);
     }
 
-    public void Show(List<PieceData> pieces, Action<int> onPicked, string prompt = "카드를 받을 기물을 선택하세요")
+    public void Show(IReadOnlyList<PieceData> pieces, Action<int> onPicked, string prompt = "카드를 받을 기물을 선택하세요")
     {
         this.onPicked = onPicked;
         ClearButtons();

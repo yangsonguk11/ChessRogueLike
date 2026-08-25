@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class RangeInfoSODatabase : MonoBehaviour
+public class RangeInfoSODatabase : MonoBehaviour, IRangeInfoSODatabase
 {
 
     public static RangeInfoSODatabase instance;

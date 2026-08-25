@@ -21,7 +21,7 @@ public partial class Board
         ownedRelics.Clear();
         ClearRelicIcons();
 
-        List<string> names = DataManager.Instance?.currentData.ownedRelicNames;
+        IReadOnlyList<string> names = DataManager.Instance?.OwnedRelicNames;
         if (names == null || RelicDatabase.instance == null) return;
 
         foreach (string name in names)

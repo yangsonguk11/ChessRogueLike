@@ -10,7 +10,7 @@ public class CardTestHandDealer : MonoBehaviour
     {
         if (TurnManager.instance == null) return;
 
-        TurnState current = TurnManager.instance.currentState;
+        TurnState current = TurnManager.instance.CurrentState;
         if (current == TurnState.Player && lastState != TurnState.Player)
             DealAllCards();
         lastState = current;
@@ -21,10 +21,8 @@ public class CardTestHandDealer : MonoBehaviour
         if (CardCanvas.instance == null || CardDatabase.instance == null) return;
         if (CardCanvas.instance.ActivePiece == null) return;
 
-        foreach (GameObject prefab in CardDatabase.instance.cardPrefabs)
-        {
-            if (prefab == null) continue;
-            CardCanvas.instance.AddCardDuringCombat(prefab.name, CardPositionZone.Hand);
-        }
+        ICardDatabase cardDb = CardDatabase.instance;
+        foreach (string cardName in cardDb.GetAllCardNames())
+            CardCanvas.instance.AddCardDuringCombat(cardName, CardPositionZone.Hand);
     }
 }

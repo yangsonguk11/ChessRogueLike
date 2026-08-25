@@ -18,11 +18,13 @@ public class NodeRow
     public List<MapNode> nodes = new List<MapNode>();
 }
 
-public class Map : MonoBehaviour
+public class Map : MonoBehaviour, IMap
 {
     public static Map instance;
     public List<NodeRow> mapData = new List<NodeRow>();
-    public int TotalFloors => LevelDatabase.instance != null ? LevelDatabase.instance.floorPools.Count : 5;
+    public int TotalFloors => LevelDatabase.instance != null ? LevelDatabase.instance.FloorCount : 5;
+
+    IReadOnlyList<NodeRow> IMap.MapData => mapData;
 
     void Awake()
     {
@@ -41,6 +43,9 @@ public class Map : MonoBehaviour
     {
         if (instance != this) return;
         if (DataManager.Instance.LoadMap())
+            // IGameDataStore.MapData는 읽기 전용 뷰라 mapData(List) 대입에 못 씀 — 여기선 세이브에 저장된
+            // 리스트를 그대로 이어받아야(같은 참조를 공유해야) GenerateMap()의 변경이 자연스럽게 반영되므로
+            // currentData를 직접 참조한다.
             mapData = DataManager.Instance.currentData.mapData;
         else
             GenerateMap();

@@ -15,7 +15,8 @@ public class ShopCardSlot : MonoBehaviour
     public void SetCard(string cardName, System.Action<string> onClick)
     {
         ClearCard();
-        spawnedCard = CardDatabase.instance.SpawnCard(cardParent, cardName);
+        ICardDatabase cardDb = CardDatabase.instance;
+        spawnedCard = cardDb.SpawnCard(cardParent, cardName);
         Card card = spawnedCard != null ? spawnedCard.GetComponent<Card>() : null;
         if (card != null) card.onClickOverride = onClick;
     }

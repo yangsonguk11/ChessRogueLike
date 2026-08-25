@@ -7,16 +7,23 @@ using UnityEngine;
 // 순수 시각 오브젝트(Image)만 있으면 되고, 유물 기능(Relic 데이터)은 Assets/Scripts/Relics/ 아래의
 // Relic 서브클래스가 담당한다. 카드가 새로 추가돼도 CardDatabase 코드를 안 고치듯, 새 유물도
 // Relics/ 폴더에 파일만 추가하면 된다 — relicName(클래스 이름)을 리플렉션으로 찾아 생성한다.
-public class RelicDatabase : MonoBehaviour
+public class RelicDatabase : MonoBehaviour, IRelicDatabase
 {
     public static RelicDatabase instance;
 
     [Tooltip("유물 아이콘 프리팹 목록. 프리팹 GameObject 이름이 곧 유물 식별자(Relic 서브클래스 이름)와 같아야 한다.")]
     public List<GameObject> iconPrefabs;
 
+    // iconPrefabs를 이름으로 즉시 찾기 위한 캐시. CardDatabase.cardsByName과 동일한 이유.
+    Dictionary<string, GameObject> iconsByName;
+
     void Awake()
     {
         if (instance == null) instance = this;
+
+        iconsByName = new Dictionary<string, GameObject>();
+        foreach (GameObject prefab in iconPrefabs)
+            if (prefab != null) iconsByName[prefab.name] = prefab;
     }
 
     // relicName과 이름이 같은 Relic 서브클래스를 찾아 인스턴스를 만든다.
@@ -36,8 +43,7 @@ public class RelicDatabase : MonoBehaviour
     // 호버 시 이름/설명을 스스로 조회해 보여줄 수 있게 한다.
     public GameObject SpawnIcon(Transform parent, string relicName)
     {
-        GameObject prefab = iconPrefabs.Find(p => p.name == relicName);
-        if (prefab == null)
+        if (!iconsByName.TryGetValue(relicName, out GameObject prefab))
         {
             string available = string.Join(", ", iconPrefabs.ConvertAll(p => p != null ? p.name : "null"));
             Debug.LogError($"[RelicDatabase] 유물 아이콘을 찾을 수 없습니다: \"{relicName}\"\n등록된 아이콘: {available}");
@@ -47,5 +53,25 @@ public class RelicDatabase : MonoBehaviour
         RelicIcon icon = obj.GetComponent<RelicIcon>();
         if (icon != null) icon.relicName = relicName;
         return obj;
+    }
+
+    // ShopCanvas.PickShopCards(CardDatabase)와 동일한 패턴 — 유물 아이콘 풀에서 중복 없이 무작위 count개.
+    public List<string> PickRandomDistinct(int count, IEnumerable<string> exclude = null)
+    {
+        var excludeSet = exclude != null ? new HashSet<string>(exclude) : null;
+        var pool = new List<string>();
+        foreach (GameObject prefab in iconPrefabs)
+            if (prefab != null && (excludeSet == null || !excludeSet.Contains(prefab.name)))
+                pool.Add(prefab.name);
+
+        var result = new List<string>();
+        int n = Mathf.Min(count, pool.Count);
+        for (int i = 0; i < n; i++)
+        {
+            int idx = UnityEngine.Random.Range(0, pool.Count);
+            result.Add(pool[idx]);
+            pool.RemoveAt(idx);
+        }
+        return result;
     }
 }

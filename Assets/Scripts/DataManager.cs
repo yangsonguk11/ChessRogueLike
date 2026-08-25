@@ -2,13 +2,21 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
 
-public class DataManager : MonoBehaviour
+public class DataManager : MonoBehaviour, IGameDataStore
 {
     public static DataManager Instance;
 
     public GameData currentData = new GameData();
     public PieceInfo basicPieceinfo;
     private string savePath;
+
+    public IReadOnlyList<PieceData> Pieces => currentData.pieceData;
+    public IReadOnlyList<string> OwnedRelicNames => currentData.ownedRelicNames;
+    public IReadOnlyList<NodeRow> MapData => currentData.mapData;
+    public IReadOnlyList<int> VisitedNodeX => currentData.visitedNodeX;
+    public string NextLevelName => currentData.nextLevelName;
+    public int CurrentFloor => currentData.currentFloor;
+    public int CurrentNodeX => currentData.currentNodeX;
 
     void Awake()
     {
@@ -123,6 +131,17 @@ public class DataManager : MonoBehaviour
         currentData.pieceData.Add(BuildPieceData(info, deckCardIDs ?? info.DefaultDeckCardIDs));
     }
 
+    public int AddPieceData(PieceData data)
+    {
+        currentData.pieceData.Add(data);
+        return currentData.pieceData.Count - 1;
+    }
+
+    public void SetPieceData(List<PieceData> pieces)
+    {
+        currentData.pieceData = pieces;
+    }
+
     // relicName을 소유 유물 목록에 영구히 추가 (Board.LoadOwnedRelics가 다음 전투 시작 시 반영)
     public void AddRelic(string relicName)
     {
@@ -195,6 +214,11 @@ public class DataManager : MonoBehaviour
         currentData.visitedNodeX[floor] = nodeX;
 
         SaveToFile();
+    }
+
+    public void SetNextLevelName(string levelName)
+    {
+        currentData.nextLevelName = levelName;
     }
 
     // 맵 진행 상태 초기화 (새 게임 시작 시)

@@ -44,11 +44,11 @@ public class MapUI : MonoBehaviour
 
     public void DrawMap(bool runComplete = false, bool viewOnly = false)
     {
-        int currentFloor = DataManager.Instance.currentData.currentFloor;
-        int currentNodeX = DataManager.Instance.currentData.currentNodeX;
+        int currentFloor = DataManager.Instance.CurrentFloor;
+        int currentNodeX = DataManager.Instance.CurrentNodeX;
         // currentNodeX가 미설정(-1)이면 첫 번째 노드(0)를 현재 위치로 간주
         int displayNodeX = (currentNodeX < 0 && currentFloor >= 0) ? 0 : currentNodeX;
-        var visited = DataManager.Instance.currentData.visitedNodeX;
+        var visited = DataManager.Instance.VisitedNodeX;
         int floorCount = mapGenerator.mapData.Count;
         // 노드 중심점들이 실제로 차지하는 범위(0층~마지막 층)
         float nodeSpan = (floorCount - 1) * ySpacing;

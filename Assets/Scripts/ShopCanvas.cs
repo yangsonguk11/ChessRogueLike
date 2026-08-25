@@ -112,23 +112,12 @@ public class ShopCanvas : MonoBehaviour
         }
     }
 
-    // 상점에 진열할 카드를 뽑는 로직. 이 함수만 교체하면 선정 방식(희귀도 가중치, 특정 카드 제외 등)을
-    // 언제든 바꿀 수 있다. 지금은 전체 카드 풀에서 중복 없이 무작위로 count장을 뽑는다.
+    // 상점에 진열할 카드를 뽑는 로직. CardDatabase(ICardDatabase)에 선정을 위임하므로, 희귀도 가중치나
+    // 특정 카드 제외 같은 정책 변경은 여기가 아니라 CardDatabase.PickRandomDistinct 쪽에서 처리하면 된다.
     List<string> PickShopCards(int count)
     {
-        var pool = new List<string>();
-        foreach (var prefab in CardDatabase.instance.cardPrefabs)
-            if (prefab != null) pool.Add(prefab.name);
-
-        var result = new List<string>();
-        int n = Mathf.Min(count, pool.Count);
-        for (int i = 0; i < n; i++)
-        {
-            int idx = Random.Range(0, pool.Count);
-            result.Add(pool[idx]);
-            pool.RemoveAt(idx);
-        }
-        return result;
+        ICardDatabase cardDb = CardDatabase.instance;
+        return cardDb.PickRandomDistinct(count);
     }
 
     void SpawnShopRelics()
@@ -149,23 +138,11 @@ public class ShopCanvas : MonoBehaviour
         }
     }
 
-    // 상점에 진열할 유물을 뽑는 로직. PickShopCards와 동일한 패턴 — 이 함수만 교체하면 선정 방식을
-    // 언제든 바꿀 수 있다. 지금은 등록된 유물 아이콘 전체 풀에서 중복 없이 무작위로 count개를 뽑는다.
+    // 상점에 진열할 유물을 뽑는 로직. RelicDatabase(IRelicDatabase)에 선정을 위임한다.
     List<string> PickShopRelics(int count)
     {
-        var pool = new List<string>();
-        foreach (var prefab in RelicDatabase.instance.iconPrefabs)
-            if (prefab != null) pool.Add(prefab.name);
-
-        var result = new List<string>();
-        int n = Mathf.Min(count, pool.Count);
-        for (int i = 0; i < n; i++)
-        {
-            int idx = Random.Range(0, pool.Count);
-            result.Add(pool[idx]);
-            pool.RemoveAt(idx);
-        }
-        return result;
+        IRelicDatabase relicDb = RelicDatabase.instance;
+        return relicDb.PickRandomDistinct(count);
     }
 
     // 유물 슬롯 클릭 시 호출: relicPrice만큼 gold를 차감한 뒤 소유 유물 목록에 영구히 추가한다.
@@ -193,7 +170,7 @@ public class ShopCanvas : MonoBehaviour
             return;
         }
 
-        PieceTargetPickerUI.instance.Show(DataManager.Instance.currentData.pieceData, pieceIndex =>
+        PieceTargetPickerUI.instance.Show(DataManager.Instance.Pieces, pieceIndex =>
         {
             DataManager.Instance.AddCardToPieceDeck(pieceIndex, cardName);
         });
@@ -210,7 +187,7 @@ public class ShopCanvas : MonoBehaviour
         }
 
         PieceTargetPickerUI.instance.Show(
-            DataManager.Instance.currentData.pieceData,
+            DataManager.Instance.Pieces,
             pieceIndex => CardCanvas.instance.ShowCardSelectionPanel(
                 CardZone.SavedDeck, 1, null,
                 _ => { },

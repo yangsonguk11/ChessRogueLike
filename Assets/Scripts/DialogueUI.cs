@@ -123,7 +123,7 @@ public class DialogueUI : MonoBehaviour
         if (choice.cardPool != null && choice.cardPool.Count > 0)
         {
             string cardName = choice.cardPool[Random.Range(0, choice.cardPool.Count)];
-            PieceTargetPickerUI.instance.Show(DataManager.Instance.currentData.pieceData, pieceIndex =>
+            PieceTargetPickerUI.instance.Show(DataManager.Instance.Pieces, pieceIndex =>
             {
                 DataManager.Instance.AddCardToPieceDeck(pieceIndex, cardName);
                 ContinueAfterCardReward(choice);
@@ -140,7 +140,7 @@ public class DialogueUI : MonoBehaviour
         if (choice.removeCardCount > 0)
         {
             PieceTargetPickerUI.instance.Show(
-                DataManager.Instance.currentData.pieceData,
+                DataManager.Instance.Pieces,
                 pieceIndex => CardCanvas.instance.ShowCardSelectionPanel(
                     CardZone.SavedDeck, choice.removeCardCount, null,
                     _ => ApplyPermanentStatStep(choice),

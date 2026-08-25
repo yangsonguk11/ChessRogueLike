@@ -127,7 +127,8 @@ public abstract class Piece : MonoBehaviour
         shieldBonus = baseShieldBonus + shieldBonusBonus;
         teamID = data.teamID;
         shield = 0;
-        moveableRange = RangeInfoSODatabase.instance.GetRangeInfoSO(data.rangeinfoname);
+        IRangeInfoSODatabase rangeInfoDb = RangeInfoSODatabase.instance;
+        moveableRange = rangeInfoDb.GetRangeInfoSO(data.rangeinfoname);
 
         if (teamID == 0)
         {
@@ -141,7 +142,7 @@ public abstract class Piece : MonoBehaviour
     // 저장에는 반영되지 않는다 — 영구 획득은 항상 DataManager.AddCardToPieceDeck을 통해서만 이뤄진다.
     List<string> SavedDeckCardIDs()
     {
-        var pieces = DataManager.Instance?.currentData.pieceData;
+        var pieces = DataManager.Instance?.Pieces;
         if (pieces == null || pieceDataIndex < 0 || pieceDataIndex >= pieces.Count) return new List<string>();
         List<string> saved = pieces[pieceDataIndex].deckCardIDs;
         return saved != null ? new List<string>(saved) : new List<string>();

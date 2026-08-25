@@ -206,7 +206,7 @@ public class CardCanvas : MonoBehaviour
             AnnouncementUI.instance?.Show("코스트가 부족합니다");
             return false;
         }
-        if ((isCardEffecting && nowusingCard == null) || TurnManager.instance.currentState != TurnState.Player)
+        if ((isCardEffecting && nowusingCard == null) || TurnManager.instance.CurrentState != TurnState.Player)
             return false;
         if (!card.CanUse())
         {
@@ -427,7 +427,7 @@ public class CardCanvas : MonoBehaviour
     public void UpdateCardInteractability()
     {
         if (cardSelectionMode) return;
-        bool playerTurn = TurnManager.instance != null && TurnManager.instance.currentState == TurnState.Player;
+        bool playerTurn = TurnManager.instance != null && TurnManager.instance.CurrentState == TurnState.Player;
         bool boardProcessing = isCardEffecting && nowusingCard == null;
         foreach (var rt in cards)
         {
@@ -803,7 +803,7 @@ public class CardCanvas : MonoBehaviour
         if (zone == CardZone.Deck   || zone == CardZone.Any) panelCardPool.AddRange(Deckcards);
         if (zone == CardZone.SavedDeck)
         {
-            var pieces = DataManager.Instance.currentData.pieceData;
+            var pieces = DataManager.Instance.Pieces;
             List<string> ids = (pieceIndex >= 0 && pieceIndex < pieces.Count) ? pieces[pieceIndex].deckCardIDs : null;
             if (ids != null)
                 foreach (string cardName in ids)

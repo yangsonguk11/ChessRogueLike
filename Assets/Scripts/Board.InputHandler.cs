@@ -20,7 +20,7 @@ public partial class Board
     public void ButtonClicked(Vector2Int pos)
     {
         if (!boardReady) return;
-        if (TurnManager.instance.currentState != TurnState.Player) return;
+        if (TurnManager.instance.CurrentState != TurnState.Player) return;
 
         // 기물 다중 선택 대기 중이면 boardmode(targeting)의 기존 분기보다 우선 처리한다.
         if (PieceSelectionActive)

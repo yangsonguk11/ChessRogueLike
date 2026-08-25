@@ -86,7 +86,8 @@ public class PieceEffect : MonoBehaviour
     // 모든 피스가 PieceEffectDatabase에 등록된 같은 프리팹을 공유한다.
     public void PlayHealEffect()
     {
-        GameObject prefab = PieceEffectDatabase.instance?.healEffectPrefab;
+        IPieceEffectDatabase effectDb = PieceEffectDatabase.instance;
+        GameObject prefab = effectDb?.HealEffectPrefab;
         if (prefab == null) return;
 
         StartCoroutine(PlayBurstCoroutine(prefab, Center, Quaternion.identity));
@@ -97,7 +98,8 @@ public class PieceEffect : MonoBehaviour
     // color는 효과 종류별로 파티클을 다르게 물들이는 데 쓴다(독=초록, 화상=주황 등).
     public void PlayDebuffEffect(Color color)
     {
-        GameObject prefab = PieceEffectDatabase.instance?.statusEffectPrefab;
+        IPieceEffectDatabase effectDb = PieceEffectDatabase.instance;
+        GameObject prefab = effectDb?.StatusEffectPrefab;
         if (prefab == null) return;
 
         StartCoroutine(PlayBurstCoroutine(prefab, Top, Quaternion.Euler(180f, 0f, 0f), color));
@@ -107,7 +109,8 @@ public class PieceEffect : MonoBehaviour
     // PlayDebuffEffect와 같은 prefab을 뒤집지 않고 재사용하며, 색은 버프 텍스트와 같은 초록(#00FF88)을 쓴다.
     public void PlayBuffEffect()
     {
-        GameObject prefab = PieceEffectDatabase.instance?.statusEffectPrefab;
+        IPieceEffectDatabase effectDb = PieceEffectDatabase.instance;
+        GameObject prefab = effectDb?.StatusEffectPrefab;
         if (prefab == null) return;
 
         StartCoroutine(PlayBurstCoroutine(prefab, Center, Quaternion.identity, new Color(0f, 1f, 0.53f)));

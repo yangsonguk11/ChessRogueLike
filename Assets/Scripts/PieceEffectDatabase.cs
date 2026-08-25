@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class PieceEffectDatabase : MonoBehaviour
+public class PieceEffectDatabase : MonoBehaviour, IPieceEffectDatabase
 {
     public static PieceEffectDatabase instance;
 
@@ -11,4 +11,7 @@ public class PieceEffectDatabase : MonoBehaviour
 
     public GameObject healEffectPrefab;
     public GameObject statusEffectPrefab;
+
+    public GameObject HealEffectPrefab => healEffectPrefab;
+    public GameObject StatusEffectPrefab => statusEffectPrefab;
 }

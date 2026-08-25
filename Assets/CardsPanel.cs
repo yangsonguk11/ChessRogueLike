@@ -36,7 +36,7 @@ public class CardsPanel : MonoBehaviour
 
     void ShiftViewedPiece(int delta)
     {
-        var pieces = DataManager.Instance.currentData.pieceData;
+        var pieces = DataManager.Instance.Pieces;
         if (pieces == null || pieces.Count == 0) return;
         viewedPieceIndex = (viewedPieceIndex + delta + pieces.Count) % pieces.Count;
         Refresh();
@@ -94,7 +94,7 @@ public class CardsPanel : MonoBehaviour
     {
         ClearCards();
         RectTransform container = GetComponent<RectTransform>();
-        var pieces = DataManager.Instance.currentData.pieceData;
+        var pieces = DataManager.Instance.Pieces;
 
         switch (currentMode)
         {

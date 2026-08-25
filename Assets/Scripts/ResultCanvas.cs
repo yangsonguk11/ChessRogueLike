@@ -20,32 +20,25 @@ public class ResultCanvas : MonoBehaviour
         cg.alpha = 0;
     }
 
+    // 시작 덱 카드(AttackCard/DefenseCard/MoveCard)는 이미 누구나 갖고 있으므로 보상 후보에서 제외한다.
+    static readonly string[] ExcludedFromRewards = { "AttackCard", "DefenseCard", "MoveCard" };
+
     void SpawnRandomCards()
     {
         foreach (var card in spawnedCards)
             Destroy(card);
         spawnedCards.Clear();
 
-        int excludeEnd = 2;
-        var source = CardDatabase.instance.cardPrefabs;
-        var pool = new List<GameObject>();
-        for (int i = 0; i < source.Count; i++)
-            if (i >= excludeEnd) pool.Add(source[i]);
+        ICardDatabase cardDb = CardDatabase.instance;
+        List<string> picks = cardDb.PickRandomDistinct(3, ExcludedFromRewards);
 
-        int count = Mathf.Min(3, pool.Count);
-        for (int i = 0; i < count && pool.Count > 0; i++)
+        foreach (string cardName in picks)
         {
-            int idx = Random.Range(0, pool.Count);
-            GameObject prefab = pool[idx];
-            pool.RemoveAt(idx);
-
-            if (prefab == null) { i--; continue; }
-
-            GameObject spawned = CardDatabase.instance.SpawnCard(GetComponent<RectTransform>(), prefab.name);
-            if (spawned == null) { i--; continue; }
+            GameObject spawned = cardDb.SpawnCard(GetComponent<RectTransform>(), cardName);
+            if (spawned == null) continue;
 
             Card card = spawned.GetComponent<Card>();
-            if (card == null) { Destroy(spawned); i--; continue; }
+            if (card == null) { Destroy(spawned); continue; }
 
             card.onClickOverride = (name) => GetCardOnDeck(name);
             spawnedCards.Add(spawned);
@@ -96,7 +89,7 @@ public class ResultCanvas : MonoBehaviour
 
     public void GetCardOnDeck(string cardname)
     {
-        PieceTargetPickerUI.instance.Show(DataManager.Instance.currentData.pieceData, pieceIndex =>
+        PieceTargetPickerUI.instance.Show(DataManager.Instance.Pieces, pieceIndex =>
         {
             DataManager.Instance.AddCardToPieceDeck(pieceIndex, cardname);
             StartCoroutine(FadeOutThenShowMap());

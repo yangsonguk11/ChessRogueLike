@@ -3,12 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 
 public enum TurnState { Player, Enemy, Processing }
-public class TurnManager : MonoBehaviour
+public class TurnManager : MonoBehaviour, ITurnManager
 {
     public static TurnManager instance;
     [Header("Debug")]
     public TurnState currentState;
     public TurnState prevState;
+    public TurnState CurrentState => currentState;
     [Header("References")]
     [SerializeField] Board board;
 

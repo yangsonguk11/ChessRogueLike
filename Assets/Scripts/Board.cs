@@ -67,10 +67,10 @@ public partial class Board : MonoBehaviour
 
     private void Start()
     {
-        if ((DataManager.Instance?.currentData.currentFloor ?? -1) < 0)
+        if ((DataManager.Instance?.CurrentFloor ?? -1) < 0)
             return; // 맵에서 노드를 아직 선택하지 않음 — 보드 초기화 건너뜀
 
-        var pieceData = DataManager.Instance.currentData.pieceData;
+        var pieceData = DataManager.Instance.Pieces;
         if (pieceData == null || pieceData.Count == 0)
         {
             Debug.LogError("[Board] pieceData가 비어있습니다. 플레이어 캐릭터 없이 게임을 진행할 수 없습니다.");
@@ -93,7 +93,7 @@ public partial class Board : MonoBehaviour
     public void EnterCombat(LevelData level)
     {
         if (level == null) return;
-        DataManager.Instance.currentData.nextLevelName = level.name; // 껐다 켜도 전투 레벨로 복귀하도록 저장
+        DataManager.Instance.SetNextLevelName(level.name); // 껐다 켜도 전투 레벨로 복귀하도록 저장
         SavePlayerPiecesToDataManager(); // 대화 중 받은 피해/회복이 다음 씬에 그대로 이어지도록 먼저 저장
         pendingLevel = level;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
@@ -160,7 +160,7 @@ public partial class Board : MonoBehaviour
                 surviving.Add(data);
             }
         }
-        DataManager.Instance.currentData.pieceData = surviving;
+        DataManager.Instance.SetPieceData(surviving);
     }
 
     // 씬 재로드 너머로 직접 넘겨받은 LevelData가 있으면 그걸 우선 사용한다 (대화 선택지로 강제 진입하는 전투 등).
@@ -173,7 +173,7 @@ public partial class Board : MonoBehaviour
     {
         if (LevelDatabase.instance == null) return leveldata;
 
-        string nextLevel = DataManager.Instance?.currentData.nextLevelName;
+        string nextLevel = DataManager.Instance?.NextLevelName;
 
         // 맵에서 노드를 선택한 경우: 저장된 레벨 이름으로 로드
         if (!string.IsNullOrEmpty(nextLevel))
@@ -192,7 +192,7 @@ public partial class Board : MonoBehaviour
     void InitBoard(LevelData data)
     {
         // 이전 씬에서 남은 적 목록 초기화 (DontDestroyOnLoad인 GameManager의 리스트)
-        GameManager.instance?.Enemylist.Clear();
+        GameManager.instance?.ClearEnemies();
         enemyPositions.Clear();
 
         currentLevelData = data;
@@ -230,7 +230,7 @@ public partial class Board : MonoBehaviour
 
         int spawnIdx = 0;
         Piece firstAlly = null;
-        foreach (PieceData piecedata in DataManager.Instance.currentData.pieceData)
+        foreach (PieceData piecedata in DataManager.Instance.Pieces)
         {
             Vector2Int spawnPos = spawnIdx < playerSpawns.Count ? playerSpawns[spawnIdx] : new Vector2Int(2, 2);
             GameObject prefab = piecedatabase.GetPiece(piecedata.pieceName);
@@ -343,8 +343,7 @@ public partial class Board : MonoBehaviour
         }
 
         PieceData data = DataManager.Instance.BuildPieceData(info, deckCardIDs ?? info.DefaultDeckCardIDs);
-        DataManager.Instance.currentData.pieceData.Add(data);
-        int dataIndex = DataManager.Instance.currentData.pieceData.Count - 1;
+        int dataIndex = DataManager.Instance.AddPieceData(data);
 
         GameObject piece = Instantiate(prefab);
         GetButtonScript(spawnPos.Value).SetPiece(piece);
