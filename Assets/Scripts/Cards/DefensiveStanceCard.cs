@@ -16,10 +16,24 @@ public class DefensiveStanceCard : Card
         blocksMovementAfterUse = true;
         requiresCasterNotMoved = true;
 
-        effects.Add(new CardEffect(Board.BoardMode.targeting, EffectType.Shield, 5, TargetLogic.self)
-            { animTrigger = "Shield", lockCasterForNext = true });
-        effects.Add(new CardEffect(Board.BoardMode.targeting, EffectType.DeBuff, 0, TargetLogic.self)
-            { statusEffectType = StatusEffectType.MovementDisabled, statusDuration = 2 });
+        effects.Add(new CardEffect
+        {
+            requiredMode = Board.BoardMode.targeting,
+            type = EffectType.Shield,
+            dmg = 5,
+            targetlogic = TargetLogic.self,
+            animTrigger = "Shield",
+            lockCasterForNext = true,
+        });
+        effects.Add(new CardEffect
+        {
+            requiredMode = Board.BoardMode.targeting,
+            type = EffectType.DeBuff,
+            dmg = 0,
+            targetlogic = TargetLogic.self,
+            statusEffectType = StatusEffectType.MovementDisabled,
+            statusDuration = 2,
+        });
     }
 
     public override string EffectDescription => $"방어도 {EffectiveShield(effects[0])}를 부여합니다. (이동 전 사용 가능, 사용 후 이동 불가)";

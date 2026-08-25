@@ -9,8 +9,14 @@ public class DefenseCard : Card
         Cost = 1;
         type = CardType.Skill;
         dragDropTarget = DragDropTarget.Self;
-        CardEffect cf = new CardEffect(Board.BoardMode.targeting, EffectType.Shield, 2, TargetLogic.self)
-            { animTrigger = "Shield" };
+        CardEffect cf = new CardEffect
+        {
+            requiredMode = Board.BoardMode.targeting,
+            type = EffectType.Shield,
+            dmg = 2,
+            targetlogic = TargetLogic.self,
+            animTrigger = "Shield",
+        };
         effects.Add(cf);
 
     }

@@ -11,5 +11,5 @@ public class ShopObject : Piece
         hp = maxhp = 1;
     }
 
-    public override List<Vector2> GetMoveableButton() => new List<Vector2>();
+    public override List<Vector2Int> GetMoveableButton() => new List<Vector2Int>();
 }

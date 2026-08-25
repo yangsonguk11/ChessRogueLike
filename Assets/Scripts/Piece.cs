@@ -163,13 +163,13 @@ public abstract class Piece : MonoBehaviour
             deckCardIDs = SavedDeckCardIDs()
         };
     }
-    public virtual List<Vector2> GetMoveableButton() { return pieceInfo.RangeInfoSO.GetAbleRange(); }
+    public virtual List<Vector2Int> GetMoveableButton() { return pieceInfo.RangeInfoSO.GetAbleRange(); }
     // 설정 안 돼 있으면 중앙 1칸(부딫힌 대상만 공격)으로 폴백 — 기존 단일 타겟 이동공격 동작을 그대로 유지.
-    public virtual List<Vector2> GetMoveAttackRange()
+    public virtual List<Vector2Int> GetMoveAttackRange()
     {
         return pieceInfo.MoveAttackRangeInfoSO != null
             ? pieceInfo.MoveAttackRangeInfoSO.GetAbleRange()
-            : new List<Vector2> { Vector2.zero };
+            : new List<Vector2Int> { Vector2Int.zero };
     }
     public RangeInfoSO MoveAttackRangeInfoSO => pieceInfo.MoveAttackRangeInfoSO;
     // isAttack: false면 독/화상 같은 상태이상 틱 데미지 — OnHit 유물은 '공격'을 받았을 때만 발동해야 하므로 제외한다.

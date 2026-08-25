@@ -38,7 +38,7 @@ public partial class Board
 
     void TurnEnd(int teamid)
     {
-        Vector2 pos = new Vector2(0, 0);
+        Vector2Int pos = new Vector2Int(0, 0);
         for (int i = 0; i < N; i++)
         {
             pos.x = i;
@@ -68,9 +68,9 @@ public partial class Board
 
     public IEnumerator PlayEnemyTurnCoroutine()
     {
-        List<Vector2> currentEnemies = new List<Vector2>(enemyPositions);
+        List<Vector2Int> currentEnemies = new List<Vector2Int>(enemyPositions);
 
-        foreach (Vector2 pos in currentEnemies)
+        foreach (Vector2Int pos in currentEnemies)
         {
             Piece p = GetButtonScript(pos).GetPiece()?.GetComponent<Piece>();
             if (p == null || p is not Enemy enemy) continue;

@@ -21,7 +21,7 @@ public class Enemy : Piece
         ActionText();
     }
 
-    public override List<Vector2> GetMoveableButton() {
+    public override List<Vector2Int> GetMoveableButton() {
         Card move = GetNextMove();
         if (move == null || move.effects.Count == 0) return base.GetMoveableButton();
         if (move.effects[0].type == EffectType.Move)

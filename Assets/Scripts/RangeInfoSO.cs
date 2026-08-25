@@ -15,9 +15,9 @@ public class RangeInfoSO : ScriptableObject
     // 행(RangeInfo)을 배열로 묶어 2차원 범위를 구성
     public RangeInfo[] rows = new RangeInfo[7];
 
-    public List<Vector2> GetAbleRange()
+    public List<Vector2Int> GetAbleRange()
     {
-        List<Vector2> temp = new List<Vector2>();
+        List<Vector2Int> temp = new List<Vector2Int>();
         int size = rows.Length;
         int center = size / 2;
         for (int i = 0; i < size; i++)
@@ -26,7 +26,7 @@ public class RangeInfoSO : ScriptableObject
             {
                 if (rows[i].columns[j])
                 {
-                    temp.Add(new Vector2(i - center, j - center));
+                    temp.Add(new Vector2Int(i - center, j - center));
                 }
             }
         }

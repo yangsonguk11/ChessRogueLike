@@ -11,13 +11,23 @@ public class RecoverShieldCard : Card
         type = CardType.Skill;
         dragDropTarget = DragDropTarget.Self;
 
-        effects.Add(new CardEffect(Board.BoardMode.targeting, EffectType.Shield, 4, TargetLogic.self)
-            { animTrigger = "Shield" });
-
-        effects.Add(new CardEffect(Board.BoardMode.cardSelecting, EffectType.SelectAndReturnToDeck, 0, TargetLogic.self)
+        effects.Add(new CardEffect
         {
+            requiredMode = Board.BoardMode.targeting,
+            type = EffectType.Shield,
+            dmg = 4,
+            targetlogic = TargetLogic.self,
+            animTrigger = "Shield",
+        });
+
+        effects.Add(new CardEffect
+        {
+            requiredMode = Board.BoardMode.cardSelecting,
+            type = EffectType.SelectAndReturnToDeck,
+            dmg = 0,
+            targetlogic = TargetLogic.self,
             cardZone = CardZone.Discard,
-            selectCount = 1
+            selectCount = 1,
         });
     }
 

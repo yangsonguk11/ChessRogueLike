@@ -10,16 +10,17 @@ public class BossAttack2Card : Card
         Name = "보스 패턴 2";
         Cost = 0;
         type = CardType.Attack;
-        CardEffect cf = new CardEffect(
-            Board.BoardMode.command,
-            EffectType.Damage,
-            5,
-            TargetLogic.AllEnemiesInRange,
-            effectRange.Count > 0 ? effectRange[0] : null,
-            false,
-            AreaTargetMode.Fixed
-        )
-        { animTrigger = "AreaAttack" };
+        CardEffect cf = new CardEffect
+        {
+            requiredMode = Board.BoardMode.command,
+            type = EffectType.Damage,
+            dmg = 5,
+            targetlogic = TargetLogic.AllEnemiesInRange,
+            effectRange = effectRange.Count > 0 ? effectRange[0] : null,
+            lockCasterForNext = false,
+            areaTargetMode = AreaTargetMode.Fixed,
+            animTrigger = "AreaAttack",
+        };
         effects.Add(cf);
     }
 

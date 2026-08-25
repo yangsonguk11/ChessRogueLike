@@ -96,7 +96,7 @@ public class CardCanvas : MonoBehaviour
     bool nowUsingCardHeld; // true면 nowusingCard가 보드 커밋 없이 마우스에 들려있는 상태
     List<RectTransform> pendingDrawCards = new List<RectTransform>();
     Coroutine batchDrawCoroutine;
-    Vector2 pendingFirstTarget = new Vector2(-1, -1);
+    Vector2Int pendingFirstTarget = new Vector2Int(-1, -1);
 
     // ── 카드 이동 애니메이션 큐 ──────────────────────────────────
     // 큐는 0.15초마다 다음 이동을 하나씩 꺼내 시작시킨다. 각 이동은 시작되면
@@ -218,7 +218,7 @@ public class CardCanvas : MonoBehaviour
             CancelCardMove(nowusingCard);
             board.CancelCardUsage();
         }
-        pendingFirstTarget = new Vector2(-1, -1);
+        pendingFirstTarget = new Vector2Int(-1, -1);
         RectTransform cardToUse = cards[handnum];
         cards.RemoveAt(handnum);
         ClearnowusingCard();
@@ -249,8 +249,8 @@ public class CardCanvas : MonoBehaviour
             if (nowusingCard == null) return;
             if (pendingFirstTarget.x >= 0)
             {
-                Vector2 target = pendingFirstTarget;
-                pendingFirstTarget = new Vector2(-1, -1);
+                Vector2Int target = pendingFirstTarget;
+                pendingFirstTarget = new Vector2Int(-1, -1);
                 board.ButtonClicked(target);
             }
         });
@@ -288,7 +288,7 @@ public class CardCanvas : MonoBehaviour
     {
         if (isCardEffecting || board.EffectApplied) return;
 
-        pendingFirstTarget = new Vector2(-1, -1);
+        pendingFirstTarget = new Vector2Int(-1, -1);
         board.CancelCardUsage(); // Board.UseCard가 한 일을 그대로 반대로 되돌림
         CardDragArrow.instance?.Hide();
         nowUsingCardHeld = true;
@@ -458,7 +458,7 @@ public class CardCanvas : MonoBehaviour
         int originalIndex = card.GetComponent<Card>().handNumber;
         cards.Insert(Mathf.Clamp(originalIndex, 0, cards.Count), card);
         AlignCards();
-        pendingFirstTarget = new Vector2(-1, -1);
+        pendingFirstTarget = new Vector2Int(-1, -1);
         board.CancelCardUsage();
     }
 
@@ -1039,7 +1039,7 @@ public class CardCanvas : MonoBehaviour
         }
 
         // 보드 밖에 놓으면(카드 종류 상관없이) 취소 — self/targeting/command 카드가 모두 공유하는 판정.
-        Vector2 boardPos = FindBoardPosAtScreen(screenPos);
+        Vector2Int boardPos = FindBoardPosAtScreen(screenPos);
         if (boardPos.x < 0)
         {
             CancelCardUsage();
@@ -1112,7 +1112,7 @@ public class CardCanvas : MonoBehaviour
         return true;
     }
 
-    Vector2 FindBoardPosAtScreen(Vector2 screenPos)
+    Vector2Int FindBoardPosAtScreen(Vector2 screenPos)
     {
         Ray ray = Camera.main.ScreenPointToRay(screenPos);
         if (Physics.Raycast(ray, out RaycastHit hit))
@@ -1120,7 +1120,7 @@ public class CardCanvas : MonoBehaviour
             var btn = hit.collider.GetComponentInParent<global::Button>();
             if (btn != null) return btn.GetLocation();
         }
-        return new Vector2(-1, -1);
+        return new Vector2Int(-1, -1);
     }
 
     // 부채꼴 배치에서 count장 중 i번째 카드의 로컬 위치/회전을 계산

@@ -46,7 +46,7 @@ public partial class Board
 
     public void TriggerRelicsOnCombatStart()
     {
-        Vector2 previousSelected = _selectedButton;
+        Vector2Int previousSelected = _selectedButton;
         foreach (Piece ally in GetAllAllyPieces())
             DrainRelicQueue(RelicsFor(RelicTiming.CombatStart), FindPiecePos(ally));
         _selectedButton = previousSelected;
@@ -54,7 +54,7 @@ public partial class Board
 
     public void TriggerRelicsOnTurnStart()
     {
-        Vector2 previousSelected = _selectedButton;
+        Vector2Int previousSelected = _selectedButton;
         foreach (Piece ally in GetAllAllyPieces())
             DrainRelicQueue(RelicsFor(RelicTiming.TurnStart), FindPiecePos(ally));
         _selectedButton = previousSelected;
@@ -62,7 +62,7 @@ public partial class Board
 
     public void TriggerRelicsOnTurnEnd()
     {
-        Vector2 previousSelected = _selectedButton;
+        Vector2Int previousSelected = _selectedButton;
         foreach (Piece ally in GetAllAllyPieces())
             DrainRelicQueue(RelicsFor(RelicTiming.TurnEnd), FindPiecePos(ally));
         _selectedButton = previousSelected;
@@ -71,7 +71,7 @@ public partial class Board
     // casterPos: 지금 카드를 쓰고 있는 기물의 위치, targetPos: 그 카드(의 첫 효과)가 실제로 겨냥한 위치
     // (둘 다 ExecuteEffect가 이미 알고 있는 값을 그대로 넘겨받음). 유물마다 TargetsCardTarget으로
     // 둘 중 어느 위치를 기준으로 Effects를 적용할지 고른다.
-    public void TriggerRelicsOnCardUsed(Vector2 casterPos, Vector2 targetPos)
+    public void TriggerRelicsOnCardUsed(Vector2Int casterPos, Vector2Int targetPos)
     {
         foreach (Relic relic in ownedRelics.Where(r => r != null && r.Timing == RelicTiming.CardUsed))
             DrainRelicQueue(relic.Effects, relic.TargetsCardTarget ? targetPos : casterPos);
@@ -79,7 +79,7 @@ public partial class Board
 
     public void TriggerRelicsOnHit(Piece target)
     {
-        Vector2 previousSelected = _selectedButton;
+        Vector2Int previousSelected = _selectedButton;
         DrainRelicQueue(RelicsFor(RelicTiming.OnHit), FindPiecePos(target));
         _selectedButton = previousSelected;
     }
@@ -88,7 +88,7 @@ public partial class Board
     public void TriggerRelicsOnKill(Piece caster)
     {
         if (caster == null || caster.teamID != 0) return;
-        Vector2 previousSelected = _selectedButton;
+        Vector2Int previousSelected = _selectedButton;
         DrainRelicQueue(RelicsFor(RelicTiming.OnKill), FindPiecePos(caster));
         _selectedButton = previousSelected;
     }
@@ -101,7 +101,7 @@ public partial class Board
     // 유물 효과 목록을 큐에 담아 casterPos를 대상으로 순차적으로(동기적으로) 전부 적용한다.
     // selectedButton 프로퍼티의 setter는 OnSelectBoard(범위 표시, self 즉시실행 등)를 트리거하므로
     // 백킹 필드를 직접 대입해 그 부작용을 피한다(ProcessEnemyCardEffect와 동일한 방식).
-    void DrainRelicQueue(List<CardEffect> effects, Vector2 casterPos)
+    void DrainRelicQueue(List<CardEffect> effects, Vector2Int casterPos)
     {
         Queue<CardEffect> queue = new Queue<CardEffect>(effects);
         while (queue.Count > 0)

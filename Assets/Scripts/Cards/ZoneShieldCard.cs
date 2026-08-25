@@ -16,18 +16,20 @@ public class ZoneShieldCard : Card
         RangeInfoSO targetRange = effectRange.Count > 1 ? effectRange[1] : null;
         bool useMovement = targetRange == null;
 
-        CardEffect cf = new CardEffect(
-            Board.BoardMode.targeting,
-            EffectType.Shield,
-            3,
-            TargetLogic.AllPiecesInRange,
-            effectRange[0],
-            false,
-            AreaTargetMode.MouseCentered,
-            targetRange,
-            useMovement
-        )
-        { animTrigger = "Shield", hasCaster = false };
+        CardEffect cf = new CardEffect
+        {
+            requiredMode = Board.BoardMode.targeting,
+            type = EffectType.Shield,
+            dmg = 3,
+            targetlogic = TargetLogic.AllPiecesInRange,
+            effectRange = effectRange[0],
+            lockCasterForNext = false,
+            areaTargetMode = AreaTargetMode.MouseCentered,
+            targetingRange = targetRange,
+            targetingUsesMovement = useMovement,
+            animTrigger = "Shield",
+            hasCaster = false,
+        };
         effects.Add(cf);
     }
 

@@ -7,15 +7,14 @@ public class DispelCard : Card
         Cost = 1;
         type = CardType.Skill;
         dragDropTarget = DragDropTarget.Enemy;
-        effects.Add(new CardEffect(
-            Board.BoardMode.targeting,
-            EffectType.Cleanse,
-            0,
-            TargetLogic.NearestEnemy
-        )
+        effects.Add(new CardEffect
         {
+            requiredMode = Board.BoardMode.targeting,
+            type = EffectType.Cleanse,
+            dmg = 0,
+            targetlogic = TargetLogic.NearestEnemy,
             cleanseBuffs = true,
-            hasCaster = false
+            hasCaster = false,
         });
     }
 

@@ -156,19 +156,19 @@ public partial class Board
     {
         if (piece == null) yield break;
 
-        List<Vector2> rangeButtons = new List<Vector2>();
+        List<Vector2Int> rangeButtons = new List<Vector2Int>();
         if (showRange && cardEffect?.targetlogic != TargetLogic.self)
         {
-            Vector2 piecePos = FindPiecePos(piece);
+            Vector2Int piecePos = FindPiecePos(piece);
             if (piecePos.x >= 0)
             {
-                List<Vector2> offsets = cardEffect?.effectRange?.GetAbleRange();
+                List<Vector2Int> offsets = cardEffect?.effectRange?.GetAbleRange();
                 if (offsets != null && (cardEffect.areaTargetMode == AreaTargetMode.Directional4 || cardEffect.areaTargetMode == AreaTargetMode.Directional8))
                     offsets = RotateOffsets(offsets, currentHoverDirection);
 
-                foreach (Vector2 offset in offsets ?? piece.GetMoveableButton())
+                foreach (Vector2Int offset in offsets ?? piece.GetMoveableButton())
                 {
-                    Vector2 target = piecePos + offset;
+                    Vector2Int target = piecePos + offset;
                     if (target.x < 0 || target.x >= N || target.y < 0 || target.y >= M) continue;
                     GetButtonScript(target).RangeOn(piece.teamID);
                     rangeButtons.Add(target);
@@ -207,7 +207,7 @@ public partial class Board
         }
         yield return new WaitForSeconds(waitTime);
 
-        foreach (Vector2 v in rangeButtons)
+        foreach (Vector2Int v in rangeButtons)
             GetButtonScript(v).RangeOff(piece.teamID);
     }
 

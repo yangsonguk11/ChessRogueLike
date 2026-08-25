@@ -10,22 +10,24 @@ public class ShieldCycleCard : Card
         type = CardType.Skill;
         dragDropTarget = DragDropTarget.Self;
 
-        effects.Add(new CardEffect(
-            Board.BoardMode.targeting,
-            EffectType.Shield,
-            3,
-            TargetLogic.self,
-            null,
-            true
-        )
-        { animTrigger = "Shield" });
+        effects.Add(new CardEffect
+        {
+            requiredMode = Board.BoardMode.targeting,
+            type = EffectType.Shield,
+            dmg = 3,
+            targetlogic = TargetLogic.self,
+            effectRange = null,
+            lockCasterForNext = true,
+            animTrigger = "Shield",
+        });
 
-        effects.Add(new CardEffect(
-            Board.BoardMode.Inspect,
-            EffectType.HandToDeckTop,
-            1,
-            TargetLogic.self
-        ));
+        effects.Add(new CardEffect
+        {
+            requiredMode = Board.BoardMode.Inspect,
+            type = EffectType.HandToDeckTop,
+            dmg = 1,
+            targetlogic = TargetLogic.self,
+        });
     }
 
     public override string EffectDescription =>

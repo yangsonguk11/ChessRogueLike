@@ -10,8 +10,14 @@ public class HealCard : Card
         Cost = 2;
         type = CardType.Skill;
         dragDropTarget = DragDropTarget.Self;
-        CardEffect cf = new CardEffect(Board.BoardMode.targeting, EffectType.Heal, 2, TargetLogic.self)
-            { animTrigger = "Heal" };
+        CardEffect cf = new CardEffect
+        {
+            requiredMode = Board.BoardMode.targeting,
+            type = EffectType.Heal,
+            dmg = 2,
+            targetlogic = TargetLogic.self,
+            animTrigger = "Heal",
+        };
         effects.Add(cf);
     }
     public override string EffectDescription => $"자신을 {effects[0].dmg} 회복합니다.";

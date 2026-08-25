@@ -7,16 +7,17 @@ public class ThornCard : Card
         Cost = 1;
         type = CardType.Skill;
         dragDropTarget = DragDropTarget.Self;
-        effects.Add(new CardEffect(
-            Board.BoardMode.command,
-            EffectType.ApplyStatus,
-            0,
-            TargetLogic.self,
-            _statusEffectType: StatusEffectType.Thorn,
-            _statusDuration: 2,
-            _statusPower: 3
-        )
-        { animTrigger = "ApplyStatus" });
+        effects.Add(new CardEffect
+        {
+            requiredMode = Board.BoardMode.command,
+            type = EffectType.ApplyStatus,
+            dmg = 0,
+            targetlogic = TargetLogic.self,
+            statusEffectType = StatusEffectType.Thorn,
+            statusDuration = 2,
+            statusPower = 3,
+            animTrigger = "ApplyStatus",
+        });
     }
 
     public override string EffectDescription =>

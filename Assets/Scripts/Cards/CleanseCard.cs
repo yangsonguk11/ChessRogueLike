@@ -7,14 +7,13 @@ public class CleanseCard : Card
         Cost = 1;
         type = CardType.Skill;
         dragDropTarget = DragDropTarget.Self;
-        effects.Add(new CardEffect(
-            Board.BoardMode.command,
-            EffectType.Cleanse,
-            0,
-            TargetLogic.self
-        )
+        effects.Add(new CardEffect
         {
-            cleanseBuffs = false
+            requiredMode = Board.BoardMode.command,
+            type = EffectType.Cleanse,
+            dmg = 0,
+            targetlogic = TargetLogic.self,
+            cleanseBuffs = false,
         });
     }
 

@@ -9,12 +9,12 @@ public partial class Board
     // 결과가 모이면 콜백에 그대로 넘기고, 그걸로 무엇을 할지는 호출부(Dialogue, CardEffect 등)가 알아서 처리한다.
     int pieceSelectCount;
     PieceSelectFilter[] pieceSelectFilters;
-    readonly List<Vector2> pieceSelectedPositions = new List<Vector2>();
+    readonly List<Vector2Int> pieceSelectedPositions = new List<Vector2Int>();
     Action<List<Piece>> pieceSelectCallback;
 
     public bool PieceSelectionActive => pieceSelectCallback != null;
 
-    static bool MatchesFilters(Vector2 pos, Piece piece, PieceSelectFilter[] filters)
+    static bool MatchesFilters(Vector2Int pos, Piece piece, PieceSelectFilter[] filters)
     {
         if (filters == null) return true;
         foreach (var f in filters)
@@ -24,13 +24,13 @@ public partial class Board
 
     // filters를 만족하는 기물이 있는 칸 전체에 RangeOn 하이라이트를 켜고, 어떤 칸에 어떤 팀으로 켰는지
     // 기록해 반환한다. RequestPieceSelection과 카드 픽업 시점 미리보기(ShowUseEligibilityPreview)가 공용으로 쓴다.
-    List<(Vector2 pos, int teamID)> HighlightMatchingPieces(PieceSelectFilter[] filters)
+    List<(Vector2Int pos, int teamID)> HighlightMatchingPieces(PieceSelectFilter[] filters)
     {
-        var result = new List<(Vector2, int)>();
+        var result = new List<(Vector2Int, int)>();
         for (int x = 0; x < N; x++)
             for (int y = 0; y < M; y++)
             {
-                Vector2 pos = new Vector2(x, y);
+                Vector2Int pos = new Vector2Int(x, y);
                 Piece p = GetPieceAt(pos);
                 if (p == null || !MatchesFilters(pos, p, filters)) continue;
 
@@ -48,7 +48,7 @@ public partial class Board
         for (int x = 0; x < N; x++)
             for (int y = 0; y < M; y++)
             {
-                Vector2 pos = new Vector2(x, y);
+                Vector2Int pos = new Vector2Int(x, y);
                 Piece p = GetPieceAt(pos);
                 if (p != null && MatchesFilters(pos, p, filters)) matchCount++;
             }
@@ -77,7 +77,7 @@ public partial class Board
         for (int x = 0; x < N; x++)
             for (int y = 0; y < M; y++)
             {
-                Vector2 pos = new Vector2(x, y);
+                Vector2Int pos = new Vector2Int(x, y);
                 Piece p = GetPieceAt(pos);
                 if (p == null || !MatchesFilters(pos, p, pieceSelectFilters)) continue;
 
@@ -91,7 +91,7 @@ public partial class Board
         pieceSelectCallback = null;
     }
 
-    public void HandlePieceSelectionClick(Vector2 pos)
+    public void HandlePieceSelectionClick(Vector2Int pos)
     {
         Piece clicked = GetPieceAt(pos);
         if (clicked == null || !MatchesFilters(pos, clicked, pieceSelectFilters)) return;
@@ -118,7 +118,7 @@ public partial class Board
         for (int x = 0; x < N; x++)
             for (int y = 0; y < M; y++)
             {
-                Vector2 pos = new Vector2(x, y);
+                Vector2Int pos = new Vector2Int(x, y);
                 Piece p = GetPieceAt(pos);
                 if (p == null || !MatchesFilters(pos, p, pieceSelectFilters)) continue;
 

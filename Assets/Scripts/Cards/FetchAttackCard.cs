@@ -9,10 +9,14 @@ public class FetchAttackCard : Card
         Cost = 0;
         type = CardType.Skill;
 
-        effects.Add(new CardEffect(Board.BoardMode.Inspect, EffectType.AddCard, 0, TargetLogic.self)
+        effects.Add(new CardEffect
         {
+            requiredMode = Board.BoardMode.Inspect,
+            type = EffectType.AddCard,
+            dmg = 0,
+            targetlogic = TargetLogic.self,
             addCardID = "AttackCard",
-            addCardZone = CardPositionZone.Hand
+            addCardZone = CardPositionZone.Hand,
         });
     }
 

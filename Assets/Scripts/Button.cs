@@ -12,7 +12,7 @@ public class Button : MonoBehaviour, ISelectable
     [SerializeField] GameObject CasterIndicatorObj; // 이 기물이 지금 든 카드의 시전자일 때 표시
     GameObject board;
     Board boardScript;
-    Vector2 location;
+    Vector2Int location;
     public Vector3 Piecelocation
     {
         get {
@@ -112,7 +112,7 @@ piece.transform.parent = gameObject.transform;
             if (enemyRangeRefCount == 0) EnemyRangeObj.SetActive(false);
         }
     }
-    public Vector2 GetLocation() { return location; }
+    public Vector2Int GetLocation() { return location; }
     void SetLocation(int _x, int _y)
     {
         location.x = _x; location.y = _y;

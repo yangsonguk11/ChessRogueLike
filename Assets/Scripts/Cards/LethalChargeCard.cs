@@ -10,10 +10,20 @@ public class LethalChargeCard : Card
         type = CardType.Move;
         dragDropTarget = DragDropTarget.AnyTile;
 
-        effects.Add(new CardEffect(Board.BoardMode.command, EffectType.Move, 0, TargetLogic.NearestEnemy)
+        effects.Add(new CardEffect
         {
+            requiredMode = Board.BoardMode.command,
+            type = EffectType.Move,
+            dmg = 0,
+            targetlogic = TargetLogic.NearestEnemy,
             animTrigger = "Move",
-            onKillEffect = new CardEffect(Board.BoardMode.Inspect, EffectType.RestoreEnergy, 2, TargetLogic.self)
+            onKillEffect = new CardEffect
+            {
+                requiredMode = Board.BoardMode.Inspect,
+                type = EffectType.RestoreEnergy,
+                dmg = 2,
+                targetlogic = TargetLogic.self,
+            },
         });
     }
 

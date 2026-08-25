@@ -127,13 +127,13 @@ public abstract class Card : MonoBehaviour, ISelectable
 
     protected string EffectiveDmg(CardEffect effect)
     {
-        int dmg = effect.type != EffectType.Damage
-            ? effect.dmg
-            : effect.useColDamageAsDmg
-                ? Mathf.Max(0, Board.instance?.CasterFullColDamage ?? 0)
-                : effect.hasCaster
-                    ? Mathf.Max(0, effect.dmg + (Board.instance?.CasterColDamage ?? 0))
-                    : effect.dmg;
+        int dmg = effect switch
+        {
+            { type: not EffectType.Damage } => effect.dmg,
+            { useColDamageAsDmg: true }     => Mathf.Max(0, Board.instance?.CasterFullColDamage ?? 0),
+            { hasCaster: true }             => Mathf.Max(0, effect.dmg + (Board.instance?.CasterColDamage ?? 0)),
+            _                                => effect.dmg,
+        };
 
         if (dmg == effect.dmg) return dmg.ToString();
         string color = dmg > effect.dmg ? "#4444FF" : "#FF4444";
@@ -280,65 +280,52 @@ public enum CardZone { Hand, Deck, Discard, Any, SavedDeck }
 public enum CostDuration { Permanent, ThisTurnOnly, OneUse }
 
 public enum EffectType { Move, Damage, Shield, Buff, DeBuff, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, BaseColDamageUp, ShieldBonusUp, BaseShieldBonusUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop, SelectAndDiscard, SelectAndChangeCost, SelectAndReturnToDeck, AddCard, RestoreEnergy, Cleanse }
-public class CardEffect
+public record CardEffect
 {
-    public Board.BoardMode requiredMode;
-    public EffectType type;
-    public int dmg;
-    public RangeInfoSO effectRange;
-    public TargetLogic targetlogic;
-    public bool lockCasterForNext;
-    public AreaTargetMode areaTargetMode;
-    public RangeInfoSO targetingRange;      // AoE 중심 배치 가능 범위 (null = 전체 보드)
-    public bool targetingUsesMovement;      // true면 캐릭터 이동 범위로 AoE 중심 제한
+    public Board.BoardMode requiredMode { get; init; }
+    public EffectType type { get; init; }
+    public int dmg { get; init; }
+    public RangeInfoSO effectRange { get; init; }
+    public TargetLogic targetlogic { get; init; }
+    public bool lockCasterForNext { get; init; }
+    public AreaTargetMode areaTargetMode { get; init; } = AreaTargetMode.Fixed;
+    public RangeInfoSO targetingRange { get; init; }      // AoE 중심 배치 가능 범위 (null = 전체 보드)
+    public bool targetingUsesMovement { get; init; }      // true면 캐릭터 이동 범위로 AoE 중심 제한
 
     // 상태이상 부여 (type이 ApplyStatus이거나 다른 효과와 함께 사용)
-    public StatusEffectType statusEffectType;
-    public int statusDuration;
-    public int statusPower;                 // 독/화상/재생의 턴당 수치, 강화/약화의 수치
+    public StatusEffectType statusEffectType { get; init; } = StatusEffectType.None;
+    public int statusDuration { get; init; }
+    public int statusPower { get; init; }                 // 독/화상/재생의 턴당 수치, 강화/약화의 수치
 
     // Cleanse 타입에서 사용: false면 디버프 전체 제거(정화), true면 버프 전체 제거(디스펠)
-    public bool cleanseBuffs = false;
+    public bool cleanseBuffs { get; init; } = false;
 
-    public bool useColDamageAsDmg;           // true면 dmg 대신 시전자의 colDamage 사용
-    public bool hasCaster = true;            // false면 캐스터(카드를 낸 기물) 없이 targetPos만으로 즉시 발동
-    public bool noMoveAttack;               // true면 이동 시 충돌 공격 불가
-    public bool healOnHit;                  // true면 적중 시 입힌 피해만큼 시전자 회복 (일반 공격/이동공격 모두 적용)
-    public string animTrigger;              // 효과 시전 시 재생할 Animator 트리거 (null이면 기본 코루틴 애니메이션 사용)
+    public bool useColDamageAsDmg { get; init; }           // true면 dmg 대신 시전자의 colDamage 사용
+    public bool hasCaster { get; init; } = true;            // false면 캐스터(카드를 낸 기물) 없이 targetPos만으로 즉시 발동
+    public bool noMoveAttack { get; init; }               // true면 이동 시 충돌 공격 불가
+    public bool healOnHit { get; init; }                  // true면 적중 시 입힌 피해만큼 시전자 회복 (일반 공격/이동공격 모두 적용)
+    public string animTrigger { get; init; }              // 효과 시전 시 재생할 Animator 트리거 (null이면 기본 코루틴 애니메이션 사용)
 
     // ApplyTurnEffect 타입에서 사용: 지정한 타이밍에 실행할 CardEffect와 지속 턴 수
-    public CardEffect onTurnEndEffect;
-    public int turnDuration;
-    public TurnPhase turnPhase = TurnPhase.OwnTurnEnd;
+    public CardEffect onTurnEndEffect { get; init; }
+    public int turnDuration { get; init; }
+    public TurnPhase turnPhase { get; init; } = TurnPhase.OwnTurnEnd;
 
     // Damage 계열 효과가 대상을 처치했을 때 시전자를 대상으로 실행할 CardEffect (예: 처치 시 ColDamageUp)
-    public CardEffect onKillEffect;
+    public CardEffect onKillEffect { get; init; }
 
     // SelectAndDiscard / SelectAndChangeCost 타입에서 사용
-    public CardZone cardZone = CardZone.Hand;   // 선택 대상 존
-    public int selectCount = 1;                 // 선택할 카드 수 (0 = 제한 없음)
+    public CardZone cardZone { get; init; } = CardZone.Hand;   // 선택 대상 존
+    public int selectCount { get; init; } = 1;                 // 선택할 카드 수 (0 = 제한 없음)
 
     // 0보다 크면 (requiredMode는 보통 Inspect) UseCard 이후 카드 효과 처리 중에 보드에서 아군 기물을
     // 이 수치만큼 직접 클릭해 고르게 한다(Board.RequestPieceSelection). 고른 기물 각각에게 이 CardEffect
     // 자신이 그대로 적용된다 (ExecuteCardEffectOnPiece가 지원하는 타입만: Heal/Shield/ColDamageUp류 등).
-    public int pieceSelectCount;
-    public int costChange = 0;                  // 코스트 변화량 (SelectAndChangeCost용)
-    public CostDuration costDuration = CostDuration.Permanent; // 코스트 지속 시간
+    public int pieceSelectCount { get; init; }
+    public int costChange { get; init; } = 0;                  // 코스트 변화량 (SelectAndChangeCost용)
+    public CostDuration costDuration { get; init; } = CostDuration.Permanent; // 코스트 지속 시간
 
     // AddCard 타입에서 사용: 추가할 카드와 추가될 위치 (CardCanvas.CardPositionZone 재사용)
-    public string addCardID;
-    public CardPositionZone addCardZone = CardPositionZone.Discard;
-
-    public CardEffect(Board.BoardMode _requiredMode, EffectType _type, int _dmg, TargetLogic _targetlogic,
-        RangeInfoSO _effectRange = null, bool _lockCasterForNext = false,
-        AreaTargetMode _areaTargetMode = AreaTargetMode.Fixed,
-        RangeInfoSO _targetingRange = null, bool _targetingUsesMovement = false,
-        StatusEffectType _statusEffectType = StatusEffectType.None,
-        int _statusDuration = 0, int _statusPower = 0)
-    {
-        requiredMode = _requiredMode; type = _type; dmg = _dmg; targetlogic = _targetlogic;
-        effectRange = _effectRange; lockCasterForNext = _lockCasterForNext; areaTargetMode = _areaTargetMode;
-        targetingRange = _targetingRange; targetingUsesMovement = _targetingUsesMovement;
-        statusEffectType = _statusEffectType; statusDuration = _statusDuration; statusPower = _statusPower;
-    }
+    public string addCardID { get; init; }
+    public CardPositionZone addCardZone { get; init; } = CardPositionZone.Discard;
 }

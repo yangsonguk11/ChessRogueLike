@@ -28,15 +28,15 @@ public partial class Board : MonoBehaviour
     event Action OnButtonUnSelected;
     public bool boardReady = false;
 
-    public List<Vector2> enemyPositions = new List<Vector2>();
+    public List<Vector2Int> enemyPositions = new List<Vector2Int>();
     [Header("보드 크기")]
     [Min(1)] public int N;
     [Min(1)] public int M;
     [SerializeField] LevelData leveldata;
     public Grid grid;
 
-    Vector2 _selectedButton;
-    Vector2 selectedButton
+    Vector2Int _selectedButton;
+    Vector2Int selectedButton
     {
         get { return _selectedButton; }
         set
@@ -109,7 +109,7 @@ public partial class Board : MonoBehaviour
         for (int x = 0; x < N; x++)
             for (int y = 0; y < M; y++)
             {
-                Piece p = GetPieceAt(new Vector2(x, y));
+                Piece p = GetPieceAt(new Vector2Int(x, y));
                 if (p == null || p.teamID != 0) continue;
 
                 int requestedAmount = amount < 0 ? p.maxhp - p.hp : amount;
@@ -129,13 +129,13 @@ public partial class Board : MonoBehaviour
     {
         if (amount <= 0) return;
 
-        var targets = new List<Vector2>();
+        var targets = new List<Vector2Int>();
         for (int x = 0; x < N; x++)
             for (int y = 0; y < M; y++)
             {
-                Piece p = GetPieceAt(new Vector2(x, y));
+                Piece p = GetPieceAt(new Vector2Int(x, y));
                 if (p != null && p.teamID == 0)
-                    targets.Add(new Vector2(x, y));
+                    targets.Add(new Vector2Int(x, y));
             }
 
         AreaAttackPiece(targets, amount);
@@ -152,7 +152,7 @@ public partial class Board : MonoBehaviour
         {
             for (int y = 0; y < M; y++)
             {
-                Piece p = GetButtonScript(new Vector2(x, y)).GetPieceScript();
+                Piece p = GetButtonScript(new Vector2Int(x, y)).GetPieceScript();
                 if (p == null || p.teamID != 0) continue;
 
                 PieceData data = p.GetPieceData(); // 이전 pieceDataIndex로 저장된 덱을 읽어온다
@@ -224,15 +224,15 @@ public partial class Board : MonoBehaviour
         }
 
         // name이 비어있는 배치를 플레이어 스폰 위치로 사용
-        List<Vector2> playerSpawns = new List<Vector2>();
+        List<Vector2Int> playerSpawns = new List<Vector2Int>();
         foreach (var p in data.placements)
-            if (string.IsNullOrEmpty(p.name)) playerSpawns.Add(new Vector2(p.position.x, p.position.y));
+            if (string.IsNullOrEmpty(p.name)) playerSpawns.Add(p.position);
 
         int spawnIdx = 0;
         Piece firstAlly = null;
         foreach (PieceData piecedata in DataManager.Instance.currentData.pieceData)
         {
-            Vector2 spawnPos = spawnIdx < playerSpawns.Count ? playerSpawns[spawnIdx] : new Vector2(2, 2);
+            Vector2Int spawnPos = spawnIdx < playerSpawns.Count ? playerSpawns[spawnIdx] : new Vector2Int(2, 2);
             GameObject prefab = piecedatabase.GetPiece(piecedata.pieceName);
             if (prefab == null)
             {
@@ -275,7 +275,7 @@ public partial class Board : MonoBehaviour
             else
             {
                 GameObject restObj = Instantiate(RestObjectPrefab);
-                GetButtonScript(new Vector2(data.eventObjectPosition.x, data.eventObjectPosition.y)).SetPiece(restObj);
+                GetButtonScript(data.eventObjectPosition).SetPiece(restObj);
             }
         }
         else if (currentEventType == LevelData.EventType.Shop)
@@ -285,7 +285,7 @@ public partial class Board : MonoBehaviour
             else
             {
                 GameObject shopObj = Instantiate(ShopObjectPrefab);
-                GetButtonScript(new Vector2(data.eventObjectPosition.x, data.eventObjectPosition.y)).SetPiece(shopObj);
+                GetButtonScript(data.eventObjectPosition).SetPiece(shopObj);
             }
             // 아직 팔 물건이 없어 상호작용할 게 없으므로, Rest처럼 뭔가 사용해야 나가기 버튼이 뜨는 방식 대신
             // 진입 즉시 나갈 수 있게 한다(소프트락 방지). 실제 구매 기능이 생기면 이 부분을 재검토.
@@ -315,7 +315,7 @@ public partial class Board : MonoBehaviour
         for (int x = 0; x < N; x++)
             for (int y = 0; y < M; y++)
             {
-                Piece p = GetPieceAt(new Vector2(x, y));
+                Piece p = GetPieceAt(new Vector2Int(x, y));
                 if (p != null && p.teamID == 0)
                     result.Add(p);
             }
@@ -328,7 +328,7 @@ public partial class Board : MonoBehaviour
     {
         if (info == null) return false;
 
-        Vector2? spawnPos = FindEmptyCell();
+        Vector2Int? spawnPos = FindEmptyCell();
         if (spawnPos == null)
         {
             Debug.LogError("[Board] 새 기물을 스폰할 빈 칸이 없습니다.");
@@ -354,25 +354,25 @@ public partial class Board : MonoBehaviour
         return true;
     }
 
-    Vector2? FindEmptyCell()
+    Vector2Int? FindEmptyCell()
     {
         for (int x = 0; x < N; x++)
             for (int y = 0; y < M; y++)
-                if (GetPieceAt(new Vector2(x, y)) == null)
-                    return new Vector2(x, y);
+                if (GetPieceAt(new Vector2Int(x, y)) == null)
+                    return new Vector2Int(x, y);
         return null;
     }
 
-    Button GetButtonScript(Vector2 pos)
+    Button GetButtonScript(Vector2Int pos)
     {
-        return Buttons[(int)pos.x, (int)pos.y].GetComponent<Button>();
+        return Buttons[pos.x, pos.y].GetComponent<Button>();
     }
 
     void ClearSelectedButton()
     {
         if (selectedButton.x != -1 && selectedButton.y != -1)
             GetButtonScript(selectedButton).SelectedFalse();
-        selectedButton = new Vector2(-1, -1);
+        selectedButton = new Vector2Int(-1, -1);
     }
 
     bool isSelectedButtonActive()
@@ -388,7 +388,7 @@ public partial class Board : MonoBehaviour
     // useColDamageAsDmg 카드(예: ColDamageAttackCard)용 — 강화 전 기본치까지 포함한 이동공격력 전체 수치
     public int CasterFullColDamage => CardCanvas.instance?.ActivePiece?.colDamage ?? 0;
 
-    public Piece GetPieceAt(Vector2 pos) => GetButtonScript(pos)?.GetPieceScript();
+    public Piece GetPieceAt(Vector2Int pos) => GetButtonScript(pos)?.GetPieceScript();
 
     public void HoverPieceFromUI(Piece piece)
     {
@@ -435,7 +435,7 @@ public partial class Board : MonoBehaviour
         for (int x = 0; x < N; x++)
             for (int y = 0; y < M; y++)
             {
-                Button button = GetButtonScript(new Vector2(x, y));
+                Button button = GetButtonScript(new Vector2Int(x, y));
                 if (button.GetPieceScript() == piece) return button;
             }
         return null;
@@ -446,7 +446,7 @@ public partial class Board : MonoBehaviour
         for (int x = 0; x < N; x++)
             for (int y = 0; y < M; y++)
             {
-                Piece p = GetPieceAt(new Vector2(x, y));
+                Piece p = GetPieceAt(new Vector2Int(x, y));
                 if (p != null && p.teamID == 0)
                     p.movedThisTurn = false;
             }

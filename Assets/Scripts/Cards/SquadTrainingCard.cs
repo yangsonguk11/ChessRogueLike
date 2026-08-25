@@ -9,8 +9,12 @@ public class SquadTrainingCard : Card
         Cost = 2;
         type = CardType.Skill;
 
-        effects.Add(new CardEffect(Board.BoardMode.Inspect, EffectType.BaseColDamageUp, 1, TargetLogic.self)
+        effects.Add(new CardEffect
         {
+            requiredMode = Board.BoardMode.Inspect,
+            type = EffectType.BaseColDamageUp,
+            dmg = 1,
+            targetlogic = TargetLogic.self,
             pieceSelectCount = 2,
             animTrigger = "Buff",
         });

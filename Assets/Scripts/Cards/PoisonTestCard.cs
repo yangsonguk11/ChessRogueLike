@@ -10,17 +10,16 @@ public class PoisonTestCard : Card
         Cost = 1;
         type = CardType.Skill;
         dragDropTarget = DragDropTarget.Enemy;
-        effects.Add(new CardEffect(
-            Board.BoardMode.targeting,
-            EffectType.ApplyStatus,
-            0,
-            TargetLogic.NearestEnemy,
-            _statusEffectType: StatusEffectType.Poison,
-            _statusDuration: 2,
-            _statusPower: 2
-        )
+        effects.Add(new CardEffect
         {
-            hasCaster = false
+            requiredMode = Board.BoardMode.targeting,
+            type = EffectType.ApplyStatus,
+            dmg = 0,
+            targetlogic = TargetLogic.NearestEnemy,
+            statusEffectType = StatusEffectType.Poison,
+            statusDuration = 2,
+            statusPower = 2,
+            hasCaster = false,
         });
     }
 

@@ -13,24 +13,26 @@ public class BossAttack3Card : Card
         type = CardType.Skill;
         RangeInfoSO range = effectRange.Count > 0 ? effectRange[0] : null;
 
-        CardEffect damage = new CardEffect(
-            Board.BoardMode.command,
-            EffectType.Damage,
-            5,
-            TargetLogic.AllEnemiesInRange,
-            range,
-            false,
-            AreaTargetMode.Fixed
-        )
-        { animTrigger = "AreaAttack" };
+        CardEffect damage = new CardEffect
+        {
+            requiredMode = Board.BoardMode.command,
+            type = EffectType.Damage,
+            dmg = 5,
+            targetlogic = TargetLogic.AllEnemiesInRange,
+            effectRange = range,
+            lockCasterForNext = false,
+            areaTargetMode = AreaTargetMode.Fixed,
+            animTrigger = "AreaAttack",
+        };
         // BoardMode.command + TargetLogic.self → ResolveEnemyTarget returns selectedButton (boss pos)
-        CardEffect shield = new CardEffect(
-            Board.BoardMode.command,
-            EffectType.Shield,
-            shieldAmount,
-            TargetLogic.self
-        )
-        { animTrigger = "Shield" };
+        CardEffect shield = new CardEffect
+        {
+            requiredMode = Board.BoardMode.command,
+            type = EffectType.Shield,
+            dmg = shieldAmount,
+            targetlogic = TargetLogic.self,
+            animTrigger = "Shield",
+        };
         effects.Add(damage);
         effects.Add(shield);
     }

@@ -6,7 +6,7 @@ public partial class Board
 {
     Queue<CardEffect> pendingEffects = new Queue<CardEffect>();
     Card currentActiveCard;
-    Vector2 lockedCaster = new Vector2(-1, -1);
+    Vector2Int lockedCaster = new Vector2Int(-1, -1);
     Piece lockedCasterPiece = null;
     bool IsLockedCasterActive() => lockedCaster.x >= 0;
     bool effectApplied = false;
@@ -20,7 +20,7 @@ public partial class Board
             ClearSelectedButton();
             ShowUseEligibilityPreview(card);
         }
-        lockedCaster = new Vector2(-1, -1);
+        lockedCaster = new Vector2Int(-1, -1);
         effectApplied = false;
         currentActiveCard = card;
         pendingEffects.Clear();
@@ -141,13 +141,13 @@ public partial class Board
 
         if (nextEffect.requiredMode == BoardMode.command)
         {
-            Vector2 targetPos = ResolveEnemyTarget(nextEffect);
+            Vector2Int targetPos = ResolveEnemyTarget(nextEffect);
             ExecuteEffect(pendingEffects.Dequeue(), targetPos);
             ScheduleNextCardEffect();
         }
         else if (nextEffect.requiredMode == BoardMode.targeting)
         {
-            Vector2 targetPos;
+            Vector2Int targetPos;
             if (nextEffect.areaTargetMode == AreaTargetMode.Directional4 ||
                 nextEffect.areaTargetMode == AreaTargetMode.Directional8)
                 targetPos = ResolveEnemyDirectionalTarget(nextEffect);
@@ -167,7 +167,7 @@ public partial class Board
         }
     }
 
-    Vector2 ResolveEnemyTarget(CardEffect effect)
+    Vector2Int ResolveEnemyTarget(CardEffect effect)
     {
         switch (effect.targetlogic)
         {
@@ -180,7 +180,7 @@ public partial class Board
         }
     }
 
-    Vector2 ResolveEnemyTargetingTarget(CardEffect effect)
+    Vector2Int ResolveEnemyTargetingTarget(CardEffect effect)
     {
         switch (effect.targetlogic)
         {
@@ -193,37 +193,37 @@ public partial class Board
             case TargetLogic.AllPiecesInRange:
                 return selectedButton;
             default:
-                return new Vector2(-1, -1);
+                return new Vector2Int(-1, -1);
         }
     }
 
-    Vector2 ResolveEnemyDirectionalTarget(CardEffect effect)
+    Vector2Int ResolveEnemyDirectionalTarget(CardEffect effect)
     {
-        if (effect.effectRange == null) return new Vector2(-1, -1);
+        if (effect.effectRange == null) return new Vector2Int(-1, -1);
 
         Piece caster = GetButtonScript(selectedButton).GetPieceScript();
-        if (caster == null) return new Vector2(-1, -1);
+        if (caster == null) return new Vector2Int(-1, -1);
 
         int targetTeam = effect.targetlogic == TargetLogic.AllEnemiesInRange
             ? (caster.teamID == 0 ? 1 : 0)
             : caster.teamID;
 
         bool eightDir = effect.areaTargetMode == AreaTargetMode.Directional8;
-        Vector2[] directions = eightDir
-            ? new[] { Vector2.up, Vector2.right, Vector2.down, Vector2.left,
-                      new Vector2(1, 1), new Vector2(1, -1), new Vector2(-1, -1), new Vector2(-1, 1) }
-            : new[] { Vector2.up, Vector2.right, Vector2.down, Vector2.left };
+        Vector2Int[] directions = eightDir
+            ? new[] { Vector2Int.up, Vector2Int.right, Vector2Int.down, Vector2Int.left,
+                      new Vector2Int(1, 1), new Vector2Int(1, -1), new Vector2Int(-1, -1), new Vector2Int(-1, 1) }
+            : new[] { Vector2Int.up, Vector2Int.right, Vector2Int.down, Vector2Int.left };
 
-        List<Vector2> offsets = effect.effectRange.GetAbleRange();
-        Vector2 bestDir = new Vector2(-1, -1);
+        List<Vector2Int> offsets = effect.effectRange.GetAbleRange();
+        Vector2Int bestDir = new Vector2Int(-1, -1);
         int bestCount = 0;
 
-        foreach (Vector2 dir in directions)
+        foreach (Vector2Int dir in directions)
         {
             int count = 0;
-            foreach (Vector2 offset in RotateOffsets(offsets, dir))
+            foreach (Vector2Int offset in RotateOffsets(offsets, dir))
             {
-                Vector2 pos = selectedButton + offset;
+                Vector2Int pos = selectedButton + offset;
                 if (pos.x < 0 || pos.x >= N || pos.y < 0 || pos.y >= M) continue;
                 Piece p = GetButtonScript(pos).GetPieceScript();
                 if (p != null && p.teamID == targetTeam) count++;
@@ -231,15 +231,15 @@ public partial class Board
             if (count > bestCount) { bestCount = count; bestDir = dir; }
         }
 
-        if (bestCount == 0) return new Vector2(-1, -1); // 어느 방향에도 대상 없음 → 스킵
+        if (bestCount == 0) return new Vector2Int(-1, -1); // 어느 방향에도 대상 없음 → 스킵
 
         currentHoverDirection = bestDir;
         return selectedButton; // Directional 모드는 시전자 위치를 중심으로 사용
     }
 
-    Vector2 ResolveLowestHPTarget(CardEffect effect)
+    Vector2Int ResolveLowestHPTarget(CardEffect effect)
     {
-        if (effect.effectRange == null) return new Vector2(-1, -1);
+        if (effect.effectRange == null) return new Vector2Int(-1, -1);
 
         Piece caster = GetButtonScript(selectedButton).GetPieceScript();
         int targetTeam = caster != null ? (caster.teamID == 0 ? 1 : 0) : 1;
@@ -247,9 +247,9 @@ public partial class Board
         AddMovableButtons(selectedButton, effect.effectRange.GetAbleRange());
 
         int lowestHP = int.MaxValue;
-        Vector2 target = new Vector2(-1, -1);
+        Vector2Int target = new Vector2Int(-1, -1);
 
-        foreach (Vector2 pos in selectedButtonMovable)
+        foreach (Vector2Int pos in selectedButtonMovable)
         {
             Piece p = GetButtonScript(pos).GetPieceScript();
             if (p != null && p.teamID == targetTeam && p.hp < lowestHP)
@@ -262,16 +262,16 @@ public partial class Board
         return target;
     }
 
-    Vector2 ResolveNearestEnemyTarget()
+    Vector2Int ResolveNearestEnemyTarget()
     {
-        List<Vector2> movableRange = GetButtonScript(selectedButton).GetPiece()?.GetComponent<Piece>().GetMoveableButton()
-            ?? new List<Vector2>();
+        List<Vector2Int> movableRange = GetButtonScript(selectedButton).GetPiece()?.GetComponent<Piece>().GetMoveableButton()
+            ?? new List<Vector2Int>();
         AddMovableButtons(selectedButton, movableRange);
 
         float minDistance = float.MaxValue;
-        Vector2 bestTargetPos = new Vector2(-1, -1);
+        Vector2Int bestTargetPos = new Vector2Int(-1, -1);
 
-        foreach (Vector2 movablePos in selectedButtonMovable)
+        foreach (Vector2Int movablePos in selectedButtonMovable)
         {
             Piece p = GetButtonScript(movablePos).GetPiece()?.GetComponent<Piece>();
             if (p != null && p.teamID == 0)
@@ -285,15 +285,15 @@ public partial class Board
             }
         }
 
-        if (bestTargetPos != new Vector2(-1, -1))
+        if (bestTargetPos != new Vector2Int(-1, -1))
             return bestTargetPos;
 
         // 범위 내 플레이어 없음: 가장 가까운 플레이어 방향으로 이동
-        Vector2 globalNearestPlayer = GetNearestPlayerPos(selectedButton);
+        Vector2Int globalNearestPlayer = GetNearestPlayerPos(selectedButton);
         float minMoveDist = float.MaxValue;
-        Vector2 bestMovePos = selectedButton;
+        Vector2Int bestMovePos = selectedButton;
 
-        foreach (Vector2 movablePos in selectedButtonMovable)
+        foreach (Vector2Int movablePos in selectedButtonMovable)
         {
             if (GetPieceAt(movablePos) != null) continue; // 다른 기물이 있는 칸은 이동 후보에서 제외
 
@@ -328,7 +328,7 @@ public partial class Board
         return Mathf.Max(0, result);
     }
 
-    void ExecuteEffect(CardEffect cardEffect, Vector2 targetPos = default)
+    void ExecuteEffect(CardEffect cardEffect, Vector2Int targetPos = default)
     {
         // lockCasterForNext가 true이고 다음 효과가 있을 때만 시전자를 고정
         // Move 효과는 기물이 targetPos로 이동하므로 목적지를 저장, 나머지는 현재 위치 유지
@@ -357,7 +357,7 @@ public partial class Board
     // currentActiveCard/pendingEffects/effectApplied 같은 "지금 실제 카드를 쓰는 중" 상태는 전혀 건드리지
     // 않으므로, 다른 카드가 한창 처리되는 도중에 끼어들어도(진행 중인 카드의 pendingEffects를 훼손하지 않고)
     // 안전하게 호출할 수 있다. 캐스터는 selectedButton으로 넘겨받는다(호출부가 미리 세팅).
-    void ApplyCardEffectNow(CardEffect cardEffect, Vector2 targetPos)
+    void ApplyCardEffectNow(CardEffect cardEffect, Vector2Int targetPos)
     {
         if (cardEffect.targetlogic == TargetLogic.AllEnemiesInRange ||
             cardEffect.targetlogic == TargetLogic.AllAlliesInRange ||
@@ -469,7 +469,7 @@ public partial class Board
         }
     }
 
-    void ApplyTurnEffectToTarget(Vector2 targetPos, CardEffect cardEffect)
+    void ApplyTurnEffectToTarget(Vector2Int targetPos, CardEffect cardEffect)
     {
         if (cardEffect.onTurnEndEffect == null) return;
         Piece target = GetButtonScript(targetPos).GetPieceScript();
@@ -481,16 +481,16 @@ public partial class Board
         StartMotionQueue();
     }
 
-    void ApplyStatusToTarget(Vector2 targetPos, CardEffect cardEffect)
+    void ApplyStatusToTarget(Vector2Int targetPos, CardEffect cardEffect)
     {
         if (targetPos.x < 0 || targetPos.y < 0) return;
-        ApplyStatusToTarget(new List<Vector2> { targetPos }, cardEffect);
+        ApplyStatusToTarget(new List<Vector2Int> { targetPos }, cardEffect);
     }
 
-    void ApplyStatusToTarget(List<Vector2> targets, CardEffect cardEffect)
+    void ApplyStatusToTarget(List<Vector2Int> targets, CardEffect cardEffect)
     {
         if (cardEffect.statusEffectType == StatusEffectType.None) return;
-        foreach (Vector2 pos in targets)
+        foreach (Vector2Int pos in targets)
         {
             Piece target = GetButtonScript(pos).GetPieceScript();
             if (target == null) continue;
@@ -505,7 +505,7 @@ public partial class Board
         }
     }
 
-    void CleanseTarget(Vector2 targetPos, CardEffect cardEffect)
+    void CleanseTarget(Vector2Int targetPos, CardEffect cardEffect)
     {
         Piece target = GetButtonScript(targetPos)?.GetPieceScript();
         if (target == null) return;
@@ -537,32 +537,32 @@ public partial class Board
             StatusEffectType.Strengthen         => new StrengthenEffect(duration, power),
             StatusEffectType.Weaken             => new WeakenEffect(duration, power),
             StatusEffectType.TurnDamageStart    => new TurnEffect(TurnPhase.OwnTurnStart,
-                new CardEffect(BoardMode.Inspect, EffectType.Damage, power, TargetLogic.self), duration),
+                new CardEffect { requiredMode = BoardMode.Inspect, type = EffectType.Damage, dmg = power, targetlogic = TargetLogic.self }, duration),
             StatusEffectType.TurnDamageEnd      => new TurnEffect(TurnPhase.OwnTurnEnd,
-                new CardEffect(BoardMode.Inspect, EffectType.Damage, power, TargetLogic.self), duration),
+                new CardEffect { requiredMode = BoardMode.Inspect, type = EffectType.Damage, dmg = power, targetlogic = TargetLogic.self }, duration),
             StatusEffectType.TurnAoEDamageStart => new TurnEffect(TurnPhase.OwnTurnStart,
-                new CardEffect(BoardMode.Inspect, EffectType.Damage, power, TargetLogic.AllEnemiesInRange, range), duration),
+                new CardEffect { requiredMode = BoardMode.Inspect, type = EffectType.Damage, dmg = power, targetlogic = TargetLogic.AllEnemiesInRange, effectRange = range }, duration),
             StatusEffectType.TurnAoEDamageEnd   => new TurnEffect(TurnPhase.OwnTurnEnd,
-                new CardEffect(BoardMode.Inspect, EffectType.Damage, power, TargetLogic.AllEnemiesInRange, range), duration),
+                new CardEffect { requiredMode = BoardMode.Inspect, type = EffectType.Damage, dmg = power, targetlogic = TargetLogic.AllEnemiesInRange, effectRange = range }, duration),
             StatusEffectType.Thorn              => new ThornEffect(duration, power),
             StatusEffectType.MovementDisabled   => new MovementDisabledEffect(duration),
             _                                   => null,
         };
     }
 
-    Vector2 FindPiecePos(Piece piece)
+    Vector2Int FindPiecePos(Piece piece)
     {
         for (int x = 0; x < N; x++)
             for (int y = 0; y < M; y++)
             {
-                Vector2 pos = new Vector2(x, y);
+                Vector2Int pos = new Vector2Int(x, y);
                 if (GetButtonScript(pos).GetPieceScript() == piece)
                     return pos;
             }
-        return new Vector2(-1, -1);
+        return new Vector2Int(-1, -1);
     }
 
-    void ExecuteAreaEffect(CardEffect cardEffect, Vector2 center)
+    void ExecuteAreaEffect(CardEffect cardEffect, Vector2Int center)
     {
         if (cardEffect.effectRange == null) return;
 
@@ -579,10 +579,10 @@ public partial class Board
         int targetTeam = cardEffect.targetlogic == TargetLogic.AllEnemiesInRange
             ? (userTeam == 0 ? 1 : 0)
             : userTeam;
-        var targets = new List<Vector2>();
+        var targets = new List<Vector2Int>();
 
-        List<Vector2> offsets = cardEffect.effectRange.GetAbleRange();
-        Vector2 actualCenter = center;
+        List<Vector2Int> offsets = cardEffect.effectRange.GetAbleRange();
+        Vector2Int actualCenter = center;
 
         if (cardEffect.areaTargetMode == AreaTargetMode.Fixed)
         {
@@ -595,9 +595,9 @@ public partial class Board
             offsets = RotateOffsets(offsets, currentHoverDirection);
         }
 
-        foreach (Vector2 offset in offsets)
+        foreach (Vector2Int offset in offsets)
         {
-            Vector2 pos = actualCenter + offset;
+            Vector2Int pos = actualCenter + offset;
             if (pos.x < 0 || pos.x >= N || pos.y < 0 || pos.y >= M) continue;
 
             Piece p = GetButtonScript(pos).GetPieceScript();
@@ -642,7 +642,7 @@ public partial class Board
         ClearHoverRange();
         if (IsLockedCasterActive())
             GetButtonScript(lockedCaster).SelectedFalse();
-        lockedCaster = new Vector2(-1, -1);
+        lockedCaster = new Vector2Int(-1, -1);
         lockedCasterPiece = null;
         ClearSelectedButton();
         CancelPieceSelection();

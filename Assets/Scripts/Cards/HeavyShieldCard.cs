@@ -11,13 +11,14 @@ public class HeavyShieldCard : Card
         dragDropTarget = DragDropTarget.Self;
         exileOnUse = true;
 
-        effects.Add(new CardEffect(
-            Board.BoardMode.targeting,
-            EffectType.Shield,
-            8,
-            TargetLogic.self
-        )
-        { animTrigger = "Shield" });
+        effects.Add(new CardEffect
+        {
+            requiredMode = Board.BoardMode.targeting,
+            type = EffectType.Shield,
+            dmg = 8,
+            targetlogic = TargetLogic.self,
+            animTrigger = "Shield",
+        });
     }
 
     public override string EffectDescription => $"자신에게 방어도 {EffectiveShield(effects[0])}를 부여합니다. (소멸)";

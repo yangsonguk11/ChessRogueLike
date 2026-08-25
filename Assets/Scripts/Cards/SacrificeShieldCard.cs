@@ -12,13 +12,23 @@ public class SacrificeShieldCard : Card
         dragDropTarget = DragDropTarget.Self;
 
         // 효과 1: 자신에게 방어도 부여 (DefenseCard와 동일 패턴)
-        effects.Add(new CardEffect(Board.BoardMode.targeting, EffectType.Shield, 6, TargetLogic.self)
-            { animTrigger = "Shield" });
-        // 효과 2: 손패에서 카드 1장 선택해서 버리기
-        effects.Add(new CardEffect(Board.BoardMode.cardSelecting, EffectType.SelectAndDiscard, 0, TargetLogic.self)
+        effects.Add(new CardEffect
         {
+            requiredMode = Board.BoardMode.targeting,
+            type = EffectType.Shield,
+            dmg = 6,
+            targetlogic = TargetLogic.self,
+            animTrigger = "Shield",
+        });
+        // 효과 2: 손패에서 카드 1장 선택해서 버리기
+        effects.Add(new CardEffect
+        {
+            requiredMode = Board.BoardMode.cardSelecting,
+            type = EffectType.SelectAndDiscard,
+            dmg = 0,
+            targetlogic = TargetLogic.self,
             cardZone = CardZone.Hand,
-            selectCount = 1
+            selectCount = 1,
         });
 
     }

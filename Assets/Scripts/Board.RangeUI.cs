@@ -4,7 +4,7 @@ using UnityEngine;
 
 public partial class Board
 {
-    List<Vector2> selectedButtonMovable = new List<Vector2>();
+    List<Vector2Int> selectedButtonMovable = new List<Vector2Int>();
     int selectedMovableTeam = 0;
 
     // 카드를 들고 있는 동안(usecard 진입~사용/취소) 시전자 칸에 표시를 켜고 끈다. 종류 상관없이 카드를
@@ -56,7 +56,7 @@ public partial class Board
     // 캐스터(casterPos)가 이번 카드 효과로 이동/공격/AoE 중심 지정 등에 쓸 수 있는 칸을 하이라이트한다.
     // selectedButton(캐스터 확정 + self 즉시실행까지 트리거하는 프로퍼티)에 의존하지 않는 순수 미리보기용
     // 함수라서, 카드를 픽업한 시점처럼 아직 캐스터를 "확정"하기 전에도 안전하게 호출할 수 있다.
-    void ShowCasterEffectRange(Vector2 casterPos, CardEffect currentEffect)
+    void ShowCasterEffectRange(Vector2Int casterPos, CardEffect currentEffect)
     {
         if (currentEffect != null &&
             currentEffect.type != EffectType.Move &&
@@ -82,7 +82,7 @@ public partial class Board
             return;
         }
 
-        List<Vector2> effectRange = null;
+        List<Vector2Int> effectRange = null;
         if (currentEffect != null && currentEffect.type != EffectType.Move && currentEffect.effectRange != null)
             effectRange = currentEffect.effectRange.GetAbleRange();
         ShowMovableButtons(casterPos, GetButtonScript(casterPos).GetPiece(), effectRange);
@@ -93,7 +93,7 @@ public partial class Board
         ShowButtonInfo(casterPos);
     }
 
-    void FilterEnemyOccupiedFromMovable(Vector2 casterPos)
+    void FilterEnemyOccupiedFromMovable(Vector2Int casterPos)
     {
         Piece caster = GetButtonScript(casterPos).GetPieceScript();
         if (caster == null) return;
@@ -122,47 +122,47 @@ public partial class Board
     // HideMovableButtons에서도 RangeOff를 호출하면 안 됨 (다른 곳에서 켜둔 같은 칸의 표시를 잘못 꺼버리게 됨).
     bool movableButtonsSilent = false;
 
-    void FillAllMovableButtonsSilent(Vector2 casterPos)
+    void FillAllMovableButtonsSilent(Vector2Int casterPos)
     {
         HideMovableButtons();
         selectedMovableTeam = GetButtonScript(casterPos).GetPieceScript()?.teamID ?? 0;
         for (int x = 0; x < N; x++)
             for (int y = 0; y < M; y++)
-                selectedButtonMovable.Add(new Vector2(x, y));
+                selectedButtonMovable.Add(new Vector2Int(x, y));
         movableButtonsSilent = true;
     }
 
-    void ShowMovableButtons(Vector2 casterPos, GameObject p, List<Vector2> effectableButton = default)
+    void ShowMovableButtons(Vector2Int casterPos, GameObject p, List<Vector2Int> effectableButton = default)
     {
         if (p == null) return;
 
-        List<Vector2> list = effectableButton ?? p.GetComponent<Piece>().GetMoveableButton();
+        List<Vector2Int> list = effectableButton ?? p.GetComponent<Piece>().GetMoveableButton();
         AddMovableButtons(casterPos, list);
     }
 
     void HideMovableButtons()
     {
         if (!movableButtonsSilent)
-            foreach (Vector2 v in selectedButtonMovable)
+            foreach (Vector2Int v in selectedButtonMovable)
                 GetButtonScript(v).RangeOff(selectedMovableTeam);
         selectedButtonMovable.Clear();
         movableButtonsSilent = false;
     }
 
-    void AddMovableButtons(Vector2 casterPos, List<Vector2> list)
+    void AddMovableButtons(Vector2Int casterPos, List<Vector2Int> list)
     {
         HideMovableButtons();
         selectedMovableTeam = GetButtonScript(casterPos).GetPieceScript()?.teamID ?? 0;
-        foreach (Vector2 v in list)
+        foreach (Vector2Int v in list)
         {
-            Vector2 m = casterPos + v;
+            Vector2Int m = casterPos + v;
             if (m.x < 0 || m.x >= N || m.y < 0 || m.y >= M) continue;
             GetButtonScript(m).RangeOn(selectedMovableTeam);
             selectedButtonMovable.Add(m);
         }
     }
 
-    void ShowButtonInfo(Vector2 button)
+    void ShowButtonInfo(Vector2Int button)
     {
         ButtonInfo buttonInfo = BoardUICanvas.GetComponent<ButtonInfo>();
         buttonInfo.SetActive(true);
@@ -178,23 +178,23 @@ public partial class Board
     public void HideButtonInfoForShop() => HideButtonInfo();
 
     // 적 기준 가장 가까운 플레이어 위치 반환
-    Vector2 GetNearestPlayerPos(Vector2 enemyPos)
+    Vector2Int GetNearestPlayerPos(Vector2Int enemyPos)
     {
-        Vector2 nearest = enemyPos;
+        Vector2Int nearest = enemyPos;
         float minDistance = float.MaxValue;
 
         for (int x = 0; x < N; x++)
         {
             for (int y = 0; y < M; y++)
             {
-                Piece p = GetButtonScript(new Vector2(x, y)).GetPiece()?.GetComponent<Piece>();
+                Piece p = GetButtonScript(new Vector2Int(x, y)).GetPiece()?.GetComponent<Piece>();
                 if (p != null && p.teamID == 0)
                 {
-                    float dist = Vector2.Distance(enemyPos, new Vector2(x, y));
+                    float dist = Vector2.Distance(enemyPos, new Vector2Int(x, y));
                     if (dist < minDistance)
                     {
                         minDistance = dist;
-                        nearest = new Vector2(x, y);
+                        nearest = new Vector2Int(x, y);
                     }
                 }
             }
@@ -209,60 +209,57 @@ public partial class Board
     //   자동으로 건너뛰어지므로 상하좌우 옆 칸 중 하나로만 이동하게 됨.
     // - 후보가 모두 막혀있거나(다른 기물 점유) 보드 밖이면 (-1,-1)을 반환해 이동공격 자체가 불가능함을 알림
     //   (호출부는 이를 일반 이동 실패와 동일하게 처리해야 함).
-    Vector2 GetAdjacentLocation(Vector2 location1, Vector2 location2)
+    Vector2Int GetAdjacentLocation(Vector2Int location1, Vector2Int location2)
     {
-        Vector2 delta = location2 - location1;
-        float adx = Math.Abs(delta.x);
-        float ady = Math.Abs(delta.y);
+        Vector2Int delta = location2 - location1;
+        int adx = Math.Abs(delta.x);
+        int ady = Math.Abs(delta.y);
 
         if ((adx == 1 && ady == 0) || (adx == 0 && ady == 1))
             return location1;
 
-        Vector2 dir;
+        Vector2Int dir;
         if (adx == ady)
         {
-            dir.x = delta.x < 0 ? -1 : 1;
-            dir.y = delta.y < 0 ? -1 : 1;
+            dir = new Vector2Int(delta.x < 0 ? -1 : 1, delta.y < 0 ? -1 : 1);
         }
         else if (adx > ady)
         {
-            dir.x = delta.x < 0 ? -1 : 1;
-            dir.y = 0;
+            dir = new Vector2Int(delta.x < 0 ? -1 : 1, 0);
         }
         else
         {
-            dir.x = 0;
-            dir.y = delta.y < 0 ? -1 : 1;
+            dir = new Vector2Int(0, delta.y < 0 ? -1 : 1);
         }
 
-        Vector2 back = -dir;
-        Vector2 lineSquare = location2 + back;
-        Vector2 side1, side2;
+        Vector2Int back = -dir;
+        Vector2Int lineSquare = location2 + back;
+        Vector2Int side1, side2;
         if (back.x != 0 && back.y != 0)
         {
             // 대각선 접근: 옆 후보는 피격자의 상하 칸 / 좌우 칸
-            side1 = location2 + new Vector2(back.x, 0);
-            side2 = location2 + new Vector2(0, back.y);
+            side1 = location2 + new Vector2Int(back.x, 0);
+            side2 = location2 + new Vector2Int(0, back.y);
         }
         else
         {
             // 직선 접근: 옆 후보는 직선 칸과 맞붙은 대각선 코너 칸
-            Vector2 perp = back.x != 0 ? new Vector2(0, 1) : new Vector2(1, 0);
+            Vector2Int perp = back.x != 0 ? new Vector2Int(0, 1) : new Vector2Int(1, 0);
             side1 = lineSquare + perp;
             side2 = lineSquare - perp;
         }
 
-        foreach (Vector2 candidate in new[] { lineSquare, side1, side2 })
+        foreach (Vector2Int candidate in new[] { lineSquare, side1, side2 })
         {
             if (candidate == location1) continue; // 공격자가 이미 그 칸에 있으면 이동 후보로 치지 않음
             if (candidate.x < 0 || candidate.x >= N || candidate.y < 0 || candidate.y >= M) continue;
             if (GetPieceAt(candidate) == null) return candidate;
         }
 
-        return new Vector2(-1, -1); // 후보 칸이 모두 막혀있음: 이동공격 불가
+        return new Vector2Int(-1, -1); // 후보 칸이 모두 막혀있음: 이동공격 불가
     }
 
-    void UpdateEnemyPositionList(Vector2 pos1, Vector2 pos2)
+    void UpdateEnemyPositionList(Vector2Int pos1, Vector2Int pos2)
     {
         int index = enemyPositions.IndexOf(pos1);
         if (index != -1)

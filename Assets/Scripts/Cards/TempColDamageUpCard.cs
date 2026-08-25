@@ -10,17 +10,16 @@ public class TempColDamageUpCard : Card
         type = CardType.Skill;
         dragDropTarget = DragDropTarget.Self;
 
-        effects.Add(new CardEffect(
-            Board.BoardMode.targeting,
-            EffectType.ApplyStatus,
-            0,
-            TargetLogic.self
-        )
+        effects.Add(new CardEffect
         {
+            requiredMode = Board.BoardMode.targeting,
+            type = EffectType.ApplyStatus,
+            dmg = 0,
+            targetlogic = TargetLogic.self,
             statusEffectType = StatusEffectType.Strengthen,
             statusDuration = 1,
             statusPower = 2,
-            animTrigger = "Buff"
+            animTrigger = "Buff",
         });
     }
 

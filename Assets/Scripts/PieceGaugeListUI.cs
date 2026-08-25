@@ -46,7 +46,7 @@ public class PieceGaugeListUI : MonoBehaviour
         for (int x = 0; x < Board.instance.N; x++)
             for (int y = 0; y < Board.instance.M; y++)
             {
-                Piece p = Board.instance.GetPieceAt(new Vector2(x, y));
+                Piece p = Board.instance.GetPieceAt(new Vector2Int(x, y));
                 if (p != null) pieces.Add(p);
             }
         return pieces;

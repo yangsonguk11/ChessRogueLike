@@ -10,17 +10,16 @@ public class ImmobilizeCard : Card
         type = CardType.Skill;
         dragDropTarget = DragDropTarget.Enemy;
 
-        effects.Add(new CardEffect(
-            Board.BoardMode.targeting,
-            EffectType.DeBuff,
-            0,
-            TargetLogic.NearestEnemy
-        )
+        effects.Add(new CardEffect
         {
+            requiredMode = Board.BoardMode.targeting,
+            type = EffectType.DeBuff,
+            dmg = 0,
+            targetlogic = TargetLogic.NearestEnemy,
             statusEffectType = StatusEffectType.MovementDisabled,
             statusDuration = 2,
             animTrigger = "DeBuff",
-            hasCaster = false
+            hasCaster = false,
         });
     }
 

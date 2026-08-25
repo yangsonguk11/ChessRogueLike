@@ -3,13 +3,13 @@ using UnityEngine;
 
 public partial class Board
 {
-    List<Vector2> hoverRangeButtons = new List<Vector2>();
-    List<Vector2> hoverPieceRangeButtons = new List<Vector2>();
+    List<Vector2Int> hoverRangeButtons = new List<Vector2Int>();
+    List<Vector2Int> hoverPieceRangeButtons = new List<Vector2Int>();
     bool hoverPieceIsAlly = true;
     bool allEnemyRangeSuppressed = false;
-    Vector2 currentHoverDirection = Vector2.up;
+    Vector2Int currentHoverDirection = Vector2Int.up;
 
-    public void ButtonHovered(Vector2 pos)
+    public void ButtonHovered(Vector2Int pos)
     {
         // AoE 카드 범위 미리보기. MouseCentered는 캐스터를 선택하지 않고 targeting 클릭 한 번으로 바로 발동하므로
         // 캐스터 선택 전에도 마우스 위치 기준으로 미리보기를 보여줘야 함.
@@ -27,10 +27,10 @@ public partial class Board
             {
                 ClearHoverRange();
 
-                List<Vector2> offsets = effect.effectRange?.GetAbleRange();
+                List<Vector2Int> offsets = effect.effectRange?.GetAbleRange();
                 if (offsets != null)
                 {
-                    Vector2 center;
+                    Vector2Int center;
                     if (effect.areaTargetMode == AreaTargetMode.MouseCentered)
                     {
                         center = pos;
@@ -38,17 +38,17 @@ public partial class Board
                     else
                     {
                         Button ownerButton = GetButtonForPiece(CardCanvas.instance?.ActivePiece);
-                        Vector2 casterPos = isSelectedButtonActive() ? selectedButton
+                        Vector2Int casterPos = isSelectedButtonActive() ? selectedButton
                             : (ownerButton != null ? ownerButton.GetLocation() : pos);
                         center = casterPos;
-                        Vector2 dir = GetSnappedDirection(casterPos, pos, effect.areaTargetMode == AreaTargetMode.Directional8);
+                        Vector2Int dir = GetSnappedDirection(casterPos, pos, effect.areaTargetMode == AreaTargetMode.Directional8);
                         currentHoverDirection = dir;
                         offsets = RotateOffsets(offsets, dir);
                     }
 
-                    foreach (Vector2 offset in offsets)
+                    foreach (Vector2Int offset in offsets)
                     {
-                        Vector2 target = center + offset;
+                        Vector2Int target = center + offset;
                         if (target.x < 0 || target.x >= N || target.y < 0 || target.y >= M) continue;
                         GetButtonScript(target).RangeOn(0);
                         hoverRangeButtons.Add(target);
@@ -87,7 +87,7 @@ public partial class Board
                     allEnemyRangeSuppressed = true;
                 }
 
-                List<Vector2> offsets;
+                List<Vector2Int> offsets;
                 int teamForRange;
                 if (pendingEffects.Count > 0 && hoveredPiece.teamID == 0)
                 {
@@ -95,7 +95,7 @@ public partial class Board
                     CardEffect effect = pendingEffects.Peek();
                     offsets = effect.effectRange != null
                         ? effect.effectRange.GetAbleRange()
-                        : new List<Vector2>();
+                        : new List<Vector2Int>();
                     teamForRange = 0;
                 }
                 else
@@ -104,9 +104,9 @@ public partial class Board
                     offsets = hoveredPiece.GetMoveableButton();
                     teamForRange = hoveredPiece.teamID;
                 }
-                foreach (Vector2 offset in offsets)
+                foreach (Vector2Int offset in offsets)
                 {
-                    Vector2 target = pos + offset;
+                    Vector2Int target = pos + offset;
                     if (target.x < 0 || target.x >= N || target.y < 0 || target.y >= M) continue;
                     GetButtonScript(target).RangeOn(teamForRange);
                     hoverPieceRangeButtons.Add(target);
@@ -148,7 +148,7 @@ public partial class Board
 
     public void ClearHoverRange()
     {
-        foreach (Vector2 v in hoverRangeButtons)
+        foreach (Vector2Int v in hoverRangeButtons)
             GetButtonScript(v).RangeOff(0);
         hoverRangeButtons.Clear();
     }
@@ -156,13 +156,13 @@ public partial class Board
     void ClearHoverPieceRange()
     {
         int team = hoverPieceIsAlly ? 0 : 1;
-        foreach (Vector2 v in hoverPieceRangeButtons)
+        foreach (Vector2Int v in hoverPieceRangeButtons)
             GetButtonScript(v).RangeOff(team);
         hoverPieceRangeButtons.Clear();
     }
 
     // 기준 방향(-1,0 = 인스펙터 위쪽 행)에서 dir 방향으로 오프셋 목록을 회전
-    public List<Vector2> RotateOffsets(List<Vector2> offsets, Vector2 dir)
+    public List<Vector2Int> RotateOffsets(List<Vector2Int> offsets, Vector2Int dir)
     {
         // RangeInfoSO에서 행(row)이 Vector2.x에 매핑되므로 인스펙터 위쪽 = (-1,0)
         // 해당 기준 방향을 dir로 회전시키는 각도 = atan2(dir.y, -dir.x)
@@ -170,35 +170,35 @@ public partial class Board
         float cos = Mathf.Cos(theta);
         float sin = Mathf.Sin(theta);
 
-        var rotated = new List<Vector2>();
-        foreach (Vector2 offset in offsets)
+        var rotated = new List<Vector2Int>();
+        foreach (Vector2Int offset in offsets)
         {
             float rx = offset.x * cos + offset.y * sin;
             float ry = -offset.x * sin + offset.y * cos;
-            rotated.Add(new Vector2(Mathf.RoundToInt(rx), Mathf.RoundToInt(ry)));
+            rotated.Add(new Vector2Int(Mathf.RoundToInt(rx), Mathf.RoundToInt(ry)));
         }
         return rotated;
     }
 
     // from → to 방향을 4방향 또는 8방향으로 스냅
-    Vector2 GetSnappedDirection(Vector2 from, Vector2 to, bool eightDir)
+    Vector2Int GetSnappedDirection(Vector2Int from, Vector2Int to, bool eightDir)
     {
-        Vector2 delta = to - from;
-        if (delta == Vector2.zero) return Vector2.up;
+        Vector2Int delta = to - from;
+        if (delta == Vector2Int.zero) return Vector2Int.up;
 
         if (!eightDir)
         {
             if (Mathf.Abs(delta.x) >= Mathf.Abs(delta.y))
-                return new Vector2(delta.x > 0 ? 1 : -1, 0);
+                return new Vector2Int(delta.x > 0 ? 1 : -1, 0);
             else
-                return new Vector2(0, delta.y > 0 ? 1 : -1);
+                return new Vector2Int(0, delta.y > 0 ? 1 : -1);
         }
         else
         {
             float angle = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg;
             int snappedDeg = Mathf.RoundToInt(angle / 45f) * 45;
             float rad = snappedDeg * Mathf.Deg2Rad;
-            return new Vector2(Mathf.RoundToInt(Mathf.Cos(rad)), Mathf.RoundToInt(Mathf.Sin(rad)));
+            return new Vector2Int(Mathf.RoundToInt(Mathf.Cos(rad)), Mathf.RoundToInt(Mathf.Sin(rad)));
         }
     }
 }

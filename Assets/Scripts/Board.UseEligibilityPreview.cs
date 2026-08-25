@@ -5,7 +5,7 @@ public partial class Board
 {
     // 카드를 손에 들어 usecardzone에 들어온 시점(Board.UseCard)에 이 카드를 쓸 수 있는 칸을 미리 보여주는 하이라이트.
     // pieceSelectCount를 쓰는 카드는 RequestPieceSelection이 이미 자체적으로 하이라이트를 처리하므로 건드리지 않는다.
-    List<(Vector2 pos, int teamID)> useEligibilityHighlights = new List<(Vector2, int)>();
+    List<(Vector2Int pos, int teamID)> useEligibilityHighlights = new List<(Vector2Int, int)>();
 
     void ShowUseEligibilityPreview(Card card)
     {

@@ -10,11 +10,22 @@ public class ExecutionerCard : Card
         type = CardType.Attack;
         dragDropTarget = DragDropTarget.Enemy;
 
-        effects.Add(new CardEffect(Board.BoardMode.command, EffectType.Damage, 3, TargetLogic.LowestHP, effectRange[0])
+        effects.Add(new CardEffect
         {
+            requiredMode = Board.BoardMode.command,
+            type = EffectType.Damage,
+            dmg = 3,
+            targetlogic = TargetLogic.LowestHP,
+            effectRange = effectRange[0],
             animTrigger = "Attack",
-            onKillEffect = new CardEffect(Board.BoardMode.Inspect, EffectType.BaseColDamageUp, 1, TargetLogic.self)
-            { animTrigger = "Buff" }
+            onKillEffect = new CardEffect
+            {
+                requiredMode = Board.BoardMode.Inspect,
+                type = EffectType.BaseColDamageUp,
+                dmg = 1,
+                targetlogic = TargetLogic.self,
+                animTrigger = "Buff",
+            },
         });
     }
 

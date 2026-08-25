@@ -10,8 +10,15 @@ public class BloodChargeCard : Card
         type = CardType.Move;
         dragDropTarget = DragDropTarget.AnyTile;
 
-        effects.Add(new CardEffect(Board.BoardMode.command, EffectType.Move, 0, TargetLogic.NearestEnemy)
-            { animTrigger = "Move", healOnHit = true });
+        effects.Add(new CardEffect
+        {
+            requiredMode = Board.BoardMode.command,
+            type = EffectType.Move,
+            dmg = 0,
+            targetlogic = TargetLogic.NearestEnemy,
+            animTrigger = "Move",
+            healOnHit = true,
+        });
     }
 
     public override string EffectDescription => "이동합니다. 이동공격 시 입힌 피해만큼 체력을 회복합니다.";

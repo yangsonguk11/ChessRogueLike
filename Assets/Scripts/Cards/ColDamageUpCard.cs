@@ -10,13 +10,14 @@ public class ColDamageUpCard : Card
         type = CardType.Skill;
         dragDropTarget = DragDropTarget.Self;
 
-        effects.Add(new CardEffect(
-            Board.BoardMode.targeting,
-            EffectType.ColDamageUp,
-            1,
-            TargetLogic.self
-        )
-        { animTrigger = "Buff" });
+        effects.Add(new CardEffect
+        {
+            requiredMode = Board.BoardMode.targeting,
+            type = EffectType.ColDamageUp,
+            dmg = 1,
+            targetlogic = TargetLogic.self,
+            animTrigger = "Buff",
+        });
     }
 
     public override string EffectDescription => "이동공격력을 1 올립니다.";

@@ -8,10 +8,10 @@ using UnityEngine;
 // "진행 중인 카드" 상태는 건드리지 않으므로 다른 카드가 한창 처리되는 도중에 끼어들어도 안전하다.
 public partial class Board
 {
-    readonly Queue<(Vector2 pos, CardEffect effect)> scheduledEffectQueue = new Queue<(Vector2, CardEffect)>();
+    readonly Queue<(Vector2Int pos, CardEffect effect)> scheduledEffectQueue = new Queue<(Vector2Int, CardEffect)>();
     bool processingScheduledEffects;
 
-    public void EnqueueScheduledEffect(Vector2 pos, CardEffect effect)
+    public void EnqueueScheduledEffect(Vector2Int pos, CardEffect effect)
     {
         scheduledEffectQueue.Enqueue((pos, effect));
         if (!processingScheduledEffects)
@@ -23,7 +23,7 @@ public partial class Board
         processingScheduledEffects = true;
         while (scheduledEffectQueue.Count > 0)
         {
-            (Vector2 pos, CardEffect effect) = scheduledEffectQueue.Dequeue();
+            (Vector2Int pos, CardEffect effect) = scheduledEffectQueue.Dequeue();
             // selectedButton 프로퍼티의 setter는 OnSelectBoard(범위 표시, self 즉시실행 등)를 트리거하므로
             // 여기선 ProcessEnemyCardEffect와 동일하게 백킹 필드를 직접 대입해 그 부작용을 피한다.
             _selectedButton = pos;

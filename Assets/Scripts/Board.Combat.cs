@@ -4,7 +4,7 @@ using UnityEngine;
 
 public partial class Board
 {
-    void MovePiece(Vector2 pos1, Vector2 pos2, CardEffect cardEffect = null)
+    void MovePiece(Vector2Int pos1, Vector2Int pos2, CardEffect cardEffect = null)
     {
         Button button1script = GetButtonScript(pos1);
         Button button2script = GetButtonScript(pos2);
@@ -40,40 +40,48 @@ public partial class Board
     // 이동공격 도착 칸을 찾지 못하면(후보 전부 막힘) false를 반환해 호출부가 일반 이동 실패와 동일하게 처리하게 함.
     bool MoveAttack(Piece pScript1, Piece pScript2, Button bScript1, Button bScript2, CardEffect cardEffect = null)
     {
-        Vector2 adjacentPos = GetAdjacentLocation(bScript1.GetLocation(), bScript2.GetLocation());
+        Vector2Int adjacentPos = GetAdjacentLocation(bScript1.GetLocation(), bScript2.GetLocation());
         if (adjacentPos.x < 0) return false; // 도착할 칸이 없음: 공격 취소, 이동 실패로 처리
 
         int dmg = pScript1.colDamage;
         pScript2.gameObject.transform.rotation = Quaternion.LookRotation(bScript1.Piecelocation - bScript2.Piecelocation);
         bScript1.GetPiece().transform.rotation = Quaternion.LookRotation(bScript2.Piecelocation - bScript1.Piecelocation);
 
-        Vector2 attackerPos = bScript1.GetLocation();
-        Vector2 impactPos = bScript2.GetLocation();
+        Vector2Int attackerPos = bScript1.GetLocation();
+        Vector2Int impactPos = bScript2.GetLocation();
 
         // DirectionalAttackCard와 동일하게, 공격자→대상 방향으로 moveAttackRange를 회전
         // 공격은 이동 후 adjacentPos에서 일어나므로, 방향도 adjacentPos 기준으로 계산해야 함
-        Vector2 attackDir = GetSnappedDirection(adjacentPos, impactPos, true);
-        List<Vector2> moveAttackOffsets = RotateOffsets(pScript1.GetMoveAttackRange(), attackDir);
-        bool isAreaAttack = !(moveAttackOffsets.Count == 1 && moveAttackOffsets[0] == Vector2.zero);
+        Vector2Int attackDir = GetSnappedDirection(adjacentPos, impactPos, true);
+        List<Vector2Int> moveAttackOffsets = RotateOffsets(pScript1.GetMoveAttackRange(), attackDir);
+        bool isAreaAttack = !(moveAttackOffsets.Count == 1 && moveAttackOffsets[0] == Vector2Int.zero);
         string attackTrigger = isAreaAttack ? "AreaAttack" : "Attack";
 
         // TriggerAnimCor도 같은 방향으로 회전해서 표시하도록 Directional8 + currentHoverDirection 재사용
         currentHoverDirection = attackDir;
-        CardEffect attackRangeEffect = new CardEffect(Board.BoardMode.command, EffectType.Damage, dmg, TargetLogic.AllEnemiesInRange,
-            pScript1.MoveAttackRangeInfoSO, false, AreaTargetMode.Directional8)
-            { animTrigger = attackTrigger };
+        CardEffect attackRangeEffect = new CardEffect
+        {
+            requiredMode = Board.BoardMode.command,
+            type = EffectType.Damage,
+            dmg = dmg,
+            targetlogic = TargetLogic.AllEnemiesInRange,
+            effectRange = pScript1.MoveAttackRangeInfoSO,
+            lockCasterForNext = false,
+            areaTargetMode = AreaTargetMode.Directional8,
+            animTrigger = attackTrigger,
+        };
 
         // 주 타겟(pScript2) 데미지 적용
         int hpLeft = pScript2.GetDamage(dmg);
         if (pScript2.teamID == 0) playerDamagedThisTurn = true;
 
         // moveAttackRange 내 나머지 적들 수집 + 데미지 적용 (이동 후 도착 위치 기준, 주 타겟은 위에서 이미 처리했으니 제외)
-        var splashResults = new List<(Vector2 pos, Piece piece, int hpLeft)>();
+        var splashResults = new List<(Vector2Int pos, Piece piece, int hpLeft)>();
         if (isAreaAttack)
         {
-            foreach (Vector2 offset in moveAttackOffsets)
+            foreach (Vector2Int offset in moveAttackOffsets)
             {
-                Vector2 pos = adjacentPos + offset;
+                Vector2Int pos = adjacentPos + offset;
                 if (pos == impactPos) continue;
                 if (pos.x < 0 || pos.x >= N || pos.y < 0 || pos.y >= M) continue;
                 Piece p = GetButtonScript(pos).GetPieceScript();
@@ -158,14 +166,14 @@ public partial class Board
 
     // 처치가 확정된 시점에 호출: OnKill 유물을 발동시키고, cardEffect에 onKillEffect가 설정돼 있으면
     // 시전자를 대상으로 그 효과도 실행한다(예: 처치 시 ColDamageUp). 기존 4개 호출 지점을 그대로 재사용.
-    void TriggerOnKillEffect(Vector2 casterPos, Piece caster, CardEffect cardEffect)
+    void TriggerOnKillEffect(Vector2Int casterPos, Piece caster, CardEffect cardEffect)
     {
         TriggerRelicsOnKill(caster);
         if (caster == null || cardEffect?.onKillEffect == null) return;
         ExecuteCardEffectOnPiece(casterPos, caster, cardEffect.onKillEffect);
     }
 
-    void AttackPiece(Vector2 pos1, Vector2 pos2, int dmg, CardEffect cardEffect = null)
+    void AttackPiece(Vector2Int pos1, Vector2Int pos2, int dmg, CardEffect cardEffect = null)
     {
         // pos1 == pos2: 캐스터 선택 없이 즉시발동하는 단일 대상 Damage 카드 (예: MagicAttackCard).
         // 공격자가 따로 없으므로 회전/공격 애니메이션 없이 피격자의 Hit/Die 반응만 재생한다.
@@ -224,7 +232,7 @@ public partial class Board
         StartMotionQueue();
     }
 
-    void HealPiece(Vector2 pos1, Vector2 pos2, int dmg, CardEffect cardEffect = null)
+    void HealPiece(Vector2Int pos1, Vector2Int pos2, int dmg, CardEffect cardEffect = null)
     {
         Piece pScript1 = GetButtonScript(pos1).GetPieceScript();
         if (pScript1 == null) { StartMotionQueue(); return; }
@@ -246,7 +254,7 @@ public partial class Board
         StartMotionQueue();
     }
 
-    void SelfDamagePiece(Vector2 casterPos, int dmg, CardEffect cardEffect = null)
+    void SelfDamagePiece(Vector2Int casterPos, int dmg, CardEffect cardEffect = null)
     {
         if (casterPos.x < 0 || casterPos.y < 0) return;
         Piece p = GetButtonScript(casterPos).GetPieceScript();
@@ -266,7 +274,7 @@ public partial class Board
         StartMotionQueue();
     }
 
-    void AreaAttackPiece(Vector2 casterPos, List<Vector2> targets, int dmg, CardEffect cardEffect = null)
+    void AreaAttackPiece(Vector2Int casterPos, List<Vector2Int> targets, int dmg, CardEffect cardEffect = null)
     {
         if (casterPos.x < 0 || casterPos.y < 0 || targets.Count == 0) return;
 
@@ -283,7 +291,7 @@ public partial class Board
         var textCoroutines = new List<IEnumerator>();
         var deathCoroutines = new List<IEnumerator>();
 
-        foreach (Vector2 pos in targets)
+        foreach (Vector2Int pos in targets)
         {
             Piece p = GetButtonScript(pos).GetPieceScript();
             if (p == null) continue;
@@ -317,7 +325,7 @@ public partial class Board
     }
 
     // 캐스터(시전자) 없이 여러 기물에게 동시에 피해를 준다. 대화 선택지처럼 보드 위에 시전자가 없는 상황에 사용.
-    void AreaAttackPiece(List<Vector2> targets, int dmg, CardEffect cardEffect = null)
+    void AreaAttackPiece(List<Vector2Int> targets, int dmg, CardEffect cardEffect = null)
     {
         if (targets.Count == 0) return;
 
@@ -325,7 +333,7 @@ public partial class Board
         var textCoroutines = new List<IEnumerator>();
         var deathCoroutines = new List<IEnumerator>();
 
-        foreach (Vector2 pos in targets)
+        foreach (Vector2Int pos in targets)
         {
             Piece p = GetButtonScript(pos).GetPieceScript();
             if (p == null) continue;
@@ -348,14 +356,14 @@ public partial class Board
         StartMotionQueue();
     }
 
-    void AreaShieldPiece(List<Vector2> targets, int dmg, CardEffect cardEffect = null)
+    void AreaShieldPiece(List<Vector2Int> targets, int dmg, CardEffect cardEffect = null)
     {
         Button casterBtn = GetButtonScript(selectedButton);
         Piece caster = casterBtn.GetPieceScript();
         var shieldedPieces = new List<Piece>();
         var textCoroutines = new List<IEnumerator>();
 
-        foreach (Vector2 pos in targets)
+        foreach (Vector2Int pos in targets)
         {
             Piece p = GetButtonScript(pos).GetPieceScript();
             if (p == null) continue;
@@ -369,14 +377,14 @@ public partial class Board
         StartMotionQueue();
     }
 
-    void AreaHealPiece(List<Vector2> targets, int dmg, CardEffect cardEffect = null)
+    void AreaHealPiece(List<Vector2Int> targets, int dmg, CardEffect cardEffect = null)
     {
         Button casterBtn = GetButtonScript(selectedButton);
         Piece caster = casterBtn.GetPieceScript();
         var healedPieces = new List<Piece>();
         var textCoroutines = new List<IEnumerator>();
 
-        foreach (Vector2 pos in targets)
+        foreach (Vector2Int pos in targets)
         {
             Piece p = GetButtonScript(pos).GetPieceScript();
             if (p == null) continue;
@@ -390,7 +398,7 @@ public partial class Board
         StartMotionQueue();
     }
 
-    void ShieldPiece(Vector2 pos1, Vector2 pos2, int dmg, CardEffect cardEffect = null)
+    void ShieldPiece(Vector2Int pos1, Vector2Int pos2, int dmg, CardEffect cardEffect = null)
     {
         Piece pScript1 = GetButtonScript(pos1).GetPieceScript();
         if (pScript1 == null) { StartMotionQueue(); return; }

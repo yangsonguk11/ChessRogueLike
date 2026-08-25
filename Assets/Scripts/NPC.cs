@@ -39,5 +39,5 @@ public class NPC : Piece
             pieceCanvas?.ShowActionText("!");
     }
 
-    public override List<Vector2> GetMoveableButton() => new List<Vector2>();
+    public override List<Vector2Int> GetMoveableButton() => new List<Vector2Int>();
 }

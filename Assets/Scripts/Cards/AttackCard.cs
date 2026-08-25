@@ -10,8 +10,15 @@ public class AttackCard : Card
         Cost = 1;
         type = CardType.Attack;
         dragDropTarget = DragDropTarget.Enemy;
-        CardEffect cf = new CardEffect(Board.BoardMode.command, EffectType.Damage, 3, TargetLogic.LowestHP, effectRange[0])
-            { animTrigger = "Attack" };
+        CardEffect cf = new CardEffect
+        {
+            requiredMode = Board.BoardMode.command,
+            type = EffectType.Damage,
+            dmg = 3,
+            targetlogic = TargetLogic.LowestHP,
+            effectRange = effectRange[0],
+            animTrigger = "Attack",
+        };
         effects.Add(cf);
     }
     public override string EffectDescription => $"적에게 {EffectiveDmg(effects[0])} 피해를 줍니다.";

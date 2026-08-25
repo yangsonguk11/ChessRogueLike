@@ -10,7 +10,7 @@ public partial class Board
         {
             for (int y = 0; y < M; y++)
             {
-                var pos = new Vector2(x, y);
+                var pos = new Vector2Int(x, y);
                 Piece p = GetButtonScript(pos).GetPieceScript();
                 if (p != null && p.teamID == teamId)
                     ExecutePieceTurnEffects(pos, p, phase);
@@ -18,7 +18,7 @@ public partial class Board
         }
     }
 
-    void ExecutePieceTurnEffects(Vector2 pos, Piece piece, TurnPhase phase)
+    void ExecutePieceTurnEffects(Vector2Int pos, Piece piece, TurnPhase phase)
     {
         for (int i = piece.activeEffects.Count - 1; i >= 0; i--)
         {
@@ -42,17 +42,17 @@ public partial class Board
     // EffectType을 지원하는 ApplyCardEffectNow(Board.CardEffect.cs)를 Board.ScheduledEffects.cs의
     // 큐로 재사용하도록 옮겨갔다 — 이 함수는 지원 EffectType이 더 좁으니(Heal/Shield/ColDamageUp류 등)
     // 새로 추가하는 예약 효과는 가능하면 EnqueueScheduledEffect 쪽을 쓰는 게 낫다.
-    void ExecuteCardEffectOnPiece(Vector2 pos, Piece caster, CardEffect ce)
+    void ExecuteCardEffectOnPiece(Vector2Int pos, Piece caster, CardEffect ce)
     {
         if (ce.targetlogic == TargetLogic.AllEnemiesInRange || ce.targetlogic == TargetLogic.AllAlliesInRange
             || ce.targetlogic == TargetLogic.AllPiecesInRange)
         {
             if (ce.effectRange == null) return;
 
-            var targets = new List<(Vector2 pos, Piece piece)>();
-            foreach (Vector2 offset in ce.effectRange.GetAbleRange())
+            var targets = new List<(Vector2Int pos, Piece piece)>();
+            foreach (Vector2Int offset in ce.effectRange.GetAbleRange())
             {
-                Vector2 targetPos = pos + offset;
+                Vector2Int targetPos = pos + offset;
                 if (targetPos.x < 0 || targetPos.x >= N || targetPos.y < 0 || targetPos.y >= M) continue;
                 Piece target = GetButtonScript(targetPos).GetPieceScript();
                 if (target == null) continue;

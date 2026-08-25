@@ -10,13 +10,14 @@ public class ShieldBonusUpCard : Card
         type = CardType.Skill;
         dragDropTarget = DragDropTarget.Self;
 
-        effects.Add(new CardEffect(
-            Board.BoardMode.targeting,
-            EffectType.ShieldBonusUp,
-            1,
-            TargetLogic.self
-        )
-        { animTrigger = "Buff" });
+        effects.Add(new CardEffect
+        {
+            requiredMode = Board.BoardMode.targeting,
+            type = EffectType.ShieldBonusUp,
+            dmg = 1,
+            targetlogic = TargetLogic.self,
+            animTrigger = "Buff",
+        });
     }
 
     public override string EffectDescription => "방어막 보너스를 1 올립니다.";

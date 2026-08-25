@@ -9,23 +9,25 @@ public class EnemyMoveAndColDamageUpCard : Card
         Cost = 2;
         type = CardType.Move;
 
-        effects.Add(new CardEffect(
-            Board.BoardMode.command,
-            EffectType.Move,
-            0,
-            TargetLogic.NearestEnemy,
-            null,
-            true
-        )
-        { animTrigger = "Move" });
+        effects.Add(new CardEffect
+        {
+            requiredMode = Board.BoardMode.command,
+            type = EffectType.Move,
+            dmg = 0,
+            targetlogic = TargetLogic.NearestEnemy,
+            effectRange = null,
+            lockCasterForNext = true,
+            animTrigger = "Move",
+        });
 
-        effects.Add(new CardEffect(
-            Board.BoardMode.targeting,
-            EffectType.ColDamageUp,
-            2,
-            TargetLogic.self
-        )
-        { animTrigger = "Buff" });
+        effects.Add(new CardEffect
+        {
+            requiredMode = Board.BoardMode.targeting,
+            type = EffectType.ColDamageUp,
+            dmg = 2,
+            targetlogic = TargetLogic.self,
+            animTrigger = "Buff",
+        });
     }
 
     public override string EffectDescription => "이동한 후 이동공격력을 2 올립니다.";

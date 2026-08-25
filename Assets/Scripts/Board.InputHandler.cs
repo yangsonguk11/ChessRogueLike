@@ -2,7 +2,7 @@ using UnityEngine;
 
 public partial class Board
 {
-    public bool IsValidDragTarget(Vector2 pos, DragDropTarget target)
+    public bool IsValidDragTarget(Vector2Int pos, DragDropTarget target)
     {
         if (pos.x < 0 || pos.y < 0) return false;
         Piece piece = GetButtonScript(pos).GetPieceScript();
@@ -17,7 +17,7 @@ public partial class Board
         };
     }
 
-    public void ButtonClicked(Vector2 pos)
+    public void ButtonClicked(Vector2Int pos)
     {
         if (!boardReady) return;
         if (TurnManager.instance.currentState != TurnState.Player) return;
