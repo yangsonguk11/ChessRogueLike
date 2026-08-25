@@ -302,6 +302,10 @@ public partial class Board : MonoBehaviour
         FinishCardUsage();
         ClearSelectedButton();
         CardCanvas.instance.ResetAllAllyHands(GetAllAllyPieces());
+
+        LoadOwnedRelics(); // 이벤트 레벨에서도 보유 유물 아이콘은 보여준다
+        if (!IsEventLevel)
+            TriggerRelicsOnCombatStart();
     }
 
     // 보드 위 teamID==0(아군) 기물 전체를 수집한다. 기물별 손패/덱 처리(턴 시작/종료, 카드 뷰 갱신 등)에 쓰인다.

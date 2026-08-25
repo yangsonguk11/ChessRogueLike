@@ -87,12 +87,12 @@ public abstract class Piece : MonoBehaviour
 
         if (poisonTotal > 0)
         {
-            GetDamage(poisonTotal);
+            GetDamage(poisonTotal, isAttack: false);
             if (Board.instance != null) Board.instance.StartCoroutine(DamageText(poisonTotal));
         }
         if (burningTotal > 0)
         {
-            GetDamage(burningTotal);
+            GetDamage(burningTotal, isAttack: false);
             if (Board.instance != null) Board.instance.StartCoroutine(DamageText(burningTotal));
         }
         if (regenTotal > 0)
@@ -172,7 +172,8 @@ public abstract class Piece : MonoBehaviour
             : new List<Vector2> { Vector2.zero };
     }
     public RangeInfoSO MoveAttackRangeInfoSO => pieceInfo.MoveAttackRangeInfoSO;
-    public int GetDamage(int damage)
+    // isAttack: false면 독/화상 같은 상태이상 틱 데미지 — OnHit 유물은 '공격'을 받았을 때만 발동해야 하므로 제외한다.
+    public int GetDamage(int damage, bool isAttack = true)
     {
         if(shield < damage)
         {
@@ -184,6 +185,7 @@ public abstract class Piece : MonoBehaviour
             shield -= damage;
         }
 
+        if (isAttack && teamID == 0) Board.instance?.TriggerRelicsOnHit(this);
         return hp;
     }
     // 실제로 회복된 양(최대 체력 클램프 적용)을 반환한다. 호출부는 이 반환값을 회복 텍스트 표시에 그대로 써야 한다.

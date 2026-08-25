@@ -156,9 +156,11 @@ public partial class Board
         return true;
     }
 
-    // cardEffect에 onKillEffect가 설정돼 있으면, 처치가 확정된 시점에 시전자를 대상으로 그 효과를 실행 (예: 처치 시 ColDamageUp)
+    // 처치가 확정된 시점에 호출: OnKill 유물을 발동시키고, cardEffect에 onKillEffect가 설정돼 있으면
+    // 시전자를 대상으로 그 효과도 실행한다(예: 처치 시 ColDamageUp). 기존 4개 호출 지점을 그대로 재사용.
     void TriggerOnKillEffect(Vector2 casterPos, Piece caster, CardEffect cardEffect)
     {
+        TriggerRelicsOnKill(caster);
         if (caster == null || cardEffect?.onKillEffect == null) return;
         ExecuteCardEffectOnPiece(casterPos, caster, cardEffect.onKillEffect);
     }

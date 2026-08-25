@@ -352,6 +352,7 @@ MonoBehaviour:
     deckCardIDs: []
     mapData: []
     pieceData: []
+    ownedRelicNames: []
     nextLevelName: 
     currentFloor: 0
     currentNodeX: 0
@@ -3007,6 +3008,7 @@ RectTransform:
   - {fileID: 105876029}
   - {fileID: 1504926602}
   - {fileID: 1994786050}
+  - {fileID: 1299643351}
   m_Father: {fileID: 928395956}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -3922,6 +3924,66 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 900001006}
   m_CullTransparentMesh: 1
+--- !u!1 &902926632
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 902926633}
+  - component: {fileID: 902926634}
+  m_Layer: 5
+  m_Name: RelicIconContainer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &902926633
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 902926632}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 928395956}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 420, y: -100}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &902926634
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 902926632}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a8695521f0d02e499659fee002a26c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GridLayoutGroup
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 0
+  m_StartCorner: 0
+  m_StartAxis: 0
+  m_CellSize: {x: 100, y: 100}
+  m_Spacing: {x: 0, y: 0}
+  m_Constraint: 2
+  m_ConstraintCount: 1
 --- !u!1 &928395952
 GameObject:
   m_ObjectHideFlags: 0
@@ -4021,6 +4083,7 @@ RectTransform:
   - {fileID: 746435973}
   - {fileID: 571599799}
   - {fileID: 2028936964}
+  - {fileID: 902926633}
   - {fileID: 661990361}
   - {fileID: 1729366967}
   - {fileID: 531976640}
@@ -4048,6 +4111,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainCanvas
   UnSeenEvent: {fileID: 695950923}
+  relicIconContainer: {fileID: 902926633}
 --- !u!114 &928395958
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4066,6 +4130,10 @@ MonoBehaviour:
   slotCount: 8
   cardPrice: 30
   removePrice: 0
+  relicSlotPrefab: {fileID: 6206896674530151298, guid: fa75545fc16e60c4793a3a5884f19c2d, type: 3}
+  relicSlotContainer: {fileID: 1299643351}
+  relicSlotCount: 4
+  relicPrice: 0
   slideDuration: 0.35
 --- !u!1 &931949925
 GameObject:
@@ -5122,6 +5190,66 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e61b8dba5b7f4e4680c1c258271d7c0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+--- !u!1 &1299643350
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1299643351}
+  - component: {fileID: 1299643352}
+  m_Layer: 5
+  m_Name: RelicSlots
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1299643351
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1299643350}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 599564108}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 100, y: 100}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1299643352
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1299643350}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a8695521f0d02e499659fee002a26c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GridLayoutGroup
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 0
+  m_StartCorner: 0
+  m_StartAxis: 0
+  m_CellSize: {x: 100, y: 100}
+  m_Spacing: {x: 100, y: 150}
+  m_Constraint: 2
+  m_ConstraintCount: 1
 --- !u!1 &1326693683
 GameObject:
   m_ObjectHideFlags: 0
@@ -6286,7 +6414,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
   m_PrefabInstance: {fileID: 6878315278730233793}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 1855580334}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0ca98b54409c844459740c94fd159e0d, type: 3}
@@ -6297,7 +6425,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3973567015829007392, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
   m_PrefabInstance: {fileID: 6878315278730233793}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 1855580334}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cb96a127098af4d4eaa1a6674e660450, type: 3}
@@ -6981,6 +7109,26 @@ RectTransform:
   m_AnchoredPosition: {x: -760, y: -160}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &1855580334 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1924541253940516919, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+  m_PrefabInstance: {fileID: 6878315278730233793}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1855580339
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1855580334}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7686372fa25c614c9e6407dc4597700, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RelicDatabase
+  iconPrefabs:
+  - {fileID: 1978758920600075269, guid: b622b54d4f2790b4ca7a95c57d15db08, type: 3}
+  - {fileID: 1978758920600075269, guid: b037770ab04f4b75921757b034009557, type: 3}
 --- !u!1 &1856970875
 GameObject:
   m_ObjectHideFlags: 0
@@ -8862,7 +9010,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1924541253940516919, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1855580339}
   m_SourcePrefab: {fileID: 100100000, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
 --- !u!1001 &8273075905116608292
 PrefabInstance:

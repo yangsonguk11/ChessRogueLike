@@ -24,7 +24,9 @@ public partial class Board
         {
             if (piece.activeEffects[i] is not TurnEffect te || te.phase != phase) continue;
 
-            ExecuteCardEffectOnPiece(pos, piece, te.cardEffect);
+            // 실제 카드가 효과를 적용할 때 쓰는 것과 동일한 함수(ApplyCardEffectNow)를
+            // Board.ScheduledEffects.cs의 큐를 통해 순차적으로 재사용한다.
+            EnqueueScheduledEffect(pos, te.cardEffect);
 
             te.duration--;
             if (te.duration <= 0)
@@ -35,7 +37,11 @@ public partial class Board
         }
     }
 
-    // 시전자(caster) 기준으로 임의의 CardEffect 하나를 즉시 실행. TurnEffect(턴 효과)와 onKillEffect(처치 시 효과)가 공유해서 사용.
+    // 시전자(caster) 기준으로 임의의 CardEffect 하나를 즉시 실행. onKillEffect(처치 시 효과)와
+    // 영구 스탯 강화(RequestPieceSelection 콜백)가 공유해서 사용한다. TurnEffect/유물은 더 많은
+    // EffectType을 지원하는 ApplyCardEffectNow(Board.CardEffect.cs)를 Board.ScheduledEffects.cs의
+    // 큐로 재사용하도록 옮겨갔다 — 이 함수는 지원 EffectType이 더 좁으니(Heal/Shield/ColDamageUp류 등)
+    // 새로 추가하는 예약 효과는 가능하면 EnqueueScheduledEffect 쪽을 쓰는 게 낫다.
     void ExecuteCardEffectOnPiece(Vector2 pos, Piece caster, CardEffect ce)
     {
         if (ce.targetlogic == TargetLogic.AllEnemiesInRange || ce.targetlogic == TargetLogic.AllAlliesInRange

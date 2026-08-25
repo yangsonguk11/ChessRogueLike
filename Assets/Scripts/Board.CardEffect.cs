@@ -338,9 +338,27 @@ public partial class Board
             lockedCasterPiece = GetButtonScript(lockedCaster).GetPieceScript();
         }
 
+        // effectApplied가 false→true로 바뀌는 지금 이 순간이 이 카드의 첫 효과가 실제로 처리되기 시작하는
+        // 시점이다(그 전까지는 CardCanvas.CancelCardUsage/RevertNowUsingCardToHeld로 언제든 취소 가능하고,
+        // 이 지점부턴 취소가 막힌다 — EffectApplied 프로퍼티 참고). 카드 하나당 딱 한 번만 발동해야 하므로
+        // 아직 false일 때만(=이 카드의 첫 효과일 때만) 호출한다. relicsOnCardUsed를 전부 큐에 모아
+        // 동기적으로 순차 처리하고 나서(TriggerRelicsOnCardUsed 내부), 곧바로 아래에서 카드 자신의
+        // 첫 효과(cardEffect)로 자연스럽게 이어진다 — 유물 효과 전부가 카드 효과보다 반드시 먼저 끝난다.
+        if (!effectApplied && currentActiveCard != null && currentActiveCard.user == User.Ally)
+            TriggerRelicsOnCardUsed(selectedButton, targetPos);
+
         effectApplied = true;
         CardCanvas.instance.isCardEffecting = true;
 
+        ApplyCardEffectNow(cardEffect, targetPos);
+    }
+
+    // 카드/예약효과(TurnEffect·유물 등) 공용: CardEffect 하나를 targetPos 기준으로 실제로 적용한다.
+    // currentActiveCard/pendingEffects/effectApplied 같은 "지금 실제 카드를 쓰는 중" 상태는 전혀 건드리지
+    // 않으므로, 다른 카드가 한창 처리되는 도중에 끼어들어도(진행 중인 카드의 pendingEffects를 훼손하지 않고)
+    // 안전하게 호출할 수 있다. 캐스터는 selectedButton으로 넘겨받는다(호출부가 미리 세팅).
+    void ApplyCardEffectNow(CardEffect cardEffect, Vector2 targetPos)
+    {
         if (cardEffect.targetlogic == TargetLogic.AllEnemiesInRange ||
             cardEffect.targetlogic == TargetLogic.AllAlliesInRange ||
             cardEffect.targetlogic == TargetLogic.AllPiecesInRange)
@@ -554,7 +572,10 @@ public partial class Board
 
         // 아군/적 판정은 caster 기물의 teamID가 아니라 카드 자체의 user(Ally/Enemy)를 기준으로 한다.
         // caster 기물이 없는 MouseCentered 카드도 이 카드를 누가 쓰는 카드인지로 정확히 판정할 수 있다.
-        int userTeam = currentActiveCard.user == User.Ally ? 0 : 1;
+        // currentActiveCard가 없는 경우(TurnEffect/유물 같은 예약 효과)는 caster의 teamID로 대신 판정한다.
+        int userTeam = currentActiveCard != null
+            ? (currentActiveCard.user == User.Ally ? 0 : 1)
+            : (caster != null ? caster.teamID : 0);
         int targetTeam = cardEffect.targetlogic == TargetLogic.AllEnemiesInRange
             ? (userTeam == 0 ? 1 : 0)
             : userTeam;

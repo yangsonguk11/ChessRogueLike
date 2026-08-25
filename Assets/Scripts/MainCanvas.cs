@@ -7,6 +7,10 @@ public class MainCanvas : MonoBehaviour
 
     [SerializeField] GameObject UnSeenEvent; // 이벤트 레벨에서 숨길 전투용 UI(덱/버린 카드/턴 종료 버튼)를 모아둔 부모
 
+    [Tooltip("보유한 유물 아이콘이 스폰되는 부모. Grid Layout Group이 붙어 있어 스폰만 하면 자동 정렬된다.")]
+    [SerializeField] RectTransform relicIconContainer;
+    public RectTransform RelicIconContainer => relicIconContainer;
+
     void Awake()
     {
         instance = this;

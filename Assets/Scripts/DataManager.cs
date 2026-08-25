@@ -73,6 +73,11 @@ public class DataManager : MonoBehaviour
             currentData.pieceData.Clear();
             currentData.pieceData.Add(BuildPieceData(basicPieceinfo, defaultDeck));
 
+            if (currentData.ownedRelicNames == null) currentData.ownedRelicNames = new List<string>();
+            currentData.ownedRelicNames.Add("ShieldRelic");
+            currentData.ownedRelicNames.Add("ShieldRelic");
+            currentData.ownedRelicNames.Add("VampiricFangRelic");
+
             currentData.nextLevelName = "";
             currentData.currentFloor = 0;
             currentData.currentNodeX = -1;
@@ -116,6 +121,13 @@ public class DataManager : MonoBehaviour
     {
         if (info == null) return;
         currentData.pieceData.Add(BuildPieceData(info, deckCardIDs ?? info.DefaultDeckCardIDs));
+    }
+
+    // relicName을 소유 유물 목록에 영구히 추가 (Board.LoadOwnedRelics가 다음 전투 시작 시 반영)
+    public void AddRelic(string relicName)
+    {
+        if (currentData.ownedRelicNames == null) currentData.ownedRelicNames = new List<string>();
+        currentData.ownedRelicNames.Add(relicName);
     }
 
     // cardname을 지정한 기물의 덱에 영구히 추가
@@ -213,6 +225,7 @@ public class GameData
     public List<string> deckCardIDs = new List<string>();
     public List<NodeRow> mapData = new List<NodeRow>();
     public List<PieceData> pieceData = new List<PieceData>();
+    public List<string> ownedRelicNames = new List<string>(); // 소유한 유물 이름들(RelicDatabase 조회 키)
     public string nextLevelName;
     public int currentFloor;
     public int currentNodeX;

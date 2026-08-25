@@ -7,6 +7,7 @@ public partial class Board
     // 이벤트 레벨에서는 TurnManager가 턴을 시작하지 않으므로 이 메서드 자체가 호출되지 않음
     void TurnStart()
     {
+        TriggerRelicsOnTurnStart();
         ProcessTeamTurnEffects(0, TurnPhase.OwnTurnStart);
         playerDamagedThisTurn = false;
         ResetPieceMovedThisTurn();
@@ -19,6 +20,7 @@ public partial class Board
         if (!boardReady) return;
         ClearAllEnemyRanges();
         ProcessTeamTurnEffects(0, TurnPhase.OwnTurnEnd);
+        TriggerRelicsOnTurnEnd();
         TurnEnd(0);
         FinishCardUsage();
         ClearSelectedButton();
