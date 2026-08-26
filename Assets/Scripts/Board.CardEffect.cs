@@ -463,6 +463,12 @@ public partial class Board
             case EffectType.Cleanse:
                 CleanseTarget(targetPos, cardEffect);
                 break;
+            case EffectType.Charge:
+                // 의도적인 무효과: 텔레그래프형 적이 공격 전에 한 턴을 예고만 하며 흘려보내는 용도.
+                break;
+            case EffectType.Stun:
+                // 의도적인 무효과: 기절한 적이 이번 턴을 스턴으로 소모했다는 표시일 뿐.
+                break;
             default:
                 Debug.LogError("효과 타입을 찾지 못했습니다");
                 break;
@@ -514,8 +520,8 @@ public partial class Board
         {
             StatusEffect effect = target.activeEffects[i];
             if (effect.IsBuff != cardEffect.cleanseBuffs) continue;
-            effect.OnRemove(target);
             target.activeEffects.RemoveAt(i);
+            effect.OnRemove(target);
             removedAny = true;
         }
         if (removedAny)

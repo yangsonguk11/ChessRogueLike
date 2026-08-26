@@ -291,7 +291,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   Board: {fileID: 712148467}
-  Enemylist: []
 --- !u!4 &74168498
 Transform:
   m_ObjectHideFlags: 0
@@ -6414,7 +6413,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
   m_PrefabInstance: {fileID: 6878315278730233793}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1855580334}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0ca98b54409c844459740c94fd159e0d, type: 3}
@@ -6425,7 +6424,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3973567015829007392, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
   m_PrefabInstance: {fileID: 6878315278730233793}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1855580334}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cb96a127098af4d4eaa1a6674e660450, type: 3}
@@ -7109,26 +7108,6 @@ RectTransform:
   m_AnchoredPosition: {x: -760, y: -160}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!1 &1855580334 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1924541253940516919, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
-  m_PrefabInstance: {fileID: 6878315278730233793}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1855580339
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1855580334}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b7686372fa25c614c9e6407dc4597700, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RelicDatabase
-  iconPrefabs:
-  - {fileID: 1978758920600075269, guid: b622b54d4f2790b4ca7a95c57d15db08, type: 3}
-  - {fileID: 1978758920600075269, guid: b037770ab04f4b75921757b034009557, type: 3}
 --- !u!1 &1856970875
 GameObject:
   m_ObjectHideFlags: 0
@@ -8971,49 +8950,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3973567015829007392, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
-      propertyPath: PiecePrefabs.Array.size
-      value: 6
-      objectReference: {fileID: 0}
-    - target: {fileID: 3973567015829007392, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
-      propertyPath: 'PiecePrefabs.Array.data[1]'
-      value: 
-      objectReference: {fileID: 782353561853643713, guid: 6a6c48e1d114a5c4984a048439daaf0a, type: 3}
-    - target: {fileID: 3973567015829007392, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
-      propertyPath: 'PiecePrefabs.Array.data[2]'
-      value: 
-      objectReference: {fileID: 107724, guid: 1bae5e056ac375b46a1158f8b09b1f7f, type: 3}
-    - target: {fileID: 3973567015829007392, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
-      propertyPath: 'PiecePrefabs.Array.data[3]'
-      value: 
-      objectReference: {fileID: 2961803386712819093, guid: 5987a34a765db874dba26aa478b09d26, type: 3}
-    - target: {fileID: 3973567015829007392, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
-      propertyPath: 'PiecePrefabs.Array.data[4]'
-      value: 
-      objectReference: {fileID: 100000, guid: b0550000000000000000000000000008, type: 3}
-    - target: {fileID: 3973567015829007392, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
-      propertyPath: 'PiecePrefabs.Array.data[5]'
-      value: 
-      objectReference: {fileID: 138226, guid: dc15f517405996445b9c4c84c99842fc, type: 3}
     - target: {fileID: 5845322441005520208, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
       propertyPath: 'floorPools.Array.data[0].levels.Array.data[0]'
       value: 
-      objectReference: {fileID: 11400000, guid: 49a264bc093d14947b49c22b255ab160, type: 2}
-    - target: {fileID: 5845322441005520208, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
-      propertyPath: 'floorPools.Array.data[1].levels.Array.data[0]'
-      value: 
-      objectReference: {fileID: 11400000, guid: 19387901c67acba43a1c093a9bdcb7e8, type: 2}
-    - target: {fileID: 5845322441005520208, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
-      propertyPath: 'floorPools.Array.data[2].levels.Array.data[0]'
-      value: 
-      objectReference: {fileID: 11400000, guid: 4c2f5deb5e169364f8814f291f6f4911, type: 2}
+      objectReference: {fileID: 11400000, guid: d564be8c8e84a494d8475bc69cc69160, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 1924541253940516919, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1855580339}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
 --- !u!1001 &8273075905116608292
 PrefabInstance:

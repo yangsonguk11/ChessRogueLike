@@ -53,6 +53,7 @@ MonoBehaviour:
   - {fileID: 8950236184682274632, guid: 38553affb47d42c2ad258b265e639c2f, type: 3}
   - {fileID: 8950236184682274632, guid: 345ce166569e452586b6d93e79516a07, type: 3}
   - {fileID: 8950236184682274632, guid: 8ea22c0342af4373ab70c09187dcdb84, type: 3}
+  - {fileID: 8950236184682274632, guid: aa9102c2a276458ca721bbdc0a722272, type: 3}
   - {fileID: 8950236184682274632, guid: 4953067e8e554c9d90750d9efe908d73, type: 3}
   - {fileID: 8950236184682274632, guid: 41825161956a4b8d9fca06f37b1a170b, type: 3}
   - {fileID: 8950236184682274632, guid: 91543713b588485e88db9dc3df6a89b0, type: 3}
@@ -105,6 +106,8 @@ MonoBehaviour:
   - {fileID: 2961803386712819093, guid: 5987a34a765db874dba26aa478b09d26, type: 3}
   - {fileID: 100000, guid: b0550000000000000000000000000008, type: 3}
   - {fileID: 138226, guid: dc15f517405996445b9c4c84c99842fc, type: 3}
+  - {fileID: 107724, guid: 91d1bd0e97be4386976b6d5b6d501ad9, type: 3}
+  - {fileID: 107724, guid: 20d581bbe9f84547af1fdb8e9284b387, type: 3}
 --- !u!114 &3181729770140103546
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -119,6 +122,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RangeInfoSODatabase
   RangeInfos:
   - {fileID: 11400000, guid: e798bd81c0425624ead1e05779a9c275, type: 2}
+  - {fileID: 11400000, guid: 8751ef872e684a43b7bb160df2dd6cbc, type: 2}
 --- !u!114 &5845322441005520208
 MonoBehaviour:
   m_ObjectHideFlags: 0

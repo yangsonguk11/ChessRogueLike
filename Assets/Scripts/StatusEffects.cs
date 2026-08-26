@@ -54,7 +54,7 @@ public class RegenEffect : StatusEffect
     public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
 }
 
-// 기절: 행동 불가 (적은 카드 사용 스킵)
+// 기절: 행동 불가. 아군은 카드 사용 자체가 막히고, 적은 다음 행동이 StunnedCard로 바뀐다(Enemy.GetNextMove).
 public class StunEffect : StatusEffect
 {
     public override string DisplayName => "기절";
@@ -65,7 +65,22 @@ public class StunEffect : StatusEffect
     {
         this.duration = duration;
     }
-    public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
+
+    // 걸리는 즉시 다음 행동 예고를 다시 계산해서 보여준다(Piece.ActionText는 기본적으로 아무 일도 안 하고,
+    // Enemy만 오버라이드해서 GetNextMove()로 다음 카드를 다시 뽑아 텍스트를 갱신함 — 이러면 원래 예고돼 있던
+    // 카드 대신 스턴이 걸렸다는 게 바로 반영된다). 아군에게는 안전한 무해 호출이다.
+    // ShowAllEnemyRanges()도 같이 다시 돌려서, 보드에 이미 하이라이트된 칸(기절 전 카드 기준 범위)도
+    // 새로 GetNextMove()가 반환하는 StunnedCard(빈 범위) 기준으로 즉시 갱신되게 한다.
+    public override void OnApply(Piece piece)
+    {
+        piece.ActionText();
+        Board.instance?.ShowAllEnemyRanges();
+    }
+    public override void OnRemove(Piece piece)
+    {
+        piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
+        piece.ActionText(); // 이 시점엔 이미 activeEffects에서 제거된 뒤라 IsStunned()가 정확히 false를 반환한다.
+    }
 }
 
 // 강화: colDamage 증가, 해제 시 원복

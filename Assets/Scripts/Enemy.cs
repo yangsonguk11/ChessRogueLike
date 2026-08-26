@@ -8,11 +8,13 @@ public class Enemy : Piece
     int Movenum;
 
     Card nextMove;
+    StunnedCard stunnedCard;
     public override void Awake()
     {
         base.Awake();
         Movenum = 0;
         nextMove = enemyCards[0];
+        stunnedCard = gameObject.AddComponent<StunnedCard>();
         GameManager.instance.AddEnemy(gameObject);
     }
 
@@ -26,12 +28,15 @@ public class Enemy : Piece
         if (move == null || move.effects.Count == 0) return base.GetMoveableButton();
         if (move.effects[0].type == EffectType.Move)
             return base.GetMoveableButton();
-        return move.effects[0].effectRange?.GetAbleRange() ?? base.GetMoveableButton();
+        // effectRange가 없는 카드는 이동 범위로 폴백하지 않고 그냥 아무 칸도 표시하지 않는다.
+        return move.effects[0].effectRange?.GetAbleRange() ?? new List<Vector2Int>();
     }
 
-    // 간단한 AI 로직: 다음에 사용할 카드를 반환
+    // 간단한 AI 로직: 다음에 사용할 카드를 반환. 기절 상태면 원래 예고했던 카드 대신 스턴 카드를 반환하고,
+    // Movenum은 그대로 둬서(ChangeMove 미호출) 기절이 풀리면 원래 카드가 그대로 이어지게 한다.
     public virtual Card GetNextMove()
     {
+        if (IsStunned()) return stunnedCard;
         if (enemyCards == null || enemyCards.Count == 0) return null;
         return nextMove;
     }
@@ -57,7 +62,7 @@ public class Enemy : Piece
                 parts.Add(desc);
         }
 
-        pieceCanvas.ShowActionText(parts.Count > 0 ? string.Join(", ", parts) : card.Name);
+        pieceCanvas.ShowActionText(parts.Count > 0 ? string.Join(" ", parts) : card.Name);
     }
 
     string BuildEffectDescription(CardEffect effect)
@@ -73,7 +78,10 @@ public class Enemy : Piece
             EffectType.ApplyStatus => BuildStatusDescription(effect),
             EffectType.ColDamageUp => $"<sprite name=\"Damage\"><space=10>+{effect.dmg}",
             EffectType.ShieldBonusUp => $"<sprite name=\"Shield\"><space=10>+{effect.dmg}",
-            _                      => ""
+            EffectType.Stun        => "<sprite name=\"Stun\">",
+            // Damage/Shield/Move/Heal/Positive/Negative 6개 아이콘 중 어디에도 안 맞는 효과(Charge 포함)는
+            // 전용 아이콘 없이 자연스럽게 Unknown으로 표시한다.
+            _                      => "<sprite name=\"Unknown\">"
         };
 
         // 주 효과에 상태이상이 함께 붙어있는 경우 표시
@@ -87,23 +95,21 @@ public class Enemy : Piece
         return primary;
     }
 
+    // 상태이상 종류(독/화상/강화 등)를 따로 표기하지 않고, 이로운 효과인지 해로운 효과인지만
+    // Positive/Negative 아이콘으로 통일해서 보여준다. 아이콘 자체는 actIcon에 나중에 추가될 예정.
+    static bool IsPositiveStatus(StatusEffectType type) => type switch
+    {
+        StatusEffectType.Regen or
+        StatusEffectType.Strengthen or
+        StatusEffectType.Thorn => true,
+        _                      => false,
+    };
+
     string BuildStatusDescription(CardEffect effect)
     {
-        return effect.statusEffectType switch
-        {
-            StatusEffectType.Poison              => $"독({effect.statusPower})",
-            StatusEffectType.Burning             => $"화상({effect.statusPower})",
-            StatusEffectType.Regen               => $"재생({effect.statusPower})",
-            StatusEffectType.Stun                => "기절",
-            StatusEffectType.Strengthen          => $"강화({effect.statusPower})",
-            StatusEffectType.Weaken              => $"약화({effect.statusPower})",
-            StatusEffectType.TurnDamageStart or
-            StatusEffectType.TurnDamageEnd       => $"턴 피해({effect.statusPower})",
-            StatusEffectType.TurnAoEDamageStart or
-            StatusEffectType.TurnAoEDamageEnd    => $"광역 피해({effect.statusPower})",
-            StatusEffectType.Thorn               => $"가시({effect.statusPower})",
-            _                                    => ""
-        };
+        if (effect.statusEffectType == StatusEffectType.None) return "";
+        if (effect.statusEffectType == StatusEffectType.Stun) return "<sprite name=\"Stun\">";
+        return $"<sprite name=\"{(IsPositiveStatus(effect.statusEffectType) ? "Positive" : "Negative")}\">";
     }
 
     private void OnDestroy()

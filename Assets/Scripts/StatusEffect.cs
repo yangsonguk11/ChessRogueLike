@@ -9,9 +9,10 @@ public abstract class StatusEffect
 
     public virtual void OnApply(Piece piece) { }
 
-    // Returns false when the effect expires (duration ran out)
+    // duration이 음수면 영구 지속(만료되지 않음). Returns false when the effect expires (duration ran out)
     public virtual bool OnTurnEnd(Piece piece)
     {
+        if (duration < 0) return true;
         duration--;
         return duration > 0;
     }

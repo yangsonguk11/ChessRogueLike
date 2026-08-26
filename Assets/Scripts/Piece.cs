@@ -48,8 +48,8 @@ public abstract class Piece : MonoBehaviour
 
     public void AddStatusEffect(StatusEffect effect)
     {
-        effect.OnApply(this);
         activeEffects.Add(effect);
+        effect.OnApply(this);
     }
 
     public bool IsStunned() => activeEffects.Exists(e => e is StunEffect);
@@ -80,8 +80,8 @@ public abstract class Piece : MonoBehaviour
             bool stillActive = effect.OnTurnEnd(this); // 지속시간 감소만 수행(피해/회복은 아래에서 합산 적용)
             if (!stillActive)
             {
-                effect.OnRemove(this);
                 activeEffects.RemoveAt(i);
+                effect.OnRemove(this);
             }
         }
 
@@ -228,9 +228,14 @@ public abstract class Piece : MonoBehaviour
     {
 
     }
+    // Enemy가 다음 행동 예고에 쓰는 것과 동일한 ShowActionText/ClearActionText를 그대로 재사용해서,
+    // 아군도 기절 중이면 같은 자리에 같은 방식으로 스턴 아이콘을 띄운다. 기절이 아니면(또는 풀리면) 지운다.
     public virtual void ActionText()
     {
-
+        if (IsStunned())
+            pieceCanvas?.ShowActionText("<sprite name=\"Stun\">");
+        else
+            pieceCanvas?.ClearActionText();
     }
     bool isDeathScheduled;
 

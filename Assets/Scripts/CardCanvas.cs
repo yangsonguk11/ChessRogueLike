@@ -206,6 +206,11 @@ public class CardCanvas : MonoBehaviour
             AnnouncementUI.instance?.Show("코스트가 부족합니다");
             return false;
         }
+        if (activePiece != null && activePiece.IsStunned())
+        {
+            AnnouncementUI.instance?.Show("기절 상태입니다");
+            return false;
+        }
         if ((isCardEffecting && nowusingCard == null) || TurnManager.instance.CurrentState != TurnState.Player)
             return false;
         if (!card.CanUse())
@@ -429,11 +434,12 @@ public class CardCanvas : MonoBehaviour
         if (cardSelectionMode) return;
         bool playerTurn = TurnManager.instance != null && TurnManager.instance.CurrentState == TurnState.Player;
         bool boardProcessing = isCardEffecting && nowusingCard == null;
+        bool stunned = activePiece != null && activePiece.IsStunned();
         foreach (var rt in cards)
         {
             Card card = rt.GetComponent<Card>();
             if (card == null) continue;
-            bool canUse = playerTurn && !boardProcessing && card.Cost <= currentenergy && card.CanUse();
+            bool canUse = playerTurn && !boardProcessing && !stunned && card.Cost <= currentenergy && card.CanUse();
             rt.GetComponent<CanvasGroup>().interactable = canUse;
         }
     }

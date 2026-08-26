@@ -3055,7 +3055,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 18ff2a06c6244318934f5d0705c96dbc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardTestBootstrap
-  testLevel: {fileID: 11400000, guid: a46320e4aa0144d6bd5fc2c5de2b4a66, type: 2}
+  testLevel: {fileID: 11400000, guid: 540a3faef9bd47a2a785c9118d7a8ce9, type: 2}
 --- !u!114 &900000004
 MonoBehaviour:
   m_ObjectHideFlags: 0

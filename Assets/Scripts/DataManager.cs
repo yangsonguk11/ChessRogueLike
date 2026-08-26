@@ -76,9 +76,11 @@ public class DataManager : MonoBehaviour, IGameDataStore
                 "DefenseCard",
                 "MoveCard",
                 "MoveCard",
+                "StunCard",
             };
 
             currentData.pieceData.Clear();
+            currentData.pieceData.Add(BuildPieceData(basicPieceinfo, defaultDeck));
             currentData.pieceData.Add(BuildPieceData(basicPieceinfo, defaultDeck));
 
             if (currentData.ownedRelicNames == null) currentData.ownedRelicNames = new List<string>();

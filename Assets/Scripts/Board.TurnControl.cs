@@ -76,17 +76,16 @@ public partial class Board
             if (p == null || p is not Enemy enemy) continue;
 
             selectedButton = pos;
+            // 기절 상태면 GetNextMove()가 원래 예고했던 카드 대신 스턴 카드를 반환한다.
+            // ChangeMove()는 기절이 아닐 때만 호출해서, 기절이 풀리면 원래 예고했던 행동이 그대로 이어지게 한다.
             Card card = enemy.GetNextMove();
 
-            if (card != null && !enemy.IsStunned())
+            if (card != null)
             {
                 UseCard(card);
                 yield return new WaitUntil(() => pendingEffects.Count == 0 && !queuecoroutineworking);
-                enemy.ChangeMove();
-                enemy.ActionText();
-            }
-            else if (enemy.IsStunned())
-            {
+                if (!enemy.IsStunned())
+                    enemy.ChangeMove();
                 enemy.ActionText();
             }
 
