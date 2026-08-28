@@ -357,6 +357,7 @@ MonoBehaviour:
     currentNodeX: 0
     visitedNodeX: 
   basicPieceinfo: {fileID: 11400000, guid: 9b16472a2e113a741a3e068e3f9f8357, type: 2}
+  summonerPieceinfo: {fileID: 11400000, guid: 81e61663c3eb4dbc97f312cba795d569, type: 2}
 --- !u!1 &76793006
 GameObject:
   m_ObjectHideFlags: 0
@@ -8950,10 +8951,38 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3973567015829007392, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: PiecePrefabs.Array.size
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 3973567015829007392, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: 'PiecePrefabs.Array.data[7]'
+      value: 
+      objectReference: {fileID: 107724, guid: 86e9194820d3d7841a80218e3adc1f31, type: 3}
+    - target: {fileID: 3973567015829007392, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: 'PiecePrefabs.Array.data[8]'
+      value: 
+      objectReference: {fileID: 103078, guid: 06c93dae46e74fa45b6ba2a08b84fdb6, type: 3}
+    - target: {fileID: 3973567015829007392, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: 'PiecePrefabs.Array.data[9]'
+      value: 
+      objectReference: {fileID: 107724, guid: b57705c0d641acc4a965848aa55a559c, type: 3}
+    - target: {fileID: 3973567015829007392, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: 'PiecePrefabs.Array.data[10]'
+      value: 
+      objectReference: {fileID: 782353561853643713, guid: 9ee4e4c8ab94cfa4c957ab85c8663872, type: 3}
     - target: {fileID: 5845322441005520208, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
       propertyPath: 'floorPools.Array.data[0].levels.Array.data[0]'
       value: 
-      objectReference: {fileID: 11400000, guid: d564be8c8e84a494d8475bc69cc69160, type: 2}
+      objectReference: {fileID: 11400000, guid: 28fc3c0e3e081494dbc4f5e44131784c, type: 2}
+    - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: cardPrefabs.Array.size
+      value: 35
+      objectReference: {fileID: 0}
+    - target: {fileID: 7720456239898483576, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
+      propertyPath: 'cardPrefabs.Array.data[34]'
+      value: 
+      objectReference: {fileID: 8950236184682274632, guid: c4751b2d4a7cd3c4686b5d70eef3228a, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

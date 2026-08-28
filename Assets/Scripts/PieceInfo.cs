@@ -6,6 +6,7 @@ public class PieceInfo : ScriptableObject
 {
     [SerializeField] string _pieceName;
     [SerializeField] int _teamID;
+    [SerializeField] bool _isSummon;
 
     [Header("기본")]
     [SerializeField] int _maxHp;
@@ -20,6 +21,7 @@ public class PieceInfo : ScriptableObject
 
     public string PieceName => _pieceName;
     public int TeamID => _teamID;
+    public bool IsSummon => _isSummon;
 
     public int MaxHp => _maxHp;
     public int ColDamage => _colDamage;

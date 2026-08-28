@@ -86,7 +86,7 @@ public class CardCanvas : MonoBehaviour
     {
         get
         {
-            int allyCount = board != null ? board.GetAllAllyPieces().Count : 1;
+            int allyCount = board != null ? board.GetAllAllyPieces().Count(p => !p.isSummon) : 1;
             return baseMaxEnergy + Mathf.Max(0, allyCount - 1);
         }
     }

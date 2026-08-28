@@ -57,27 +57,34 @@ public enum AreaTargetMode
 }
 public abstract class Card : MonoBehaviour, ISelectable
 {
+    [Tooltip("필수 입력 — 대부분의 구체 카드가 Awake()에서 effectRange[0]으로 읽어서 씀. 비워두면 인덱스 접근에서 바로 예외 발생.")]
     public List<RangeInfoSO> effectRange;
-    public string Name, Description;
+    [Tooltip("거의 모든 카드가 Awake()에서 직접 덮어씀 — 여기 채워도 대부분 무시됨(해당 카드 클래스의 Awake() 확인).")]
+    public string Name;
+    public string Description; // 대부분 코드가 안 건드림 — 실제 플레이버 텍스트로 채워도 됨(일부 카드는 Awake에서 덮어쓰기도 하니 확인)
     public virtual string EffectDescription => "";
+    [Tooltip("거의 모든 카드가 Awake()에서 직접 덮어씀 — 여기 채워도 대부분 무시됨(해당 카드 클래스의 Awake() 확인).")]
     public int Cost;
+    [Tooltip("거의 모든 카드가 Awake()에서 직접 덮어씀 — 여기 채워도 대부분 무시됨(해당 카드 클래스의 Awake() 확인).")]
     public CardType type;
     public List<CardEffect> effects = new List<CardEffect>();
+    [Tooltip("필수 입력 — 코드가 거의 안 건드림(예외: Enemy 전용으로만 쓰는 일부 카드는 Awake()에서 User.Enemy로 직접 고정). 적이 자동으로 쓰게 하려면 여기서 Enemy로 바꿔야 함.")]
     public User user;
     public bool shieldOnMoveAttack;
     public int moveAttackShieldAmount;
     public bool blocksMovementAfterUse;    // 사용 후 이번 턴 이동 불가
     public bool requiresCasterNotMoved;   // 사용자가 이번 턴에 이동하지 않았어야 사용 가능
     public bool exileOnUse;             // 사용 후 소멸
+    [Tooltip("대부분의 카드가 Awake()에서 직접 덮어씀 — 여기 채워도 대부분 무시됨(해당 카드 클래스의 Awake() 확인).")]
     public DragDropTarget dragDropTarget = DragDropTarget.Ally;
 
     // CardDatabase.SpawnCard가 스폰 직후 채워주는 원본 프리팹 이름. 기물의 덱 구성을 저장 데이터로
     // 되돌릴 때(Piece.GetPieceData) 이 값으로 어떤 카드였는지 복원한다.
-    public string cardID;
+    [ReadOnlyInInspector] public string cardID; // 스폰 시점에 외부(CardDatabase)가 채워줌 — 프리팹엔 항상 비워둠
 
     // 코스트 임시 변경 추적 (-1이면 미변경)
-    public int originalCost = -1;
-    public CostDuration costDuration = CostDuration.Permanent;
+    [ReadOnlyInInspector] public int originalCost = -1; // 콘텐츠 값이 아니라 런타임 추적용 — 프리팹에서 건드릴 필요 없음
+    [ReadOnlyInInspector] public CostDuration costDuration = CostDuration.Permanent; // 위와 동일, 런타임 추적용
 
     [Header("Card View")]
     [SerializeField] TextMeshProUGUI costText;
@@ -279,7 +286,7 @@ public enum CardZone { Hand, Deck, Discard, Any, SavedDeck }
 /// <summary>코스트 변경 효과의 지속 시간</summary>
 public enum CostDuration { Permanent, ThisTurnOnly, OneUse }
 
-public enum EffectType { Move, Damage, Shield, Buff, DeBuff, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, BaseColDamageUp, ShieldBonusUp, BaseShieldBonusUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop, SelectAndDiscard, SelectAndChangeCost, SelectAndReturnToDeck, AddCard, RestoreEnergy, Cleanse, Charge, Stun }
+public enum EffectType { Move, Damage, Shield, Buff, DeBuff, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, BaseColDamageUp, ShieldBonusUp, BaseShieldBonusUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop, SelectAndDiscard, SelectAndChangeCost, SelectAndReturnToDeck, AddCard, RestoreEnergy, Cleanse, Charge, Stun, Summon }
 public record CardEffect
 {
     public Board.BoardMode requiredMode { get; init; }
@@ -328,4 +335,8 @@ public record CardEffect
     // AddCard 타입에서 사용: 추가할 카드와 추가될 위치 (CardCanvas.CardPositionZone 재사용)
     public string addCardID { get; init; }
     public CardPositionZone addCardZone { get; init; } = CardPositionZone.Discard;
+
+    // Summon 타입에서 사용: 소환할 기물의 템플릿 (PieceName/스탯/기본덱 등을 담은 SO).
+    // PieceInfo.TeamID가 소환된 기물의 진영을 결정하므로 적/아군 카드 양쪽에서 재사용 가능.
+    public PieceInfo summonPieceInfo { get; init; }
 }

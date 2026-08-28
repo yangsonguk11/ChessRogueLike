@@ -89,6 +89,8 @@ public partial class Board
 
         if (currentEffect != null && currentEffect.type == EffectType.Move && currentEffect.noMoveAttack)
             FilterEnemyOccupiedFromMovable(casterPos);
+        if (currentEffect != null && currentEffect.type == EffectType.Summon)
+            FilterOccupiedFromMovable(casterPos);
 
         ShowButtonInfo(casterPos);
     }
@@ -101,6 +103,18 @@ public partial class Board
         {
             Piece p = GetButtonScript(selectedButtonMovable[i]).GetPieceScript();
             if (p != null && p.teamID != caster.teamID)
+            {
+                GetButtonScript(selectedButtonMovable[i]).RangeOff(selectedMovableTeam);
+                selectedButtonMovable.RemoveAt(i);
+            }
+        }
+    }
+
+    void FilterOccupiedFromMovable(Vector2Int casterPos)
+    {
+        for (int i = selectedButtonMovable.Count - 1; i >= 0; i--)
+        {
+            if (GetButtonScript(selectedButtonMovable[i]).GetPieceScript() != null)
             {
                 GetButtonScript(selectedButtonMovable[i]).RangeOff(selectedMovableTeam);
                 selectedButtonMovable.RemoveAt(i);
@@ -177,8 +191,8 @@ public partial class Board
     // ShopCanvas.Show()에서 호출: 상점 캔버스가 대신 나타나므로 ButtonInfo(호버 정보창)는 숨긴다.
     public void HideButtonInfoForShop() => HideButtonInfo();
 
-    // 적 기준 가장 가까운 플레이어 위치 반환
-    Vector2Int GetNearestPlayerPos(Vector2Int enemyPos)
+    // 기준 위치에서 가장 가까운 targetTeam 소속 기물 위치 반환
+    Vector2Int GetNearestPlayerPos(Vector2Int enemyPos, int targetTeam)
     {
         Vector2Int nearest = enemyPos;
         float minDistance = float.MaxValue;
@@ -188,7 +202,7 @@ public partial class Board
             for (int y = 0; y < M; y++)
             {
                 Piece p = GetButtonScript(new Vector2Int(x, y)).GetPiece()?.GetComponent<Piece>();
-                if (p != null && p.teamID == 0)
+                if (p != null && p.teamID == targetTeam)
                 {
                     float dist = Vector2.Distance(enemyPos, new Vector2Int(x, y));
                     if (dist < minDistance)

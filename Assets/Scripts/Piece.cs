@@ -6,21 +6,27 @@ using UnityEngine;
 [RequireComponent(typeof(PieceEffect))]
 public abstract class Piece : MonoBehaviour
 {
+    [Tooltip("필수 입력 — Awake()에서 teamID를 이 값의 TeamID로 덮어씀. Enemy/AutoPiece 계열은 RangeInfoSO도 여기서만 읽음.")]
     [SerializeField] PieceInfo pieceInfo;
     public PieceCanvas pieceCanvas;
 
     public new string name;
+    [Tooltip("Ally(플레이어 로스터)로 스폰되면 SetPieceData가 덮어씀 — 여기 값은 무시됨.\nEnemy/AutoAlly처럼 레벨에 직접 배치·소환되는 기물은 SetPieceData를 안 거치므로 여기 값을 그대로 씀 — 0으로 두면 즉시 사망 판정된다.")]
     public int hp;
+    [Tooltip("hp와 동일 조건 — Ally는 SetPieceData가 덮어씀, Enemy/AutoAlly는 여기 값이 그대로 쓰임.")]
     public int maxhp;
+    [Tooltip("hp와 동일 조건 — Ally는 SetPieceData가 덮어씀, Enemy/AutoAlly는 여기 값이 그대로 쓰임.")]
     public int colDamage;
-    public int baseColDamage; // 기물의 강화 전(영입 시점) 이동공격력. 영구 강화로는 변하지 않는다.
+    [ReadOnlyInInspector] public int baseColDamage; // Awake()에서 항상 colDamage를 그대로 복사함 — 여기 채워도 덮어써짐
     public int colDamageBonus; // 영구 강화로 누적된 이동공격력 보너스. 전투 시작 시 colDamage에 합산된다.
     public int ColDamageDelta => colDamage - baseColDamage;
+    [Tooltip("hp와 동일 조건 — Ally는 SetPieceData가 덮어씀, Enemy/AutoAlly는 여기 값이 그대로 쓰임.")]
     public int shieldBonus;
-    public int baseShieldBonus; // 기물의 강화 전(영입 시점) 방어막 보너스. 영구 강화로는 변하지 않는다.
+    [ReadOnlyInInspector] public int baseShieldBonus; // Awake()에서 항상 shieldBonus를 그대로 복사함 — 여기 채워도 덮어써짐
     public int shieldBonusBonus; // 영구 강화로 누적된 방어막 보너스. 전투 시작 시 shieldBonus에 합산된다.
     public int ShieldBonusDelta => shieldBonus - baseShieldBonus;
-    public int teamID;
+    [ReadOnlyInInspector] public int teamID; // Awake()에서 항상 pieceInfo.TeamID로 덮어씀 — teamID는 pieceInfo에서 바꿔야 함
+    [ReadOnlyInInspector] public bool isSummon; // Awake()에서 항상 pieceInfo.IsSummon으로 덮어씀 — isSummon도 pieceInfo에서 바꿔야 함
     int _shield;
     public int shield
     {
@@ -31,7 +37,7 @@ public abstract class Piece : MonoBehaviour
             UpdateShieldVisual();
         }
     }
-    public RangeInfoSO moveableRange;
+    [ReadOnlyInInspector] public RangeInfoSO moveableRange; // Ally는 SetPieceData가 덮어씀, Enemy/AutoPiece는 아예 안 읽음(카드의 effectRange만 사용)
 
     // teamID==0(아군)일 때만 SetPieceData에서 생성됨. 적/NPC는 null로 유지.
     public PieceDeck pieceDeck;
@@ -39,7 +45,7 @@ public abstract class Piece : MonoBehaviour
     // DataManager.currentData.pieceData에서 이 기물에 해당하는 인덱스. 덱은 더 이상 손패/버림/덱 더미를
     // 스캔해서 만들지 않고 이 인덱스로 저장된 deckCardIDs를 그대로 이어받는다(Board.SavePlayerPiecesToDataManager
     // 가 매번 다시 채워준다). 스폰 경로 밖에서 만들어진 경우 -1로 남아 저장에 반영되지 않는다.
-    public int pieceDataIndex = -1;
+    [ReadOnlyInInspector] public int pieceDataIndex = -1; // Awake()에서 손대지 않음 — 스폰 시점에 외부(Board)가 채워줌
 
     public List<StatusEffect> activeEffects = new List<StatusEffect>();
     public bool movedThisTurn;
@@ -106,6 +112,7 @@ public abstract class Piece : MonoBehaviour
         baseColDamage = colDamage;
         baseShieldBonus = shieldBonus;
         teamID = pieceInfo.TeamID;
+        isSummon = pieceInfo.IsSummon;
         pieceEffect = GetComponent<PieceEffect>();
         UpdateShieldVisual();
     }

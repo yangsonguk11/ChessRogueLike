@@ -54,6 +54,7 @@ public partial class Board
                     if (pp.hp <= 0)
                     {
                         if (pp.teamID == 1) enemyPositions.Remove(pos);
+                        else if (pp is AutoAlly) autoAllyPositions.Remove(pos);
                         StartCoroutine(pp.DeathCor());
                     }
                 }
@@ -94,5 +95,32 @@ public partial class Board
 
         TurnManager.instance.EndEnemyTurn();
         TurnManager.instance.StartPlayerTurn();
+    }
+
+    // 플레이어 턴 종료 직후 · 적 턴 시작 전에 자동행동 아군을 순서대로 행동시킨다.
+    // PlayEnemyTurnCoroutine과 달리 다음 단계 진행(적 턴 시작)은 호출부(TurnManager)가 맡는다.
+    public IEnumerator PlayAutoAllyTurnCoroutine()
+    {
+        List<Vector2Int> currentAutoAllies = new List<Vector2Int>(autoAllyPositions);
+
+        foreach (Vector2Int pos in currentAutoAllies)
+        {
+            Piece p = GetButtonScript(pos).GetPiece()?.GetComponent<Piece>();
+            if (p == null || p is not AutoAlly autoAlly) continue;
+
+            selectedButton = pos;
+            Card card = autoAlly.GetNextMove();
+
+            if (card != null)
+            {
+                UseCard(card);
+                yield return new WaitUntil(() => pendingEffects.Count == 0 && !queuecoroutineworking);
+                if (!autoAlly.IsStunned())
+                    autoAlly.ChangeMove();
+                autoAlly.ActionText();
+            }
+
+            ClearSelectedButton();
+        }
     }
 }

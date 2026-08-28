@@ -6,8 +6,14 @@ public class DataManager : MonoBehaviour, IGameDataStore
 {
     public static DataManager Instance;
 
+    // TitleScene에는 DataManager가 없어 Instance가 null일 수 있다. 그 상태로 시작 기물을 선택하면
+    // MainMenuCanvas가 이 키로 선택한 인덱스를 PlayerPrefs에 남기고, MainScene에서 DataManager가
+    // 처음 생성될 때 LoadFromFile()이 이 값을 읽어 적용한다.
+    public const string PendingStartingPieceIndexPrefKey = "PendingStartingPieceIndex";
+
     public GameData currentData = new GameData();
     public PieceInfo basicPieceinfo;
+    public PieceInfo summonerPieceinfo;
     private string savePath;
 
     public IReadOnlyList<PieceData> Pieces => currentData.pieceData;
@@ -61,38 +67,73 @@ public class DataManager : MonoBehaviour, IGameDataStore
         }
         else
         {
-            if (currentData.mapData == null) currentData.mapData = new List<NodeRow>();
-            if (currentData.pieceData == null) currentData.pieceData = new List<PieceData>();
-            if (currentData.nextLevelName == null) currentData.nextLevelName = "";
-            if (currentData.visitedNodeX == null) currentData.visitedNodeX = new List<int>();
-
-            List<string> defaultDeck = new List<string>()
+            PieceInfo startingPiece = basicPieceinfo;
+            if (PlayerPrefs.HasKey(PendingStartingPieceIndexPrefKey))
             {
-                "AttackCard",
-                "AttackCard",
-                "AttackCard",
-                "DefenseCard",
-                "DefenseCard",
-                "DefenseCard",
-                "MoveCard",
-                "MoveCard",
-                "StunCard",
-            };
-
-            currentData.pieceData.Clear();
-            currentData.pieceData.Add(BuildPieceData(basicPieceinfo, defaultDeck));
-            currentData.pieceData.Add(BuildPieceData(basicPieceinfo, defaultDeck));
-
-            if (currentData.ownedRelicNames == null) currentData.ownedRelicNames = new List<string>();
-            currentData.ownedRelicNames.Add("ShieldRelic");
-            currentData.ownedRelicNames.Add("ShieldRelic");
-            currentData.ownedRelicNames.Add("VampiricFangRelic");
-
-            currentData.nextLevelName = "";
-            currentData.currentFloor = 0;
-            currentData.currentNodeX = -1;
+                startingPiece = ResolveStartingPieceInfo(PlayerPrefs.GetInt(PendingStartingPieceIndexPrefKey));
+                PlayerPrefs.DeleteKey(PendingStartingPieceIndexPrefKey);
+            }
+            InitializeDefaultData(startingPiece);
         }
     }
+
+    // 새 게임 시작 시 기본 데이터(기물 2장, 기본 유물, 진행 상태)를 구성한다. startingPiece로 지정한 기물 2장으로 로스터를 채운다.
+    void InitializeDefaultData(PieceInfo startingPiece)
+    {
+        if (currentData.mapData == null) currentData.mapData = new List<NodeRow>();
+        if (currentData.pieceData == null) currentData.pieceData = new List<PieceData>();
+        if (currentData.nextLevelName == null) currentData.nextLevelName = "";
+        if (currentData.visitedNodeX == null) currentData.visitedNodeX = new List<int>();
+
+        List<string> defaultDeck = new List<string>()
+        {
+            "AttackCard",
+            "AttackCard",
+            "AttackCard",
+            "DefenseCard",
+            "DefenseCard",
+            "SummonCard",
+            "MoveCard",
+            "MoveCard",
+            "StunCard",
+        };
+        List<string> deck = startingPiece.DefaultDeckCardIDs != null && startingPiece.DefaultDeckCardIDs.Count > 0
+            ? startingPiece.DefaultDeckCardIDs
+            : defaultDeck;
+
+        currentData.pieceData.Clear();
+        currentData.pieceData.Add(BuildPieceData(startingPiece, deck));
+
+        if (currentData.ownedRelicNames == null) currentData.ownedRelicNames = new List<string>();
+        currentData.ownedRelicNames.Add("ShieldRelic");
+        currentData.ownedRelicNames.Add("VampiricFangRelic");
+
+        currentData.nextLevelName = "";
+        currentData.currentFloor = 0;
+        currentData.currentNodeX = -1;
+    }
+
+    // 세이브 삭제 후, 지정한 기물 2장으로 시작 로스터를 구성한다 (대체 시작 기물 테스트/선택용)
+    public void ResetSaveWithStartingPiece(PieceInfo startingPiece)
+    {
+        if (startingPiece == null) return;
+        if (File.Exists(savePath)) File.Delete(savePath);
+        currentData = new GameData();
+        InitializeDefaultData(startingPiece);
+    }
+
+    // startingPieceIndex로 시작 기물을 선택해 리셋한다 (0: 기본 기물, 1: 소환사)
+    public void ResetSaveWithStartingPiece(int startingPieceIndex)
+    {
+        ResetSaveWithStartingPiece(ResolveStartingPieceInfo(startingPieceIndex));
+    }
+
+    PieceInfo ResolveStartingPieceInfo(int startingPieceIndex) => startingPieceIndex switch
+    {
+        0 => basicPieceinfo,
+        1 => summonerPieceinfo,
+        _ => basicPieceinfo,
+    };
 
     // 기물별 덱 도입 이전 세이브 호환: 팀 공용이던 legacyDeckCardIDs를 0번 기물의 덱으로 한 번만 옮긴다.
     void MigrateLegacyDeckIfNeeded()
@@ -238,6 +279,7 @@ public class DataManager : MonoBehaviour, IGameDataStore
     {
         if (File.Exists(savePath))
             File.Delete(savePath);
+        PlayerPrefs.DeleteKey(PendingStartingPieceIndexPrefKey);
         currentData = new GameData();
         LoadFromFile();
     }

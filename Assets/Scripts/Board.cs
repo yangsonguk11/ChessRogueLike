@@ -29,6 +29,7 @@ public partial class Board : MonoBehaviour
     public bool boardReady = false;
 
     public List<Vector2Int> enemyPositions = new List<Vector2Int>();
+    public List<Vector2Int> autoAllyPositions = new List<Vector2Int>();
     [Header("보드 크기")]
     [Min(1)] public int N;
     [Min(1)] public int M;
@@ -193,7 +194,9 @@ public partial class Board : MonoBehaviour
     {
         // 이전 씬에서 남은 적 목록 초기화 (DontDestroyOnLoad인 GameManager의 리스트)
         GameManager.instance?.ClearEnemies();
+        GameManager.instance?.ClearAllies();
         enemyPositions.Clear();
+        autoAllyPositions.Clear();
 
         currentLevelData = data;
         IsEventLevel = data.levelType == LevelData.LevelType.Event;

@@ -83,6 +83,7 @@ MonoBehaviour:
   - {fileID: 8950236184682274632, guid: 377aa31775b2cd844a6ddae513cdfaa9, type: 3}
   - {fileID: 8950236184682274632, guid: c6b940bb917ba074c870446296a9ccf8, type: 3}
   - {fileID: 8950236184682274632, guid: dbd239f4bf99bbe4da58d7cfdaecc5ae, type: 3}
+  - {fileID: 8950236184682274632, guid: c4751b2d4a7cd3c4686b5d70eef3228a, type: 3}
   spritesPrefabs:
   - {fileID: 8983308741282738250, guid: 4cd8a850886c3d84192f6b9fe63b7103, type: 3}
   - {fileID: 8983308741282738250, guid: acfd85d4bfd6ed04789af40e579bad12, type: 3}
@@ -108,6 +109,8 @@ MonoBehaviour:
   - {fileID: 138226, guid: dc15f517405996445b9c4c84c99842fc, type: 3}
   - {fileID: 107724, guid: 91d1bd0e97be4386976b6d5b6d501ad9, type: 3}
   - {fileID: 107724, guid: 20d581bbe9f84547af1fdb8e9284b387, type: 3}
+  - {fileID: 107724, guid: 86e9194820d3d7841a80218e3adc1f31, type: 3}
+  - {fileID: 103078, guid: c08f26c86fd94ee194e4f53464eda0f2, type: 3}
 --- !u!114 &3181729770140103546
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -123,6 +126,7 @@ MonoBehaviour:
   RangeInfos:
   - {fileID: 11400000, guid: e798bd81c0425624ead1e05779a9c275, type: 2}
   - {fileID: 11400000, guid: 8751ef872e684a43b7bb160df2dd6cbc, type: 2}
+  - {fileID: 11400000, guid: c3f46dc319874fce97a3aa5c202168f5, type: 2}
 --- !u!114 &5845322441005520208
 MonoBehaviour:
   m_ObjectHideFlags: 0

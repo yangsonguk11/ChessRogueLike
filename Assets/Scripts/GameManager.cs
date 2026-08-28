@@ -7,6 +7,7 @@ public class GameManager : MonoBehaviour, IGameManager
 
     [SerializeField] GameObject Board;
     readonly List<GameObject> Enemylist = new List<GameObject>();
+    readonly List<GameObject> Allylist = new List<GameObject>();
 
     private bool isQuitting = false;
     private void OnApplicationQuit() { isQuitting = true; }
@@ -59,6 +60,26 @@ public class GameManager : MonoBehaviour, IGameManager
     }
 
     public void ClearEnemies() => Enemylist.Clear();
+
+    public void AddAlly(GameObject obj)
+    {
+        Allylist.Add(obj);
+    }
+
+    public void RemoveAlly(GameObject obj)
+    {
+        Allylist.Remove(obj);
+        if (Allylist.Count == 0 && !isQuitting)
+            TriggerDefeat();
+    }
+
+    public void ClearAllies() => Allylist.Clear();
+
+    // TODO: 실제 패배 UI/씬 전환 흐름 구현 필요 — 현재는 로그만 남긴다.
+    void TriggerDefeat()
+    {
+        Debug.Log("[GameManager] 모든 일반 아군이 사망 — 패배 조건 충족 (placeholder, 실제 패배 흐름 미구현)");
+    }
 
     // 휴식 등 이벤트 레벨의 '나가기' 버튼에서 호출. 전투 레벨에서는 호출되어선 안 됨.
     public void FinishEventLevel()

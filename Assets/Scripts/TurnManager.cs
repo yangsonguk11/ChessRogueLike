@@ -77,6 +77,7 @@ public class TurnManager : MonoBehaviour, ITurnManager
     {
         board.SendMessage("AllyTurnEnd");
         yield return new WaitUntil(() => !board.queuecoroutineworking);
+        yield return StartCoroutine(board.PlayAutoAllyTurnCoroutine());
         StartEnemyTurn();
     }
 

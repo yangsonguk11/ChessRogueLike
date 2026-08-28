@@ -10,13 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e4dbbf5546730bb49820b9d1b68e5d31, type: 3}
-  m_Name: RookPieceInfo
+  m_Name: summoned
   m_EditorClassIdentifier: Assembly-CSharp::PieceInfo
-  _pieceName: enemy
+  _pieceName: summoned
   _teamID: 1
+  _isSummon: 1
   _maxHp: 10
   _colDamage: 5
   _shieldBonus: 0
-  _rangeInfoSO: {fileID: 11400000, guid: 35d0d714c9e81e94ba8bb12c5d295a0e, type: 2}
+  _rangeInfoSO: {fileID: 11400000, guid: e798bd81c0425624ead1e05779a9c275, type: 2}
   _moveAttackRangeInfoSO: {fileID: 0}
   _defaultDeckCardIDs: []

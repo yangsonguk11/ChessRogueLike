@@ -15,10 +15,10 @@ public class StunCard : Card
             targetlogic = TargetLogic.LowestHP,
             effectRange = effectRange[0],
             statusEffectType = StatusEffectType.Stun,
-            statusDuration = 2,
+            statusDuration = 1,
             animTrigger = "ApplyStatus",
         };
         effects.Add(cf);
     }
-    public override string EffectDescription => $"대상에게 기절을 {effects[0].statusDuration - 1}턴 부여합니다.";
+    public override string EffectDescription => $"대상에게 기절을 {effects[0].statusDuration}턴 부여합니다.";
 }

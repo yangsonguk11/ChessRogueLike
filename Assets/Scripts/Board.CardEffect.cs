@@ -264,6 +264,11 @@ public partial class Board
 
     Vector2Int ResolveNearestEnemyTarget()
     {
+        // 캐스터 자신의 teamID 기준으로 상대팀을 동적으로 계산 — teamID==1(적)뿐 아니라
+        // teamID==0(자동행동 아군)이 이 로직을 써도 올바르게 반대팀을 노리게 하기 위함.
+        Piece caster = GetButtonScript(selectedButton).GetPieceScript();
+        int targetTeam = caster != null && caster.teamID == 0 ? 1 : 0;
+
         List<Vector2Int> movableRange = GetButtonScript(selectedButton).GetPiece()?.GetComponent<Piece>().GetMoveableButton()
             ?? new List<Vector2Int>();
         AddMovableButtons(selectedButton, movableRange);
@@ -274,7 +279,7 @@ public partial class Board
         foreach (Vector2Int movablePos in selectedButtonMovable)
         {
             Piece p = GetButtonScript(movablePos).GetPiece()?.GetComponent<Piece>();
-            if (p != null && p.teamID == 0)
+            if (p != null && p.teamID == targetTeam)
             {
                 float dist = Vector2.Distance(selectedButton, movablePos);
                 if (dist < minDistance)
@@ -289,7 +294,7 @@ public partial class Board
             return bestTargetPos;
 
         // 범위 내 플레이어 없음: 가장 가까운 플레이어 방향으로 이동
-        Vector2Int globalNearestPlayer = GetNearestPlayerPos(selectedButton);
+        Vector2Int globalNearestPlayer = GetNearestPlayerPos(selectedButton, targetTeam);
         float minMoveDist = float.MaxValue;
         Vector2Int bestMovePos = selectedButton;
 
@@ -469,10 +474,92 @@ public partial class Board
             case EffectType.Stun:
                 // 의도적인 무효과: 기절한 적이 이번 턴을 스턴으로 소모했다는 표시일 뿐.
                 break;
+            case EffectType.Summon:
+                SummonPieceAt(targetPos, cardEffect);
+                break;
             default:
                 Debug.LogError("효과 타입을 찾지 못했습니다");
                 break;
         }
+    }
+
+    void SummonPieceAt(Vector2Int targetPos, CardEffect cardEffect)
+    {
+        if (targetPos.x < 0 || targetPos.y < 0) return;
+
+        PieceInfo info = cardEffect.summonPieceInfo;
+        if (info == null) { Debug.LogError("[Board] Summon 효과에 summonPieceInfo가 없습니다."); return; }
+
+        // 점유된 targetPos(적 위치) 자신을 중심으로 사거리를 다시 잡는다 — 시전자(selectedButton) 기준으로
+        // 두면 사거리 경계가 시전자 쪽에 치우쳐서, 적과는 가깝지만 시전자에게서 먼 빈 칸이 부당하게 걸러진다.
+        HashSet<Vector2Int> inRange = new HashSet<Vector2Int>();
+        if (cardEffect.effectRange != null)
+            foreach (Vector2Int offset in cardEffect.effectRange.GetAbleRange())
+                inRange.Add(targetPos + offset);
+
+        Vector2Int spawnPos = FindEmptySummonCell(new List<Vector2Int> { targetPos }, inRange, new HashSet<Vector2Int> { targetPos });
+        if (spawnPos.x < 0) return; // 사거리 내에 더 시도할 빈 칸이 없음 — 이 효과는 스킵
+
+        GameObject prefab = piecedatabase.GetPiece(info.PieceName);
+        if (prefab == null)
+        {
+            Debug.LogError($"[Board] 소환 실패: '{info.PieceName}' 을(를) PieceDatabase에서 찾을 수 없습니다.");
+            return;
+        }
+
+        GameObject pieceObj = Instantiate(prefab);
+        GetButtonScript(spawnPos).SetPiece(pieceObj);
+        Piece pieceScript = pieceObj.GetComponent<Piece>();
+
+        if (pieceScript is Enemy)
+        {
+            enemyPositions.Add(spawnPos);
+        }
+        else if (pieceScript is AutoAlly)
+        {
+            autoAllyPositions.Add(spawnPos); // 손패 없음, AI가 자동 행동
+        }
+        else if (pieceScript.teamID == 0)
+        {
+            // 전투 한정 소환: DataManager에 영구 등록하지 않음 (pieceDataIndex는 -1로 유지)
+            PieceData data = DataManager.Instance.BuildPieceData(info, info.DefaultDeckCardIDs);
+            pieceScript.SetPieceData(data);
+        }
+    }
+
+    // 상하좌우(직교) 먼저, 대각선은 나중 — 같은 프론티어(같은 홉 거리) 안에서 상하좌우 빈 칸이 있으면
+    // 그쪽을 먼저 반환하도록 순서로 우선순위를 준다. 8방향 모두 홉 거리는 동일하게 취급하되(대각선도
+    // 인접으로 인정), 동률일 때만 대각선보다 직교를 우선한다.
+    static readonly Vector2Int[] EightDirectionOffsets =
+    {
+        new Vector2Int(0, -1), new Vector2Int(-1, 0), new Vector2Int(1, 0), new Vector2Int(0, 1),
+        new Vector2Int(-1, -1), new Vector2Int(1, -1), new Vector2Int(-1, 1), new Vector2Int(1, 1),
+    };
+
+    // frontier(현재 탐색 중인, 점유된 대상으로부터 같은 거리에 있는 칸 무리)를 한 칸씩 검사해 비어있는
+    // 칸을 찾는다. 전부 점유돼 있으면 그 칸들의 인접(8방향)·inRange·미방문 칸으로 다음 frontier를 만들어
+    // 재귀한다 — 거리 단계별로(가까운 칸 무리를 전부 검사한 뒤에야 한 칸 더 먼 무리로 넘어가므로) "가장
+    // 가까운" 빈 칸을 보장한다(한 방향으로만 깊이 파고드는 방식이면 더 가까운 다른 방향을 놓칠 수 있음).
+    // inRange 내에 더 시도할 칸이 없으면 (-1,-1) 반환 — 호출부(SummonPieceAt)가 스킵 신호로 쓴다.
+    Vector2Int FindEmptySummonCell(List<Vector2Int> frontier, HashSet<Vector2Int> inRange, HashSet<Vector2Int> tried)
+    {
+        if (frontier.Count == 0) return new Vector2Int(-1, -1);
+
+        List<Vector2Int> nextFrontier = new List<Vector2Int>();
+        foreach (Vector2Int candidate in frontier)
+        {
+            if (GetPieceAt(candidate) == null) return candidate;
+
+            foreach (Vector2Int dir in EightDirectionOffsets)
+            {
+                Vector2Int next = candidate + dir;
+                if (next.x < 0 || next.x >= N || next.y < 0 || next.y >= M) continue;
+                if (!inRange.Contains(next) || tried.Contains(next)) continue;
+                tried.Add(next);
+                nextFrontier.Add(next);
+            }
+        }
+        return FindEmptySummonCell(nextFrontier, inRange, tried);
     }
 
     void ApplyTurnEffectToTarget(Vector2Int targetPos, CardEffect cardEffect)

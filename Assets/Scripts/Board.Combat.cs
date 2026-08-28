@@ -117,6 +117,7 @@ public partial class Board
         if (hpLeft <= 0)
         {
             if (pScript2.teamID == 1) enemyPositions.Remove(impactPos);
+            else if (pScript2 is AutoAlly) autoAllyPositions.Remove(impactPos);
             motionQueue.Enqueue(pScript2.DeathCor());
             motionQueue.Enqueue(PieceMoveCor(GetButtonScript(adjacentPos), bScript2, 1f));
             TriggerOnKillEffect(impactPos, pScript1, cardEffect);
@@ -126,6 +127,7 @@ public partial class Board
             if (splashHpLeft <= 0)
             {
                 if (p.teamID == 1) enemyPositions.Remove(pos);
+                else if (p is AutoAlly) autoAllyPositions.Remove(pos);
                 motionQueue.Enqueue(p.DeathCor());
                 TriggerOnKillEffect(hpLeft <= 0 ? impactPos : adjacentPos, pScript1, cardEffect);
             }
@@ -140,6 +142,7 @@ public partial class Board
             if (attackerHp <= 0)
             {
                 if (pScript1.teamID == 1) enemyPositions.Remove(attackerPos);
+                else if (pScript1 is AutoAlly) autoAllyPositions.Remove(attackerPos);
                 motionQueue.Enqueue(pScript1.DeathCor());
             }
         }
@@ -191,6 +194,7 @@ public partial class Board
             if (hpLeftDirect <= 0)
             {
                 if (target.teamID == 1) enemyPositions.Remove(pos2);
+                else if (target is AutoAlly) autoAllyPositions.Remove(pos2);
                 motionQueue.Enqueue(target.DeathCor());
             }
             StartMotionQueue();
@@ -220,6 +224,7 @@ public partial class Board
         if (hpLeft <= 0)
         {
             if (pScript2.teamID == 1) enemyPositions.Remove(pos2);
+            else if (pScript2 is AutoAlly) autoAllyPositions.Remove(pos2);
             motionQueue.Enqueue(pScript2.DeathCor());
             TriggerOnKillEffect(pos1, pScript1, cardEffect);
         }
@@ -269,6 +274,7 @@ public partial class Board
         if (hpLeft <= 0)
         {
             if (p.teamID == 1) enemyPositions.Remove(casterPos);
+            else if (p is AutoAlly) autoAllyPositions.Remove(casterPos);
             motionQueue.Enqueue(p.DeathCor());
         }
         StartMotionQueue();
@@ -304,6 +310,7 @@ public partial class Board
             if (died)
             {
                 if (p.teamID == 1) enemyPositions.Remove(pos);
+                else if (p is AutoAlly) autoAllyPositions.Remove(pos);
                 deathCoroutines.Add(p.DeathCor());
                 TriggerOnKillEffect(casterPos, caster, cardEffect);
             }
@@ -345,6 +352,7 @@ public partial class Board
             if (died)
             {
                 if (p.teamID == 1) enemyPositions.Remove(pos);
+                else if (p is AutoAlly) autoAllyPositions.Remove(pos);
                 deathCoroutines.Add(p.DeathCor());
             }
         }
