@@ -115,6 +115,20 @@ public abstract class Piece : MonoBehaviour
         isSummon = pieceInfo.IsSummon;
         pieceEffect = GetComponent<PieceEffect>();
         UpdateShieldVisual();
+        if (!isSummon)
+        {
+            if (teamID == 0) GameManager.instance?.AddAlly(gameObject);
+            else if (teamID == 1) GameManager.instance?.AddEnemy(gameObject);
+        }
+    }
+
+    void OnDestroy()
+    {
+        if (!isSummon)
+        {
+            if (teamID == 0) GameManager.instance?.RemoveAlly(gameObject);
+            else if (teamID == 1) GameManager.instance?.RemoveEnemy(gameObject);
+        }
     }
 
     void UpdateShieldVisual()

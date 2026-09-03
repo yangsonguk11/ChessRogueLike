@@ -145,12 +145,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 103078}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2342992fd2fc88b4c8a99d70379f27dd, type: 3}
+  m_Script: {fileID: 11500000, guid: 5b231754acf790548af0ae2d8d980ad9, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Enemy
+  m_EditorClassIdentifier: Assembly-CSharp::AutoPiece
   pieceInfo: {fileID: 11400000, guid: 42cbb7d2167862f4e8a7ceb7ca7b9485, type: 2}
   pieceCanvas: {fileID: 1364080683605813438}
-  name:
+  name: Summoner
   hp: 50
   maxhp: 50
   colDamage: 5
@@ -160,6 +160,7 @@ MonoBehaviour:
   baseShieldBonus: 0
   shieldBonusBonus: 0
   teamID: 0
+  isSummon: 0
   moveableRange: {fileID: 0}
   pieceDataIndex: -1
   movedThisTurn: 0

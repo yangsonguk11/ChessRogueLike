@@ -511,11 +511,11 @@ public partial class Board
         GetButtonScript(spawnPos).SetPiece(pieceObj);
         Piece pieceScript = pieceObj.GetComponent<Piece>();
 
-        if (pieceScript is Enemy)
+        if (pieceScript is AutoPiece && pieceScript.teamID == 1)
         {
             enemyPositions.Add(spawnPos);
         }
-        else if (pieceScript is AutoAlly)
+        else if (pieceScript is AutoPiece)
         {
             autoAllyPositions.Add(spawnPos); // 손패 없음, AI가 자동 행동
         }

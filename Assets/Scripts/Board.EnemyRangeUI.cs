@@ -11,7 +11,7 @@ public partial class Board
         foreach (Vector2Int pos in enemyPositions)
         {
             Piece p = GetButtonScript(pos).GetPieceScript();
-            if (p == null || p is not Enemy enemy) continue;
+            if (p == null || p is not AutoPiece enemy) continue;
 
             List<Vector2Int> offsets = enemy.GetMoveableButton();
             foreach (Vector2Int offset in offsets)

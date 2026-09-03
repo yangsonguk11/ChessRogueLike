@@ -54,7 +54,7 @@ public partial class Board
                     if (pp.hp <= 0)
                     {
                         if (pp.teamID == 1) enemyPositions.Remove(pos);
-                        else if (pp is AutoAlly) autoAllyPositions.Remove(pos);
+                        else if (pp is AutoPiece) autoAllyPositions.Remove(pos);
                         StartCoroutine(pp.DeathCor());
                     }
                 }
@@ -74,7 +74,7 @@ public partial class Board
         foreach (Vector2Int pos in currentEnemies)
         {
             Piece p = GetButtonScript(pos).GetPiece()?.GetComponent<Piece>();
-            if (p == null || p is not Enemy enemy) continue;
+            if (p == null || p is not AutoPiece enemy) continue;
 
             selectedButton = pos;
             // 기절 상태면 GetNextMove()가 원래 예고했던 카드 대신 스턴 카드를 반환한다.
@@ -106,7 +106,7 @@ public partial class Board
         foreach (Vector2Int pos in currentAutoAllies)
         {
             Piece p = GetButtonScript(pos).GetPiece()?.GetComponent<Piece>();
-            if (p == null || p is not AutoAlly autoAlly) continue;
+            if (p == null || p is not AutoPiece autoAlly) continue;
 
             selectedButton = pos;
             Card card = autoAlly.GetNextMove();

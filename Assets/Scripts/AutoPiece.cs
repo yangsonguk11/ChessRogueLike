@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-public abstract class AutoPiece : Piece
+public class AutoPiece : Piece
 {
     [FormerlySerializedAs("enemyCards")]
     public List<Card> actionCards; // 순서대로 사용할 스킬/효과 리스트 (Enemy/AutoAlly 공용)

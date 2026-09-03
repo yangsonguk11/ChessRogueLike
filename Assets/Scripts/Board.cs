@@ -145,6 +145,8 @@ public partial class Board : MonoBehaviour
     // 보드 위 생존 기물들의 스탯을 currentData.pieceData로 동기화한다. 덱(deckCardIDs)은 손패/버림/덱 더미를
     // 다시 스캔하지 않고 pieceDataIndex로 이전 저장값을 그대로 이어받으므로(Piece.GetPieceData 참고),
     // 새로 채워질 리스트에서의 위치로 각 기물의 pieceDataIndex를 갱신해줘야 다음 저장에서도 계속 맞물린다.
+    // isSummon 기물(예: autoally)은 전투 한정이므로 영구 로스터에 남기지 않는다 — SummonPieceAt의
+    // "전투 한정 소환: DataManager에 영구 등록하지 않음" 방침과 동일한 이유.
     public void SavePlayerPiecesToDataManager()
     {
         if (!boardReady) return;
@@ -154,7 +156,7 @@ public partial class Board : MonoBehaviour
             for (int y = 0; y < M; y++)
             {
                 Piece p = GetButtonScript(new Vector2Int(x, y)).GetPieceScript();
-                if (p == null || p.teamID != 0) continue;
+                if (p == null || p.teamID != 0 || p.isSummon) continue;
 
                 PieceData data = p.GetPieceData(); // 이전 pieceDataIndex로 저장된 덱을 읽어온다
                 p.pieceDataIndex = surviving.Count; // 새 리스트에서 자기가 놓일 위치로 갱신
