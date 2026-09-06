@@ -15,8 +15,6 @@
 
 - **엔진**: Unity `6000.3.10f1`
 - **언어**: C#
-- **UI**: TextMesh Pro, Unity UGUI
-- **입력**: Unity Input System
 
 ## 프로젝트 구조
 
@@ -36,15 +34,13 @@ Assets/
   SO/                      # ScriptableObject 데이터 (기물 정보, 사거리 정보 등)
   Prefab/                  # 기물, UI, 카드 프리팹
   Scenes/                  # TitleScene, MainScene, CardTestScene
-docs/
-  code-evolution-before-after-ai.md
-                            # AI(Claude Code) 협업 도입 전후의 코드베이스 변화 기록
+
 ```
 
 ## 시작하기
 
 1. Unity Hub에서 `6000.3.10f1` 버전의 에디터로 이 프로젝트 폴더를 엽니다.
-2. `Assets/Scenes/TitleScene.unity` 또는 `Assets/Scenes/MainScene.unity`를 실행합니다.
+2. `Assets/Scenes/TitleScene.unity`를 실행합니다.
 3. `Assets/Scenes/CardTestScene.unity`는 카드 동작을 개별적으로 테스트하기 위한 씬입니다 (`CardTestBootstrap.cs`, `CardTestHandDealer.cs` 참고).
 
 ## 아키텍처 메모
@@ -54,4 +50,3 @@ docs/
 - 카드 효과(`CardEffect`)는 명명된 필드를 가진 `record`로 정의되어 있어 호출부에서 인자의 의미를 명확히 알 수 있습니다.
 - 보드 좌표는 `Vector2Int`로 통일되어 있습니다.
 
-더 자세한 변경 이력과 설계 배경은 [docs/code-evolution-before-after-ai.md](docs/code-evolution-before-after-ai.md)를 참고하세요.
