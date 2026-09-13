@@ -28,7 +28,8 @@ public class ZoneAttackCard : Card
             targetingRange = targetRange,
             targetingUsesMovement = useMovement,
             animTrigger = "AreaAttack",
-            hasCaster = false,
+            noRangeLimit = true,
+            ignoreCasterColDamageBonus = true,
         };
         effects.Add(cf);
     }

@@ -26,7 +26,9 @@ public class TurnEffect : StatusEffect
             return $"{timing} {effectDesc}";
         }
     }
-    public override bool IsBuff => cardEffect.type == EffectType.Heal || cardEffect.type == EffectType.Shield;
+    // cardEffect(=onTurnEndEffect 등)가 직접 명시한 값을 그대로 사용한다 — type만으로는
+    // 버프/디버프를 구분할 수 없다(예: Damage는 자기 자신 대상이면 디버프, 적 대상이면 버프).
+    public override bool IsBuff => cardEffect.isBuff;
 
     public TurnEffect(TurnPhase phase, CardEffect cardEffect, int duration)
     {

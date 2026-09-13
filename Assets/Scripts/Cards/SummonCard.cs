@@ -17,6 +17,7 @@ public class SummonCard : Card
             type = EffectType.Summon,
             effectRange = effectRange[0],
             summonPieceInfo = pieceToSummon,
+            animTrigger = "Attack",
         };
         effects.Add(cf);
     }

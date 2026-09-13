@@ -31,3 +31,5 @@ MonoBehaviour:
   rewardUpgradeSelectCount: 1
   rewardUpgradeColDamageBonus: 1
   rewardUpgradeShieldBonusBonus: 0
+  rewardGoldMin: 10
+  rewardGoldMax: 20

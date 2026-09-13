@@ -1,4 +1,4 @@
-using System.Collections;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 
@@ -18,6 +18,7 @@ public class PieceCanvas : MonoBehaviour
     
     public void ShowActionText(string text)
     {
+        AudioManager.instance?.PlayEnemyTelegraph();
         Destroy(currentText);
         GameObject textobj = Instantiate(DamageText, transform);
         TextMeshProUGUI tmp = textobj.GetComponent<TextMeshProUGUI>();
@@ -39,7 +40,7 @@ public class PieceCanvas : MonoBehaviour
         GameObject textobj = Instantiate(DamageText, transform);
         BringToFrontOfRangeHatch(textobj.GetComponent<TextMeshProUGUI>());
         textobj.GetComponent<TextMeshProUGUI>().text = dmg.ToString();
-        StartCoroutine(FloatAndFadeCoroutine(textobj));
+        FloatAndFade(textobj);
     }
 
     // 버프/디버프가 적용될 때 어떤 효과인지(예: "독 (2/턴)") 데미지 텍스트와 같은 자리에 띄움
@@ -51,7 +52,7 @@ public class PieceCanvas : MonoBehaviour
         BringToFrontOfRangeHatch(tmp);
         tmp.text = text;
         tmp.color = isBuff ? buffColor : effectColor;
-        StartCoroutine(FloatAndFadeCoroutine(textobj));
+        FloatAndFade(textobj);
     }
 
     // RangeHatch 셰이더가 Queue=Transparent+1로 그려져서 기본 Transparent(3000) 큐인
@@ -62,27 +63,20 @@ public class PieceCanvas : MonoBehaviour
         foreach (Material mat in tmp.fontMaterials)
             mat.renderQueue = 3002;
     }
-    IEnumerator FloatAndFadeCoroutine(GameObject textobj)
+    void FloatAndFade(GameObject textobj)
     {
         TextMeshProUGUI text = textobj.GetComponent<TextMeshProUGUI>();
         Color baseColor = text.color;
-
         Vector3 startPos = new Vector3(0, 2.0f, 0);
-        float time = 0f;
+        textobj.transform.localPosition = startPos;
 
-        Vector3 v = new Vector3(0, moveSpeed, 0);
-        while (time < duration)
-        {
-            time += Time.deltaTime;
-            float t = time / duration;
-            textobj.transform.localPosition = startPos + (v * t);
-            Color c = baseColor;
-            c.a = baseColor.a * (1f - t);
-            text.color = c;
-            yield return null;
-        }
+        textobj.transform.DOLocalMove(startPos + new Vector3(0, moveSpeed, 0) * duration, duration)
+            .SetEase(Ease.Linear)
+            .OnComplete(() => Destroy(textobj));
 
-        Destroy(textobj);
+        DOTween.To(() => text.color.a,
+            a => { Color c = baseColor; c.a = a; text.color = c; },
+            0f, duration).SetEase(Ease.Linear);
     }
 
 }

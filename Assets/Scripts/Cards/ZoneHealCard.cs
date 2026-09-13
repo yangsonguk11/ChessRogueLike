@@ -28,7 +28,7 @@ public class ZoneHealCard : Card
             targetingRange = targetRange,
             targetingUsesMovement = useMovement,
             animTrigger = "Heal",
-            hasCaster = false,
+            noRangeLimit = true,
         };
         effects.Add(cf);
     }

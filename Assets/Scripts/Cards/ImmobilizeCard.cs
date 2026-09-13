@@ -13,13 +13,13 @@ public class ImmobilizeCard : Card
         effects.Add(new CardEffect
         {
             requiredMode = Board.BoardMode.targeting,
-            type = EffectType.DeBuff,
+            type = EffectType.ApplyStatus,
             dmg = 0,
             targetlogic = TargetLogic.NearestEnemy,
             statusEffectType = StatusEffectType.MovementDisabled,
             statusDuration = 2,
-            animTrigger = "DeBuff",
-            hasCaster = false,
+            animTrigger = "ApplyStatus",
+            noRangeLimit = true,
         });
     }
 

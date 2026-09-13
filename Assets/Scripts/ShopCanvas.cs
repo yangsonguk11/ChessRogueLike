@@ -56,6 +56,7 @@ public class ShopCanvas : MonoBehaviour
 
     public void Show()
     {
+        AudioManager.instance?.PlayPanelOpen();
         Board.instance?.HideButtonInfoForShop();
 
         SpawnShopCards();
@@ -157,6 +158,7 @@ public class ShopCanvas : MonoBehaviour
         }
 
         DataManager.Instance.AddRelic(relicName);
+        AudioManager.instance?.PlayShopPurchase();
         Board.instance?.LoadOwnedRelics();
     }
 
@@ -185,6 +187,7 @@ public class ShopCanvas : MonoBehaviour
             AnnouncementUI.instance?.Show("골드가 부족합니다");
             return;
         }
+        AudioManager.instance?.PlayButtonClick();
 
         PieceTargetPickerUI.instance.Show(
             DataManager.Instance.Pieces,
@@ -198,6 +201,7 @@ public class ShopCanvas : MonoBehaviour
     // 닫기 버튼의 OnClick에 연결.
     public void OnClickClose()
     {
+        AudioManager.instance?.PlayButtonClick();
         Hide();
     }
 

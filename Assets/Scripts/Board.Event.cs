@@ -3,6 +3,7 @@ public partial class Board
     // 휴식 오브젝트의 휴식 버튼에서 호출: 보드 위 모든 아군을 각자의 최대 HP까지만 회복시킨다.
     public void RestHeal()
     {
+        AudioManager.instance?.PlayButtonClick();
         Piece caster = GetButtonScript(selectedButton).GetPieceScript();
         HealAllAllies(caster);
         if (caster is RestObject restObject) restObject.used = true;
@@ -17,6 +18,7 @@ public partial class Board
     // (RequestPieceSelection으로 아군을 고른 뒤 ApplyPermanentStatBuff)으로 처리한다.
     public void RestUpgrade()
     {
+        AudioManager.instance?.PlayButtonClick();
         Piece caster = GetButtonScript(selectedButton).GetPieceScript();
         if (!(caster is RestObject restObject)) return;
 
@@ -57,7 +59,7 @@ public partial class Board
         }
 
         if (ResultCanvas.Instance != null)
-            ResultCanvas.Instance.EnableCanvas();
+            ResultCanvas.Instance.EnableCanvas(currentLevelData?.rewardGoldMin ?? 0, currentLevelData?.rewardGoldMax ?? 0);
         else
             UnityEngine.Debug.LogError("[Board] GrantLevelReward: ResultCanvas.Instance가 null입니다.");
     }

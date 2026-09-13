@@ -4,9 +4,6 @@ using UnityEngine;
 public partial class Board
 {
     List<Vector2Int> hoverRangeButtons = new List<Vector2Int>();
-    List<Vector2Int> hoverPieceRangeButtons = new List<Vector2Int>();
-    bool hoverPieceIsAlly = true;
-    bool allEnemyRangeSuppressed = false;
     Vector2Int currentHoverDirection = Vector2Int.up;
 
     public void ButtonHovered(Vector2Int pos)
@@ -58,10 +55,9 @@ public partial class Board
             return;
         }
 
-        // 시전자 미선택 상태: 기물 위에 올리면 범위와 정보 표시
+        // 시전자 미선택 상태: 기물 위에 올리면 정보 표시(범위는 표시하지 않음)
         if (!isSelectedButtonActive())
         {
-            ClearHoverPieceRange();
             Piece hoveredPiece = GetButtonScript(pos).GetPieceScript();
 
             Piece newCaster = (hoveredPiece != null && hoveredPiece.teamID == 0)
@@ -77,53 +73,15 @@ public partial class Board
                 CardCanvas.instance.SetActivePiece(newCaster, silent: true);
 
             if (hoveredPiece != null)
-            {
-                hoverPieceIsAlly = hoveredPiece.teamID == 0;
-
-                // 적군 전체 기본 범위가 켜져 있는 상태라면, 그 위에 마우스를 올린 적군의 범위만 보이도록 잠깐 꺼둔다.
-                if (hoveredPiece.teamID == 1 && enemyAlwaysOnRange.Count > 0)
-                {
-                    ClearAllEnemyRanges();
-                    allEnemyRangeSuppressed = true;
-                }
-
-                List<Vector2Int> offsets;
-                int teamForRange;
-                if (pendingEffects.Count > 0 && hoveredPiece.teamID == 0)
-                {
-                    // 카드 사용 중 + 아군 기물: 카드 effectRange 표시
-                    CardEffect effect = pendingEffects.Peek();
-                    offsets = effect.effectRange != null
-                        ? effect.effectRange.GetAbleRange()
-                        : new List<Vector2Int>();
-                    teamForRange = 0;
-                }
-                else
-                {
-                    // Inspect 모드: 기물 기본 이동 범위 표시
-                    offsets = hoveredPiece.GetMoveableButton();
-                    teamForRange = hoveredPiece.teamID;
-                }
-                foreach (Vector2Int offset in offsets)
-                {
-                    Vector2Int target = pos + offset;
-                    if (target.x < 0 || target.x >= N || target.y < 0 || target.y >= M) continue;
-                    GetButtonScript(target).RangeOn(teamForRange);
-                    hoverPieceRangeButtons.Add(target);
-                }
                 ShowButtonInfo(pos);
-            }
             else
-            {
                 HideButtonInfo();
-            }
         }
     }
 
     public void ButtonUnhovered()
     {
         ClearHoverRange();
-        ClearHoverPieceRange();
         if (!isSelectedButtonActive())
             HideButtonInfo();
         if (!isSelectedButtonActive() && casterPiece != null)
@@ -139,11 +97,6 @@ public partial class Board
             if (selectedPiece != null && selectedPiece.teamID == 0)
                 CardCanvas.instance?.SetActivePiece(selectedPiece, silent: true);
         }
-        if (allEnemyRangeSuppressed)
-        {
-            ShowAllEnemyRanges();
-            allEnemyRangeSuppressed = false;
-        }
     }
 
     public void ClearHoverRange()
@@ -151,14 +104,6 @@ public partial class Board
         foreach (Vector2Int v in hoverRangeButtons)
             GetButtonScript(v).RangeOff(0);
         hoverRangeButtons.Clear();
-    }
-
-    void ClearHoverPieceRange()
-    {
-        int team = hoverPieceIsAlly ? 0 : 1;
-        foreach (Vector2Int v in hoverPieceRangeButtons)
-            GetButtonScript(v).RangeOff(team);
-        hoverPieceRangeButtons.Clear();
     }
 
     // 기준 방향(-1,0 = 인스펙터 위쪽 행)에서 dir 방향으로 오프셋 목록을 회전

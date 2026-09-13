@@ -200,6 +200,7 @@ public class DataManager : MonoBehaviour, IGameDataStore
         if (piece.deckCardIDs == null) piece.deckCardIDs = new List<string>();
         piece.deckCardIDs.Add(cardname);
         currentData.pieceData[pieceIndex] = piece;
+        AudioManager.instance?.PlayCardAcquired();
         CardCanvas.instance?.ShowAddedCard(cardname, CardPositionZone.Discard);
     }
 
@@ -217,11 +218,12 @@ public class DataManager : MonoBehaviour, IGameDataStore
         return true;
     }
 
-    // gold를 지급한다. 호출부는 아직 없음 — 언제 얼마나 지급할지는 이후 결정.
+    // gold를 지급한다. 모든 골드 획득 경로(전투 보상 등)가 이 함수를 거치므로 사운드도 여기 한 곳에서만 재생한다.
     public void AddGold(int amount)
     {
         if (amount <= 0) return;
         currentData.gold += amount;
+        AudioManager.instance?.PlayGoldAcquired();
     }
 
     // gold가 충분하면 차감하고 true, 부족하면 아무 것도 하지 않고 false를 반환한다.

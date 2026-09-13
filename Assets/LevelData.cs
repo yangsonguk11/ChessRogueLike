@@ -43,4 +43,9 @@ public class LevelData : ScriptableObject
     public int rewardUpgradeColDamageBonus = 1;
     [Tooltip("rewardType이 PieceUpgrade일 때 선택된 아군에게 영구로 더할 방어막 보너스")]
     public int rewardUpgradeShieldBonusBonus = 0;
+
+    [Tooltip("rewardType이 Card일 때 지급할 골드 범위의 최솟값")]
+    public int rewardGoldMin = 0;
+    [Tooltip("rewardType이 Card일 때 지급할 골드 범위의 최댓값 (포함)")]
+    public int rewardGoldMax = 0;
 }

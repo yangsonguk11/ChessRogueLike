@@ -19,6 +19,10 @@ public class PieceInfo : ScriptableObject
     [Tooltip("이 기물이 세이브에 새로 추가될 때(DataManager.AddPiece) 시작 덱으로 쓸 카드 목록. CardDatabase에 등록된 카드 이름.")]
     [SerializeField] List<string> _defaultDeckCardIDs;
 
+    [Header("직업")]
+    [Tooltip("이 기물이 속한 직업. 전투 보상 화면에서 카드 풀을 결정하는 데 쓰인다.")]
+    [SerializeField] JobInfo _job;
+
     public string PieceName => _pieceName;
     public int TeamID => _teamID;
     public bool IsSummon => _isSummon;
@@ -29,4 +33,5 @@ public class PieceInfo : ScriptableObject
     public RangeInfoSO RangeInfoSO => _rangeInfoSO;
     public RangeInfoSO MoveAttackRangeInfoSO => _moveAttackRangeInfoSO;
     public List<string> DefaultDeckCardIDs => _defaultDeckCardIDs;
+    public JobInfo Job => _job;
 }

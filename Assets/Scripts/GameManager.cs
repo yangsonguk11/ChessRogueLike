@@ -56,7 +56,11 @@ public class GameManager : MonoBehaviour, IGameManager
     {
         Enemylist.Remove(obj);
         if (Enemylist.Count == 0 && !isQuitting)
+        {
+            MarkCombatEnded();
+            AudioManager.instance?.PlayBattleVictory();
             FinishLevel();
+        }
     }
 
     public void ClearEnemies() => Enemylist.Clear();
@@ -70,14 +74,25 @@ public class GameManager : MonoBehaviour, IGameManager
     {
         Allylist.Remove(obj);
         if (Allylist.Count == 0 && !isQuitting)
+        {
+            MarkCombatEnded();
             TriggerDefeat();
+        }
     }
 
     public void ClearAllies() => Allylist.Clear();
 
+    // 승패가 갈린 순간 Board에 알려서, 진행 중이던 턴 체인(TurnManager)이 다음 단계로 넘어가지 않게 막는다.
+    void MarkCombatEnded()
+    {
+        global::Board boardScript = this.Board?.GetComponent<global::Board>();
+        if (boardScript != null) boardScript.CombatEnded = true;
+    }
+
     // TODO: 실제 패배 UI/씬 전환 흐름 구현 필요 — 현재는 로그만 남긴다.
     void TriggerDefeat()
     {
+        AudioManager.instance?.PlayBattleDefeat();
         Debug.Log("[GameManager] 모든 일반 아군이 사망 — 패배 조건 충족 (placeholder, 실제 패배 흐름 미구현)");
     }
 

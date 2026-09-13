@@ -38,6 +38,7 @@ public class CardsPanel : MonoBehaviour
     {
         var pieces = DataManager.Instance.Pieces;
         if (pieces == null || pieces.Count == 0) return;
+        AudioManager.instance?.PlayButtonClick();
         viewedPieceIndex = (viewedPieceIndex + delta + pieces.Count) % pieces.Count;
         Refresh();
     }
@@ -70,6 +71,10 @@ public class CardsPanel : MonoBehaviour
     public void ShowDeck()      => Toggle(ViewMode.RuntimeDeck);
     public void ShowDiscard()   => Toggle(ViewMode.Discard);
 
+    // 덱/버림/저장덱 보기 버튼의 EventTrigger(PointerEnter)에서 호출 — stock UnityEngine.UI.Button은
+    // 호버 이벤트가 없어서 Show*()처럼 OnClick에 바로 연결할 수 없기 때문에 EventTrigger로 별도 연결한다.
+    public void PlayHoverSound() => AudioManager.instance?.PlayButtonHover();
+
     public void Close()
     {
         ClearCards();
@@ -78,6 +83,7 @@ public class CardsPanel : MonoBehaviour
 
     void Toggle(ViewMode mode)
     {
+        AudioManager.instance?.PlayButtonClick();
         bool isOpen = rootPanel != null && rootPanel.activeSelf;
         if (isOpen && currentMode == mode) { Close(); return; }
         currentMode = mode;

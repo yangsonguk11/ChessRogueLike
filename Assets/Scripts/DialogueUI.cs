@@ -198,6 +198,7 @@ public class DialogueUI : MonoBehaviour
     // 타이핑이 끝난 뒤 생성된 확인 버튼의 OnClick에 코드로 연결됨
     void OnClickConfirm()
     {
+        AudioManager.instance?.PlayButtonClick();
         currentIndex++;
         DisplayCurrentLine();
     }

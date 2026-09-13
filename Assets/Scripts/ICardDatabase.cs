@@ -12,6 +12,10 @@ public interface ICardDatabase
     // count가 (제외 후) 남은 풀 크기보다 크면 있는 만큼만 반환한다.
     List<string> PickRandomDistinct(int count, IEnumerable<string> exclude = null);
 
+    // fromPool로 후보를 제한한 채(등록 안 된 이름은 무시) 중복 없이 무작위로 count개를 뽑는다.
+    // 기물 직업별 보상 카드 풀처럼, 전체 카드 풀이 아니라 특정 부분집합에서만 뽑아야 할 때 쓴다.
+    List<string> PickRandomDistinctFrom(int count, IEnumerable<string> fromPool, IEnumerable<string> exclude = null);
+
     // 등록된 카드 전체의 이름. 카드 테스트 도구처럼 "전체 목록"이 필요한 곳에서 cardPrefabs를 직접
     // 순회하는 대신 이걸 쓰면 된다.
     IEnumerable<string> GetAllCardNames();

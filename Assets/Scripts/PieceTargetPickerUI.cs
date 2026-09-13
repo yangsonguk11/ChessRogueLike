@@ -26,6 +26,7 @@ public class PieceTargetPickerUI : MonoBehaviour
 
     public void Show(IReadOnlyList<PieceData> pieces, Action<int> onPicked, string prompt = "카드를 받을 기물을 선택하세요")
     {
+        AudioManager.instance?.PlayPanelOpen();
         this.onPicked = onPicked;
         ClearButtons();
 

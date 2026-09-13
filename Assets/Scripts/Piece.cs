@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 
 
@@ -94,12 +95,12 @@ public abstract class Piece : MonoBehaviour
         if (poisonTotal > 0)
         {
             GetDamage(poisonTotal, isAttack: false);
-            if (Board.instance != null) Board.instance.StartCoroutine(DamageText(poisonTotal));
+            if (Board.instance != null) Board.instance.StartCoroutine(DamageText(poisonTotal, isAttack: false));
         }
         if (burningTotal > 0)
         {
             GetDamage(burningTotal, isAttack: false);
-            if (Board.instance != null) Board.instance.StartCoroutine(DamageText(burningTotal));
+            if (Board.instance != null) Board.instance.StartCoroutine(DamageText(burningTotal, isAttack: false));
         }
         if (regenTotal > 0)
         {
@@ -131,9 +132,11 @@ public abstract class Piece : MonoBehaviour
         }
     }
 
+    // 실드가 꺼지는 경우(0 이하로 떨어짐)만 자동으로 처리한다. 켜지는 시점(GetShield)은 시전자의 실드
+    // 애니메이션에 맞춰 대상이 하는 유일한 반응이므로, ShieldVisualOn()을 통해 명시적으로 호출해야 한다.
     void UpdateShieldVisual()
     {
-        if (pieceEffect != null) pieceEffect.SetVisible(shield > 0);
+        if (pieceEffect != null && shield <= 0) pieceEffect.SetVisible(false);
     }
     public void SetPieceData(PieceData data)
     {
@@ -222,24 +225,48 @@ public abstract class Piece : MonoBehaviour
         shield += damage;
         return shield;
     }
-    // colDamage를 변경하고 버프/디버프 텍스트+파티클을 함께 재생한다. permanent가 true면 colDamageBonus도 같이 올려
-    // GetPieceData 저장을 거쳐 다음 전투로도 이어지게 한다(영구 강화용). baseColDamage는 건드리지 않는다.
-    public int AddColDamage(int delta, bool permanent = false)
+    // colDamage를 변경하고(즉시) 버프/디버프 텍스트+파티클+사운드를 재생한다. permanent가 true면
+    // colDamageBonus도 같이 올려 GetPieceData 저장을 거쳐 다음 전투로도 이어지게 한다(영구 강화용).
+    // baseColDamage는 건드리지 않는다. showReaction: false면 텍스트/파티클/사운드를 재생하지 않는다 —
+    // 캐스터 애니메이션의 OnAnimationEvent 시점에 맞춰 ColDamageUpReaction으로 따로 재생하고 싶을 때 사용.
+    public int AddColDamage(int delta, bool permanent = false, bool showReaction = true)
     {
         colDamage += delta;
         if (permanent) colDamageBonus += delta;
-        if (delta != 0)
-            ShowStatusText(delta > 0 ? $"이동공격력 +{delta}" : $"이동공격력 {delta}", delta > 0, new Color(1f, 0.27f, 0.27f));
+        if (showReaction) ShowColDamageReaction(delta);
         return colDamage;
     }
-    // shieldBonus를 변경하고 버프/디버프 텍스트+파티클을 함께 재생한다. permanent 의미는 AddColDamage와 동일.
-    public int AddShieldBonus(int delta, bool permanent = false)
+    void ShowColDamageReaction(int delta)
+    {
+        if (delta != 0)
+            ShowStatusText(delta > 0 ? $"이동공격력 +{delta}" : $"이동공격력 {delta}", delta > 0, new Color(1f, 0.27f, 0.27f));
+    }
+    // AddColDamage(showReaction: false)와 짝을 이루는, 텍스트/파티클/사운드만 따로 재생하는 버전 —
+    // PlayCasterAndTargetReaction의 targetReaction으로 넘겨서 캐스터 애니메이션과 동기화할 때 사용.
+    public IEnumerator ColDamageUpReaction(int delta)
+    {
+        ShowColDamageReaction(delta);
+        yield return null;
+    }
+
+    // shieldBonus를 변경하고(즉시) 버프/디버프 텍스트+파티클+사운드를 재생한다. permanent/showReaction
+    // 의미는 AddColDamage와 동일.
+    public int AddShieldBonus(int delta, bool permanent = false, bool showReaction = true)
     {
         shieldBonus += delta;
         if (permanent) shieldBonusBonus += delta;
+        if (showReaction) ShowShieldBonusReaction(delta);
+        return shieldBonus;
+    }
+    void ShowShieldBonusReaction(int delta)
+    {
         if (delta != 0)
             ShowStatusText(delta > 0 ? $"방어막 보너스 +{delta}" : $"방어막 보너스 {delta}", delta > 0, new Color(1f, 0.27f, 0.27f));
-        return shieldBonus;
+    }
+    public IEnumerator ShieldBonusUpReaction(int delta)
+    {
+        ShowShieldBonusReaction(delta);
+        yield return null;
     }
     public virtual void OnTurnEnd()
     {
@@ -260,10 +287,15 @@ public abstract class Piece : MonoBehaviour
     }
     bool isDeathScheduled;
 
-    public IEnumerator DamageText(int damage)
+    // isAttack: false면 독/화상 같은 상태이상 틱 데미지 — GetDamage의 isAttack과 동일한 의미로,
+    // 그 경우엔 attackImpact 타격음을 재생하지 않는다(틱마다 무기 타격음이 울리면 어색함).
+    // isCounter: true면 가시/반격류로 되돌려받는 피해 — attackImpact 대신 counterAttack을 재생한다.
+    public IEnumerator DamageText(int damage, bool isAttack = true, bool isCounter = false)
     {
         if (this != null && pieceCanvas != null)
             pieceCanvas.InvokeDamageText(damage);
+        if (isCounter) AudioManager.instance?.PlayCounterAttack();
+        else if (isAttack) AudioManager.instance?.PlayAttackImpact();
         yield return null;
     }
 
@@ -273,6 +305,7 @@ public abstract class Piece : MonoBehaviour
             pieceCanvas.InvokeDamageText(damage);
         if (this != null && pieceEffect != null)
             pieceEffect.PlayHealEffect();
+        AudioManager.instance?.PlayHeal();
         yield return null;
     }
 
@@ -283,11 +316,59 @@ public abstract class Piece : MonoBehaviour
             pieceCanvas.InvokeDamageText(damage);
     }
 
+    // 실드가 걸리는 시점의 유일한 대상 반응 — 실드 애니메이션은 시전자만 재생하고(대상은 자신의
+    // 애니메이터 트리거를 갖지 않음), 대상은 pieceEffect 오빗을 켜는 것만 한다.
+    // resultingShield(부여 후 실드량)가 0 이하면(예: dmg가 0으로 계산된 경우) 표시할 실드 자체가
+    // 없으므로 켜지 않는다.
+    public IEnumerator ShieldVisualOn(int resultingShield)
+    {
+        if (this != null && pieceEffect != null && resultingShield > 0)
+        {
+            pieceEffect.SetVisible(true);
+            AudioManager.instance?.PlayShieldApply();
+        }
+        yield return null;
+    }
+
+    // 사망이 확정된 대상의 반응 목록(targetCoroutines)에 합류시켜서, "Die" 트리거 애니메이션과 같은
+    // 시점(캐스터의 OnAnimationEvent)에 사망 사운드가 재생되게 한다. 실제 오브젝트 파괴(Destroy)는
+    // DeathCor가 별도로 더 나중에(사망 연출용 대기 후) 처리 — 이건 사운드 타이밍만 담당한다.
+    public IEnumerator PieceDeathSound()
+    {
+        AudioManager.instance?.PlayPieceDeath();
+        yield return null;
+    }
+
+    // 소환 시 파티클 연출 + 등장 스케일 팝인. targetScale은 호출부(SummonPieceAt)가 Instantiate 직후
+    // localScale을 0으로 숨겨두기 전의 프리팹 원래 스케일 — 이 시점에 그 크기로 다시 키워서 "짠" 하고
+    // 나타나게 한다. 텍스트 없이 파티클만 재생 — 지금은 임시로 버프 파티클을 재사용한다.
+    public IEnumerator SummonVisualEffect(Vector3 targetScale)
+    {
+        if (this == null) yield break;
+        if (pieceEffect != null) pieceEffect.PlayBuffEffect();
+        AudioManager.instance?.PlayPieceSummon();
+        yield return transform.DOScale(targetScale, 0.3f).SetEase(Ease.OutBack).WaitForCompletion();
+    }
+
     public void TriggerAnim(string triggerName)
     {
         Animator anim = GetComponent<Animator>();
         if (anim != null) anim.SetTrigger(triggerName);
     }
+
+    // Charge/Stun처럼 "켜지면 다른 애니메이션을 무시하고 유지되다가, 명시적으로 꺼야 사라지는" 상태를
+    // Bool 파라미터로 켜고 끈다(트리거와 달리 값이 유지됨 — Any State 전환의 켜짐/꺼짐 조건으로 쓰임).
+    public void SetAnimBool(string paramName, bool value)
+    {
+        Animator anim = GetComponent<Animator>();
+        if (anim != null) anim.SetBool(paramName, value);
+    }
+
+    public bool animationEventFired;
+    // Animation Event가 호출할 콜백. 공격/힐/실드/버프 등 어떤 애니메이션 클립이든, 시전자가
+    // "지금 대상에게 효과가 전달되는" 순간에 이 함수를 호출하는 이벤트를 심어두면 된다
+    // (Board.Animation.cs의 PlayCasterAndTargetReaction/WaitAnimationEventThenRun 참고).
+    public void OnAnimationEvent() => animationEventFired = true;
 
     public void ShowStatusText(string text, bool isBuff, Color effectColor)
     {
@@ -297,6 +378,17 @@ public abstract class Piece : MonoBehaviour
             pieceEffect.PlayDebuffEffect(effectColor);
         else if (isBuff && pieceEffect != null)
             pieceEffect.PlayBuffEffect();
+        if (isBuff) AudioManager.instance?.PlayBuffApply();
+        else AudioManager.instance?.PlayDebuffApply();
+    }
+
+    // ShowStatusText를 DamageText/HealText와 같은 모양(IEnumerator)으로 감싼 버전 — 상태이상 적용
+    // 자체(AddStatusEffect 등)는 호출부가 GetHeal/GetShield처럼 미리 즉시 실행해두고, 텍스트/파티클/
+    // 사운드만 이 코루틴으로 extra/targetCoroutines에 끼워 넣어 캐스터의 OnAnimationEvent에 동기화한다.
+    public IEnumerator StatusTextReaction(string text, bool isBuff, Color effectColor)
+    {
+        ShowStatusText(text, isBuff, effectColor);
+        yield return null;
     }
 
 

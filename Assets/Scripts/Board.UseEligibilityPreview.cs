@@ -7,14 +7,19 @@ public partial class Board
     // pieceSelectCount를 쓰는 카드는 RequestPieceSelection이 이미 자체적으로 하이라이트를 처리하므로 건드리지 않는다.
     List<(Vector2Int pos, int teamID)> useEligibilityHighlights = new List<(Vector2Int, int)>();
 
+    // true면 지금 든 카드가 픽업 시점에 ShowCasterEffectRange로 실제 사거리(selectedButtonMovable)를
+    // 미리 계산해둔 상태 — 드롭 시 IsValidDropPos가 이 사거리를 기준으로 검증해야 한다는 뜻.
+    bool pendingUseHasRangeLimit;
+
     void ShowUseEligibilityPreview(Card card)
     {
+        pendingUseHasRangeLimit = false;
         if (card.effects.Count == 0) return;
         CardEffect first = card.effects[0];
         if (first.pieceSelectCount > 0) return;
 
-        // BoardMode.command는 ButtonClicked에서 항상 캐스터 선택을 먼저 요구하므로 first.hasCaster와 무관하게 캐스터형으로 취급.
-        bool needsCaster = first.requiredMode == BoardMode.command || first.hasCaster;
+        // BoardMode.command는 ButtonClicked에서 항상 캐스터 선택을 먼저 요구하므로 first.noRangeLimit와 무관하게 캐스터형으로 취급.
+        bool needsCaster = first.requiredMode == BoardMode.command || !first.noRangeLimit;
 
         if (needsCaster)
         {
@@ -26,7 +31,10 @@ public partial class Board
             {
                 Button ownerButton = GetButtonForPiece(CardCanvas.instance?.ActivePiece);
                 if (ownerButton != null)
+                {
                     ShowCasterEffectRange(ownerButton.GetLocation(), first);
+                    pendingUseHasRangeLimit = true;
+                }
             }
             return;
         }
@@ -42,6 +50,10 @@ public partial class Board
 
         useEligibilityHighlights = HighlightMatchingPieces(new[] { filter });
     }
+
+    // 드래그로 카드를 놓은 칸이 실제로 유효한지 검사. pendingUseHasRangeLimit가 false면(사거리 제한이 없거나
+    // 애초에 계산하지 않은 카드) 어디든 유효 — 그 외엔 픽업 시점에 하이라이트해둔 selectedButtonMovable 안인지 확인한다.
+    public bool IsValidDropPos(Vector2Int pos) => !pendingUseHasRangeLimit || selectedButtonMovable.Contains(pos);
 
     void ClearUseEligibilityPreview()
     {

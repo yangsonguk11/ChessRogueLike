@@ -74,11 +74,13 @@ public class StunEffect : StatusEffect
     public override void OnApply(Piece piece)
     {
         piece.ActionText();
+        piece.SetAnimBool("Stun", true);
         Board.instance?.ShowAllEnemyRanges();
     }
     public override void OnRemove(Piece piece)
     {
         piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
+        piece.SetAnimBool("Stun", false);
         piece.ActionText(); // 이 시점엔 이미 activeEffects에서 제거된 뒤라 IsStunned()가 정확히 false를 반환한다.
     }
 }

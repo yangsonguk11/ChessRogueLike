@@ -22,11 +22,14 @@ public class AnnouncementUI : MonoBehaviour
         }
     }
 
-    public void Show(string message)
+    // isWarning: 기본 true — 대부분의 Show 호출이 "이럴 땐 못 함" 류의 경고 메시지라 기본값으로
+    // invalidAction SFX를 재생한다. 턴/전투 시작 안내처럼 경고가 아닌 3곳만 false로 넘긴다.
+    public void Show(string message, bool isWarning = true)
     {
         if (announcementText == null) return;
         if (currentRoutine != null) StopCoroutine(currentRoutine);
         currentRoutine = StartCoroutine(ShowRoutine(message));
+        if (isWarning) AudioManager.instance?.PlayInvalidAction();
     }
 
     public IEnumerator ShowRoutine(string message)

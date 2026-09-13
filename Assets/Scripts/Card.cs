@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using TMPro;
@@ -136,10 +137,10 @@ public abstract class Card : MonoBehaviour, ISelectable
     {
         int dmg = effect switch
         {
-            { type: not EffectType.Damage } => effect.dmg,
-            { useColDamageAsDmg: true }     => Mathf.Max(0, Board.instance?.CasterFullColDamage ?? 0),
-            { hasCaster: true }             => Mathf.Max(0, effect.dmg + (Board.instance?.CasterColDamage ?? 0)),
-            _                                => effect.dmg,
+            { type: not EffectType.Damage }          => effect.dmg,
+            { useColDamageAsDmg: true }               => Mathf.Max(0, Board.instance?.CasterFullColDamage ?? 0),
+            { ignoreCasterColDamageBonus: true }      => effect.dmg,
+            _                                          => Mathf.Max(0, effect.dmg + (Board.instance?.CasterColDamage ?? 0)),
         };
 
         if (dmg == effect.dmg) return dmg.ToString();
@@ -149,7 +150,7 @@ public abstract class Card : MonoBehaviour, ISelectable
 
     protected string EffectiveShield(CardEffect effect)
     {
-        int amount = effect.type != EffectType.Shield
+        int amount = effect.type != EffectType.Shield || effect.ignoreCasterShieldBonus
             ? effect.dmg
             : Mathf.Max(0, effect.dmg + (Board.instance?.CasterShieldBonus ?? 0));
 
@@ -167,10 +168,14 @@ public abstract class Card : MonoBehaviour, ISelectable
     public bool NeedsTargeting() => effects.Count > 0 && effects[0].requiredMode != Board.BoardMode.Inspect
         && dragDropTarget != DragDropTarget.Self;
 
-    public bool IsSelectable()
-    {
-        return true;
-    }
+    // ISelectable 계약 — 실제로 지금 손패 리스트(CardCanvas.cards)에 들어있는 카드인지로 판정한다.
+    // handNumber는 카드가 손패를 떠나는 모든 경로(HandtoDiscardCount/HandtoDeckTop/HandtoExileCount 등,
+    // 카드효과로 인한 이동)에서 항상 -1로 갱신된다는 보장이 없고(FinishUseCard만 명시적으로 갱신함),
+    // 그 이동 연출이 보드 애니메이션 뒤로 밀려 몇 초씩 늦게 재생될 수도 있어(motionQueue 통합) 더더욱
+    // 신뢰할 수 없다. 리스트 소속은 로직 단계에서 항상 즉시 정확하므로 이걸 직접 확인한다 — 연출이 아직
+    // 시작되지 않아 화면엔 손패 자리에 남아있어도, 로직상 이미 빠진 카드는 선택되지 않는다.
+    public bool IsSelectable() =>
+        CardCanvas.instance != null && CardCanvas.instance.cards.Contains(GetComponent<RectTransform>());
     public void SelectedFalse()
     {
         selected = false;
@@ -181,36 +186,85 @@ public abstract class Card : MonoBehaviour, ISelectable
         selected = true;
         transform.localRotation = Quaternion.Euler(0, 0, 0);
         ScaleHover();
+        ClearHoverLift(); // 잡는 순간엔 리프트 없이 원래처럼 스케일만
     }
 
     [HideInInspector] public Vector3 defaultScale;
     float hoverScale = 1.1f;
     float speed = 10f;
+    [SerializeField] float hoverLift = 20f;
+    bool isHoverLifted;
+    float restY; // 리프트 안 걸렸을 때의 "바닥" localPosition.y
 
     public GameObject cardCanvas;
     public int handNumber;
 
+    // ISelectable 인터페이스 계약이라 유지 — 폴리모픽하게 호출하는 곳은 없지만 다른 구현체와 형태를 맞춰둔다.
     public IEnumerator ScaleTo(Vector3 target) => ScaleAnimator.ScaleTo(transform, target, speed);
+
+    float ScaleDuration => Mathf.Clamp(3f / Mathf.Max(speed, 0.01f), 0.05f, 1f);
+
     public void ScaleDefault()
     {
-        StopAllCoroutines();
-        StartCoroutine(ScaleTo(defaultScale));
+        DOTween.Kill(transform);
+        transform.DOScale(defaultScale, ScaleDuration).SetEase(Ease.OutBack);
     }
     public void ScaleHover()
     {
-        StopAllCoroutines();
-        StartCoroutine(ScaleTo(defaultScale * hoverScale));
+        DOTween.Kill(transform);
+        transform.DOScale(defaultScale * hoverScale, ScaleDuration).SetEase(Ease.OutBack);
     }
+
+    // 호버 리프트용 — 선택(드래그) 중인 카드는 리프트를 걸지 않는다는 조건만 IsSelectable에 추가.
+    bool IsHandCard() => !selected && IsSelectable();
+
+    // 리프트는 SetId(this)로 관리되는 제네릭 트윈이라(target이 transform이 아님) ScaleHover/ScaleDefault의
+    // DOTween.Kill(transform)에 걸리지 않는다 — 그래서 호출 순서를 신경 쓸 필요가 없다.
+    // restY 갱신은 DOTween.IsTweening(this)로 "이전 리프트 트윈이 이미 끝났는지"를 확인해서만 한다 —
+    // 아직 살아있는 도중(반복 호버로 중간에 다시 걸린 경우)엔 갱신하지 않아야 드리프트가 안 생긴다.
+    const float LiftDuration = 0.12f;
+
+    void ApplyHoverLift()
+    {
+        if (isHoverLifted) return;
+        isHoverLifted = true;
+        if (!DOTween.IsTweening(this))
+            restY = transform.localPosition.y;
+        DOTween.Kill(this);
+        DOTween.To(() => transform.localPosition.y,
+            y => { Vector3 p = transform.localPosition; p.y = y; transform.localPosition = p; },
+            restY + hoverLift, LiftDuration).SetEase(Ease.OutQuad).SetId(this);
+    }
+
+    void ClearHoverLift()
+    {
+        if (!isHoverLifted) return;
+        isHoverLifted = false;
+        DOTween.Kill(this);
+        DOTween.To(() => transform.localPosition.y,
+            y => { Vector3 p = transform.localPosition; p.y = y; transform.localPosition = p; },
+            restY, LiftDuration).SetEase(Ease.OutQuad).SetId(this);
+    }
+
     public void MouseEnter()
     {
+        // 카드 선택 패널(cardSelectionMode)은 손패가 아닌 덱/버림더미 카드도 보여주므로 그때는
+        // IsSelectable(cards 소속 여부)과 무관하게 호버를 허용한다. 그 외(평소 손패 화면)에는
+        // 로직상 이미 손패를 떠났지만 연출 대기 중이라 화면에 남아있는 카드는 호버 자체가 되면 안 된다.
+        if (!CardCanvas.cardSelectionMode && !IsSelectable()) return;
+        AudioManager.instance?.PlayCardHover();
         ScaleHover();
+        if (IsHandCard())
+            ApplyHoverLift();
     }
 
     public void MouseExit()
     {
-        if (selected) return;
-        if (CardCanvas.cardSelectionMode && CardCanvas.instance.IsSelectedInPanel(GetComponent<RectTransform>())) return;
-        ScaleDefault();
+        bool keepScale = selected
+            || (CardCanvas.cardSelectionMode && CardCanvas.instance.IsSelectedInPanel(GetComponent<RectTransform>()));
+        if (!keepScale)
+            ScaleDefault();
+        ClearHoverLift(); // selected여도 리프트는 항상 풀어준다 — 선택 중엔 스케일만 유지되는 게 맞음
     }
     public System.Action<string> onClickOverride;
 
@@ -231,7 +285,9 @@ public abstract class Card : MonoBehaviour, ISelectable
             CardCanvas.instance.CancelCardUsage();
             return;
         }
-        if (!selected)
+        // 로직상 이미 손패를 떠난 카드(연출 대기 중이라 화면엔 아직 손패 자리에 남아있을 수 있음)는
+        // 집을 수 없다.
+        if (!selected && IsSelectable())
         {
             CardCanvas.instance.CardSelected(handNumber);
             _canvasGroup.blocksRaycasts = false;
@@ -257,9 +313,14 @@ public abstract class Card : MonoBehaviour, ISelectable
 
         if (CardCanvas.instance.nowusingCard == GetComponent<RectTransform>())
         {
+            // 이미 커밋된(보드에서 사용 확정된) 카드는 손패 리스트를 떠나있는 게 정상이라 IsSelectable
+            // 검사 대상이 아니다.
             CardCanvas.instance.HandleCommittedCardDrag(pointerData.position);
             return;
         }
+
+        // 아직 커밋 전(손패에서 막 집기만 한) 카드인데, 그 사이 다른 카드효과가 손패에서 빼갔다면 중단.
+        if (!IsSelectable()) return;
 
         this.transform.position = pointerData.position;
 
@@ -286,7 +347,7 @@ public enum CardZone { Hand, Deck, Discard, Any, SavedDeck }
 /// <summary>코스트 변경 효과의 지속 시간</summary>
 public enum CostDuration { Permanent, ThisTurnOnly, OneUse }
 
-public enum EffectType { Move, Damage, Shield, Buff, DeBuff, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, BaseColDamageUp, ShieldBonusUp, BaseShieldBonusUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop, SelectAndDiscard, SelectAndChangeCost, SelectAndReturnToDeck, AddCard, RestoreEnergy, Cleanse, Charge, Stun, Summon }
+public enum EffectType { Move, Damage, Shield, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, BaseColDamageUp, ShieldBonusUp, BaseShieldBonusUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop, SelectAndDiscard, SelectAndChangeCost, SelectAndReturnToDeck, AddCard, RestoreEnergy, Cleanse, Charge, Stun, Summon }
 public record CardEffect
 {
     public Board.BoardMode requiredMode { get; init; }
@@ -308,7 +369,9 @@ public record CardEffect
     public bool cleanseBuffs { get; init; } = false;
 
     public bool useColDamageAsDmg { get; init; }           // true면 dmg 대신 시전자의 colDamage 사용
-    public bool hasCaster { get; init; } = true;            // false면 캐스터(카드를 낸 기물) 없이 targetPos만으로 즉시 발동
+    public bool noRangeLimit { get; init; }               // true면 캐스터 위치/이동범위와 무관하게 보드 전체가 유효 대상(dragDropTarget 기준으로만 필터링)
+    public bool ignoreCasterColDamageBonus { get; init; } // true면 시전자의 colDamage 보너스를 데미지에 더하지 않음
+    public bool ignoreCasterShieldBonus { get; init; }    // true면 시전자의 shieldBonus 보너스를 실드량에 더하지 않음
     public bool noMoveAttack { get; init; }               // true면 이동 시 충돌 공격 불가
     public bool healOnHit { get; init; }                  // true면 적중 시 입힌 피해만큼 시전자 회복 (일반 공격/이동공격 모두 적용)
     public string animTrigger { get; init; }              // 효과 시전 시 재생할 Animator 트리거 (null이면 기본 코루틴 애니메이션 사용)
@@ -317,6 +380,12 @@ public record CardEffect
     public CardEffect onTurnEndEffect { get; init; }
     public int turnDuration { get; init; }
     public TurnPhase turnPhase { get; init; } = TurnPhase.OwnTurnEnd;
+
+    // 이 CardEffect가 TurnEffect.cardEffect로 감싸질 때(= onTurnEndEffect로 쓰이거나, CreateStatusEffect의
+    // TurnDamageStart/End·TurnAoEDamageStart/End가 즉석으로 만드는 내부 CardEffect일 때) 그 상태가
+    // 버프인지 디버프인지를 미리 명시한다 — type만으로는 판단할 수 없음(예: Damage는 자기 자신 대상이면
+    // 디버프지만 적 대상이면 버프). TurnEffect.IsBuff가 이 값을 그대로 읽는다. 그 외의 곳에서는 안 쓰임.
+    public bool isBuff { get; init; }
 
     // Damage 계열 효과가 대상을 처치했을 때 시전자를 대상으로 실행할 CardEffect (예: 처치 시 ColDamageUp)
     public CardEffect onKillEffect { get; init; }
@@ -329,6 +398,7 @@ public record CardEffect
     // 이 수치만큼 직접 클릭해 고르게 한다(Board.RequestPieceSelection). 고른 기물 각각에게 이 CardEffect
     // 자신이 그대로 적용된다 (ExecuteCardEffectOnPiece가 지원하는 타입만: Heal/Shield/ColDamageUp류 등).
     public int pieceSelectCount { get; init; }
+    public bool excludeCasterFromPieceSelection { get; init; } // true면 pieceSelectCount 선택 대상에서 카드를 낸 기물 자신을 제외
     public int costChange { get; init; } = 0;                  // 코스트 변화량 (SelectAndChangeCost용)
     public CostDuration costDuration { get; init; } = CostDuration.Permanent; // 코스트 지속 시간
 

@@ -18,7 +18,7 @@ public class MagicAttackCard : Card
             targetlogic = TargetLogic.NearestEnemy,
             effectRange = effectRange[0],
             animTrigger = "Attack",
-            hasCaster = false,
+            ignoreCasterColDamageBonus = true,
         };
         effects.Add(cf);
     }

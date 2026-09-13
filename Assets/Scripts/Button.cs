@@ -66,11 +66,31 @@ public class Button : MonoBehaviour, ISelectable
 
     public void SetPiece(GameObject obj)
     {
-        piece = obj;
-        piece.transform.position = transform.position;
-piece.transform.parent = gameObject.transform;
+        SetPieceLogical(obj);
+        SnapPieceToCell();
+        AttachPieceVisual(obj);
     }
-    
+
+    // 점유(논리) 대입만 — transform은 건드리지 않는다. 이동 애니메이션이 재생되는 동안에도
+    // "이 칸엔 이제 이 기물이 있다"는 판정을 즉시 성립시키기 위해 시각적 이동과 분리해서 쓴다.
+    public void SetPieceLogical(GameObject obj)
+    {
+        piece = obj;
+    }
+
+    // 월드 좌표를 유지한 채(순간이동 없이) 부모만 이 버튼으로 옮긴다 — 이동 트윈이 끝난 뒤 호출용.
+    public void AttachPieceVisual(GameObject obj)
+    {
+        obj.transform.SetParent(transform, true);
+    }
+
+    // 현재 piece를 이 칸의 정확한 위치로 즉시 스냅 — 트윈 종료 마무리, 또는 순간이동이 맞는 배치용.
+    public void SnapPieceToCell()
+    {
+        if (piece != null)
+            piece.transform.position = transform.position;
+    }
+
     public void RemovePiece()
     {
         piece = null;

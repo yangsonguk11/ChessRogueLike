@@ -14,7 +14,8 @@ public class DispelCard : Card
             dmg = 0,
             targetlogic = TargetLogic.NearestEnemy,
             cleanseBuffs = true,
-            hasCaster = false,
+            noRangeLimit = true,
+            animTrigger = "Attack",
         });
     }
 

@@ -24,6 +24,7 @@ public class FlameThrowingCard : Card
                 targetlogic = TargetLogic.AllEnemiesInRange,
                 effectRange = effectRange[0],
                 animTrigger = "AreaAttack",
+                isBuff = true,
             },
             turnDuration = 3,
         };

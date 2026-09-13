@@ -28,7 +28,8 @@ public class ZoneShieldCard : Card
             targetingRange = targetRange,
             targetingUsesMovement = useMovement,
             animTrigger = "Shield",
-            hasCaster = false,
+            noRangeLimit = true,
+            ignoreCasterShieldBonus = true,
         };
         effects.Add(cf);
     }

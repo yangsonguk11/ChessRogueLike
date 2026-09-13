@@ -27,6 +27,9 @@ public partial class Board : MonoBehaviour
     event Action OnButtonSelected;
     event Action OnButtonUnSelected;
     public bool boardReady = false;
+    // GameManager가 승패(Enemylist/Allylist Count==0)를 감지한 순간 세팅. TurnManager가 이걸 보고
+    // 전투 종료 후의 턴 전환(플레이어 턴 시작/적 턴 시작 등)을 더 진행하지 않도록 막는다.
+    public bool CombatEnded { get; set; }
 
     public List<Vector2Int> enemyPositions = new List<Vector2Int>();
     public List<Vector2Int> autoAllyPositions = new List<Vector2Int>();
@@ -199,6 +202,7 @@ public partial class Board : MonoBehaviour
         GameManager.instance?.ClearAllies();
         enemyPositions.Clear();
         autoAllyPositions.Clear();
+        CombatEnded = false;
 
         currentLevelData = data;
         IsEventLevel = data.levelType == LevelData.LevelType.Event;

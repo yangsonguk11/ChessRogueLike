@@ -48,6 +48,23 @@ public class CardDatabase : MonoBehaviour, ICardDatabase
             if (prefab != null && (excludeSet == null || !excludeSet.Contains(prefab.name)))
                 pool.Add(prefab.name);
 
+        return PickDistinctFromPool(count, pool);
+    }
+
+    public List<string> PickRandomDistinctFrom(int count, IEnumerable<string> fromPool, IEnumerable<string> exclude = null)
+    {
+        var excludeSet = exclude != null ? new HashSet<string>(exclude) : null;
+        var pool = new List<string>();
+        foreach (string name in fromPool)
+            if (cardsByName.ContainsKey(name) && (excludeSet == null || !excludeSet.Contains(name)))
+                pool.Add(name);
+
+        return PickDistinctFromPool(count, pool);
+    }
+
+    // pool에서 중복 없이 최대 count개를 무작위로 뽑아낸다(셔플-팝 방식). pool은 이 호출 안에서 소모된다.
+    static List<string> PickDistinctFromPool(int count, List<string> pool)
+    {
         var result = new List<string>();
         int n = Mathf.Min(count, pool.Count);
         for (int i = 0; i < n; i++)

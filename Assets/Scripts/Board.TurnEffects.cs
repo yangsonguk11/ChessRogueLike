@@ -81,7 +81,7 @@ public partial class Board
             // 자기 자신 대상 데미지(독/화상 등)는 SelfDamagePiece 재사용
             if (ce.type == EffectType.Damage)
             {
-                SelfDamagePiece(pos, ce.dmg, ce);
+                SelfDamagePiece(pos, ce.dmg);
                 return;
             }
 
@@ -101,30 +101,32 @@ public partial class Board
                 yield return target.HealText(healed);
                 break;
             case EffectType.Shield:
-                target.GetShield(ce.dmg);
+            {
+                int shieldAfter = target.GetShield(ce.dmg);
+                yield return target.ShieldVisualOn(shieldAfter);
                 yield return target.ShieldText(ce.dmg);
                 break;
+            }
+            // ColDamageUp류는 스탯 변경 + pieceEffect(AddColDamage/AddShieldBonus 내부 ShowStatusText)만 담당한다.
+            // 캐스터 애니메이션은 호출부(ExecuteCardEffectOnPiece)가 이미 병렬로 재생 중이므로 여기서 또 재생하면
+            // 같은 기물에게 같은 트리거가 중복으로 걸린다 — 그래서 animTrigger를 여기서는 재생하지 않는다.
             case EffectType.ColDamageUp:
                 target.AddColDamage(ce.dmg);
                 CardCanvas.instance?.RefreshAllCardViews();
-                if (ce.animTrigger != null) yield return TriggerAnimCor(target, ce.animTrigger, 0.3f, false);
                 break;
             case EffectType.BaseColDamageUp:
                 // colDamageBonus도 함께 올려 이번 전투뿐 아니라 다음 전투로도 이어지게 함 (GetPieceData가 colDamageBonus를 저장)
                 target.AddColDamage(ce.dmg, permanent: true);
                 CardCanvas.instance?.RefreshAllCardViews();
-                if (ce.animTrigger != null) yield return TriggerAnimCor(target, ce.animTrigger, 0.3f, false);
                 break;
             case EffectType.ShieldBonusUp:
                 target.AddShieldBonus(ce.dmg);
                 CardCanvas.instance?.RefreshAllCardViews();
-                if (ce.animTrigger != null) yield return TriggerAnimCor(target, ce.animTrigger, 0.3f, false);
                 break;
             case EffectType.BaseShieldBonusUp:
                 // shieldBonusBonus도 함께 올려 이번 전투뿐 아니라 다음 전투로도 이어지게 함 (GetPieceData가 shieldBonusBonus를 저장)
                 target.AddShieldBonus(ce.dmg, permanent: true);
                 CardCanvas.instance?.RefreshAllCardViews();
-                if (ce.animTrigger != null) yield return TriggerAnimCor(target, ce.animTrigger, 0.3f, false);
                 break;
             case EffectType.RestoreEnergy:
                 // 코스트(에너지)는 기물별이 아니라 아군 전체가 공유하는 자원이라 target 대신 CardCanvas의 currentenergy를 직접 갱신

@@ -20,7 +20,7 @@ public partial class Board
     public void ButtonClicked(Vector2Int pos)
     {
         if (!boardReady) return;
-        if (TurnManager.instance.CurrentState != TurnState.Player) return;
+        if (!TurnManager.instance.IsPlayerActionable) return;
 
         // 기물 다중 선택 대기 중이면 boardmode(targeting)의 기존 분기보다 우선 처리한다.
         if (PieceSelectionActive)
@@ -95,24 +95,12 @@ public partial class Board
                 CardEffect currentEffect = pendingEffects.Count > 0 ? pendingEffects.Peek() : null;
 
                 // targeting은 기물(또는 위치) 1개만 지정하면 발동해야 함. self는 캐스터 선택 자체가 곧 대상 지정이라
-                // 기존 OnSelectBoard 경로를 그대로 쓴다. 그 외에 CardEffect.hasCaster가 false인 카드
-                // (DeBuff/ApplyStatus 등 단일 대상 효과, 마우스로 위치만 지정하는 MouseCentered AoE 등)는
-                // 캐스터 선택 없이 클릭 한 번으로 바로 적용한다.
-                bool needsCaster = currentEffect == null || currentEffect.hasCaster;
-
+                // 기존 OnSelectBoard 경로를 그대로 쓴다. 캐스터는 드롭 시점에 ConfirmCasterOnDrop이 항상
+                // 먼저 확정해두므로(AutoSelectCardOwnerAsCaster), 보통은 이 분기에 도달할 때 이미
+                // selectedButton이 활성 상태다 — 아래는 그게 아직 안 된 경우(예: ActivePiece를 못 찾은 예외
+                // 상황)의 폴백으로, 자기 기물을 직접 클릭해 캐스터를 확정하게 한다.
                 if (selectedButton.x < 0 || selectedButton.y < 0)
                 {
-                    if (!needsCaster)
-                    {
-                        if (IsValidDragTarget(pos, currentActiveCard.dragDropTarget))
-                        {
-                            selectedButton = pos;
-                            ExecuteEffect(pendingEffects.Dequeue(), pos);
-                            ScheduleNextCardEffect();
-                        }
-                        break;
-                    }
-
                     Piece clickedPiece = GetButtonScript(pos).GetPieceScript();
                     if (clickedPiece != null && clickedPiece.teamID == 0)
                     {

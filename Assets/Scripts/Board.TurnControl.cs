@@ -53,8 +53,7 @@ public partial class Board
 
                     if (pp.hp <= 0)
                     {
-                        if (pp.teamID == 1) enemyPositions.Remove(pos);
-                        else if (pp is AutoPiece) autoAllyPositions.Remove(pos);
+                        ClearDeadPieceOccupancy(pos, pp);
                         StartCoroutine(pp.DeathCor());
                     }
                 }

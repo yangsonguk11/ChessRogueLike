@@ -19,7 +19,7 @@ public class PoisonTestCard : Card
             statusEffectType = StatusEffectType.Poison,
             statusDuration = 2,
             statusPower = 2,
-            hasCaster = false,
+            noRangeLimit = true,
         });
     }
 

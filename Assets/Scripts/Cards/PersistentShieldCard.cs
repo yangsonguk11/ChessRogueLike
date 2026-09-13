@@ -36,6 +36,7 @@ public class PersistentShieldCard : Card
                 dmg = 4,
                 targetlogic = TargetLogic.self,
                 animTrigger = "Shield",
+                isBuff = true,
             },
             turnDuration = 1,
             turnPhase = TurnPhase.OwnTurnStart,

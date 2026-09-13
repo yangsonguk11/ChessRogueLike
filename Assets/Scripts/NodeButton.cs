@@ -69,6 +69,7 @@ public class NodeButton : MonoBehaviour, ISelectable
 
     public void MouseEnter()
     {
+        if (selectable) AudioManager.instance?.PlayButtonHover();
         ScaleHover();
     }
 
@@ -80,6 +81,7 @@ public class NodeButton : MonoBehaviour, ISelectable
     public void MouseDown()
     {
         if (!selectable) return;
+        AudioManager.instance?.PlayButtonClick();
         DataManager.Instance.SetNextLevel(nodeData.levelDataName, nodeFloor, nodeData.x);
         SceneManager.LoadScene("MainScene");
     }

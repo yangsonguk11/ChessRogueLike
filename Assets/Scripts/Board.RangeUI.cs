@@ -58,6 +58,15 @@ public partial class Board
     // 함수라서, 카드를 픽업한 시점처럼 아직 캐스터를 "확정"하기 전에도 안전하게 호출할 수 있다.
     void ShowCasterEffectRange(Vector2Int casterPos, CardEffect currentEffect)
     {
+        // noRangeLimit 효과(예: MagicAttackCard, Zone*Card)는 캐스터 위치/이동범위와 무관하게 보드
+        // 전체가 유효 대상이어야 하므로, 캐스터 기준 사거리 계산을 전부 건너뛰고 무제한 폴백만 채운다.
+        if (currentEffect != null && currentEffect.noRangeLimit)
+        {
+            FillAllMovableButtonsSilent(casterPos);
+            ShowButtonInfo(casterPos);
+            return;
+        }
+
         if (currentEffect != null &&
             currentEffect.type != EffectType.Move &&
             currentEffect.effectRange != null &&
@@ -127,7 +136,6 @@ public partial class Board
         casterPiece = null;
         CardCanvas.instance?.RefreshAllCardViews();
         ClearHoverRange();
-        ClearHoverPieceRange();
         HideMovableButtons();
         HideButtonInfo();
     }
@@ -273,10 +281,18 @@ public partial class Board
         return new Vector2Int(-1, -1); // 후보 칸이 모두 막혀있음: 이동공격 불가
     }
 
-    void UpdateEnemyPositionList(Vector2Int pos1, Vector2Int pos2)
+    // teamID==1(적)이든 teamID==0 AutoPiece(자동행동 아군)든, 이동한 기물이 어느 위치 추적 리스트에
+    // 들어있었는지 몰라도 실제로 값을 갖고 있던 리스트만 갱신한다.
+    void UpdateAutoPiecePositionList(Vector2Int pos1, Vector2Int pos2)
     {
-        int index = enemyPositions.IndexOf(pos1);
-        if (index != -1)
-            enemyPositions[index] = pos2;
+        int enemyIndex = enemyPositions.IndexOf(pos1);
+        if (enemyIndex != -1)
+        {
+            enemyPositions[enemyIndex] = pos2;
+            return;
+        }
+        int allyIndex = autoAllyPositions.IndexOf(pos1);
+        if (allyIndex != -1)
+            autoAllyPositions[allyIndex] = pos2;
     }
 }
