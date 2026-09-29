@@ -7,10 +7,6 @@ public class PieceDatabase : MonoBehaviour
 
     public List<GameObject> PiecePrefabs;
 
-    [Tooltip("pieceName(PieceInfo.PieceName)으로 PieceInfo를 조회하기 위한 목록. " +
-        "PiecePrefabs에 등록 안 된 PieceInfo도 포함해, 보상 카드 풀 조회 대상은 전부 등록해둔다.")]
-    public List<PieceInfo> PieceInfos;
-
     void Awake()
     {
         if (instance == null) instance = this;
@@ -22,5 +18,16 @@ public class PieceDatabase : MonoBehaviour
         return c;
     }
 
-    public PieceInfo GetPieceInfo(string pieceName) => PieceInfos.Find(p => p != null && p.PieceName == pieceName);
+    // 별도로 관리되는 PieceInfo 목록 없이, 이미 채워져 있는 PiecePrefabs 각각의 Piece.Info에서
+    // 바로 찾는다 — 두 목록을 따로 유지하면 한쪽만 갱신됐을 때 보상 풀 조회가 조용히 실패할 수 있다.
+    public PieceInfo GetPieceInfo(string pieceName)
+    {
+        foreach (GameObject prefab in PiecePrefabs)
+        {
+            Piece piece = prefab != null ? prefab.GetComponent<Piece>() : null;
+            if (piece != null && piece.Info != null && piece.Info.PieceName == pieceName)
+                return piece.Info;
+        }
+        return null;
+    }
 }

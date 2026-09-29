@@ -163,6 +163,10 @@ public abstract class Card : MonoBehaviour, ISelectable
     public virtual string GetCannotUseReason() => "사용할 수 없습니다";
     public virtual void Execute() { }
 
+    // 이 카드가 이번 사용 후 소멸(Exile)할지 판단한다. 기본은 정적 플래그 exileOnUse 그대로 반환.
+    // 사용 결과(예: 코스트가 0이 됐는지)에 따라 동적으로 결정하고 싶은 카드만 오버라이드한다.
+    public virtual bool ShouldExileOnUse() => exileOnUse;
+
     // 첫 번째 CardEffect의 requiredMode로 보드/기물 타겟팅이 필요한 카드인지 판단.
     // self 타겟 카드는 대상이 항상 카드를 낸 기물 자신이라 실질적으로 타겟팅할 게 없으므로 제외한다.
     public bool NeedsTargeting() => effects.Count > 0 && effects[0].requiredMode != Board.BoardMode.Inspect
@@ -347,7 +351,7 @@ public enum CardZone { Hand, Deck, Discard, Any, SavedDeck }
 /// <summary>코스트 변경 효과의 지속 시간</summary>
 public enum CostDuration { Permanent, ThisTurnOnly, OneUse }
 
-public enum EffectType { Move, Damage, Shield, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, BaseColDamageUp, ShieldBonusUp, BaseShieldBonusUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop, SelectAndDiscard, SelectAndChangeCost, SelectAndReturnToDeck, AddCard, RestoreEnergy, Cleanse, Charge, Stun, Summon }
+public enum EffectType { Move, Damage, Shield, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, BaseColDamageUp, ShieldBonusUp, BaseShieldBonusUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop, SelectAndDiscard, SelectAndChangeCost, SelectAndReturnToDeck, AddCard, RestoreEnergy, Cleanse, Charge, Stun, Summon, ReduceCost, GrantChainMoveAttack, GrantSummonColDamage, GrantSummonMaxHp }
 public record CardEffect
 {
     public Board.BoardMode requiredMode { get; init; }
@@ -409,4 +413,7 @@ public record CardEffect
     // Summon 타입에서 사용: 소환할 기물의 템플릿 (PieceName/스탯/기본덱 등을 담은 SO).
     // PieceInfo.TeamID가 소환된 기물의 진영을 결정하므로 적/아군 카드 양쪽에서 재사용 가능.
     public PieceInfo summonPieceInfo { get; init; }
+
+    // Damage 타입에서 사용: 같은 대상에게 이 효과를 몇 번 적용할지 (기본 1 = 기존과 동일).
+    public int hitCount { get; init; } = 1;
 }

@@ -378,8 +378,14 @@ public partial class Board
         // 아직 false일 때만(=이 카드의 첫 효과일 때만) 호출한다. relicsOnCardUsed를 전부 큐에 모아
         // 동기적으로 순차 처리하고 나서(TriggerRelicsOnCardUsed 내부), 곧바로 아래에서 카드 자신의
         // 첫 효과(cardEffect)로 자연스럽게 이어진다 — 유물 효과 전부가 카드 효과보다 반드시 먼저 끝난다.
+        // 에너지 차감도 여기서 먼저 끝내둔다 — 카드 자신의 효과(예: ReduceCost)가 이후 Cost를 바꾸더라도
+        // 이번 사용분 차감엔 영향이 없도록(예전엔 모든 효과가 끝난 뒤 FinishUseCard에서 차감해서, 카드가
+        // 자기 코스트를 스스로 깎으면 이번 판 차감액까지 할인돼버리는 문제가 있었다).
         if (!effectApplied && currentActiveCard != null && currentActiveCard.user == User.Ally)
+        {
             TriggerRelicsOnCardUsed(selectedButton, targetPos);
+            CardCanvas.instance.DeductEnergyForCard(currentActiveCard);
+        }
 
         effectApplied = true;
         CardCanvas.instance.isCardEffecting = true;
@@ -443,7 +449,8 @@ public partial class Board
             {
                 Piece caster = GetButtonScript(selectedButton).GetPieceScript();
                 int resolvedDmg = ResolveDamageWithColDamage(cardEffect, caster);
-                AttackPiece(selectedButton, targetPos, resolvedDmg, cardEffect);
+                for (int i = 0; i < Mathf.Max(1, cardEffect.hitCount); i++)
+                    AttackPiece(selectedButton, targetPos, resolvedDmg, cardEffect);
                 break;
             }
             case EffectType.Heal:
@@ -546,6 +553,46 @@ public partial class Board
             case EffectType.Summon:
                 SummonPieceAt(targetPos, cardEffect);
                 break;
+            case EffectType.ReduceCost:
+                currentActiveCard.Cost = Mathf.Max(0, currentActiveCard.Cost - cardEffect.dmg);
+                currentActiveCard.RefreshView();
+                break;
+            case EffectType.GrantChainMoveAttack:
+            {
+                Piece caster = GetButtonScript(targetPos).GetPieceScript();
+                if (caster != null)
+                {
+                    if (caster.GetComponent<ChainMoveAttackBuff>() == null)
+                        caster.gameObject.AddComponent<ChainMoveAttackBuff>();
+                    // 다른 버프 카드(ColDamageUp 등)와 동일하게 animTrigger 재생 + 상태 텍스트/파티클/사운드를
+                    // 캐스터의 OnAnimationEvent 시점에 맞춰 재생 — 이게 빠져 있어서 카드를 써도 아무 연출이 없었음.
+                    motionQueue.Enqueue(PlayCasterAndTargetReaction(caster, cardEffect?.animTrigger,
+                        caster.StatusTextReaction("연쇄 공격", true, new Color(1f, 0.27f, 0.27f)), cardEffect));
+                    StartMotionQueue();
+                }
+                break;
+            }
+            case EffectType.GrantSummonColDamage:
+            {
+                Piece caster = GetButtonScript(selectedButton).GetPieceScript();
+                if (caster != null)
+                {
+                    caster.summonColDamagePending += cardEffect.dmg;
+                    // 다른 버프 카드와 동일하게 animTrigger 재생 + 상태 텍스트/파티클/사운드 표시.
+                    motionQueue.Enqueue(PlayCasterAndTargetReaction(caster, cardEffect?.animTrigger,
+                        caster.StatusTextReaction($"다음 소환 강화 +{cardEffect.dmg}", true, new Color(1f, 0.27f, 0.27f)), cardEffect));
+                    StartMotionQueue();
+                }
+                break;
+            }
+            case EffectType.GrantSummonMaxHp:
+            {
+                // 1번째 효과(GrantSummonColDamage)가 이미 캐스터의 Buff 애니메이션/텍스트를 재생했으므로,
+                // HeavyAttackCard의 SelfDamage처럼 곧바로 이어지는 이 효과는 별도 연출 없이 수치만 반영한다.
+                Piece caster = GetButtonScript(selectedButton).GetPieceScript();
+                if (caster != null) caster.summonMaxHpPending += cardEffect.dmg;
+                break;
+            }
             default:
                 Debug.LogError("효과 타입을 찾지 못했습니다");
                 break;
@@ -580,6 +627,11 @@ public partial class Board
         GetButtonScript(spawnPos).SetPiece(pieceObj);
         Piece pieceScript = pieceObj.GetComponent<Piece>();
 
+        // 소환 카드를 실제로 쓴 시전자 — SummonMasteryCard가 이 시전자에게 쌓아둔 다음 소환 보너스가
+        // 있으면 소모한다(적 소환 카드가 먼저 가로채지 않도록 시전자 개인에게 귀속).
+        Piece caster = GetButtonScript(selectedButton).GetPieceScript();
+        bool hasSummonBuff = caster != null && (caster.summonColDamagePending > 0 || caster.summonMaxHpPending > 0);
+
         // SummonVisualEffect가 재생되는 타이밍까지 보이지 않게 숨겨둔다 — Instantiate 직후 원래
         // 스케일을 기억해뒀다가, motionQueue에서 그 연출이 실행될 때 다시 키워서 "짠" 하고 나타나게 한다.
         Vector3 summonScale = pieceObj.transform.localScale;
@@ -592,20 +644,32 @@ public partial class Board
         else if (pieceScript is AutoPiece)
         {
             autoAllyPositions.Add(spawnPos); // 손패 없음, AI가 자동 행동
+            if (hasSummonBuff) ApplyAndConsumeSummonBuff(pieceScript, caster);
         }
         else if (pieceScript.teamID == 0)
         {
             // 전투 한정 소환: DataManager에 영구 등록하지 않음 (pieceDataIndex는 -1로 유지)
             PieceData data = DataManager.Instance.BuildPieceData(info, info.DefaultDeckCardIDs);
-            pieceScript.SetPieceData(data);
+            pieceScript.SetPieceData(data); // 스탯 전체를 덮어쓰므로 버프는 반드시 이 다음에 적용
+            if (hasSummonBuff) ApplyAndConsumeSummonBuff(pieceScript, caster);
         }
 
         // 다른 모든 시전자→대상 연출(PieceAttackCor/PieceHealCor 등)과 동일하게 PlayCasterAndTargetReaction을
         // 거쳐서, 시전자 캐스팅 애니메이션의 Animation Event(또는 Attack 트리거의 DOPunch 폴백 콜백) 시점에
         // 맞춰 기물이 나타나게 한다 — 예전엔 Parallel로 캐스팅 시작과 동시에 나타나 타이밍이 어긋났었다.
-        Piece caster = GetButtonScript(selectedButton).GetPieceScript();
         motionQueue.Enqueue(PlayCasterAndTargetReaction(caster, cardEffect?.animTrigger, pieceScript.SummonVisualEffect(summonScale), cardEffect));
         StartMotionQueue();
+    }
+
+    // SummonMasteryCard가 caster에게 쌓아둔 "다음 소환 보너스"를 새로 소환된 기물에 적용하고 소모한다.
+    void ApplyAndConsumeSummonBuff(Piece newPiece, Piece caster)
+    {
+        newPiece.AddColDamage(caster.summonColDamagePending, showReaction: false);
+        newPiece.maxhp += caster.summonMaxHpPending;
+        newPiece.hp += caster.summonMaxHpPending;
+        caster.summonColDamagePending = 0;
+        caster.summonMaxHpPending = 0;
+        CardCanvas.instance?.RefreshAllCardViews();
     }
 
     // 상하좌우(직교) 먼저, 대각선은 나중 — 같은 프론티어(같은 홉 거리) 안에서 상하좌우 빈 칸이 있으면

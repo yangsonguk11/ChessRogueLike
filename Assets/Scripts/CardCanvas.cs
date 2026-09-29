@@ -479,20 +479,27 @@ public class CardCanvas : MonoBehaviour
         board.CancelCardUsage();
     }
 
+    // 카드 로직이 실제로 시작되는 시점(Board.ExecuteEffect, 첫 효과 적용 직전)에 미리 에너지를 차감한다.
+    // OneUse 코스트 복구도 여기서 함께 처리 — "실제 사용된 코스트"를 정확히 기록해야 하므로. 예전엔
+    // FinishUseCard(모든 효과가 끝난 뒤)에서 차감해서, 카드 자신의 효과가 자기 Cost를 바꾸면(예:
+    // WarmUpDamageCard의 ReduceCost) 이번 사용분 차감액까지 그 할인이 반영돼버리는 문제가 있었다.
+    public void DeductEnergyForCard(Card card)
+    {
+        int costToDeduct = card.Cost;
+        if (card.originalCost >= 0 && card.costDuration == CostDuration.OneUse)
+        {
+            card.Cost = card.originalCost;
+            card.originalCost = -1;
+        }
+        currentenergy -= costToDeduct;
+    }
+
     public void FinishUseCard()             //사용한 카드 처리
     {
         CardDragArrow.instance?.Hide();
         if (nowusingCard)
         {
             Card card = nowusingCard.GetComponent<Card>();
-            int costToDeduct = card.Cost;
-            // OneUse 코스트 임시 변경 복구 (복구 전 실제 사용 코스트를 저장)
-            if (card.originalCost >= 0 && card.costDuration == CostDuration.OneUse)
-            {
-                card.Cost = card.originalCost;
-                card.originalCost = -1;
-            }
-            currentenergy -= costToDeduct;
             RectTransform usedCard = nowusingCard;
             usedCard.GetComponent<Card>().handNumber = -1;
             nowusingCard = null;
@@ -501,7 +508,7 @@ public class CardCanvas : MonoBehaviour
             // 버림/소멸 더미로 날아가는 건 그 연출이 실제로 끝났다는 신호(OnUsedCardAnimationsComplete)를
             // 받을 때까지 미룬다 — 그때까지는 NowUsing 위치 근처에 그대로(또는 살짝 비켜서) 머문다.
             isCardEffecting = false;
-            bool exile = card.exileOnUse;
+            bool exile = card.ShouldExileOnUse();
             if (exile) Exilecards.Add(usedCard);
             else { Discardcards.Add(usedCard); NotifyPileChanged(); }
 

@@ -16,12 +16,12 @@ MonoBehaviour:
   _rewardCardPool:
   - ColDamageUpCard
   - TempColDamageUpCard
-  - SquadTrainingCard
+  - WarmUpDamageCard
   - ExecutionerCard
   - HeavyAttackCard
   - DirectionalAttackCard
-  - ZoneAttackCard
-  - FetchAttackCard
+  - DoubleAttackCard
+  - FinalAttackCard
   - MoveAndAttackCard
   - ChargeCard
   - BloodChargeCard
@@ -29,6 +29,7 @@ MonoBehaviour:
   - ColDamageAttackCard
   - LifeDrainCard
   - FlameThrowingCard
+  - ChainMoveAttackCard
   - PersistentShieldCard
   - ShieldCycleCard
   - SacrificeShieldCard
@@ -38,3 +39,5 @@ MonoBehaviour:
   - DrawCard
   - StunCard
   - DispelCard
+  - HealCard
+  - CleanseCard

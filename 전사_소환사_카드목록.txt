@@ -1,0 +1,112 @@
+전사 (Warrior) 카드 목록 - 총 24장
+====================================
+
+[힘] (8장)
+1. ColDamageUpCard
+   이동공격력을 1 올립니다.
+
+2. TempColDamageUpCard
+   이번 턴 동안 이동공격력을 2 올립니다.
+
+3. SquadTrainingCard
+   아군 기물 2체를 선택해 이동공격력을 영구적으로 1 올립니다.
+
+4. ExecutionerCard
+   적에게 3 피해를 줍니다. 처치 시 이동공격력이 영구적으로 1 오릅니다.
+
+5. HeavyAttackCard
+   적에게 6 피해를 주고, 자신도 2 피해를 받습니다.
+
+6. DirectionalAttackCard
+   방향을 선택해 범위 내 적에게 5 피해를 줍니다.
+
+7. ZoneAttackCard
+   범위 내 모든 기물에게 2 피해를 줍니다.
+
+8. FetchAttackCard
+   공격 카드를 1장 손에 가져옵니다.
+
+[이동공격] (7장)
+1. MoveAndAttackCard
+   이동한 후 적에게 3 피해를 줍니다.
+
+2. ChargeCard
+   이동합니다. 이동공격 시 방어도 3를 획득합니다.
+
+3. BloodChargeCard
+   이동합니다. 이동공격 시 입힌 피해만큼 체력을 회복합니다.
+
+4. LethalChargeCard
+   이동합니다. 이동공격으로 적을 처치하면 코스트를 2 회복합니다.
+
+5. ColDamageAttackCard
+   이동 범위 내 적에게 이동공격력만큼 피해를 줍니다.
+
+6. LifeDrainCard
+   범위 내 적에게 2 피해를 주고, 적중한 적마다 입힌 피해만큼 회복합니다.
+
+7. FlameThrowingCard
+   턴 종료 시 주변에 2 피해를 줍니다. (3턴 지속)
+
+[방어] (6장)
+1. PersistentShieldCard
+   방어도 4를 부여하고, 다음 턴 시작 시 방어도 4를 추가로 부여합니다.
+
+2. ShieldCycleCard
+   방어도 3를 부여하고, 손의 카드 1장을 무작위로 덱 맨 위로 되돌립니다.
+
+3. SacrificeShieldCard
+   손의 카드 1장을 버린 후 방어도 6를 얻습니다.
+
+4. DefensiveStanceCard
+   방어도 5를 부여합니다. (이동 전 사용 가능, 사용 후 이동 불가)
+
+5. ShieldBonusUpCard
+   방어막 보너스를 1 올립니다.
+
+6. HeavyShieldCard
+   자신에게 방어도 8를 부여합니다. (소멸)
+
+[공통] (3장)
+1. DrawCard
+   카드를 2장 드로우합니다.
+
+2. StunCard
+   대상에게 기절을 1턴 부여합니다.
+
+3. DispelCard
+   적을 선택해 걸려 있는 버프를 모두 제거합니다.
+
+
+소환사 (Summoner) 카드 목록 - 총 9장
+====================================
+
+[기물소환] (3장)
+1. SummonCard
+   autoally을(를) 소환합니다.
+
+2. GreaterSummonCard
+   강력한 GreaterAutoAlly을(를) 소환합니다.
+
+3. EmpowerAllyCard
+   자신을 제외한 아군 기물 1체를 선택해 이동공격력을 영구적으로 2 올립니다.
+
+[고정 데미지] (1장)
+1. MagicAttackCard
+   기물에 10의 데미지를 줍니다.
+
+[공통] (5장)
+1. HealCard
+   자신을 2 회복합니다.
+
+2. CleanseCard
+   자신에게 걸린 디버프를 모두 제거합니다.
+
+3. ImmobilizeCard
+   적을 선택해 2턴간 이동 불가 상태로 만듭니다.
+
+4. MoveAndDrawCard
+   이동한 후 카드를 1장 드로우합니다.
+
+5. SafeMoveCard
+   이동합니다. (이동공격 불가)

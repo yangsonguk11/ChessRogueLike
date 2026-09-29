@@ -14,11 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::JobInfo
   _jobName: Summoner
   _rewardCardPool:
+  - SummonCard
   - GreaterSummonCard
   - EmpowerAllyCard
+  - SummonMasteryCard
+  - AreaHealCard
   - MagicAttackCard
-  - HealCard
-  - CleanseCard
+  - ZoneAttackCard
+  - FetchAttackCard
   - ImmobilizeCard
   - MoveAndDrawCard
   - SafeMoveCard

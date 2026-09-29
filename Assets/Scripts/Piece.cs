@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
@@ -9,6 +10,7 @@ public abstract class Piece : MonoBehaviour
 {
     [Tooltip("필수 입력 — Awake()에서 teamID를 이 값의 TeamID로 덮어씀. Enemy/AutoPiece 계열은 RangeInfoSO도 여기서만 읽음.")]
     [SerializeField] PieceInfo pieceInfo;
+    public PieceInfo Info => pieceInfo;
     public PieceCanvas pieceCanvas;
 
     public new string name;
@@ -26,6 +28,8 @@ public abstract class Piece : MonoBehaviour
     [ReadOnlyInInspector] public int baseShieldBonus; // Awake()에서 항상 shieldBonus를 그대로 복사함 — 여기 채워도 덮어써짐
     public int shieldBonusBonus; // 영구 강화로 누적된 방어막 보너스. 전투 시작 시 shieldBonus에 합산된다.
     public int ShieldBonusDelta => shieldBonus - baseShieldBonus;
+    public int summonColDamagePending; // 다음 소환에 물려줄 콜대미지 보너스 (SummonMasteryCard가 쌓고, 소환 시 소모)
+    public int summonMaxHpPending;     // 다음 소환에 물려줄 체력 보너스
     [ReadOnlyInInspector] public int teamID; // Awake()에서 항상 pieceInfo.TeamID로 덮어씀 — teamID는 pieceInfo에서 바꿔야 함
     [ReadOnlyInInspector] public bool isSummon; // Awake()에서 항상 pieceInfo.IsSummon으로 덮어씀 — isSummon도 pieceInfo에서 바꿔야 함
     int _shield;
@@ -60,6 +64,15 @@ public abstract class Piece : MonoBehaviour
     }
 
     public bool IsStunned() => activeEffects.Exists(e => e is StunEffect);
+
+    // 이동공격이 실제로 발생했을 때(주 타겟 피해 적용 + 스플래시 처리까지 끝난 시점) 발화. 연쇄 공격
+    // 같은 부가 효과를 표현하는 컴포넌트가 Board.Combat.cs 수정 없이 스스로 구독해 반응할 수 있게 한다.
+    // hitMultipleTargets: 이번 이동공격이 주 타겟 외에 실제로 스플래시 대상을 하나라도 맞혔는지
+    // (MoveAttackRangeInfoSO가 설정돼 있는지 여부인 isAreaAttack과는 다름 — 방향성 단일 칸 범위처럼
+    // 회전 후 주 타겟 칸과 겹쳐서 스플래시가 0건인 "사실상 단일 타격"도 있을 수 있다).
+    public event Action<Vector2Int, Vector2Int, int, bool> OnMoveAttackPerformed; // (attackerFinalPos, impactPos, dmg, hitMultipleTargets)
+    public void RaiseMoveAttackPerformed(Vector2Int attackerFinalPos, Vector2Int impactPos, int dmg, bool hitMultipleTargets)
+        => OnMoveAttackPerformed?.Invoke(attackerFinalPos, impactPos, dmg, hitMultipleTargets);
 
     public int TriggerReceiveMoveAttack(Piece attacker)
     {
@@ -396,6 +409,9 @@ public abstract class Piece : MonoBehaviour
     {
         if (isDeathScheduled) yield break;
         isDeathScheduled = true;
+        // enemyPositions는 전투 처리 시점에 이미 이 기물을 제외해뒀으므로, 지금 다시 그리면
+        // 죽은 기물의 의도(범위) 하이라이트가 사라진다.
+        Board.instance?.ShowAllEnemyRanges();
         yield return new WaitForSeconds(1f);
         Destroy(gameObject);
     }

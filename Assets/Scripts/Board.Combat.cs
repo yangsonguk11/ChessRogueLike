@@ -158,6 +158,15 @@ public partial class Board
             }
         }
 
+        // 연쇄 이동공격 같은, 이동공격 자체를 구독해 반응하는 부가 효과를 위한 이벤트 발화.
+        // Board.Combat.cs는 누가 구독하는지 몰라도 된다(ChainMoveAttackBuff 참고).
+        // 주의: isAreaAttack 자체를 넘기면 안 된다 — 이 값은 "MoveAttackRangeInfoSO가 (0,0) 센티널이
+        // 아닌 값으로 설정돼 있는지"만 볼 뿐이라, BasicFrontRangeInfo처럼 칸 하나짜리 방향성 범위(회전 후
+        // 정확히 impactPos와 겹쳐서 스플래시 루프의 자체 중복 제거로 걸러지는 경우, 예: Warrior)에도 true가
+        // 나온다. 실제로 스플래시 대상이 있었는지(splashResults.Count > 0)를 넘겨야 "사실상 단일 타격"을
+        // 정확히 구분해서, 이런 기물의 평범한 이동공격까지 연쇄가 막혀버리는 걸 방지한다.
+        pScript1.RaiseMoveAttackPerformed(finalAttackerPos, impactPos, dmg, splashResults.Count > 0);
+
         // 반격(가시 등)은 본체 공격과 별개의 시점에 일어나는 반응이라 자체 Parallel로 한 항목만 큐에 넣는다 —
         // TriggerAnim을 즉시(동기) 호출하던 예전 방식은 애니메이션이 큐 순번을 기다리는 사운드보다 먼저
         // 재생돼 타이밍이 어긋났다. TriggerAnimCor로 바꿔 애니메이션과 DamageText(사운드)가 같은 큐 항목
@@ -184,6 +193,26 @@ public partial class Board
 
         StartMotionQueue();
         return true;
+    }
+
+    // ChainMoveAttackBuff처럼 Piece.OnMoveAttackPerformed를 구독하는 컴포넌트의 공용 진입점.
+    // attacker 기준 이동범위(GetMoveableButton) 내에서 excludePos를 제외한 첫 적을 찾아 같은 피해로 공격한다.
+    public void TryChainMoveAttack(Piece attacker, Vector2Int attackerFinalPos, Vector2Int excludePos, int dmg)
+    {
+        foreach (Vector2Int offset in attacker.GetMoveableButton())
+        {
+            Vector2Int pos = attackerFinalPos + offset;
+            if (pos == excludePos) continue;
+            if (pos.x < 0 || pos.x >= N || pos.y < 0 || pos.y >= M) continue;
+            Piece p = GetButtonScript(pos).GetPieceScript();
+            if (p == null || p.teamID == attacker.teamID) continue;
+            // animTrigger를 반드시 채워서 넘긴다 — cardEffect가 null(또는 animTrigger 없음)이면 공격자가
+            // 아무 트리거도 재생하지 않아 WaitAnimationEventThenRun이 OnAnimationEvent를 영영 못 받고
+            // AnimationEventFallbackTimeout(1.2초)만큼 그냥 멈췄다가 데미지 텍스트/피격 반응이 뜬다.
+            CardEffect chainEffect = new CardEffect { animTrigger = "Attack" };
+            AttackPiece(attackerFinalPos, pos, dmg, chainEffect); // 데미지/애니메이션/처치 로직 재사용
+            return;
+        }
     }
 
     // 이동 스텝(PieceMoveCor)이 이동 방향으로 덮어쓴 회전을, 공격 애니메이션이 재생되기 직전(이동
