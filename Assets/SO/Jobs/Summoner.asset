@@ -16,12 +16,18 @@ MonoBehaviour:
   _rewardCardPool:
   - SummonCard
   - GreaterSummonCard
+  - TauntSummonCard
   - EmpowerAllyCard
   - SummonMasteryCard
   - AreaHealCard
+  - SummonGrowthCard
   - MagicAttackCard
   - ZoneAttackCard
   - FetchAttackCard
   - ImmobilizeCard
   - MoveAndDrawCard
   - SafeMoveCard
+  - GraveHealCard
+  - GraveAttackCard
+  - GraveHarvestCard
+  - VulnerableTestCard

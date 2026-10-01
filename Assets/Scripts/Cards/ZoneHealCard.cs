@@ -23,7 +23,6 @@ public class ZoneHealCard : Card
             dmg = 5,
             targetlogic = TargetLogic.AllPiecesInRange,
             effectRange = effectRange[0],
-            lockCasterForNext = false,
             areaTargetMode = AreaTargetMode.MouseCentered,
             targetingRange = targetRange,
             targetingUsesMovement = useMovement,

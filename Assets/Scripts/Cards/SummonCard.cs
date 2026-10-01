@@ -20,6 +20,7 @@ public class SummonCard : Card
             animTrigger = "Attack",
         };
         effects.Add(cf);
+
     }
     public override string EffectDescription => $"{pieceToSummon?.PieceName}을(를) 소환합니다.";
 }

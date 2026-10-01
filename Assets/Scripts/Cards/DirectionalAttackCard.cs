@@ -19,7 +19,6 @@ public class DirectionalAttackCard : Card
             dmg = 5,
             targetlogic = TargetLogic.AllEnemiesInRange,
             effectRange = effectRange[0],
-            lockCasterForNext = false,
             areaTargetMode = AreaTargetMode.Directional4,
             animTrigger = "AreaAttack",
         };

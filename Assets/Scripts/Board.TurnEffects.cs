@@ -25,11 +25,11 @@ public partial class Board
             if (piece.activeEffects[i] is not TurnEffect te || te.phase != phase) continue;
 
             // 실제 카드가 효과를 적용할 때 쓰는 것과 동일한 함수(ApplyCardEffectNow)를
-            // Board.ScheduledEffects.cs의 큐를 통해 순차적으로 재사용한다.
-            EnqueueScheduledEffect(pos, te.cardEffect);
+            // Board.ScheduledEffects.cs의 큐를 통해 순차적으로 재사용한다. 시전자는 이 턴 효과를 가진 기물.
+            EnqueueScheduledEffect(pos, te.cardEffect with { caster = piece });
 
-            te.duration--;
-            if (te.duration <= 0)
+            // 지속시간 감소는 StatusEffect.OnTurnEnd 공용 규칙을 따른다(duration이 음수면 영구 — 감소/만료 없음).
+            if (!te.OnTurnEnd(piece))
             {
                 te.OnRemove(piece);
                 piece.activeEffects.RemoveAt(i);
@@ -63,6 +63,15 @@ public partial class Board
 
             if (targets.Count == 0) return;
 
+            // AddGrave는 다음 효과 판정에 바로 반영돼야 하므로 아래 EnqueueCardEffectOnPiece(연출 시점에
+            // 늦게 적용됨) 대신 여기서 즉시 적용한다.
+            if (ce.type == EffectType.AddGrave)
+            {
+                foreach (var (_, target) in targets) target.AddGrave(ce.dmg);
+                CardCanvas.instance?.UpdateCardInteractability();
+                return;
+            }
+
             // 데미지 타입은 Board.Combat의 AreaAttackPiece를 그대로 재사용 (피해 적용, 텍스트, 죽음 처리, 범위 표시까지 동일하게 처리됨)
             if (ce.type == EffectType.Damage)
             {
@@ -82,6 +91,14 @@ public partial class Board
             if (ce.type == EffectType.Damage)
             {
                 SelfDamagePiece(pos, ce.dmg);
+                return;
+            }
+
+            // 처치 시 무덤 +N / 기물 선택형 무덤 부여 — 즉시 적용(위 범위형과 같은 이유)
+            if (ce.type == EffectType.AddGrave)
+            {
+                caster?.AddGrave(ce.dmg);
+                CardCanvas.instance?.UpdateCardInteractability();
                 return;
             }
 

@@ -9,7 +9,7 @@
 - **보드 전투**: 체스판(그리드) 위에서 아군/적 기물이 카드를 사용해 이동, 공격, 방어막, 힐 등을 수행합니다.
 - **덱빌딩**: 기물마다 개인 덱을 가지며, 전투 보상과 상점에서 카드를 획득해 덱을 강화합니다.
 - **유물(Relic)**: 상점에서 구매하는 영구 강화 아이템으로 전투 전반에 영향을 줍니다.
-- **상태 효과**: 중독, 화상, 재생, 기절, 강화/약화, 가시(반격) 등 다양한 상태 효과 시스템을 제공합니다.
+- **상태 효과**: 중독, 화상, 재생, 기절, 강화/약화, 가시(반격), 도발 등 다양한 상태 효과 시스템을 제공합니다.
 - **맵 진행**: 노드 기반 맵을 따라 전투 / 상점 / 휴식 / 이벤트 노드를 선택하며 진행하고, 마지막 층을 클리어하면 런이 종료됩니다.
 - **소환 시스템**: 보스와 일반 적을 `AutoPiece`로 통합한 기물 소환 로직을 제공합니다.
 
@@ -57,28 +57,27 @@ Assets/
 카드 한 장은 `Card.effects`(`List<CardEffect>`)를 가지며, `Board`는 이를 큐(`Queue<CardEffect> pendingEffects`)에 담아 **등록된 순서대로 하나씩** 처리합니다. 관련 코드: [Board.CardEffect.cs](Assets/Scripts/Board.CardEffect.cs).
 
 1. **카드 선택/드롭**: 손패에서 카드를 클릭하거나 드래그해 보드에 드롭하면 `CardCanvas.UseCard(handnum)` → `CommitNowUsingCard()`를 거쳐, 타겟팅이 필요한 카드는 `Board.UseCard(Card card)`가 호출됩니다.
-2. **`Board.UseCard`**: 이전 상태(`lockedCaster`, `effectApplied`)를 초기화하고, `card.effects`를 전부 `pendingEffects` 큐에 채운 뒤 `ProcessNextCardEffect()`를 시작합니다.
+2. **`Board.UseCard`**: 이전 상태(`effectApplied` 등)를 초기화하고, `card.effects`를 전부 카드 시전자를 기록한 사본(`CardEffect.caster`)으로 `pendingEffects` 큐에 채운 뒤 `ProcessNextCardEffect()`를 시작합니다. 효과마다 이 시전자의 현재 위치를 시전자 칸으로 쓰므로, 앞 효과로 이동했으면 다음 효과는 새 위치 기준으로 처리됩니다.
 3. **`ProcessNextCardEffect`**: 큐의 다음 효과(`Peek`)를 보고 진행 방식을 분기합니다.
    - **적 카드(`User.Enemy`)**: `ProcessEnemyCardEffect`가 `TargetLogic`(`NearestEnemy` / `LowestHP` / `self` / `AllXInRange` 등)에 따라 대상을 자동으로 계산해 즉시 실행합니다.
    - **아군 카드(`User.Ally`)**: 효과의 `requiredMode`에 따라
      - `cardSelecting` → 카드 선택 패널(핸드/덱/버림 더미 등에서 카드 고르기)을 띄우고 플레이어의 확정을 기다립니다.
      - `Inspect`(보드 상호작용 불필요) + `pieceSelectCount > 0` → 보드에서 기물을 직접 클릭해 고르게 합니다(`RequestPieceSelection`).
      - `Inspect`(그 외) → 대상 선택 없이 즉시 실행합니다.
-     - `command` / `targeting` → 플레이어가 보드를 클릭해 시전자·대상을 고를 때까지 대기합니다(`lockedCaster`로 이전 효과의 시전자를 다음 효과에도 고정 가능).
+     - `command` / `targeting` → 첫 효과는 드롭으로 시전자가 확정되고 대상을 고를 때까지 대기합니다. 두 번째 이후 효과는 카드를 쓴 기물을 현재 위치에서 다시 선택한 것처럼 처리해, `self`면 바로 실행하고 아니면 그 효과의 사거리를 띄워 클릭을 기다립니다.
 4. **효과 실행**: 대상이 정해지면 `ExecuteEffect(cardEffect, targetPos)` → `ApplyCardEffectNow`가 실제로 게임 상태를 변경합니다.
 5. **다음 효과로 진행**: `ScheduleNextCardEffect()`가 현재 효과의 이동/애니메이션 코루틴(`queuecoroutineworking`)이 끝날 때까지 기다린 뒤 `ProcessNextCardEffect()`를 다시 호출합니다. 즉, **각 `CardEffect`는 이전 효과의 애니메이션까지 완전히 끝난 뒤에야 리스트 순서대로 실행**됩니다.
 6. **카드 종료**: `pendingEffects`가 비면 `FinishCardUsage()`가 호출되어 (필요 시) 시전자의 이번 턴 이동을 막고, `CardCanvas.FinishUseCard()`와 `ResetBoardAfterCardUse()`로 보드 상태를 정리합니다.
 
 ### `CardEffect` 하나의 처리 순서 (`ExecuteEffect` → `ApplyCardEffectNow`)
 
-1. **시전자 고정**: `lockCasterForNext == true`이고 뒤에 처리할 효과가 남아 있으면, 다음 효과가 참조할 시전자 위치를 고정합니다(`Move` 타입이면 이동 목적지, 그 외에는 현재 위치).
-2. **유물(Relic) 훅 — 카드당 단 한 번**: 이 카드의 첫 효과가 실행되는 시점(`effectApplied`가 처음 `true`로 바뀌는 순간)에 `TriggerRelicsOnCardUsed`가 "카드 사용 시" 발동하는 유물 효과를 전부 동기적으로 먼저 처리합니다. 이 지점부터는 카드 취소가 불가능해집니다.
-3. **`ApplyCardEffectNow`로 실제 적용**:
+1. **유물(Relic) 훅 — 카드당 단 한 번**: 이 카드의 첫 효과가 실행되는 시점(`effectApplied`가 처음 `true`로 바뀌는 순간)에 `TriggerRelicsOnCardUsed`가 "카드 사용 시" 발동하는 유물 효과를 전부 동기적으로 먼저 처리합니다. 이 지점부터는 카드 취소가 불가능해집니다.
+2. **`ApplyCardEffectNow`로 실제 적용**:
    - `targetlogic`이 `AllEnemiesInRange` / `AllAlliesInRange` / `AllPiecesInRange`면 `ExecuteAreaEffect`로 분기해, `effectRange` 오프셋(필요 시 `Directional4` / `Directional8`로 회전)으로 대상 목록을 모은 뒤 타입별 광역 함수(`AreaAttackPiece` / `AreaShieldPiece` / `AreaHealPiece`)를 적용합니다.
    - 그 외에는 `EffectType`(`Move`, `Damage`, `Heal`, `Shield`, `SelfDamage`, `Draw`, `ApplyStatus`, `ApplyTurnEffect`, `ColDamageUp`, `Summon` 등)에 따라 분기해 처리합니다.
    - `Damage` / `Heal` / `Shield`는 각각 `ResolveDamageWithColDamage` / `ResolveShieldWithBonus`로 시전자의 영구 강화 스탯(콜대미지·방어막 보너스)을 더한 뒤 적용하고, 이어서 `statusEffectType`이 설정돼 있으면 `ApplyStatusToTarget`으로 상태 효과(중독·화상·기절 등)를 함께 부여합니다.
-4. **처치 시 연쇄 효과(`onKillEffect`)**: `Damage` 효과로 대상이 처치되면 `Board.Combat.cs`가 `cardEffect.onKillEffect`를 시전자 자신에게 즉시 실행합니다(예: `ExecutionerCard`는 처치 시 영구 콜대미지 증가, `LethalChargeCard`는 처치 시 코스트 회복).
-5. 적용이 끝나면 다시 상위 큐 루프(`ScheduleNextCardEffect`)로 돌아가 다음 `CardEffect`를 처리합니다.
+3. **처치 시 연쇄 효과(`onKillEffect`)**: `Damage` 효과로 대상이 처치되면 `Board.Combat.cs`가 `cardEffect.onKillEffect`를 시전자 자신에게 즉시 실행합니다(예: `ExecutionerCard`는 처치 시 영구 콜대미지 증가, `LethalChargeCard`는 처치 시 코스트 회복).
+4. 적용이 끝나면 다시 상위 큐 루프(`ScheduleNextCardEffect`)로 돌아가 다음 `CardEffect`를 처리합니다.
 
 ## 턴 진행 상태 머신
 

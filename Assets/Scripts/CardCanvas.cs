@@ -225,6 +225,11 @@ public class CardCanvas : MonoBehaviour
             AnnouncementUI.instance?.Show(card.GetCannotUseReason());
             return false;
         }
+        if (!card.HasGraveForFirstEffect(activePiece))
+        {
+            AnnouncementUI.instance?.Show("무덤이 부족합니다");
+            return false;
+        }
         if (nowusingCard != null)
         {
             CancelCardMove(nowusingCard);
@@ -450,7 +455,8 @@ public class CardCanvas : MonoBehaviour
         {
             Card card = rt.GetComponent<Card>();
             if (card == null) continue;
-            bool canUse = playerTurn && !boardProcessing && !stunned && card.Cost <= currentenergy && card.CanUse();
+            bool canUse = playerTurn && !boardProcessing && !stunned && card.Cost <= currentenergy && card.CanUse()
+                && card.HasGraveForFirstEffect(activePiece);
             rt.GetComponent<CanvasGroup>().interactable = canUse;
         }
     }

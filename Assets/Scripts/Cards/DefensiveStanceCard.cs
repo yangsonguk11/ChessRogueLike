@@ -23,7 +23,6 @@ public class DefensiveStanceCard : Card
             dmg = 5,
             targetlogic = TargetLogic.self,
             animTrigger = "Shield",
-            lockCasterForNext = true,
         });
         effects.Add(new CardEffect
         {

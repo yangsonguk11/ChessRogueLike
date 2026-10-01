@@ -17,7 +17,6 @@ public class BossAttack2Card : Card
             dmg = 5,
             targetlogic = TargetLogic.AllEnemiesInRange,
             effectRange = effectRange.Count > 0 ? effectRange[0] : null,
-            lockCasterForNext = false,
             areaTargetMode = AreaTargetMode.Fixed,
             animTrigger = "AreaAttack",
         };

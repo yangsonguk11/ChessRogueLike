@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e4dbbf5546730bb49820b9d1b68e5d31, type: 3}
   m_Name: SummonerPieceInfo
   m_EditorClassIdentifier: Assembly-CSharp::PieceInfo
-  _pieceName: Summoner
+  _pieceName: SummonerAlly
   _teamID: 0
   _isSummon: 0
   _maxHp: 40

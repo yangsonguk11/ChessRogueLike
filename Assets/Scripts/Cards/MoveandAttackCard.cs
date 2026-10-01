@@ -17,7 +17,6 @@ public class MoveAndAttackCard : Card
             dmg = 0,
             targetlogic = TargetLogic.NearestEnemy,
             effectRange = null,
-            lockCasterForNext = true,
             animTrigger = "Move",
         };
         effects.Add(cf);

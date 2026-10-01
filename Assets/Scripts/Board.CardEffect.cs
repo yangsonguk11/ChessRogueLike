@@ -6,12 +6,24 @@ public partial class Board
 {
     Queue<CardEffect> pendingEffects = new Queue<CardEffect>();
     Card currentActiveCard;
-    Vector2Int lockedCaster = new Vector2Int(-1, -1);
-    Piece lockedCasterPiece = null;
-    bool IsLockedCasterActive() => lockedCaster.x >= 0;
     bool effectApplied = false;
     public bool EffectApplied => effectApplied;
+    // 무덤 비용(CardEffect.graveCost)을 내는 기물 — 아군 카드는 카드를 낸 기물(ActivePiece), 적/자동행동
+    // 카드는 UseCard 시점의 selectedButton 기물(TurnControl이 미리 세팅). 카드 사용 동안 고정된다.
+    Piece currentCardCaster;
+    // CardEffect.useLastTarget이 재사용하는 직전 효과의 targetPos
+    Vector2Int lastEffectTargetPos = new Vector2Int(-1, -1);
 
+    // 이름과 달리 카드를 "실제로 사용"하는 함수가 아니라, 이제부터 처리할 카드를 보드에 등록(무장)하는 함수다.
+    // currentActiveCard/시전자를 세팅하고 effects를 pendingEffects에 채운 뒤, 첫 효과가 요구하는 모드
+    // (boardmode)로 전환해 타겟 입력을 기다린다. 효과 적용과 에너지 차감은 모두 ExecuteEffect(effectApplied가
+    // true가 되는 순간)에서 일어난다.
+    // 호출 시점은 카드 종류마다 다르다:
+    //  - 타겟팅(NeedsTargeting)/pieceSelectCount/Self 카드: CardCanvas.CommitNowUsingCard가 카드를 "집는"
+    //    시점(드롭 전)에 호출 — 첫 효과가 타겟을 기다리므로 아직 아무것도 적용되지 않았고 취소도 가능하다.
+    //  - 그 외(DrawCard처럼 효과가 전부 Inspect인 카드): CardCanvas.OnDragCardReleased가 "드롭" 시점에 호출.
+    // 큐 맨 앞 효과가 위치가 필요 없는 Inspect면 ProcessNextCardEffect가 이 호출 안에서 곧바로 ExecuteEffect까지
+    // 실행하므로, 그 경우엔 UseCard 호출 중에 효과 적용·에너지 차감이 함께 일어난다(DrawCard는 드롭 시점).
     public void UseCard(Card card)
     {
         Debug.Log($"UseCard: {card.name} (user: {card.user}, effects: {card.effects.Count})");
@@ -20,12 +32,15 @@ public partial class Board
             ClearSelectedButton();
             ShowUseEligibilityPreview(card);
         }
-        lockedCaster = new Vector2Int(-1, -1);
+        currentCardCaster = card.user == User.Ally
+            ? CardCanvas.instance?.ActivePiece
+            : (isSelectedButtonActive() ? GetButtonScript(selectedButton).GetPieceScript() : null);
+        lastEffectTargetPos = new Vector2Int(-1, -1);
         effectApplied = false;
         currentActiveCard = card;
         pendingEffects.Clear();
         foreach (var effect in card.effects)
-            pendingEffects.Enqueue(effect);
+            pendingEffects.Enqueue(effect with { caster = currentCardCaster });
         ProcessNextCardEffect();
     }
 
@@ -71,6 +86,52 @@ public partial class Board
 
         CardEffect nextEffect = pendingEffects.Peek();
 
+        // 시전자(카드를 쓴 기물, 소환 시 효과면 소환된 기물)가 앞 효과로 죽어 보드에 없으면 이 효과는 건너뛴다.
+        if (nextEffect.caster != null && FindPiecePos(nextEffect.caster).x < 0)
+        {
+            pendingEffects.Dequeue();
+            ScheduleNextCardEffect();
+            return;
+        }
+
+        // 카드 주인이 아닌 기물이 시전하는 효과(소환 시 효과): 적 카드 규칙대로 자동 실행한다(ProcessEnemyCardEffect가
+        // 그 기물 위치를 시전자로 잡음). 실행하는 동안 바뀐 선택 상태는 되돌려 카드의 이후 효과로 새지 않게 한다 —
+        // 자동 실행은 이 호출 안에서 끝나고 ScheduleNextCardEffect는 드레인 중이라 다음 패스만 예약한다.
+        if (nextEffect.caster != null && nextEffect.caster != currentCardCaster)
+        {
+            if (nextEffect.graveCost > 0 && !nextEffect.caster.HasGrave(nextEffect.graveCost))
+            {
+                pendingEffects.Dequeue(); // 무덤 부족: 이 효과만 스킵
+                ScheduleNextCardEffect();
+                return;
+            }
+            var saved = (_selectedButton, casterPiece);
+            ProcessEnemyCardEffect(nextEffect);
+            (_selectedButton, casterPiece) = saved;
+            return;
+        }
+
+        // 무덤 부족: 타겟팅에 들어가기 전에 판정해서, 실행되지 않을 효과 때문에 타겟을 고르게 하지 않는다.
+        // 첫 효과면 카드 전체 무효(아군은 CardCanvas.UseCard에서 이미 막히므로 사실상 적/자동행동 경로),
+        // 2번째 이후면 이 효과만 건너뛴다. 로직이 동기라 앞 효과가 만든 무덤 변화가 여기서 바로 반영된다.
+        if (nextEffect.graveCost > 0 && (currentCardCaster == null || !currentCardCaster.HasGrave(nextEffect.graveCost)))
+        {
+            if (pendingEffects.Count == currentActiveCard.effects.Count) pendingEffects.Clear();
+            else pendingEffects.Dequeue();
+            ScheduleNextCardEffect();
+            return;
+        }
+
+        if (nextEffect.useLastTarget && lastEffectTargetPos.x >= 0)
+        {
+            // 일반 공격은 selectedButton을 유지하지만, 이동(MovePiece)이 지웠다면 시전자의 현재 위치로 복원한다.
+            // setter는 OnSelectBoard 부작용이 있으므로 백킹 필드에 직접 대입(ProcessEnemyCardEffect와 동일).
+            if (!isSelectedButtonActive() && nextEffect.caster != null) _selectedButton = FindPiecePos(nextEffect.caster);
+            ExecuteEffect(pendingEffects.Dequeue(), lastEffectTargetPos);
+            ScheduleNextCardEffect();
+            return;
+        }
+
         if (currentActiveCard.user == User.Enemy)
         {
             ProcessEnemyCardEffect(nextEffect);
@@ -108,19 +169,15 @@ public partial class Board
             ExecuteEffect(pendingEffects.Dequeue());
             ScheduleNextCardEffect();
         }
-        else if (IsLockedCasterActive())
+        else if (nextEffect.caster != null && pendingEffects.Count < currentActiveCard.effects.Count)
         {
-            if (lockedCasterPiece != null && boardmode == BoardMode.targeting)
-            {
-                ExecuteEffect(pendingEffects.Dequeue(), lockedCaster);
-                ScheduleNextCardEffect();
-            }
-            else
-            {
-                selectedButton = lockedCaster;
-                if (isSelectedButtonActive())
-                    GetButtonScript(selectedButton).SelectedTrue();
-            }
+            // 후속 효과(첫 효과가 아님 — 위 무덤 판정과 같은 기준, 앞에 끼워 넣은 소환 시 효과는 이미 소진됨):
+            // 카드를 쓴 기물을 현재 위치에서 다시 선택한 것처럼 처리한다 — self 타겟이면 OnSelectBoard가 바로
+            // 실행하고, 아니면 이 효과의 사거리를 띄워 클릭을 기다린다(이동했으면 새 위치 기준).
+            // 첫 효과는 드롭(ConfirmCasterOnDrop)이 시전자를 확정하므로 건드리지 않는다.
+            selectedButton = FindPiecePos(nextEffect.caster);
+            if (isSelectedButtonActive())
+                GetButtonScript(selectedButton).SelectedTrue();
         }
     }
 
@@ -131,7 +188,7 @@ public partial class Board
     public void ConfirmCasterOnDrop()
     {
         if (pendingEffects.Count == 0 || currentActiveCard == null || currentActiveCard.user != User.Ally) return;
-        if (isSelectedButtonActive() || IsLockedCasterActive()) return;
+        if (isSelectedButtonActive()) return;
 
         if (boardmode == BoardMode.command || boardmode == BoardMode.targeting)
             AutoSelectCardOwnerAsCaster();
@@ -163,10 +220,9 @@ public partial class Board
 
     void ProcessEnemyCardEffect(CardEffect nextEffect)
     {
-        // 이전 효과(예: Move)가 lockCasterForNext를 설정해뒀다면, 시전자가 이동한 새 위치를
-        // 기준으로 다음 효과(예: 자기 자신 버프)를 풀이해야 함
-        if (IsLockedCasterActive())
-            _selectedButton = lockedCaster;
+        // 효과에 기록된 시전자의 현재 위치를 기준으로 풀이한다 — 앞 효과(예: Move)로 이동했으면 새 위치.
+        if (nextEffect.caster != null)
+            _selectedButton = FindPiecePos(nextEffect.caster);
 
         if (nextEffect.requiredMode == BoardMode.command)
         {
@@ -194,6 +250,32 @@ public partial class Board
                 ScheduleNextCardEffect();
             }
         }
+        else
+        {
+            // Inspect처럼 위치가 필요 없는 효과: 시전자 칸 기준으로 즉시 실행(분기가 없으면 큐가 멈춘다)
+            ExecuteEffect(pendingEffects.Dequeue(), selectedButton);
+            ScheduleNextCardEffect();
+        }
+    }
+
+    // 도발 판정용: effect가 casterPos에서 pos의 기물에 실제로 닿는지. 이동은 이동공격 도착 칸이 있어야 닿는다
+    // (MoveAttack이 실패하는 조건과 같은 GetAdjacentLocation 기준, noMoveAttack이면 닿지 않음). 그 외 효과는 사거리 안이면 닿는다.
+    bool CanEffectReach(CardEffect effect, Vector2Int casterPos, Vector2Int pos) =>
+        effect == null || effect.type != EffectType.Move
+        || (!effect.noMoveAttack && GetAdjacentLocation(casterPos, pos).x >= 0);
+
+    // 도발: candidates 중 targetTeam 소속이고 도발을 가졌으며 effect가 실제로 닿는 기물의 칸이 하나라도 있으면 그 칸들만,
+    // 없으면 candidates를 그대로 돌려준다 — "사거리 안에 도발 기물이 있으면 그 기물들 우선, 없으면 원래 로직".
+    // 도발 기물이 여럿이면 전부 남기고, 그중 무엇을 고를지는 호출부의 원래 기준(가장 가까움/최저 체력 등)이 정한다.
+    // 적/자동행동 아군 AI의 대상 선택이 쓰고, 플레이어 카드의 대상 제한(적 도발, 예정)도 같은 함수를 쓴다.
+    List<Vector2Int> PrioritizeTauntTargets(List<Vector2Int> candidates, int targetTeam, CardEffect effect, Vector2Int casterPos)
+    {
+        List<Vector2Int> taunting = candidates.FindAll(pos =>
+        {
+            Piece p = GetPieceAt(pos);
+            return p != null && p.teamID == targetTeam && p.HasTaunt() && CanEffectReach(effect, casterPos, pos);
+        });
+        return taunting.Count > 0 ? taunting : candidates;
     }
 
     Vector2Int ResolveEnemyTarget(CardEffect effect)
@@ -201,7 +283,7 @@ public partial class Board
         switch (effect.targetlogic)
         {
             case TargetLogic.NearestEnemy:
-                return ResolveNearestEnemyTarget();
+                return ResolveNearestEnemyTarget(effect);
             case TargetLogic.LowestHP:
                 return ResolveLowestHPTarget(effect);
             default:
@@ -246,18 +328,30 @@ public partial class Board
         List<Vector2Int> offsets = effect.effectRange.GetAbleRange();
         Vector2Int bestDir = new Vector2Int(-1, -1);
         int bestCount = 0;
+        int bestTauntCount = 0;
+        bool targetsFoe = targetTeam != caster.teamID; // 도발은 상대 진영을 노릴 때만 본다
 
         foreach (Vector2Int dir in directions)
         {
             int count = 0;
+            int tauntCount = 0;
             foreach (Vector2Int offset in RotateOffsets(offsets, dir))
             {
                 Vector2Int pos = selectedButton + offset;
                 if (pos.x < 0 || pos.x >= N || pos.y < 0 || pos.y >= M) continue;
                 Piece p = GetButtonScript(pos).GetPieceScript();
-                if (p != null && p.teamID == targetTeam) count++;
+                if (p == null || p.teamID != targetTeam) continue;
+                count++;
+                if (targetsFoe && p.HasTaunt()) tauntCount++;
             }
-            if (count > bestCount) { bestCount = count; bestDir = dir; }
+            if (count == 0) continue;
+            // 도발 기물을 더 많이 맞히는 방향 우선 — 같으면 원래대로 대상 수가 많은 쪽
+            if (tauntCount > bestTauntCount || (tauntCount == bestTauntCount && count > bestCount))
+            {
+                bestTauntCount = tauntCount;
+                bestCount = count;
+                bestDir = dir;
+            }
         }
 
         if (bestCount == 0) return new Vector2Int(-1, -1); // 어느 방향에도 대상 없음 → 스킵
@@ -278,7 +372,7 @@ public partial class Board
         int lowestHP = int.MaxValue;
         Vector2Int target = new Vector2Int(-1, -1);
 
-        foreach (Vector2Int pos in selectedButtonMovable)
+        foreach (Vector2Int pos in PrioritizeTauntTargets(selectedButtonMovable, targetTeam, effect, selectedButton))
         {
             Piece p = GetButtonScript(pos).GetPieceScript();
             if (p != null && p.teamID == targetTeam && p.hp < lowestHP)
@@ -291,7 +385,7 @@ public partial class Board
         return target;
     }
 
-    Vector2Int ResolveNearestEnemyTarget()
+    Vector2Int ResolveNearestEnemyTarget(CardEffect effect)
     {
         // 캐스터 자신의 teamID 기준으로 상대팀을 동적으로 계산 — teamID==1(적)뿐 아니라
         // teamID==0(자동행동 아군)이 이 로직을 써도 올바르게 반대팀을 노리게 하기 위함.
@@ -305,7 +399,8 @@ public partial class Board
         float minDistance = float.MaxValue;
         Vector2Int bestTargetPos = new Vector2Int(-1, -1);
 
-        foreach (Vector2Int movablePos in selectedButtonMovable)
+        // 사거리 안에 (닿는) 도발 기물이 있으면 그 기물들 중에서만 가장 가까운 기물을 고른다.
+        foreach (Vector2Int movablePos in PrioritizeTauntTargets(selectedButtonMovable, targetTeam, effect, selectedButton))
         {
             Piece p = GetButtonScript(movablePos).GetPiece()?.GetComponent<Piece>();
             if (p != null && p.teamID == targetTeam)
@@ -362,15 +457,21 @@ public partial class Board
         return Mathf.Max(0, result);
     }
 
+    // 무덤 비용을 시전자(e.caster — 카드 효과면 UseCard가 기록한 카드 시전자, 소환 시 효과면 소환된 기물)에게서
+    // 즉시 차감하고, dmgPerGrave가 있으면 소모량만큼 dmg를 올린 사본을 돌려준다.
+    // 효과가 실제로 실행되는 시점에만 호출한다 — 타겟팅 대기 중 취소하면 차감되지 않아야 하므로.
+    CardEffect PayGrave(CardEffect e)
+    {
+        if (e.caster == null || (e.graveCost <= 0 && !e.consumeAllGrave)) return e;
+        int used = e.caster.ConsumeGrave(e.graveCost, e.consumeAllGrave);
+        CardCanvas.instance?.UpdateCardInteractability();
+        return e.dmgPerGrave != 0 ? e with { dmg = e.dmg + used * e.dmgPerGrave } : e;
+    }
+
     void ExecuteEffect(CardEffect cardEffect, Vector2Int targetPos = default)
     {
-        // lockCasterForNext가 true이고 다음 효과가 있을 때만 시전자를 고정
-        // Move 효과는 기물이 targetPos로 이동하므로 목적지를 저장, 나머지는 현재 위치 유지
-        if (cardEffect.lockCasterForNext && pendingEffects.Count > 0)
-        {
-            lockedCaster = cardEffect.type == EffectType.Move ? targetPos : selectedButton;
-            lockedCasterPiece = GetButtonScript(lockedCaster).GetPieceScript();
-        }
+        cardEffect = PayGrave(cardEffect);
+        lastEffectTargetPos = targetPos;
 
         // effectApplied가 false→true로 바뀌는 지금 이 순간이 이 카드의 첫 효과가 실제로 처리되기 시작하는
         // 시점이다(그 전까지는 CardCanvas.CancelCardUsage/RevertNowUsingCardToHeld로 언제든 취소 가능하고,
@@ -587,10 +688,30 @@ public partial class Board
             }
             case EffectType.GrantSummonMaxHp:
             {
-                // 1번째 효과(GrantSummonColDamage)가 이미 캐스터의 Buff 애니메이션/텍스트를 재생했으므로,
-                // HeavyAttackCard의 SelfDamage처럼 곧바로 이어지는 이 효과는 별도 연출 없이 수치만 반영한다.
+                // GrantSummonColDamage와 동일하게 자체 버프 애니메이션/텍스트를 재생한다 — 두 효과가
+                // 체인으로 이어져도(SummonMasteryCard/SummonGrowthCard) 각자 수치를 분명히 보여주기 위함.
                 Piece caster = GetButtonScript(selectedButton).GetPieceScript();
-                if (caster != null) caster.summonMaxHpPending += cardEffect.dmg;
+                if (caster != null)
+                {
+                    caster.summonMaxHpPending += cardEffect.dmg;
+                    motionQueue.Enqueue(PlayCasterAndTargetReaction(caster, cardEffect?.animTrigger,
+                        caster.StatusTextReaction($"다음 소환 체력 +{cardEffect.dmg}", true, new Color(1f, 0.27f, 0.27f)), cardEffect));
+                    StartMotionQueue();
+                }
+                break;
+            }
+            case EffectType.AddGrave:
+            {
+                // 무덤 증가는 즉시 반영(다음 효과의 graveCost 판정에 바로 쓰임) — 연출만 큐잉한다.
+                Piece caster = isSelectedButtonActive() ? GetButtonScript(selectedButton).GetPieceScript() : null;
+                Piece target = (targetPos.x >= 0 && targetPos.y >= 0 ? GetButtonScript(targetPos).GetPieceScript() : null) ?? caster;
+                target?.AddGrave(cardEffect.dmg);
+                if (caster != null && cardEffect.animTrigger != null)
+                {
+                    motionQueue.Enqueue(TriggerAnimCor(caster, cardEffect.animTrigger, cardEffect: cardEffect));
+                    StartMotionQueue();
+                }
+                CardCanvas.instance?.UpdateCardInteractability();
                 break;
             }
             default:
@@ -624,7 +745,7 @@ public partial class Board
         }
 
         GameObject pieceObj = Instantiate(prefab);
-        GetButtonScript(spawnPos).SetPiece(pieceObj);
+        ApplySpawnOccupancy(spawnPos, pieceObj); // 소환 시 효과가 이 효과 바로 다음(카드의 이후 효과보다 먼저)에 실행되게 큐 맨 앞에 들어간다
         Piece pieceScript = pieceObj.GetComponent<Piece>();
 
         // 소환 카드를 실제로 쓴 시전자 — SummonMasteryCard가 이 시전자에게 쌓아둔 다음 소환 보너스가
@@ -637,6 +758,9 @@ public partial class Board
         Vector3 summonScale = pieceObj.transform.localScale;
         pieceObj.transform.localScale = Vector3.zero;
 
+        // 소환 등장 연출(SummonVisualEffect)에, 소환 보너스가 있었으면 그 버프 텍스트/파티클도 같이 묶는다.
+        var summonReactions = new List<IEnumerator> { pieceScript.SummonVisualEffect(summonScale) };
+
         if (pieceScript is AutoPiece && pieceScript.teamID == 1)
         {
             enemyPositions.Add(spawnPos);
@@ -644,32 +768,46 @@ public partial class Board
         else if (pieceScript is AutoPiece)
         {
             autoAllyPositions.Add(spawnPos); // 손패 없음, AI가 자동 행동
-            if (hasSummonBuff) ApplyAndConsumeSummonBuff(pieceScript, caster);
+            if (hasSummonBuff) summonReactions.AddRange(ApplyAndConsumeSummonBuff(pieceScript, caster));
         }
         else if (pieceScript.teamID == 0)
         {
             // 전투 한정 소환: DataManager에 영구 등록하지 않음 (pieceDataIndex는 -1로 유지)
             PieceData data = DataManager.Instance.BuildPieceData(info, info.DefaultDeckCardIDs);
             pieceScript.SetPieceData(data); // 스탯 전체를 덮어쓰므로 버프는 반드시 이 다음에 적용
-            if (hasSummonBuff) ApplyAndConsumeSummonBuff(pieceScript, caster);
+            if (hasSummonBuff) summonReactions.AddRange(ApplyAndConsumeSummonBuff(pieceScript, caster));
         }
 
         // 다른 모든 시전자→대상 연출(PieceAttackCor/PieceHealCor 등)과 동일하게 PlayCasterAndTargetReaction을
         // 거쳐서, 시전자 캐스팅 애니메이션의 Animation Event(또는 Attack 트리거의 DOPunch 폴백 콜백) 시점에
         // 맞춰 기물이 나타나게 한다 — 예전엔 Parallel로 캐스팅 시작과 동시에 나타나 타이밍이 어긋났었다.
-        motionQueue.Enqueue(PlayCasterAndTargetReaction(caster, cardEffect?.animTrigger, pieceScript.SummonVisualEffect(summonScale), cardEffect));
+        motionQueue.Enqueue(PlayCasterAndTargetReaction(caster, cardEffect?.animTrigger, Parallel(summonReactions.ToArray()), cardEffect));
         StartMotionQueue();
     }
 
-    // SummonMasteryCard가 caster에게 쌓아둔 "다음 소환 보너스"를 새로 소환된 기물에 적용하고 소모한다.
-    void ApplyAndConsumeSummonBuff(Piece newPiece, Piece caster)
+    // SummonMasteryCard/SummonGrowthCard가 caster에게 쌓아둔 "다음 소환 보너스"를 새로 소환된 기물에
+    // 적용하고 소모한다. 실제로 적용된 스탯만큼 버프 텍스트/파티클 반응을 만들어 반환 — 호출부(SummonPieceAt)가
+    // 소환 등장 연출과 함께 재생한다.
+    List<IEnumerator> ApplyAndConsumeSummonBuff(Piece newPiece, Piece caster)
     {
-        newPiece.AddColDamage(caster.summonColDamagePending, showReaction: false);
-        newPiece.maxhp += caster.summonMaxHpPending;
-        newPiece.hp += caster.summonMaxHpPending;
+        var reactions = new List<IEnumerator>();
+        if (caster.summonColDamagePending != 0)
+        {
+            int delta = caster.summonColDamagePending;
+            newPiece.AddColDamage(delta, showReaction: false);
+            reactions.Add(newPiece.StatusTextReaction($"이동공격력 +{delta}", true, new Color(1f, 0.27f, 0.27f)));
+        }
+        if (caster.summonMaxHpPending != 0)
+        {
+            int delta = caster.summonMaxHpPending;
+            newPiece.maxhp += delta;
+            newPiece.hp += delta;
+            reactions.Add(newPiece.StatusTextReaction($"체력 +{delta}", true, new Color(1f, 0.27f, 0.27f)));
+        }
         caster.summonColDamagePending = 0;
         caster.summonMaxHpPending = 0;
         CardCanvas.instance?.RefreshAllCardViews();
+        return reactions;
     }
 
     // 상하좌우(직교) 먼저, 대각선은 나중 — 같은 프론티어(같은 홉 거리) 안에서 상하좌우 빈 칸이 있으면
@@ -808,6 +946,8 @@ public partial class Board
                 new CardEffect { requiredMode = BoardMode.Inspect, type = EffectType.Damage, dmg = power, targetlogic = TargetLogic.AllEnemiesInRange, effectRange = range, isBuff = true }, duration),
             StatusEffectType.Thorn              => new ThornEffect(duration, power),
             StatusEffectType.MovementDisabled   => new MovementDisabledEffect(duration),
+            StatusEffectType.Vulnerable         => new VulnerableEffect(duration, power),
+            StatusEffectType.Taunt              => new TauntEffect(duration),
             _                                   => null,
         };
     }
@@ -830,12 +970,11 @@ public partial class Board
 
         Piece caster = GetButtonScript(selectedButton).GetPieceScript();
 
-        // 아군/적 판정은 caster 기물의 teamID가 아니라 카드 자체의 user(Ally/Enemy)를 기준으로 한다
-        // (MouseCentered AoE처럼 캐스터와 무관하게 보드 어디든 놓을 수 있는 카드도 이 카드를 누가 쓰는
-        // 카드인지로 정확히 판정할 수 있다). currentActiveCard가 없는 경우(TurnEffect/유물 같은 예약
-        // 효과)는 caster의 teamID로 대신 판정한다.
-        int userTeam = currentActiveCard != null
-            ? (currentActiveCard.user == User.Ally ? 0 : 1)
+        // 아군/적 판정은 효과에 기록된 시전자(cardEffect.caster)의 진영을 기준으로 한다 — 위치가 아니라 기물
+        // 참조라 MouseCentered AoE처럼 시전자 칸을 선택하지 않는 카드에서도 정확하다. 기록이 없을 때만 예전처럼
+        // 카드 자체의 user(Ally/Enemy), 그마저 없으면(TurnEffect/유물 같은 예약 효과) caster 칸 기물의 teamID로 판정한다.
+        int userTeam = cardEffect.caster != null ? cardEffect.caster.teamID
+            : currentActiveCard != null ? (currentActiveCard.user == User.Ally ? 0 : 1)
             : caster.teamID;
         int targetTeam = cardEffect.targetlogic == TargetLogic.AllEnemiesInRange
             ? (userTeam == 0 ? 1 : 0)
@@ -881,6 +1020,11 @@ public partial class Board
             case EffectType.ApplyStatus:
                 ApplyStatusToTarget(caster, targets, cardEffect);
                 break;
+            case EffectType.AddGrave:
+                foreach (Vector2Int pos in targets)
+                    GetButtonScript(pos).GetPieceScript()?.AddGrave(cardEffect.dmg);
+                CardCanvas.instance?.UpdateCardInteractability();
+                break;
         }
     }
 
@@ -895,10 +1039,8 @@ public partial class Board
     {
         boardmode = BoardMode.Inspect;
         ClearHoverRange();
-        if (IsLockedCasterActive())
-            GetButtonScript(lockedCaster).SelectedFalse();
-        lockedCaster = new Vector2Int(-1, -1);
-        lockedCasterPiece = null;
+        currentCardCaster = null;
+        lastEffectTargetPos = new Vector2Int(-1, -1);
         ClearSelectedButton();
         CancelPieceSelection();
         ClearUseEligibilityPreview();
@@ -937,6 +1079,7 @@ public partial class Board
     // 카드 선택 패널에서 플레이어가 선택을 확정한 후 호출됨
     void ApplyCardSelectionEffect(CardEffect effect, List<RectTransform> selected)
     {
+        PayGrave(effect); // 카드 선택 효과는 dmg를 쓰지 않으므로 차감만
         switch (effect.type)
         {
             case EffectType.SelectAndDiscard:
@@ -965,8 +1108,9 @@ public partial class Board
     // RequestPieceSelection으로 보드에서 직접 고른 기물들 각각에게 effect를 적용한다.
     void ApplyPieceSelectionEffect(CardEffect effect, List<Piece> selected)
     {
+        effect = PayGrave(effect); // 선택한 기물 수와 무관하게 한 번만 차감(카드 시전자가 지불)
         foreach (var piece in selected)
-            ExecuteCardEffectOnPiece(FindPiecePos(piece), piece, effect);
+            ExecuteCardEffectOnPiece(FindPiecePos(piece), piece, effect with { caster = piece });
         ScheduleNextCardEffect();
     }
 }

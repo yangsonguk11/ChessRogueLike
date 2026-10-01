@@ -111,7 +111,7 @@ public class ButtonInfo : MonoBehaviour
         foreach (var effect in p.activeEffects)
         {
             string color = effect.IsBuff ? "#00FF88" : "#FF4444";
-            string durationSuffix = effect.duration < 0 ? "" : $"  {effect.duration}턴";
+            string durationSuffix = effect.duration < 0 ? "" : $"  {effect.duration}턴"; // 영구(음수)면 턴 표시 생략
             sb.AppendLine($"<color={color}>{effect.DisplayName}{durationSuffix}</color>");
         }
         return sb.ToString().TrimEnd();

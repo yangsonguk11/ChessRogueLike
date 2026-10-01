@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 
 [RequireComponent(typeof(PieceEffect))]
@@ -30,6 +31,10 @@ public abstract class Piece : MonoBehaviour
     public int ShieldBonusDelta => shieldBonus - baseShieldBonus;
     public int summonColDamagePending; // 다음 소환에 물려줄 콜대미지 보너스 (SummonMasteryCard가 쌓고, 소환 시 소모)
     public int summonMaxHpPending;     // 다음 소환에 물려줄 체력 보너스
+    // 같은 팀 기물이 죽을 때마다 쌓이는 자원(Board.AddGraveToTeammates). CardEffect.graveCost 등으로 소모한다.
+    // 전투 한정 — GetPieceData/SetPieceData에 넣지 않으므로 전투마다 0부터 시작한다.
+    [ReadOnlyInInspector] public int grave;
+    [HideInInspector] public bool deathCounted; // 같은 기물의 사망이 무덤에 두 번 집계되지 않도록 막는 가드
     [ReadOnlyInInspector] public int teamID; // Awake()에서 항상 pieceInfo.TeamID로 덮어씀 — teamID는 pieceInfo에서 바꿔야 함
     [ReadOnlyInInspector] public bool isSummon; // Awake()에서 항상 pieceInfo.IsSummon으로 덮어씀 — isSummon도 pieceInfo에서 바꿔야 함
     int _shield;
@@ -52,6 +57,10 @@ public abstract class Piece : MonoBehaviour
     // 가 매번 다시 채워준다). 스폰 경로 밖에서 만들어진 경우 -1로 남아 저장에 반영되지 않는다.
     [ReadOnlyInInspector] public int pieceDataIndex = -1; // Awake()에서 손대지 않음 — 스폰 시점에 외부(Board)가 채워줌
 
+    [Tooltip("스폰 시 효과 — 이 프리팹에 붙인 Card 컴포넌트를 연결(AutoPiece.actionCards와 같은 방식).\n보드에 스폰되는 순간(전투 시작 배치·대화 합류·소환 카드) 위에서부터 각 카드의 effects 순서대로 이 기물을 시전자로 자동 실행한다.\n소환 카드면 소환 효과 바로 다음(카드의 이후 효과보다 먼저), 전투 시작 배치는 전투 시작 시 배치 순서대로 유물 전투 시작 효과보다 먼저 실행된다. 이벤트 레벨에서는 발동하지 않는다.\n대상은 적 카드 규칙으로 자동 결정되며 카드의 user/Cost는 무시된다. 카드 선택 패널·pieceSelectCount·useLastTarget 효과는 미지원.")]
+    [FormerlySerializedAs("onSummonCards")]
+    public List<Card> onSpawnCards = new List<Card>();
+
     public List<StatusEffect> activeEffects = new List<StatusEffect>();
     public bool movedThisTurn;
 
@@ -64,6 +73,7 @@ public abstract class Piece : MonoBehaviour
     }
 
     public bool IsStunned() => activeEffects.Exists(e => e is StunEffect);
+    public bool HasTaunt() => activeEffects.Exists(e => e is TauntEffect);
 
     // 이동공격이 실제로 발생했을 때(주 타겟 피해 적용 + 스플래시 처리까지 끝난 시점) 발화. 연쇄 공격
     // 같은 부가 효과를 표현하는 컴포넌트가 Board.Combat.cs 수정 없이 스스로 구독해 반응할 수 있게 한다.
@@ -80,6 +90,17 @@ public abstract class Piece : MonoBehaviour
         foreach (var effect in activeEffects)
             total += effect.OnReceiveMoveAttack(this, attacker);
         return total;
+    }
+
+    // attack/moveattack 피해에만 적용되는 보정(취약 등) — Board.ApplyAttackDamage에서만 호출한다.
+    // 0 피해 공격은 "피해를 받은" 게 아니므로 보정하지 않는다. 같은 효과가 여러 개면 합산.
+    public int ModifyIncomingAttackDamage(int damage)
+    {
+        if (damage <= 0) return damage;
+        int bonus = 0;
+        foreach (var effect in activeEffects)
+            bonus += effect.IncomingAttackDamageBonus;
+        return Mathf.Max(0, damage + bonus);
     }
 
     void ProcessStatusEffects()
@@ -237,6 +258,24 @@ public abstract class Piece : MonoBehaviour
     {
         shield += damage;
         return shield;
+    }
+
+    // 무덤이 실제로 느는 모든 경로(카드 효과, 기물 사망 시 Board.AddGraveToTeammates 등)가 전부 여기를
+    // 거치므로, 버프 반응을 호출부마다 따로 챙기지 않고 여기 한 곳에서 큐에 넣는다.
+    // TODO: 전용 애니메이션/파티클로 교체 예정 — 지금은 공용 버프 반응을 재사용.
+    public void AddGrave(int amount)
+    {
+        if (amount <= 0) return;
+        grave += amount;
+        Board.instance?.EnqueueBoardAnimation(StatusTextReaction($"무덤 +{amount}", true, new Color(1f, 0.27f, 0.27f)));
+    }
+    public bool HasGrave(int amount) => amount <= 0 || grave >= amount;
+    // 실제로 소모한 양을 반환한다 — consumeAll이면 가진 무덤 전부, 아니면 amount(가진 만큼까지).
+    public int ConsumeGrave(int amount, bool consumeAll)
+    {
+        int used = consumeAll ? grave : Mathf.Clamp(amount, 0, grave);
+        grave -= used;
+        return used;
     }
     // colDamage를 변경하고(즉시) 버프/디버프 텍스트+파티클+사운드를 재생한다. permanent가 true면
     // colDamageBonus도 같이 올려 GetPieceData 저장을 거쳐 다음 전투로도 이어지게 한다(영구 강화용).

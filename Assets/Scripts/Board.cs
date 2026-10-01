@@ -250,7 +250,7 @@ public partial class Board : MonoBehaviour
                 continue;
             }
             GameObject piece = Instantiate(prefab);
-            GetButtonScript(spawnPos).SetPiece(piece);
+            ApplySpawnOccupancy(spawnPos, piece);
             Piece pieceScript = piece.GetComponent<Piece>();
             pieceScript.pieceDataIndex = spawnIdx;
             pieceScript.SetPieceData(piecedata);
@@ -270,7 +270,7 @@ public partial class Board : MonoBehaviour
                 continue;
             }
             GameObject piece = Instantiate(prefab);
-            GetButtonScript(placement.position).SetPiece(piece);
+            ApplySpawnOccupancy(placement.position, piece);
 
             // teamID==1(적)인 기물만 enemyPositions에 등록해 적 턴 AI 대상이 되게 함
             if (piece.GetComponent<Piece>().teamID == 1)
@@ -284,7 +284,7 @@ public partial class Board : MonoBehaviour
             else
             {
                 GameObject restObj = Instantiate(RestObjectPrefab);
-                GetButtonScript(data.eventObjectPosition).SetPiece(restObj);
+                ApplySpawnOccupancy(data.eventObjectPosition, restObj);
             }
         }
         else if (currentEventType == LevelData.EventType.Shop)
@@ -294,7 +294,7 @@ public partial class Board : MonoBehaviour
             else
             {
                 GameObject shopObj = Instantiate(ShopObjectPrefab);
-                GetButtonScript(data.eventObjectPosition).SetPiece(shopObj);
+                ApplySpawnOccupancy(data.eventObjectPosition, shopObj);
             }
             // 아직 팔 물건이 없어 상호작용할 게 없으므로, Rest처럼 뭔가 사용해야 나가기 버튼이 뜨는 방식 대신
             // 진입 즉시 나갈 수 있게 한다(소프트락 방지). 실제 구매 기능이 생기면 이 부분을 재검토.
@@ -314,7 +314,10 @@ public partial class Board : MonoBehaviour
 
         LoadOwnedRelics(); // 이벤트 레벨에서도 보유 유물 아이콘은 보여준다
         if (!IsEventLevel)
-            TriggerRelicsOnCombatStart();
+        {
+            TriggerRelicsOnCombatStart(); // 배치하며 모아둔 스폰 시 효과 뒤에 유물 전투 시작 효과를 넣고
+            ProcessNextCardEffect();      // 전투 시작 효과를 한 번에 처리
+        }
     }
 
     // 보드 위 teamID==0(아군) 기물 전체를 수집한다. 기물별 손패/덱 처리(턴 시작/종료, 카드 뷰 갱신 등)에 쓰인다.
@@ -355,10 +358,12 @@ public partial class Board : MonoBehaviour
         int dataIndex = DataManager.Instance.AddPieceData(data);
 
         GameObject piece = Instantiate(prefab);
-        GetButtonScript(spawnPos.Value).SetPiece(piece);
+        ApplySpawnOccupancy(spawnPos.Value, piece);
         Piece pieceScript = piece.GetComponent<Piece>();
         pieceScript.pieceDataIndex = dataIndex;
         pieceScript.SetPieceData(data);
+        // 카드 밖(대화) 합류라 큐에 모인 스폰 시 효과를 바로 처리한다 — NPC 대화는 Inspect 모드에서만 열려 진행 중인 카드가 없다.
+        if (!IsEventLevel) ProcessNextCardEffect();
         return true;
     }
 

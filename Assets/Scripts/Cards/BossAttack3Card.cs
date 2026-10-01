@@ -20,7 +20,6 @@ public class BossAttack3Card : Card
             dmg = 5,
             targetlogic = TargetLogic.AllEnemiesInRange,
             effectRange = range,
-            lockCasterForNext = false,
             areaTargetMode = AreaTargetMode.Fixed,
             animTrigger = "AreaAttack",
         };

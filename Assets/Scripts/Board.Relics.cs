@@ -44,12 +44,13 @@ public partial class Board
             Destroy(container.GetChild(i).gameObject);
     }
 
+    // 다른 훅과 달리 즉시 적용하지 않고, 아군마다 시전자 기록 사본으로 효과 큐 뒤에 넣는다 — 배치하며 모아둔
+    // 스폰 시 효과 다음에 InitBoard가 ProcessNextCardEffect로 함께 처리한다(실행 중 바뀐 선택 상태도 그쪽이 되돌림).
     public void TriggerRelicsOnCombatStart()
     {
-        Vector2Int previousSelected = _selectedButton;
         foreach (Piece ally in GetAllAllyPieces())
-            DrainRelicQueue(RelicsFor(RelicTiming.CombatStart), FindPiecePos(ally));
-        _selectedButton = previousSelected;
+            foreach (CardEffect effect in RelicsFor(RelicTiming.CombatStart))
+                pendingEffects.Enqueue(effect with { caster = ally });
     }
 
     public void TriggerRelicsOnTurnStart()
@@ -107,7 +108,8 @@ public partial class Board
         while (queue.Count > 0)
         {
             _selectedButton = casterPos;
-            ApplyCardEffectNow(queue.Dequeue(), casterPos);
+            // 시전자는 유물이 발동한 기물 — GetButtonScript는 (-1,-1)에서 예외가 나므로 가드
+            ApplyCardEffectNow(queue.Dequeue() with { caster = casterPos.x >= 0 ? GetPieceAt(casterPos) : null }, casterPos);
         }
     }
 }

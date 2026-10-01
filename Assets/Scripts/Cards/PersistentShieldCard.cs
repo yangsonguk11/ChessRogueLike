@@ -18,7 +18,6 @@ public class PersistentShieldCard : Card
             dmg = 4,
             targetlogic = TargetLogic.self,
             effectRange = null,
-            lockCasterForNext = true,
             animTrigger = "Shield",
         });
 

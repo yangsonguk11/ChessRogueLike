@@ -18,11 +18,12 @@ public class SummonMasteryCard : Card
             targetlogic = TargetLogic.self,
             animTrigger = "Buff",
         });
-        effects.Add(new CardEffect // 2번째: 위치 불필요 — Inspect라 자동 연쇄
+        effects.Add(new CardEffect // 2번째: 위치 불필요 — Inspect라 자동 연쇄. 자체 버프 연출을 재생한다
         {
             requiredMode = Board.BoardMode.Inspect,
             type = EffectType.GrantSummonMaxHp,
             dmg = 2,
+            animTrigger = "Buff",
         });
     }
 

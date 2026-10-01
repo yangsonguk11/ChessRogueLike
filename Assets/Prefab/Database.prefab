@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 3181729770140103546}
   - component: {fileID: 5845322441005520208}
   - component: {fileID: 6601234567890123456}
+  - component: {fileID: 4417305829163548271}
   m_Layer: 0
   m_Name: Database
   m_TagString: Untagged
@@ -91,6 +92,12 @@ MonoBehaviour:
   - {fileID: 8950236184682274632, guid: 76bcc5833d274dcaafb64109c346e416, type: 3}
   - {fileID: 8950236184682274632, guid: c3a355f6770748739937d9c4ff9e2037, type: 3}
   - {fileID: 8950236184682274632, guid: 7a0588fcbb0846c68d214b3a1478487e, type: 3}
+  - {fileID: 8950236184682274632, guid: a16e589cdb0049d4b1685e7849fa9f86, type: 3}
+  - {fileID: 8950236184682274632, guid: 4170b0b961404176951823b4a45a9666, type: 3}
+  - {fileID: 8950236184682274632, guid: 726fe041136c3ca229bfb5fe8923f39c, type: 3}
+  - {fileID: 8950236184682274632, guid: 65827272ff54423f8428e4a6cadc115f, type: 3}
+  - {fileID: 8950236184682274632, guid: 5c91aaf851ec4d56a76019772babe313, type: 3}
+  - {fileID: 8950236184682274632, guid: 6089e53d6d4e4595bc1e1f100c7eeb08, type: 3}
   spritesPrefabs:
   - {fileID: 8983308741282738250, guid: 4cd8a850886c3d84192f6b9fe63b7103, type: 3}
   - {fileID: 8983308741282738250, guid: acfd85d4bfd6ed04789af40e579bad12, type: 3}
@@ -122,6 +129,7 @@ MonoBehaviour:
   - {fileID: 782353561853643713, guid: 9ee4e4c8ab94cfa4c957ab85c8663872, type: 3}
   - {fileID: 782353561853643713, guid: 6a6c48e1d114a5c4984a048439daaf0a, type: 3}
   - {fileID: 107724, guid: 288ffe79da9047618ff26d038d0c483e, type: 3}
+  - {fileID: 107724, guid: 61001da72b3f411b8f9a345d75ce07b4, type: 3}
 --- !u!114 &3181729770140103546
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -187,3 +195,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PieceEffectDatabase
   healEffectPrefab: {fileID: 5100941364825399842, guid: 8b318a7b3f13e7948a60613b8b96153b, type: 3}
   statusEffectPrefab: {fileID: 5100941364825399842, guid: 8b318a7b3f13e7948a60613b8b96153b, type: 3}
+--- !u!114 &4417305829163548271
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1924541253940516919}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7686372fa25c614c9e6407dc4597700, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::RelicDatabase
+  iconPrefabs:
+  - {fileID: 1978758920600075269, guid: b622b54d4f2790b4ca7a95c57d15db08, type: 3}
+  - {fileID: 1978758920600075269, guid: b037770ab04f4b75921757b034009557, type: 3}

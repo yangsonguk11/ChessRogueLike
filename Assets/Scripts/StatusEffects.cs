@@ -126,6 +126,39 @@ public class ThornEffect : StatusEffect
     public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
 }
 
+// 취약: attack/moveattack으로 받는 피해 +N. 독/화상/반격/자해 등 다른 경로의 피해는 증가하지 않는다
+// (보정은 Board.ApplyAttackDamage를 거치는 공격 피해에만 적용됨).
+public class VulnerableEffect : StatusEffect
+{
+    public readonly int bonusDamage;
+    public override string DisplayName => $"취약 (+{bonusDamage})";
+    public override bool IsBuff => false;
+    public override Color EffectColor => new Color(1f, 0.45f, 0.65f); // 취약 분홍
+
+    public VulnerableEffect(int duration, int bonusDamage)
+    {
+        this.duration = duration;
+        this.bonusDamage = bonusDamage;
+    }
+
+    public override int IncomingAttackDamageBonus => bonusDamage;
+    public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
+}
+
+// 도발: 상대 진영이 공격/이동 대상을 고를 때, 사거리 안에 도발 기물이 있으면 그 기물을 우선한다
+// (Board.PrioritizeTauntTargets). 지금은 적/자동행동 아군 AI에만 적용되고, 플레이어 카드 대상 제한은 예정.
+public class TauntEffect : StatusEffect
+{
+    public override string DisplayName => "도발";
+    public override bool IsBuff => true;
+
+    public TauntEffect(int duration)
+    {
+        this.duration = duration;
+    }
+    public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
+}
+
 // 이동 불가: 현재 게임플레이 미적용, 상태 표시만
 public class MovementDisabledEffect : StatusEffect
 {

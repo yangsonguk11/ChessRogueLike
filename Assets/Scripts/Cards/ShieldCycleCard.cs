@@ -17,7 +17,6 @@ public class ShieldCycleCard : Card
             dmg = 3,
             targetlogic = TargetLogic.self,
             effectRange = null,
-            lockCasterForNext = true,
             animTrigger = "Shield",
         });
 

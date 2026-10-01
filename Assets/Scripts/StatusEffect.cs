@@ -21,4 +21,7 @@ public abstract class StatusEffect
 
     // 이동공격을 받았을 때 호출. 반격 피해량을 반환.
     public virtual int OnReceiveMoveAttack(Piece self, Piece attacker) { return 0; }
+
+    // attack/moveattack으로 피해를 받을 때 그 피해에 더할 값(취약 등). Piece.ModifyIncomingAttackDamage가 합산한다.
+    public virtual int IncomingAttackDamageBonus => 0;
 }

@@ -102,7 +102,8 @@ public class AutoPiece : Piece
     {
         StatusEffectType.Regen or
         StatusEffectType.Strengthen or
-        StatusEffectType.Thorn => true,
+        StatusEffectType.Thorn or
+        StatusEffectType.Taunt => true,
         _                      => false,
     };
 

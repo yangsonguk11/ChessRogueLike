@@ -167,6 +167,11 @@ public abstract class Card : MonoBehaviour, ISelectable
     // 사용 결과(예: 코스트가 0이 됐는지)에 따라 동적으로 결정하고 싶은 카드만 오버라이드한다.
     public virtual bool ShouldExileOnUse() => exileOnUse;
 
+    // 첫 번째 CardEffect의 무덤 비용을 caster가 감당할 수 있는지 — 부족하면 카드 사용 자체가 막힌다.
+    // 2번째 이후 효과의 비용은 여기서 보지 않는다(실행 시점에 부족하면 그 효과만 스킵).
+    public bool HasGraveForFirstEffect(Piece caster) =>
+        effects.Count == 0 || effects[0].graveCost <= 0 || (caster != null && caster.HasGrave(effects[0].graveCost));
+
     // 첫 번째 CardEffect의 requiredMode로 보드/기물 타겟팅이 필요한 카드인지 판단.
     // self 타겟 카드는 대상이 항상 카드를 낸 기물 자신이라 실질적으로 타겟팅할 게 없으므로 제외한다.
     public bool NeedsTargeting() => effects.Count > 0 && effects[0].requiredMode != Board.BoardMode.Inspect
@@ -351,7 +356,7 @@ public enum CardZone { Hand, Deck, Discard, Any, SavedDeck }
 /// <summary>코스트 변경 효과의 지속 시간</summary>
 public enum CostDuration { Permanent, ThisTurnOnly, OneUse }
 
-public enum EffectType { Move, Damage, Shield, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, BaseColDamageUp, ShieldBonusUp, BaseShieldBonusUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop, SelectAndDiscard, SelectAndChangeCost, SelectAndReturnToDeck, AddCard, RestoreEnergy, Cleanse, Charge, Stun, Summon, ReduceCost, GrantChainMoveAttack, GrantSummonColDamage, GrantSummonMaxHp }
+public enum EffectType { Move, Damage, Shield, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, BaseColDamageUp, ShieldBonusUp, BaseShieldBonusUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop, SelectAndDiscard, SelectAndChangeCost, SelectAndReturnToDeck, AddCard, RestoreEnergy, Cleanse, Charge, Stun, Summon, ReduceCost, GrantChainMoveAttack, GrantSummonColDamage, GrantSummonMaxHp, AddGrave }
 public record CardEffect
 {
     public Board.BoardMode requiredMode { get; init; }
@@ -359,7 +364,6 @@ public record CardEffect
     public int dmg { get; init; }
     public RangeInfoSO effectRange { get; init; }
     public TargetLogic targetlogic { get; init; }
-    public bool lockCasterForNext { get; init; }
     public AreaTargetMode areaTargetMode { get; init; } = AreaTargetMode.Fixed;
     public RangeInfoSO targetingRange { get; init; }      // AoE 중심 배치 가능 범위 (null = 전체 보드)
     public bool targetingUsesMovement { get; init; }      // true면 캐릭터 이동 범위로 AoE 중심 제한
@@ -377,7 +381,7 @@ public record CardEffect
     public bool ignoreCasterColDamageBonus { get; init; } // true면 시전자의 colDamage 보너스를 데미지에 더하지 않음
     public bool ignoreCasterShieldBonus { get; init; }    // true면 시전자의 shieldBonus 보너스를 실드량에 더하지 않음
     public bool noMoveAttack { get; init; }               // true면 이동 시 충돌 공격 불가
-    public bool healOnHit { get; init; }                  // true면 적중 시 입힌 피해만큼 시전자 회복 (일반 공격/이동공격 모두 적용)
+    public bool healOnHit { get; init; }                  // true면 적중 시 입힌 피해만큼 시전자 회복 (일반 공격/이동공격 모두 적용). 입힌 피해 = 대상별 실제 적용 피해(취약 등 보정 포함, Board.ApplyAttackDamage의 dealt)
     public string animTrigger { get; init; }              // 효과 시전 시 재생할 Animator 트리거 (null이면 기본 코루틴 애니메이션 사용)
 
     // ApplyTurnEffect 타입에서 사용: 지정한 타이밍에 실행할 CardEffect와 지속 턴 수
@@ -416,4 +420,21 @@ public record CardEffect
 
     // Damage 타입에서 사용: 같은 대상에게 이 효과를 몇 번 적용할지 (기본 1 = 기존과 동일).
     public int hitCount { get; init; } = 1;
+
+    // 무덤 소모: graveCost는 이 효과 실행에 필요한 최소 무덤 수 — 첫 효과면 부족 시 카드 사용 불가,
+    // 2번째 이후면 이 효과만 스킵(Board.ProcessNextCardEffectStep). consumeAllGrave면 graveCost 이상일 때
+    // 가진 무덤을 전부 소모한다. dmgPerGrave는 소모한 무덤 1개당 dmg에 더할 값(0이면 비례 효과 없음).
+    // 무덤은 카드를 낸 기물(시전자)의 것을 쓴다.
+    public int graveCost { get; init; }
+    public bool consumeAllGrave { get; init; }
+    public int dmgPerGrave { get; init; }
+
+    // true면 타겟을 다시 고르지 않고 직전 효과의 targetPos에 바로 적용한다(같은 대상 추가 타격 등).
+    public bool useLastTarget { get; init; }
+
+    // 이 효과의 시전자 — Board는 효과마다 이 기물의 현재 위치를 시전자 칸으로 쓴다(이동했으면 새 위치).
+    // null이면 selectedButton 기준(기존 방식).
+    // 효과를 실행하도록 등록하는 시점(카드 사용·소환 시 효과·턴 효과·유물·처치 시 효과 등)에 원본은 그대로 두고
+    // `with { caster = ... }` 사본으로 기록한다 — TurnEffect가 카드의 중첩 CardEffect 객체를 공유하므로 원본을 바꾸면 안 된다.
+    public Piece caster { get; init; }
 }

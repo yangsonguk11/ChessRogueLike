@@ -16,7 +16,6 @@ public class EnemyMoveAndColDamageUpCard : Card
             dmg = 0,
             targetlogic = TargetLogic.NearestEnemy,
             effectRange = null,
-            lockCasterForNext = true,
             animTrigger = "Move",
         });
 
