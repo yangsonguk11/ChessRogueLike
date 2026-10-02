@@ -9,6 +9,11 @@ public class AutoPiece : Piece
 
     int Movenum;
 
+    // CardEffect.lockOnAllyPositions 효과가 칠 보드 절대 좌표 — 플레이어 턴 시작 시 Board.LockEnemyTelegraphs가
+    // 채우고, 행동을 마친 뒤(ChangeMove) 비운다. 전투 런타임 전용 — 직렬화되면 Unity가 빈 리스트로 채워
+    // null(잠금 없음)과 구분이 안 되므로 NonSerialized로 둔다.
+    [System.NonSerialized] public List<Vector2Int> lockedTargetCells;
+
     Card nextMove;
     StunnedCard stunnedCard;
     public override void Awake()
@@ -29,6 +34,9 @@ public class AutoPiece : Piece
         if (move == null || move.effects.Count == 0) return base.GetMoveableButton();
         if (move.effects[0].type == EffectType.Move)
             return base.GetMoveableButton();
+        // 아군 위치 고정 공격의 effectRange는 시전자 기준 오프셋이 아니다 — 예고는 ShowAllEnemyRanges가 잠긴 칸으로 따로 그린다.
+        if (move.effects[0].lockOnAllyPositions)
+            return new List<Vector2Int>();
         // effectRange가 없는 카드는 이동 범위로 폴백하지 않고 그냥 아무 칸도 표시하지 않는다.
         return move.effects[0].effectRange?.GetAbleRange() ?? new List<Vector2Int>();
     }
@@ -44,6 +52,7 @@ public class AutoPiece : Piece
 
     public Card ChangeMove()
     {
+        lockedTargetCells = null; // 잠금은 한 번의 행동에만 유효 — 지난 예고 칸이 다음 ShowAllEnemyRanges에 다시 뜨지 않게
         Movenum++;
         if (Movenum >= actionCards.Count)
             Movenum = 0;

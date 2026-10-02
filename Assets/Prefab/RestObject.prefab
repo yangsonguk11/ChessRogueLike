@@ -134,10 +134,26 @@ MonoBehaviour:
   maxhp: 0
   colDamage: 0
   baseColDamage: 0
+  colDamageBonus: 0
+  shieldBonus: 0
+  baseShieldBonus: 0
+  shieldBonusBonus: 0
+  summonColDamagePending: 0
+  summonMaxHpPending: 0
+  grave: 0
+  deathCounted: 0
   teamID: 0
+  isSummon: 0
   moveableRange: {fileID: 0}
+  pieceDataIndex: -1
+  onSpawnCards: []
   movedThisTurn: 0
+  animationEventFired: 0
   used: 0
+  healAmount: 20
+  upgradeSelectCount: 1
+  upgradeColDamageBonus: 1
+  upgradeShieldBonusBonus: 0
 --- !u!114 &5301824008612482765
 MonoBehaviour:
   m_ObjectHideFlags: 0

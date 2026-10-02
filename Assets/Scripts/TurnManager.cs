@@ -66,6 +66,11 @@ public class TurnManager : MonoBehaviour, ITurnManager
     IEnumerator StartPlayerTurnCoroutine()
     {
         if (board.CombatEnded) yield break; // 전투가 이미 끝났으면 새 턴을 시작하지 않음
+        // 적 턴 종료 효과(예: BossRageCard의 턴 종료 이동공격력 증가)의 연출이 아직 재생 중이면 끝날 때까지 기다린다.
+        // 그 사이에 Player로 바꿔두면, 연출이 끝날 때 RollbackStateProcessing이 연출 시작 시점의 상태(Enemy)로
+        // 되돌려버려 플레이어 턴인데 입력·턴 종료가 전부 막힌다.
+        yield return new WaitUntil(() => !board.queuecoroutineworking);
+        if (board.CombatEnded) yield break;
         currentState = TurnState.Player;
         PlayerInputLocked = false;
         AudioManager.instance?.PlayTurnStartPlayer();

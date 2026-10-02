@@ -12,6 +12,7 @@ public partial class Board
         playerDamagedThisTurn = false;
         ResetPieceMovedThisTurn();
         CardCanvas.instance.ProcessTurnStartForAllAllies(GetAllAllyPieces());
+        LockEnemyTelegraphs();
         ShowAllEnemyRanges();
     }
 

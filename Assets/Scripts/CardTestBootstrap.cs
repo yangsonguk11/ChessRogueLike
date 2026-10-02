@@ -10,6 +10,12 @@ public class CardTestBootstrap : MonoBehaviour
 {
     [SerializeField] LevelData testLevel;
 
+    // 카드 테스트 씬이 떠 있는 동안 true — 전투가 끝나도 보상/결과 화면 흐름(GameManager.FinishLevel)을 타지 않는다.
+    // GameManager가 DontDestroyOnLoad라 씬을 나갈 때(OnDestroy) 반드시 다시 내려야 한다.
+    public static bool IsActive { get; private set; }
+
+    void Awake() => IsActive = true;
+
     string savePath;
     string originalSaveJson;
     bool hasBackup;
@@ -37,7 +43,11 @@ public class CardTestBootstrap : MonoBehaviour
     }
 
     void OnApplicationQuit() => RestoreSave();
-    void OnDestroy() => RestoreSave();
+    void OnDestroy()
+    {
+        IsActive = false;
+        RestoreSave();
+    }
 
     void RestoreSave()
     {

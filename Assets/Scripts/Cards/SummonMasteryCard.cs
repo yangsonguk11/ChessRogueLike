@@ -23,6 +23,7 @@ public class SummonMasteryCard : Card
             requiredMode = Board.BoardMode.Inspect,
             type = EffectType.GrantSummonMaxHp,
             dmg = 2,
+            targetlogic = TargetLogic.self,
             animTrigger = "Buff",
         });
     }

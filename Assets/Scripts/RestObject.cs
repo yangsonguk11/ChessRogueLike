@@ -7,6 +7,10 @@ public class RestObject : Piece
     // 휴식을 한 번 사용했는지 여부. true가 되면 휴식/강화 버튼이 더 이상 뜨지 않는다.
     public bool used;
 
+    [Header("회복 설정")]
+    [Tooltip("휴식 버튼으로 회복할 양. 음수면 각자의 최대 HP까지(풀힐).")]
+    public int healAmount = -1;
+
     [Header("강화 설정")]
     public int upgradeSelectCount = 1;      // 강화 대상으로 선택할 아군 수
     public int upgradeColDamageBonus = 1;   // 선택된 아군에게 영구로 더할 콜대미지

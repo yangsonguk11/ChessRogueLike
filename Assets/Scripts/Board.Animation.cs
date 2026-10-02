@@ -135,6 +135,56 @@ public partial class Board
         yield return PlayCasterAndTargetReaction(attacker, attackTrigger, Parallel(targetCoroutines.ToArray()), cardEffect);
     }
 
+    // 다중 타격(AttackPiece의 hitCount > 1) 피격 반응 — PlayCasterAndTargetReaction의 targetReaction으로 넘겨 시전자
+    // 애니메이션 1회의 타격 시점에 시작한다. 1타 피격 반응과 같은 총 시간(window) 안에 hitCount개의 칸을 균등 간격으로 두고,
+    // 칸마다 그 타의 반응(PieceAttackCor와 같은 구성: Hit/Die + extra)을 발사만 하고 기다리지 않는다 — 다음 타의 Hit 트리거가
+    // 앞선 Hit를 끊고 처음부터 다시 재생하므로(PieceAnimator의 Any State→Hit가 자기 자신으로 즉시 전환) Hit 초반부만 반복된다.
+    // hitExtras는 실제로 들어간 타격만 담고 있어 처치 이후 칸은 비어 있고, died면 마지막으로 들어간 타가 Die다.
+    IEnumerator MultiHitReactionCor(Piece defender, List<List<IEnumerator>> hitExtras, int hitCount, bool died)
+    {
+        if (defender == null) yield break;
+
+        float window = 0.3f; // TriggerAnimCor의 Hit 폴백과 같은 값 — Animator에 Hit 상태가 있으면 첫 타 후 그 길이로 바꾼다
+        float t = 0f;
+        for (int i = 0; i < hitCount; i++)
+        {
+            while (t < window * i / hitCount)
+            {
+                yield return null;
+                t += Time.deltaTime;
+            }
+
+            if (i < hitExtras.Count)
+            {
+                bool killingHit = died && i == hitExtras.Count - 1;
+                var reactions = new List<IEnumerator> { TriggerAnimCor(defender, killingHit ? "Die" : "Hit", 0.3f, false) };
+                if (killingHit) reactions.Add(defender.PieceDeathSound());
+                reactions.AddRange(hitExtras[i]);
+                StartCoroutine(Parallel(reactions.ToArray()));
+            }
+
+            // 1타였다면 TriggerAnimCor가 Hit 길이만큼 기다렸을 것이므로, 첫 Hit가 들어간 다음 프레임에 그 길이를 재서 창으로 쓴다.
+            if (i == 0)
+            {
+                yield return null;
+                t += Time.deltaTime;
+                Animator animator = defender.GetComponent<Animator>();
+                if (animator != null && animator.enabled && animator.runtimeAnimatorController != null)
+                {
+                    AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(0);
+                    if (info.IsName("Hit") && info.length > 0.01f)
+                        window = info.length;
+                }
+            }
+        }
+
+        while (t < window)
+        {
+            yield return null;
+            t += Time.deltaTime;
+        }
+    }
+
     // 실드는 시전자가 하는 행동이지 대상이 하는 행동이 아니다 — 대상은 자신의 애니메이터 트리거를 갖지
     // 않고, extra(ShieldVisualOn/ShieldText 등)만 시전자의 OnAnimationEvent 시점에 맞춰 재생한다.
     IEnumerator PieceShieldCor(Piece caster, Piece target, CardEffect cardEffect = null, List<IEnumerator> extra = null)
@@ -222,7 +272,20 @@ public partial class Board
         if (piece == null) yield break;
 
         List<Vector2Int> rangeButtons = new List<Vector2Int>();
-        if (showRange && cardEffect?.targetlogic != TargetLogic.self)
+        // 아군 위치 고정 공격: 시전자 기준 오프셋이 아니라 잠가둔 절대 좌표를 표시한다. 잠금은 ChangeMove에서만
+        // 풀리고, PlayEnemyTurnCoroutine은 motionQueue가 끝난 뒤에야 ChangeMove를 부르므로 이 시점엔 아직 유효하다.
+        if (showRange && cardEffect != null && cardEffect.lockOnAllyPositions)
+        {
+            if (piece is AutoPiece lockOwner && lockOwner.lockedTargetCells != null)
+            {
+                foreach (Vector2Int target in lockOwner.lockedTargetCells)
+                {
+                    GetButtonScript(target).RangeOn(piece.teamID);
+                    rangeButtons.Add(target);
+                }
+            }
+        }
+        else if (showRange && cardEffect?.targetlogic != TargetLogic.self)
         {
             Vector2Int piecePos = originPos ?? FindPiecePos(piece);
             if (piecePos.x >= 0)
@@ -231,12 +294,17 @@ public partial class Board
                 if (offsets != null && (cardEffect.areaTargetMode == AreaTargetMode.Directional4 || cardEffect.areaTargetMode == AreaTargetMode.Directional8))
                     offsets = RotateOffsets(offsets, directionOverride ?? currentHoverDirection);
 
-                foreach (Vector2Int offset in offsets ?? piece.GetMoveableButton())
+                // noRangeLimit 카드(보드 전체가 대상)는 범위 개념이 없으므로 기물 기본 이동범위로 폴백하지 않는다.
+                bool skipFallback = offsets == null && (cardEffect?.noRangeLimit ?? false);
+                if (!skipFallback)
                 {
-                    Vector2Int target = piecePos + offset;
-                    if (target.x < 0 || target.x >= N || target.y < 0 || target.y >= M) continue;
-                    GetButtonScript(target).RangeOn(piece.teamID);
-                    rangeButtons.Add(target);
+                    foreach (Vector2Int offset in offsets ?? piece.GetMoveableButton())
+                    {
+                        Vector2Int target = piecePos + offset;
+                        if (target.x < 0 || target.x >= N || target.y < 0 || target.y >= M) continue;
+                        GetButtonScript(target).RangeOn(piece.teamID);
+                        rangeButtons.Add(target);
+                    }
                 }
             }
         }

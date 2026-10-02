@@ -11,6 +11,10 @@ public class CardTestHandDealer : MonoBehaviour
         if (TurnManager.instance == null) return;
 
         TurnState current = TurnManager.instance.CurrentState;
+        // Processing은 턴이 바뀐 게 아니라 보드 연출이 재생되는 동안만 걸리는 상태다(Board.ProcessQueue).
+        // 이걸 턴 전환으로 치면 아군 턴 중 연출(턴 시작 드로우, 카드 사용 등)이 끝날 때마다 Processing→Player를
+        // 새 턴으로 오인해 카드를 전부 다시 나눠준다 — 그래서 무시하고 lastState도 갱신하지 않는다.
+        if (current == TurnState.Processing) return;
         if (current == TurnState.Player && lastState != TurnState.Player)
             DealAllCards();
         lastState = current;

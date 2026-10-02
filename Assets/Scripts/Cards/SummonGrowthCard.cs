@@ -22,6 +22,7 @@ public class SummonGrowthCard : Card
                 requiredMode = Board.BoardMode.Inspect,
                 type = EffectType.GrantSummonColDamage,
                 dmg = 1,
+                targetlogic = TargetLogic.self,
                 isBuff = true,
                 animTrigger = "Buff", // 매 턴 발동 시에도 캐스터가 버프 포즈를 재생하도록
             },
@@ -39,6 +40,7 @@ public class SummonGrowthCard : Card
                 requiredMode = Board.BoardMode.Inspect,
                 type = EffectType.GrantSummonMaxHp,
                 dmg = 3,
+                targetlogic = TargetLogic.self,
                 isBuff = true,
                 animTrigger = "Buff", // 매 턴 발동 시에도 캐스터가 버프 포즈를 재생하도록
             },

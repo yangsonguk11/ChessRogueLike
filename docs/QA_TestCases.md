@@ -35,7 +35,6 @@
 코드 분석 중 발견되었으며 아래 섹션의 개별 케이스 비고란에 표시된 항목들의 요약:
 
 - 프리팹이 없어 정상 플레이로는 도달 불가능한 orphan 카드: `AreaAttackCard`, `AreaShieldCard`, `RecoverShieldCard`, `ThornCard`, `ZoneHealCard`, `ZoneShieldCard` (섹션 6)
-- Warrior 보상 풀(`Warrior.asset`)에 스크립트/프리팹이 존재하지 않는 `FinalAttackCard` 참조 (섹션 16)
 - `ThornCard` 툴팁 텍스트가 `statusDuration - 1`을 표시해 실제 지속시간(2턴)과 1턴 차이 남 (섹션 6.7)
 - `StatusEffects.cs`의 `MovementDisabledEffect` 주석은 "게임플레이 미적용"이라 하지만 실제로는 Move 카드 차단 로직에 적용되어 있음 (섹션 7)
 - `GameManager.TriggerDefeat`가 로그 출력만 하는 플레이스홀더로, 실제 패배 화면/흐름 없음 (섹션 15)
@@ -198,13 +197,18 @@
 | TC-CARD-003 | `MagicAttackCard`(Cost 3, dmg 10, `ignoreCasterColDamageBonus=true`), 캐스터 colDamage 버프 보유 | 임의 기물(`AnyPiece`)에 사용 | 버프 무관하게 정확히 10 고정 피해 | |
 | TC-CARD-004 | `HeavyAttackCard`(Cost 2, dmg 6 적/2 자해) | LowestHP 적에게 사용, 대상 존재 | 적 6 피해 + 자신 2 자해가 함께 발생 | |
 | TC-CARD-005 | `HeavyAttackCard`를 대상 없는 빈 칸/사거리 내 적 없음 상황에서 사용 | 카드 사용 | 적 피해는 미발생(헛스윙)하지만 자해 2는 대상과 무관하게 별도 효과로 발생하는지 확인 | ⚠ 두 효과가 독립적으로 처리되어 실패 조건이 연동되지 않음 |
-| TC-CARD-006 | `DoubleAttackCard`(Cost 3, dmg 4, hitCount=2) | 체력 4 이하 적에게 사용 | 1타에 적이 죽고, 2타는 동일 위치 재타격 시 헛스윙 처리(에러 없음) | |
-| TC-CARD-007 | `DoubleAttackCard` | 체력 20 적에게 사용 | 동일 대상에게 4 피해 2회(총 8) 적용 | |
+| TC-CARD-006 | `DoubleAttackCard`(Cost 3, dmg 4, hitCount=2) | 체력 4 이하 적에게 사용 | 1타에 적이 죽고 2타는 발생하지 않음(피해·헛스윙 연출 없음, 에러 없음). 시전자 공격 애니메이션 1회, 1번 칸에 Die | |
+| TC-CARD-007 | `DoubleAttackCard` | 체력 20 적에게 사용 | 동일 대상에게 4 피해 2회(총 8) 적용. 시전자 공격 애니메이션은 1회, 타격 시점에 데미지 텍스트·타격음 2번이 1타 피격 반응과 같은 시간 안에 연달아 재생 | |
 | TC-CARD-008 | `ExecutionerCard`(Cost 1, dmg 3)로 적을 처치 | 처치 성공 | `onKillEffect`로 자신의 `colDamageBonus` 영구 +1 (다음 전투까지 유지) | |
 | TC-CARD-009 | `ExecutionerCard`로 3연속 처치 | 3회 처치 | `colDamageBonus`가 누적되어 +3 | |
 | TC-CARD-010 | `DirectionalAttackCard`(Cost 2, dmg 5, Directional4) | 4방향 중 특정 방향에 적 배치 후 사용 | 마우스/클릭 방향으로 회전된 직선 범위에만 적중 | |
 | TC-CARD-011 | `ZoneAttackCard`(Cost 2, dmg 2, MouseCentered, `AllPiecesInRange`) | 아군·적 혼재 지역에 시전 | 팀 무관 전원 2 피해(아군도 피해 받음) | |
 | TC-CARD-012 | `FetchAttackCard`(Cost 0) | 사용 | `AttackCard` 1장이 즉시 손패에 추가 | |
+| TC-CARD-101 | `FinalAttackCard`(Cost 2, 손패 전부 버림 + 버린 카드 1장당 4 피해 1회, `hitsPerDiscarded=1`), 손패에 다른 카드 3장, 체력 충분한 적 | 적에게 드롭 | 손패 3장이 버림더미로 날아간 뒤 같은 대상에게 4 피해 3회(총 12). 피해 효과는 다시 클릭하지 않아도 같은 대상에 들어감(`useLastTarget`) | 사용한 카드 자신은 버린 수에 포함되지 않음 → 버림더미는 총 +4장 |
+| TC-CARD-102 | `FinalAttackCard`, 시전자 이동공격력 보너스 +2, 손패에 다른 카드 2장 | 적에게 사용 | 타격마다 보너스 적용 → 6 + 6 = 총 12. 카드 설명의 피해 수치도 6으로 표시 | |
+| TC-CARD-103 | `FinalAttackCard`가 손패의 유일한 카드 | 적에게 사용 | 카드는 사용되고 에너지 2 차감, 타격 없음(헛스윙 연출도 없음). 카드 정상 종료, 이어서 다른 카드 사용 가능 | 버린 카드 0장이면 피해 효과만 스킵 |
+| TC-CARD-104 | `FinalAttackCard`를 든 상태(드롭 전) | 사거리 표시 확인 후 취소 | 공격 사거리가 표시되고, 취소하면 손패가 하나도 버려지지 않은 채 그대로 남음 | 버리기는 대상을 찍는 순간 실행됨 |
+| TC-CARD-105 | `FinalAttackCard`, 손패 다른 카드 3장, 체력 8 적 | 적에게 사용 | 2타에 적 처치, 3타는 발생하지 않음(피해·헛스윙 연출 없음, 에러 없음). 피격 반응 3칸 중 2번 칸에 Die, 3번 칸은 비어 있음 | `DoubleAttackCard`와 같은 다중 타격 처리 |
 
 ### 6.2 이동/이동공격형
 
@@ -316,6 +320,14 @@
 | TC-CARD-066 | `EnemyWideChargedAttackCard`(dmg 10 AoE Fixed, 누적 ColDamageUp에 비례 증가) | 여러 사이클 관측 | 매 사이클 데미지가 이전 ColDamageUp 누적분만큼 커짐(영구 스탯이므로 복리 증가) | |
 | TC-CARD-067 | `BossAttack1/2/3Card`(각각 퀸무브형, 바람개비형, 5x5 AoE+보호막) | 보스전에서 각 패턴 순서대로 관측 | 설명된 정확한 패턴/수치로 발동 | |
 | TC-CARD-068 | `StunnedCard`(Cost 0, No-op 마커) | 적이 스턴 상태로 자기 턴 도달 | AI 행동이 이 카드로 대체되어 아무 효과 없이 턴 소모 | |
+| TC-CARD-093 | `AllyLockedStrikeCard`(`lockOnAllyPositions`), `L3-Pursuer` | 플레이어 턴 시작 시 예고 관측 → 턴 중 아군을 예고 칸 밖으로 이동 → 턴 종료 | 예고(빨간 칸)가 턴 시작 시점의 아군 위치 기준으로 뜨고, 아군이 움직여도 따라오지 않음. 적 턴에 예고 칸에 남은 아군만 피해 | 이동 강요 보스 |
+| TC-CARD-094 | 위와 동일 | 모든 아군이 예고 칸에서 벗어난 채 턴 종료 | 피해 없이 보스 헛스윙 연출 + 잠긴 칸 표시만 재생, 전투 진행 정상 | |
+| TC-CARD-095 | 위와 동일, 예고가 떠 있는 상태 | 플레이어 턴에 보스를 기절시킴 | 예고 칸이 즉시 사라짐. 기절이 풀린 다음 플레이어 턴에 그 시점 아군 위치로 다시 잠김 | |
+| TC-CARD-096 | 위와 동일, 패턴별 범위(아군 칸만 12 / 십자 8 / 3x3 6) | 6턴 순환 관측 | 패턴 순서(낙뢰 → 이동 → 십자 → 이동 → 3x3 → 이동)와 범위·피해가 일치. 보드 밖 칸은 예고에서 제외 | |
+| TC-CARD-097 | `BossRageCard`(onSpawnCards, 매 자기 턴 종료 이동공격력 +2 영구), `L3-Berserker` | 전투 시작 → 적 턴 종료마다 관측 | 스폰 즉시 턴 효과 부여, 적 턴 종료마다 "이동공격력 +2" 표시, 머리 위 행동 예고 숫자도 함께 증가 | 데미지 강요 보스 |
+| TC-CARD-098 | 위와 동일 | `DispelCard`로 보스의 버프 제거 | 턴 종료 성장 중단(이미 오른 수치는 유지) | |
+| TC-CARD-099 | `BossFrenzyCard`(주변 피해 + ColDamageDelta) | Berserker/Colossus로 여러 사이클 관측 | 피해가 기본 수치 + 이번 전투에서 오른 이동공격력만큼 증가 | |
+| TC-CARD-100 | `BossRegenerateCard`(자가 회복 15) / `BossEmpowerCard`(이동공격력 +3), `L3-Colossus` | 5턴 순환 관측(지진 → 재생 → 지진 → 축적 → 이동) | 이동은 5턴에 1번·상하좌우 1칸만. 회복은 maxhp를 넘지 않음. 축적 이후 지진·충돌 피해 증가 | 스케일 강요 보스 |
 
 ### 6.10 무덤형
 
@@ -552,8 +564,8 @@
 | ID | 사전조건 | 테스트 절차 | 기대 결과 | 비고 |
 |---|---|---|---|---|
 | TC-JOB-001 | Summoner 기물 보상 오픈 | 보상 풀 확인 | `Summoner.asset`의 17개 카드(SummonCard, GreaterSummonCard, TauntSummonCard, EmpowerAllyCard, SummonMasteryCard, AreaHealCard, SummonGrowthCard, MagicAttackCard, ZoneAttackCard, FetchAttackCard, ImmobilizeCard, MoveAndDrawCard, SafeMoveCard, GraveHealCard, GraveAttackCard, GraveHarvestCard, VulnerableTestCard) 전부 실제 프리팹으로 존재 확인 | ⚠ `VulnerableTestCard`는 검증 전용 카드로 임시 포함 — 플레이테스트 후 제거 여부 결정 |
-| TC-JOB-002 | Warrior 기물 보상을 반복 오픈(예: 50회) | 카드명 수집 | `FinalAttackCard`라는 이름은 절대 제시되지 않음(스크립트/프리팹/DB 엔트리 없어 `PickRandomDistinctFrom`에서 자동 스킵) | ⚠ Warrior.asset에 존재하지 않는 카드 참조가 있음, 기획 의도(원래 다른 카드였는지) 확인 필요 |
-| TC-JOB-003 | Warrior 보상 풀의 나머지 26개 카드 각각 | 보상으로 제시될 때 수치 확인 | `전사_소환사_카드목록.txt`에 명시된 코스트·수치(예: HeavyAttackCard 코스트 2·6뎀/2자해, DoubleAttackCard 코스트 3·4뎀×2)와 실제 구현이 일치 | |
+| TC-JOB-002 | Warrior 기물 보상을 반복 오픈(예: 50회) | 카드명 수집 | `FinalAttackCard`도 보상으로 제시됨(프리팹이 `Database.prefab`의 `cardPrefabs`에 등록되어 `PickRandomDistinctFrom`에서 스킵되지 않음) | |
+| TC-JOB-003 | Warrior 보상 풀의 27개 카드 각각 | 보상으로 제시될 때 수치 확인 | `전사_소환사_카드목록.txt`에 명시된 코스트·수치(예: HeavyAttackCard 코스트 2·6뎀/2자해, DoubleAttackCard 코스트 3·4뎀×2)와 실제 구현이 일치 | |
 | TC-JOB-004 | `Warrior.asset`(27장)·`Summoner.asset`(17장)과 `전사_소환사_카드목록.txt` | 두 목록을 대조 | 카드 구성·개수가 일치하고, 텍스트 파일의 설명이 게임 내 카드 설명(`EffectDescription`)과 같음 | 카드를 보상 풀에 추가·제거할 때마다 텍스트 파일도 함께 갱신 |
 | TC-JOB-005 | Job이 설정되지 않은 기물 | 보상 오픈 | `ResolveRewardPoolFor`가 전체 카드 목록으로 폴백 | |
 

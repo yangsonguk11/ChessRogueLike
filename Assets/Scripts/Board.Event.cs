@@ -1,11 +1,11 @@
 public partial class Board
 {
-    // 휴식 오브젝트의 휴식 버튼에서 호출: 보드 위 모든 아군을 각자의 최대 HP까지만 회복시킨다.
+    // 휴식 오브젝트의 휴식 버튼에서 호출: 보드 위 모든 아군을 회복시킨다 — 회복량은 RestObject.healAmount를 따른다(음수면 풀힐).
     public void RestHeal()
     {
         AudioManager.instance?.PlayButtonClick();
         Piece caster = GetButtonScript(selectedButton).GetPieceScript();
-        HealAllAllies(caster);
+        HealAllAllies(caster, (caster as RestObject)?.healAmount ?? -1);
         if (caster is RestObject restObject) restObject.used = true;
 
         ClearSelectedButton();

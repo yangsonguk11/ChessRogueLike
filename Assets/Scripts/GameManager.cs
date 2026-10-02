@@ -59,6 +59,7 @@ public class GameManager : MonoBehaviour, IGameManager
         {
             MarkCombatEnded();
             AudioManager.instance?.PlayBattleVictory();
+            if (CardTestBootstrap.IsActive) return; // 카드 테스트 씬: 결과/보상 화면 없이 전투만 끝낸다
             FinishLevel();
         }
     }

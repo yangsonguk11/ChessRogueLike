@@ -243,7 +243,9 @@ public partial class Board
         return (dealt, hpLeft);
     }
 
-    void AttackPiece(Vector2Int pos1, Vector2Int pos2, int dmg, CardEffect cardEffect = null)
+    // hitCount: 같은 대상을 연달아 때리는 횟수(DoubleAttackCard의 hitCount, FinalAttackCard의 hitsPerDiscarded).
+    // 피해/상태이상/흡혈은 타격마다 따로 적용하고, 연출은 시전자 애니메이션 1회 + 피격 반응 hitCount회(MultiHitReactionCor)로 묶는다.
+    void AttackPiece(Vector2Int pos1, Vector2Int pos2, int dmg, CardEffect cardEffect = null, int hitCount = 1)
     {
         // pos1 == pos2: 자기 자신에게 거는 예약 Damage 효과(예: StatusEffectType.TurnDamageStart/End의
         // DoT 틱 — CreateStatusEffect가 targetlogic=self로 만들어 EnqueueScheduledEffect를 통해 자기
@@ -289,21 +291,35 @@ public partial class Board
             return;
         }
 
-        var (dealt, hpLeft) = ApplyAttackDamage(pScript2, dmg);
+        // 타격마다 피해/상태이상/흡혈을 적용하고 그 타의 반응(extra)을 모은다. 대상이 죽으면 남은 타격은 없다 —
+        // 예전엔 타격마다 AttackPiece를 따로 불러 죽은 뒤 호출이 헛스윙 분기로 빠졌는데, 그 역할을 hpLeft > 0 조건이 대신한다.
+        var hitExtras = new List<List<IEnumerator>>();
+        int hpLeft = 1;
+        for (int i = 0; i < Mathf.Max(1, hitCount) && hpLeft > 0; i++)
+        {
+            int dealt;
+            (dealt, hpLeft) = ApplyAttackDamage(pScript2, dmg);
+
+            var extra = new List<IEnumerator> { pScript2.DamageText(dealt) };
+            StatusEffect statusEffect = ApplyStatusEffect(pScript2, cardEffect); // 즉시 적용
+            if (statusEffect != null)
+                extra.Add(pScript2.StatusTextReaction(statusEffect.DisplayName, statusEffect.IsBuff, statusEffect.EffectColor));
+            if (cardEffect != null && cardEffect.healOnHit && dealt > 0)
+            {
+                int healed = pScript1.GetHeal(dealt);
+                extra.Add(pScript1.HealText(healed));
+            }
+            hitExtras.Add(extra);
+        }
 
         pScript2.transform.rotation = Quaternion.LookRotation(GetButtonScript(pos1).Piecelocation - GetButtonScript(pos2).Piecelocation);
         pScript1.transform.rotation = Quaternion.LookRotation(GetButtonScript(pos2).Piecelocation - GetButtonScript(pos1).Piecelocation);
 
-        var extra = new List<IEnumerator> { pScript2.DamageText(dealt) };
-        StatusEffect statusEffect = ApplyStatusEffect(pScript2, cardEffect); // 즉시 적용
-        if (statusEffect != null)
-            extra.Add(pScript2.StatusTextReaction(statusEffect.DisplayName, statusEffect.IsBuff, statusEffect.EffectColor));
-        if (cardEffect != null && cardEffect.healOnHit && dealt > 0)
-        {
-            int healed = pScript1.GetHeal(dealt);
-            extra.Add(pScript1.HealText(healed));
-        }
-        motionQueue.Enqueue(PieceAttackCor(pScript1, pScript2, cardEffect?.animTrigger, hpLeft <= 0 ? "Die" : "Hit", cardEffect, extra));
+        if (hitCount <= 1)
+            motionQueue.Enqueue(PieceAttackCor(pScript1, pScript2, cardEffect?.animTrigger, hpLeft <= 0 ? "Die" : "Hit", cardEffect, hitExtras[0]));
+        else
+            motionQueue.Enqueue(PlayCasterAndTargetReaction(pScript1, cardEffect?.animTrigger,
+                MultiHitReactionCor(pScript2, hitExtras, hitCount, hpLeft <= 0), cardEffect));
         if (hpLeft <= 0)
         {
             ClearDeadPieceOccupancy(pos2, pScript2);

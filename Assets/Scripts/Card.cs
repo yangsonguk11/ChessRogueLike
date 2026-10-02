@@ -421,6 +421,10 @@ public record CardEffect
     // Damage 타입에서 사용: 같은 대상에게 이 효과를 몇 번 적용할지 (기본 1 = 기존과 동일).
     public int hitCount { get; init; } = 1;
 
+    // Damage 타입에서 사용: 0보다 크면 hitCount를 "이번 카드에서 앞 효과로 실제로 버려진 카드 수 × hitsPerDiscarded"로
+    // 바꿔 실행한다(Board.ExecuteEffect). 버려진 카드가 없어 0이 되면 이 효과는 타격 없이 스킵된다.
+    public int hitsPerDiscarded { get; init; }
+
     // 무덤 소모: graveCost는 이 효과 실행에 필요한 최소 무덤 수 — 첫 효과면 부족 시 카드 사용 불가,
     // 2번째 이후면 이 효과만 스킵(Board.ProcessNextCardEffectStep). consumeAllGrave면 graveCost 이상일 때
     // 가진 무덤을 전부 소모한다. dmgPerGrave는 소모한 무덤 1개당 dmg에 더할 값(0이면 비례 효과 없음).
@@ -431,6 +435,11 @@ public record CardEffect
 
     // true면 타겟을 다시 고르지 않고 직전 효과의 targetPos에 바로 적용한다(같은 대상 추가 타격 등).
     public bool useLastTarget { get; init; }
+
+    // 적 AI 전용 "아군 위치 고정 공격": effectRange를 시전자가 아니라 각 아군 위치를 중심으로 펼친다.
+    // 칸은 플레이어 턴 시작 시점에 잠기고(Board.LockEnemyTelegraphs → AutoPiece.lockedTargetCells) 실행 시엔
+    // 그 잠긴 칸을 그대로 친다 — 예고를 보고 그 칸에서 벗어나면 피할 수 있다. 범위형 targetlogic과 함께 쓴다.
+    public bool lockOnAllyPositions { get; init; }
 
     // 이 효과의 시전자 — Board는 효과마다 이 기물의 현재 위치를 시전자 칸으로 쓴다(이동했으면 새 위치).
     // null이면 selectedButton 기준(기존 방식).

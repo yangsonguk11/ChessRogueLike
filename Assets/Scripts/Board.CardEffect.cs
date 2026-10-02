@@ -13,6 +13,9 @@ public partial class Board
     Piece currentCardCaster;
     // CardEffect.useLastTarget이 재사용하는 직전 효과의 targetPos
     Vector2Int lastEffectTargetPos = new Vector2Int(-1, -1);
+    // 이번 카드 사용 중 카드 효과(DiscardHand/SelectAndDiscard)로 실제로 버려진 카드 수 — CardEffect.hitsPerDiscarded가 읽는다.
+    // 직전 효과 하나가 아니라 카드 전체 누적이라, 사이에 다른 효과가 끼어도 유지된다.
+    int discardedThisCard;
 
     // 이름과 달리 카드를 "실제로 사용"하는 함수가 아니라, 이제부터 처리할 카드를 보드에 등록(무장)하는 함수다.
     // currentActiveCard/시전자를 세팅하고 effects를 pendingEffects에 채운 뒤, 첫 효과가 요구하는 모드
@@ -36,6 +39,7 @@ public partial class Board
             ? CardCanvas.instance?.ActivePiece
             : (isSelectedButtonActive() ? GetButtonScript(selectedButton).GetPieceScript() : null);
         lastEffectTargetPos = new Vector2Int(-1, -1);
+        discardedThisCard = 0;
         effectApplied = false;
         currentActiveCard = card;
         pendingEffects.Clear();
@@ -468,9 +472,15 @@ public partial class Board
         return e.dmgPerGrave != 0 ? e with { dmg = e.dmg + used * e.dmgPerGrave } : e;
     }
 
+    // hitsPerDiscarded가 있으면 이번 카드의 앞 효과로 실제로 버려진 카드 수(discardedThisCard)만큼 타격 수를 정한
+    // 사본을 돌려준다. 로직이 동기라 앞 효과(DiscardHand 등)가 끝난 시점에 이미 확정된 값을 읽는다.
+    CardEffect ApplyDiscardedHits(CardEffect e) =>
+        e.hitsPerDiscarded > 0 ? e with { hitCount = discardedThisCard * e.hitsPerDiscarded } : e;
+
     void ExecuteEffect(CardEffect cardEffect, Vector2Int targetPos = default)
     {
         cardEffect = PayGrave(cardEffect);
+        cardEffect = ApplyDiscardedHits(cardEffect);
         lastEffectTargetPos = targetPos;
 
         // effectApplied가 false→true로 바뀌는 지금 이 순간이 이 카드의 첫 효과가 실제로 처리되기 시작하는
@@ -490,6 +500,10 @@ public partial class Board
 
         effectApplied = true;
         CardCanvas.instance.isCardEffecting = true;
+
+        // 버려진 카드가 없어 타격 수가 0이면 스킵 — AttackPiece 타격 루프의 Mathf.Max(1, hitCount)가 0타를 1타로 바꾸지 않게.
+        // 카드 사용(에너지 차감 등)은 위에서 이미 처리됐고, 호출부가 이어서 ScheduleNextCardEffect를 부르므로 큐도 멈추지 않는다.
+        if (cardEffect.hitsPerDiscarded > 0 && cardEffect.hitCount <= 0) return;
 
         ApplyCardEffectNow(cardEffect, targetPos);
     }
@@ -550,8 +564,8 @@ public partial class Board
             {
                 Piece caster = GetButtonScript(selectedButton).GetPieceScript();
                 int resolvedDmg = ResolveDamageWithColDamage(cardEffect, caster);
-                for (int i = 0; i < Mathf.Max(1, cardEffect.hitCount); i++)
-                    AttackPiece(selectedButton, targetPos, resolvedDmg, cardEffect);
+                // 다중 타격(hitCount/hitsPerDiscarded)도 한 번 호출 — 피해는 타격마다 따로 들어가고, 시전자 애니메이션은 1회만 재생된다.
+                AttackPiece(selectedButton, targetPos, resolvedDmg, cardEffect, cardEffect.hitCount);
                 break;
             }
             case EffectType.Heal:
@@ -591,6 +605,7 @@ public partial class Board
                     motionQueue.Enqueue(PlayCasterAndTargetReaction(caster, cardEffect?.animTrigger, p.ColDamageUpReaction(cardEffect.dmg), cardEffect));
                     StartMotionQueue();
                     CardCanvas.instance?.RefreshAllCardViews();
+                    p.ActionText(); // 적의 행동 예고 숫자(dmg + ColDamageDelta)가 턴 종료 패시브 등으로 오른 값을 따라가게
                 }
                 break;
             }
@@ -608,8 +623,13 @@ public partial class Board
                 break;
             }
             case EffectType.DiscardHand:
-                EnqueueCardMoves(CardCanvas.instance.HandtoDiscardCount(cardEffect.dmg), 0.2f);
+            {
+                // 손패가 요청 수보다 적으면 있는 만큼만 버려지므로 moves.Count가 곧 실제로 버려진 수
+                var discardMoves = CardCanvas.instance.HandtoDiscardCount(cardEffect.dmg);
+                discardedThisCard += discardMoves.Count;
+                EnqueueCardMoves(discardMoves, 0.2f);
                 break;
+            }
             case EffectType.ShuffleHandToDeck:
                 EnqueueCardMoves(CardCanvas.instance.HandtoDeckCount(cardEffect.dmg), 0.2f);
                 break;
@@ -980,30 +1000,51 @@ public partial class Board
             ? (userTeam == 0 ? 1 : 0)
             : userTeam;
         var targets = new List<Vector2Int>();
+        var cells = new List<Vector2Int>();
 
-        List<Vector2Int> offsets = cardEffect.effectRange.GetAbleRange();
-        Vector2Int actualCenter = center;
-
-        if (cardEffect.areaTargetMode == AreaTargetMode.Fixed)
+        if (cardEffect.lockOnAllyPositions)
         {
-            actualCenter = selectedButton; // 고정 범위는 항상 시전자 중심
+            // 아군 위치 고정 공격: 플레이어 턴 시작 때 잠가둔 보드 절대 좌표를 그대로 친다(Board.LockEnemyTelegraphs).
+            if ((cardEffect.caster ?? caster) is AutoPiece lockOwner && lockOwner.lockedTargetCells != null)
+                cells.AddRange(lockOwner.lockedTargetCells);
         }
-        else if (cardEffect.areaTargetMode == AreaTargetMode.Directional4 ||
-            cardEffect.areaTargetMode == AreaTargetMode.Directional8)
+        else
         {
-            actualCenter = selectedButton;
-            offsets = RotateOffsets(offsets, currentHoverDirection);
+            List<Vector2Int> offsets = cardEffect.effectRange.GetAbleRange();
+            Vector2Int actualCenter = center;
+
+            if (cardEffect.areaTargetMode == AreaTargetMode.Fixed)
+            {
+                actualCenter = selectedButton; // 고정 범위는 항상 시전자 중심
+            }
+            else if (cardEffect.areaTargetMode == AreaTargetMode.Directional4 ||
+                cardEffect.areaTargetMode == AreaTargetMode.Directional8)
+            {
+                actualCenter = selectedButton;
+                offsets = RotateOffsets(offsets, currentHoverDirection);
+            }
+
+            foreach (Vector2Int offset in offsets)
+                cells.Add(actualCenter + offset);
         }
 
-        foreach (Vector2Int offset in offsets)
+        foreach (Vector2Int pos in cells)
         {
-            Vector2Int pos = actualCenter + offset;
             if (pos.x < 0 || pos.x >= N || pos.y < 0 || pos.y >= M) continue;
 
             Piece p = GetButtonScript(pos).GetPieceScript();
             if (p == null) continue;
             if (cardEffect.targetlogic != TargetLogic.AllPiecesInRange && p.teamID != targetTeam) continue;
             targets.Add(pos);
+        }
+
+        // 고정 공격을 전원이 피했으면 AreaAttackPiece가 아무 연출 없이 끝나므로, 헛스윙 + 잠긴 칸 표시만 재생해
+        // "피했다"는 피드백을 준다.
+        if (cardEffect.lockOnAllyPositions && targets.Count == 0 && caster != null)
+        {
+            motionQueue.Enqueue(TriggerAnimCor(caster, cardEffect.animTrigger, cardEffect: cardEffect));
+            StartMotionQueue();
+            return;
         }
 
         switch (cardEffect.type)
@@ -1041,6 +1082,7 @@ public partial class Board
         ClearHoverRange();
         currentCardCaster = null;
         lastEffectTargetPos = new Vector2Int(-1, -1);
+        discardedThisCard = 0;
         ClearSelectedButton();
         CancelPieceSelection();
         ClearUseEligibilityPreview();
@@ -1085,6 +1127,7 @@ public partial class Board
             case EffectType.SelectAndDiscard:
                 foreach (var card in selected)
                     CardCanvas.instance.MoveCardToDiscard(card);
+                discardedThisCard += selected.Count;
                 break;
             case EffectType.SelectAndChangeCost:
                 foreach (var card in selected)
