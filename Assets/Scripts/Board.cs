@@ -296,8 +296,8 @@ public partial class Board : MonoBehaviour
                 GameObject shopObj = Instantiate(ShopObjectPrefab);
                 ApplySpawnOccupancy(data.eventObjectPosition, shopObj);
             }
-            // 아직 팔 물건이 없어 상호작용할 게 없으므로, Rest처럼 뭔가 사용해야 나가기 버튼이 뜨는 방식 대신
-            // 진입 즉시 나갈 수 있게 한다(소프트락 방지). 실제 구매 기능이 생기면 이 부분을 재검토.
+            // 상점은 아무것도 사지 않고 지나가도 되는 노드라, Rest처럼 뭔가 사용해야 나가기 버튼이 뜨는 방식 대신
+            // 진입 즉시 나갈 수 있게 한다(골드가 부족해 살 게 없을 때의 소프트락 방지). 구매/제거는 ShopCanvas가 처리한다.
             EventExitButtonObj?.SetActive(true);
         }
         else if (currentEventType == LevelData.EventType.Unknown)

@@ -20,7 +20,7 @@ public class ZoneAttackCard : Card
         {
             requiredMode = Board.BoardMode.targeting,
             type = EffectType.Damage,
-            dmg = 2,
+            dmg = 5,
             targetlogic = TargetLogic.AllPiecesInRange,
             effectRange = effectRange[0],
             areaTargetMode = AreaTargetMode.MouseCentered,
@@ -33,5 +33,5 @@ public class ZoneAttackCard : Card
         effects.Add(cf);
     }
 
-    public override string EffectDescription => $"범위 내 모든 기물에게 {EffectiveDmg(effects[0])} 피해를 줍니다.";
+    public override string EffectDescription => $"범위 내 모든 기물에게 {EffectiveDmg(effects[0])}의 고정 데미지를 줍니다.";
 }

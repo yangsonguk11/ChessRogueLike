@@ -15,7 +15,7 @@ MonoBehaviour:
   _pieceName: BossBerserker
   _teamID: 1
   _isSummon: 0
-  _maxHp: 45
+  _maxHp: 60
   _colDamage: 4
   _shieldBonus: 0
   _rangeInfoSO: {fileID: 11400000, guid: e798bd81c0425624ead1e05779a9c275, type: 2}

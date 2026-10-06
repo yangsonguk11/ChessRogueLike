@@ -84,6 +84,32 @@ public abstract class Piece : MonoBehaviour
     public void RaiseMoveAttackPerformed(Vector2Int attackerFinalPos, Vector2Int impactPos, int dmg, bool hitMultipleTargets)
         => OnMoveAttackPerformed?.Invoke(attackerFinalPos, impactPos, dmg, hitMultipleTargets);
 
+    // 걸려 있는 "다음 이동공격" 버프(NextMoveAttackEffect)의 합계 — 소모하지 않는다(카드 설명 미리보기용).
+    public MoveAttackBonus PeekNextMoveAttackBonus()
+    {
+        var bonus = new MoveAttackBonus();
+        foreach (var effect in activeEffects)
+        {
+            if (effect is not NextMoveAttackEffect next) continue;
+            next.AddTo(bonus);
+            bonus.consumedNames.Add(next.DisplayName);
+        }
+        return bonus;
+    }
+
+    // 이동공격(이동공격 판정 포함)이 실제로 일어날 때 Board가 1회 호출: 합계를 내고 버프를 전부 소모한다.
+    // 만료가 아니므로 "해제" 텍스트를 띄우는 OnRemove는 부르지 않는다 — 소모 텍스트는 호출부(Board.ResolveMoveAttackHit)가 공격자의 이동 애니메이션 직전에 띄운다.
+    public MoveAttackBonus ConsumeNextMoveAttackBonus()
+    {
+        MoveAttackBonus bonus = PeekNextMoveAttackBonus();
+        if (bonus.HasAny)
+        {
+            activeEffects.RemoveAll(e => e is NextMoveAttackEffect);
+            CardCanvas.instance?.RefreshAllCardViews();
+        }
+        return bonus;
+    }
+
     public int TriggerReceiveMoveAttack(Piece attacker)
     {
         int total = 0;
@@ -422,10 +448,12 @@ public abstract class Piece : MonoBehaviour
     // (Board.Animation.cs의 PlayCasterAndTargetReaction/WaitAnimationEventThenRun 참고).
     public void OnAnimationEvent() => animationEventFired = true;
 
-    public void ShowStatusText(string text, bool isBuff, Color effectColor)
+    // textOnly: true면 텍스트만 띄우고 버프/디버프 파티클·사운드는 재생하지 않는다(예: 다음 이동공격 버프 소모 표시).
+    public void ShowStatusText(string text, bool isBuff, Color effectColor, bool textOnly = false)
     {
         if (pieceCanvas != null)
             pieceCanvas.InvokeStatusText(text, isBuff, effectColor);
+        if (textOnly) return;
         if (!isBuff && pieceEffect != null)
             pieceEffect.PlayDebuffEffect(effectColor);
         else if (isBuff && pieceEffect != null)
@@ -437,9 +465,9 @@ public abstract class Piece : MonoBehaviour
     // ShowStatusText를 DamageText/HealText와 같은 모양(IEnumerator)으로 감싼 버전 — 상태이상 적용
     // 자체(AddStatusEffect 등)는 호출부가 GetHeal/GetShield처럼 미리 즉시 실행해두고, 텍스트/파티클/
     // 사운드만 이 코루틴으로 extra/targetCoroutines에 끼워 넣어 캐스터의 OnAnimationEvent에 동기화한다.
-    public IEnumerator StatusTextReaction(string text, bool isBuff, Color effectColor)
+    public IEnumerator StatusTextReaction(string text, bool isBuff, Color effectColor, bool textOnly = false)
     {
-        ShowStatusText(text, isBuff, effectColor);
+        ShowStatusText(text, isBuff, effectColor, textOnly);
         yield return null;
     }
 

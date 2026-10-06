@@ -134,14 +134,25 @@ MonoBehaviour:
   pieceCanvas: {fileID: 3846972708060593604}
   name: Rook
   hp: 25
-  maxhp: 15
+  maxhp: 25
   colDamage: 4
   baseColDamage: 0
+  colDamageBonus: 0
+  shieldBonus: 0
+  baseShieldBonus: 0
+  shieldBonusBonus: 0
+  summonColDamagePending: 0
+  summonMaxHpPending: 0
+  grave: 0
+  deathCounted: 0
   teamID: 1
-  shield: 0
+  isSummon: 0
   moveableRange: {fileID: 0}
+  pieceDataIndex: -1
+  onSpawnCards: []
   movedThisTurn: 0
-  enemyCards:
+  animationEventFired: 0
+  actionCards:
   - {fileID: 7977081368484686681}
   - {fileID: 1624530039857462508}
 --- !u!114 &7977081368484686681
@@ -169,6 +180,7 @@ MonoBehaviour:
   requiresCasterNotMoved: 0
   exileOnUse: 0
   dragDropTarget: 0
+  cardID: 
   originalCost: -1
   costDuration: 0
   costText: {fileID: 0}
@@ -177,6 +189,7 @@ MonoBehaviour:
   typeText: {fileID: 0}
   effectText: {fileID: 0}
   defaultScale: {x: 0, y: 0, z: 0}
+  hoverLift: 20
   cardCanvas: {fileID: 0}
   handNumber: 0
 --- !u!114 &1624530039857462508
@@ -203,6 +216,7 @@ MonoBehaviour:
   requiresCasterNotMoved: 0
   exileOnUse: 0
   dragDropTarget: 0
+  cardID: 
   originalCost: -1
   costDuration: 0
   costText: {fileID: 0}
@@ -211,6 +225,7 @@ MonoBehaviour:
   typeText: {fileID: 0}
   effectText: {fileID: 0}
   defaultScale: {x: 0, y: 0, z: 0}
+  hoverLift: 20
   cardCanvas: {fileID: 0}
   handNumber: 0
 --- !u!114 &4032581927463851029
@@ -223,7 +238,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 75170816855fcb04c924aedc2c413dad, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PieceEffect
   orbitPrefab: {fileID: 4361218346547452735, guid: 6faf0af0322d8b343aa06ddbb550307e, type: 3}
   count: 1
@@ -231,7 +246,6 @@ MonoBehaviour:
   heightOffset: 0.5
   degreesPerSecond: 180
   axis: {x: 0, y: 0, z: 1}
-  healEffectPrefab: {fileID: 7829987916877201295, guid: c3a52f289f31ded45a05df03faab4738, type: 3}
 --- !u!1 &5409465227225651031
 GameObject:
   m_ObjectHideFlags: 0
@@ -349,3 +363,4 @@ MonoBehaviour:
   DamageText: {fileID: 898273830055804285, guid: ff1c09560f7a035419be5686fc95669f, type: 3}
   duration: 1
   moveSpeed: 200
+  buffColor: {r: 0, g: 1, b: 0.53, a: 1}

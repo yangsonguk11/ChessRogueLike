@@ -30,4 +30,12 @@ public class PieceDatabase : MonoBehaviour
         }
         return null;
     }
+
+    // pieceName 기물의 직업 보상 카드 풀. PieceInfo/Job이 없거나 풀이 비어 있으면 null.
+    // 전투 보상(ResultCanvas)과 상점(ShopCanvas)이 같은 기준으로 "이 기물이 받을 수 있는 카드"를 판단하도록 공용으로 둔다.
+    public List<string> GetRewardCardPool(string pieceName)
+    {
+        List<string> pool = GetPieceInfo(pieceName)?.Job?.RewardCardPool;
+        return pool != null && pool.Count > 0 ? pool : null;
+    }
 }

@@ -23,11 +23,17 @@ MonoBehaviour:
   - SummonGrowthCard
   - MagicAttackCard
   - ZoneAttackCard
-  - FetchAttackCard
+  - MagicMissileCard
+  - MagicVulnerableAttackCard
+  - LoadMagicMissileCard
   - ImmobilizeCard
+  - WeakenDrawCard
   - MoveAndDrawCard
   - SafeMoveCard
+  - WardZoneCard
+  - VulnerableCard
   - GraveHealCard
   - GraveAttackCard
   - GraveHarvestCard
-  - VulnerableTestCard
+  - GraveDefenseCard
+  - GrowingGraveCard

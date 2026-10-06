@@ -19,4 +19,7 @@ public interface ICardDatabase
     // 등록된 카드 전체의 이름. 카드 테스트 도구처럼 "전체 목록"이 필요한 곳에서 cardPrefabs를 직접
     // 순회하는 대신 이걸 쓰면 된다.
     IEnumerable<string> GetAllCardNames();
+
+    // cardName 카드의 희귀도. 스폰 없이 프리팹에서 읽으므로 진열 후보를 고를 때 써도 된다.
+    CardRarity GetRarity(string cardName);
 }

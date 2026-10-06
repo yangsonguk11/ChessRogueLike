@@ -25,7 +25,7 @@ public class LevelData : ScriptableObject
     [Tooltip("levelType이 Event일 때 어떤 이벤트인지")]
     public EventType eventType = EventType.None;
 
-    [Tooltip("eventType이 Rest일 때, 휴식 오브젝트를 놓을 위치")]
+    [Tooltip("eventType이 Rest/Shop일 때, 휴식/상점 오브젝트를 놓을 위치")]
     public Vector2Int eventObjectPosition;
 
     [Tooltip("eventType이 Unknown일 때 레벨 시작과 동시에 보여줄 대화. 비어있으면 시작 시 대화를 띄우지 않는다.")]

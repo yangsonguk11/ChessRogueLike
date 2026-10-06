@@ -76,6 +76,7 @@ Assets/
    - `targetlogic`이 `AllEnemiesInRange` / `AllAlliesInRange` / `AllPiecesInRange`면 `ExecuteAreaEffect`로 분기해, `effectRange` 오프셋(필요 시 `Directional4` / `Directional8`로 회전)으로 대상 목록을 모은 뒤 타입별 광역 함수(`AreaAttackPiece` / `AreaShieldPiece` / `AreaHealPiece`)를 적용합니다.
    - 그 외에는 `EffectType`(`Move`, `Damage`, `Heal`, `Shield`, `SelfDamage`, `Draw`, `ApplyStatus`, `ApplyTurnEffect`, `ColDamageUp`, `Summon` 등)에 따라 분기해 처리합니다.
    - `Damage` / `Heal` / `Shield`는 각각 `ResolveDamageWithColDamage` / `ResolveShieldWithBonus`로 시전자의 영구 강화 스탯(콜대미지·방어막 보너스)을 더한 뒤 적용하고, 이어서 `statusEffectType`이 설정돼 있으면 `ApplyStatusToTarget`으로 상태 효과(중독·화상·기절 등)를 함께 부여합니다.
+   - **이동공격**: `Move`로 적 칸에 부딪히는 경우와 `Damage`에 `countsAsMoveAttack`이 켜진 경우(이동공격 판정) 모두 [Board.Combat.cs](Assets/Scripts/Board.Combat.cs)의 `ResolveMoveAttackHit` 하나를 거칩니다. 다음 이동공격 버프(`NextMoveAttackEffect`) 소모, 기물의 이동공격 스플래시(`MoveAttackRangeInfoSO`), 연쇄(`Piece.OnMoveAttackPerformed`), 가시 반격이 똑같이 적용되고 `hitCount`도 반영됩니다. 실제 이동공격만 대상 앞 칸까지 다가가고 처치 시 그 칸으로 전진하며, 이동공격 판정은 제자리에서 대상 바로 앞의 가상 도착 칸을 기준으로 스플래시를 펼칩니다.
 3. **처치 시 연쇄 효과(`onKillEffect`)**: `Damage` 효과로 대상이 처치되면 `Board.Combat.cs`가 `cardEffect.onKillEffect`를 시전자 자신에게 즉시 실행합니다(예: `ExecutionerCard`는 처치 시 영구 콜대미지 증가, `LethalChargeCard`는 처치 시 코스트 회복).
 4. 적용이 끝나면 다시 상위 큐 루프(`ScheduleNextCardEffect`)로 돌아가 다음 `CardEffect`를 처리합니다.
 

@@ -5,6 +5,9 @@ public class CardDatabase : MonoBehaviour, ICardDatabase
 {
     public static CardDatabase instance;
 
+    // 시작 덱 카드는 이미 누구나 갖고 있으므로 전투 보상(ResultCanvas)과 상점(ShopCanvas) 후보에서 제외한다.
+    public static readonly string[] StarterCardNames = { "AttackCard", "DefenseCard", "MoveCard", "SummonCard" };
+
     public List<GameObject> cardPrefabs;
     public List<GameObject> spritesPrefabs;
 
@@ -77,4 +80,12 @@ public class CardDatabase : MonoBehaviour, ICardDatabase
     }
 
     public IEnumerable<string> GetAllCardNames() => cardsByName.Keys;
+
+    // 스폰하지 않고 프리팹 컴포넌트의 Card.Rarity(프로퍼티라 Awake 불필요)를 읽는다. 등록 안 된 이름은 일반 취급.
+    public CardRarity GetRarity(string cardName)
+    {
+        if (!cardsByName.TryGetValue(cardName, out GameObject prefab)) return CardRarity.Common;
+        Card card = prefab.GetComponent<Card>();
+        return card != null ? card.Rarity : CardRarity.Common;
+    }
 }

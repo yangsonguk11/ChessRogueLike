@@ -135,8 +135,8 @@ MonoBehaviour:
   pieceInfo: {fileID: 11400000, guid: b0551000000000000000000000000022, type: 2}
   pieceCanvas: {fileID: 1500000}
   name: 
-  hp: 45
-  maxhp: 45
+  hp: 60
+  maxhp: 60
   colDamage: 4
   baseColDamage: 0
   colDamageBonus: 0
@@ -268,7 +268,7 @@ MonoBehaviour:
   hoverLift: 20
   cardCanvas: {fileID: 0}
   handNumber: 0
-  damage: 3
+  damage: 5
 --- !u!114 &2000000
 MonoBehaviour:
   m_ObjectHideFlags: 0

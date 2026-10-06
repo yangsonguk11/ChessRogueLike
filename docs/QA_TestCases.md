@@ -1,6 +1,6 @@
 # ChessRogueLike QA 테스트 케이스
 
-이 문서는 `Assets/Scripts/` 전체(Board 16개 partial class, Piece/Card 핵심 엔진, `Cards/` 폴더 카드 66종, 매니저/UI/맵/상점/다이얼로그/유물 시스템)와 `Assets/LevelData.cs`, `Assets/CardsPanel.cs`, `Assets/SO/Jobs/*.asset`, `전사_소환사_카드목록.txt`를 근거로 작성된 QA 테스트 케이스 모음이다.
+이 문서는 `Assets/Scripts/` 전체(Board 16개 partial class, Piece/Card 핵심 엔진, `Cards/` 폴더 카드 82종, 매니저/UI/맵/상점/다이얼로그/유물 시스템)와 `Assets/LevelData.cs`, `Assets/CardsPanel.cs`, `Assets/SO/Jobs/*.asset`, `전사_소환사_카드목록.txt`를 근거로 작성된 QA 테스트 케이스 모음이다.
 
 ## 사용법
 
@@ -40,11 +40,12 @@
 - `GameManager.TriggerDefeat`가 로그 출력만 하는 플레이스홀더로, 실제 패배 화면/흐름 없음 (섹션 15)
 - 동시 전멸(마지막 아군·마지막 적 같은 틱에 사망) 시 승리/패배 판정 경쟁 상태 가능성 (섹션 15)
 - `RangeInfoSODatabase.GetRangeInfoSO`는 조회 실패 시 에러 로그 없이 `null` 반환 (다른 Database류와 불일치) (섹션 3, 6)
-- `ShopCanvas`의 `cardPrice`/`removePrice`/`relicPrice` 인스펙터 기본값이 0이고, `MainScene.unity`에서도 `removePrice`·`relicPrice`가 0이라 카드 제거와 유물 구매가 무료 (섹션 11)
-- `PieceTargetPickerUI`/다이얼로그 보상 선택 등에 취소 버튼이 없어 일부 흐름은 되돌릴 수 없음 (섹션 11, 13)
+- 상점에 팔 유물이 없음. 유물이 `ShieldRelic`, `VampiricFangRelic` 2종뿐이고 둘 다 시작 유물이라, 보유 유물을 빼면 유물 칸이 비어 나옴 (섹션 11)
+- `ShopObject.prefab`이 휴식용 `RestPieceInfo`(이름 "모닥불")와 모닥불 메시를 그대로 써서 상점이 모닥불로 보임 (섹션 11)
+- 상점에서 카드 제거를 누르면 카드 선택 창(`CardCanvas/CardSelectionPanel`, CardCanvas Sort Order 1)이 상점 패널(`MainCanvas/ShopPanel`, Sort Order 2) 뒤에 가려짐. 선택 창에 Override Sorting Canvas(Sort Order 3)와 Graphic Raycaster가 필요. 카드 획득 연출은 `CardCanvas.cardFxLayer`(Sort Order 4)로 해결됨 (섹션 11)
+- 다이얼로그 보상 선택(카드 받을 기물 선택, 카드 제거)에는 취소 버튼이 없어 되돌릴 수 없음. 상점 흐름은 취소 가능 (섹션 13)
 - `Map.cs` 노드 생성 시 다음 층 고아 노드 방지 안전망이 있으나 반복 생성으로 회귀 검증 필요 (섹션 10)
 - `SummonerPieceInfo`의 기물 이름이 `Summoner`에서 `SummonerAlly`로 바뀌어, 변경 전에 만든 세이브의 소환사 기물은 `PieceDatabase`에서 찾지 못해 스폰에 실패할 수 있음 (섹션 1)
-- `GraveAttackCard`의 1타로 적을 처치하면 2타는 빈 칸에 헛스윙하는데도 무덤 1이 소모됨 (섹션 6.10)
 - 현재 무덤 수를 보여주는 UI가 없음. 정보창에도 표시되지 않고, 늘어날 때 "무덤 +N" 텍스트만 뜸 (섹션 18)
 - 적이 죽으면 다른 적 전원에게도 "무덤 +1" 텍스트가 뜸. 적은 무덤을 쓰는 카드가 없어 의미 없는 연출 (섹션 18)
 - 소환 카드 설명에 소환수의 스폰 시 효과(`autoally`·`tauntAutoAlly`의 방어도 2)가 표시되지 않음 (섹션 6.4)
@@ -58,7 +59,7 @@
 
 | ID | 사전조건 | 테스트 절차 | 기대 결과 | 비고 |
 |---|---|---|---|---|
-| TC-SAVE-001 | 세이브 파일 없음(최초 실행) | 메인메뉴에서 "기본" 기물로 새 게임 시작 | `basicPieceinfo` 기준 로스터 1기, 기본 덱 9장(AttackCard×3, DefenseCard×2, SummonCard×1, MoveCard×2, StunCard×1) 생성 | |
+| TC-SAVE-001 | 세이브 파일 없음(최초 실행) | 메인메뉴에서 "기본" 기물로 새 게임 시작 | `basicPieceinfo` 기준 로스터 1기, 기본 덱 9장(AttackCard×3, DefenseCard×2, SummonCard×1, MoveCard×2, StunCard×1) 생성, 골드 100(`DataManager.startingGold`), `cardRemoveCount` 0 | |
 | TC-SAVE-002 | 세이브 파일 없음 | "소환사" 기물로 새 게임 시작(`StartGameWithPiece(1)`) | `summonerPieceinfo` 기준 로스터 생성 | |
 | TC-SAVE-003 | `ResolveStartingPieceInfo`에 범위 밖 인덱스(예: 5, -1) 전달 | 신규 게임 시작 | `basicPieceinfo`로 폴백되어 정상 시작(크래시 없음) | |
 | TC-SAVE-004 | 신규 게임 시작 직후 | 보유 유물 확인 | `ShieldRelic`, `VampiricFangRelic` 두 개가 항상 시작 유물로 존재 | |
@@ -74,6 +75,7 @@
 | TC-SAVE-014 | 특정 기물 덱에 카드 3장 | `RemoveCardFromDeck(pieceIndex, 잘못된 index)` 호출(범위 밖) | `false` 반환, 덱 변화 없음, 크래시 없음 | |
 | TC-SAVE-015 | 게임 진행 중 | "세이브 초기화" 실행 | 맵 진행/로스터/유물 모두 초기화되고 새 게임과 동일한 시작 상태로 복귀 | |
 | TC-SAVE-016 | `SummonerPieceInfo` 이름 변경(`Summoner` → `SummonerAlly`) 전에 소환사로 시작한 세이브 | 이어하기로 전투 레벨 진입 후 결과 화면까지 진행 | 소환사 기물이 정상 스폰되고, 보상 카드가 소환사 보상 풀에서 제시됨 | ⚠ 세이브의 `pieceName`이 `Summoner`로 남아 있으면 `PieceDatabase.GetPiece`가 프리팹을 찾지 못해 스폰 실패(에러 로그), 보상도 전체 카드 풀로 폴백됨. 마이그레이션 또는 세이브 초기화 안내 필요 |
+| TC-SAVE-017 | `cardRemoveCount` 필드가 없는 이전 세이브 | 이어하기 후 상점 진입 | `cardRemoveCount`가 0으로 읽혀 제거 가격 50G, 크래시 없음 | |
 
 ---
 
@@ -100,7 +102,9 @@
 
 ## 3. 이동 & 이동공격
 
-**관련 스크립트**: `Board.Combat.cs`, `Board.Occupancy.cs`, `Board.RangeUI.cs`, `Board.HoverRange.cs`
+실제 이동공격(`Move`로 적 칸에 부딪힘)과 이동공격 판정 공격(`Damage` + `countsAsMoveAttack`, 예: `ColDamageAttackCard`)은 모두 `Board.ResolveMoveAttackHit` 하나로 처리된다. 판정 공격은 다가가지 않고 제자리에서 때리며, 스플래시는 대상 바로 앞의 가상 도착 칸(대상 - 공격 방향)을 기준으로 펼친다. 처치해도 전진하지 않는다. 대상이 없거나 같은 편이면 일반 공격(`AttackPiece`)으로 처리된다.
+
+**관련 스크립트**: `Board.Combat.cs`(`MoveAttack`, `MoveAttackInPlace`, `ResolveMoveAttackHit`), `Board.Occupancy.cs`, `Board.RangeUI.cs`, `Board.HoverRange.cs`
 
 | ID | 사전조건 | 테스트 절차 | 기대 결과 | 비고 |
 |---|---|---|---|---|
@@ -116,7 +120,7 @@
 | TC-MOVE-010 | `ChargeCard`로 빈 칸 이동(충돌 없음) | 이동 실행 | 보호막 획득 없음 | ⚠ 반드시 충돌해야만 효과 발동함을 확인 |
 | TC-MOVE-011 | `MoveAttackRangeInfoSO`가 스플래시(다중 오프셋)인 카드로 여러 적 동시 타격 | 이동공격 실행 | `isAreaAttack=true`, 스플래시 대상 전원에게 개별 피해, 사망 기물은 점유 정보 즉시 제거 | |
 | TC-MOVE-012 | `ChainMoveAttackBuff` 부착된 기물이 스플래시 이동공격 수행 | 이동공격 실행(다중 타격) | 체인 발동 안 함(`hitMultipleTargets=true`이므로 차단) | |
-| TC-MOVE-013 | `ChainMoveAttackBuff` 부착된 기물이 단일 대상만 타격하는 이동공격 수행 | 이동공격 실행 | 최종 위치의 이동범위 내 다른 적 1기를 자동으로 추가 타격(동일 피해량, 재귀 체인 없음) | |
+| TC-MOVE-013 | `ChainMoveAttackBuff` 부착된 기물이 단일 대상만 타격하는 이동공격 수행 | 이동공격 실행 | 최종 위치의 이동범위 내 다른 적 1기를 자동으로 추가 타격(동일 피해량, 재귀 체인 없음). 다른 적이 없으면 TC-MOVE-028 | |
 | TC-MOVE-014 | `BloodChargeCard`(`healOnHit=true`)로 스플래시 이동공격 2명 적중 | 이동공격 실행 | 자힐량 = 주 타겟 + 스플래시 대상별 실제 피해(취약 보정 포함)의 합. 취약 대상이 없으면 `dmg × (1+스플래시 수)`와 같음 | 취약 포함 케이스는 TC-STATUS-023 |
 | TC-MOVE-015 | `LethalChargeCard`로 이동공격 킬 성공 | 이동공격 실행 | `onKillEffect`(에너지 +2) 발동 | |
 | TC-MOVE-016 | `LethalChargeCard`로 이동공격했지만 대상 생존 | 이동공격 실행 | `onKillEffect` 발동 안 함 | |
@@ -124,6 +128,16 @@
 | TC-MOVE-018 | 대각선 방향 이동공격 | 이동공격 실행 | `GetAdjacentLocation`이 직선 우선이 아닌 두 개의 직교 인접 칸 중에서 착지 위치 결정 | |
 | TC-MOVE-019 | 소환 카드로 대상 칸 및 주변이 모두 점유된 상태에서 소환 시도 | 소환 카드 사용 | 범위 내 빈 칸을 찾지 못하면 소환 없이 카드만 소모 | |
 | TC-MOVE-020 | 이동 중(애니메이션 재생 중) 다른 입력 시도 | 애니메이션 진행 중 보드 클릭 | 논리적 점유는 이미 갱신되어 있어 다음 액션이 올바른 위치 기준으로 처리(시각적 지연과 무관) | |
+| TC-MOVE-021 | 시전자와 떨어진 적(체력 충분), 시전자 colDamage 5 | `ColDamageAttackCard`(이동공격 판정)로 그 적 공격 | 시전자는 제자리에 남고 적에게 5 피해. 시전자는 대상을 향해 공격 애니메이션 재생 | |
+| TC-MOVE-022 | 시전자와 떨어진 적(체력 5 이하) | `ColDamageAttackCard`로 처치 | 적 사망, 시전자는 제자리 유지(실제 이동공격과 달리 전진하지 않음). 처치 효과·처치 유물은 발동 | |
+| TC-MOVE-023 | `MoveAttackRangeInfoSO`가 스플래시인 기물, 떨어진 적 A와 A 주변의 적 B | `ColDamageAttackCard`로 A 공격 | 스플래시가 시전자 칸이 아니라 A 바로 앞 칸(시전자 쪽) 기준으로 공격 방향에 맞춰 펼쳐져 B도 피해. 공격 중 범위 표시도 그 칸 기준 | 실제로 A 앞 칸까지 이동공격했을 때와 같은 칸이 맞아야 함 |
+| TC-MOVE-024 | 가시(`ThornEffect`)를 가진 적 | `ColDamageAttackCard`로 공격 | 시전자가 반격 피해를 받음(죽을 수 있음, 제자리 기준으로 점유 정리) | 일반 `AttackCard`로는 반격 없음 |
+| TC-MOVE-025 | `ChainMoveAttackBuff` 보유 기물, 단일 대상 판정 공격 | `ColDamageAttackCard`로 공격 | 시전자의 현재 칸 기준 이동범위 내 다른 적 1기에게 같은 피해로 연쇄 | |
+| TC-MOVE-026 | 다음 이동공격 버프 보유 | `ColDamageAttackCard`를 대상이 없는 칸(또는 같은 편)에 쓰는 상황 | 일반 공격 헛스윙과 같이 처리, 버프는 소모되지 않음 | ⚠ `dragDropTarget=Enemy`라 정상 플레이로는 빈 칸 지정이 어려움. 코드 확인 또는 적 카드로 재현 |
+| TC-MOVE-027 | 이동 효과나 판정 공격의 `hitCount`를 2로 임시 수정, 스플래시 기물, 주 대상 체력 낮음(1타에 사망)·스플래시 대상 체력 충분 | 이동공격 실행 | 1타에 주 대상과 스플래시 대상 모두 피해, 2타는 살아 있는 스플래시 대상에게만. 피격 반응은 대상마다 다중 타격 연출. 버프 소모·연쇄·가시 반격·이동공격 시 방어도는 1회씩. 흡혈은 전체 피해 합만큼 1회 | ⚠ 현재 `hitCount`가 2 이상인 이동/판정 카드가 없음. 임시 수정으로 확인 후 원복 |
+| TC-MOVE-028 | `ChainMoveAttackBuff` 보유 기물, 이동범위 안에 적이 이동공격 대상 1기뿐(체력 충분) | 그 적에게 단일 대상 이동공격 | 같은 대상에게 같은 피해로 한 번 더 타격(총 2회). 추가 타격은 이동공격이 아니라 버프 소모·가시 반격 없음 | |
+| TC-MOVE-029 | TC-MOVE-028과 같되 대상 체력이 1타 피해 이하 | 이동공격으로 처치 | 공격자가 그 칸으로 전진하고 추가 타격은 발생하지 않음(헛스윙·빈 칸 공격 없음) | |
+| TC-MOVE-030 | `ChainMoveAttackBuff` 보유 기물, 최종 위치 이동범위 안에 이동공격 대상 외 적 A(체력 8)·B(체력 3) | 단일 대상 이동공격 | 추가 타격이 체력이 더 낮은 B에게 들어감. A가 도발을 가졌으면 체력과 무관하게 A. 체력이 같으면 이동범위 오프셋 순서상 먼저인 적 | `LowestHP` 카드와 같은 선택 기준(`PickLowestHPTarget`) |
 
 ---
 
@@ -186,15 +200,15 @@
 
 ## 6. 개별 카드 기능
 
-**관련 스크립트**: `Assets/Scripts/Cards/*.cs` (66종), `Assets/Prefab/Cards/*.prefab`
+**관련 스크립트**: `Assets/Scripts/Cards/*.cs` (82종), `Assets/Prefab/Cards/*.prefab`
 
 ### 6.1 기본 공격형
 
 | ID | 사전조건 | 테스트 절차 | 기대 결과 | 비고 |
 |---|---|---|---|---|
 | TC-CARD-001 | `AttackCard`(Cost 1, dmg 3, LowestHP) 보유, 사거리 내 적 2기(체력 다름) | 카드 사용, 대상 자동/클릭 선택 | 사거리 내 체력이 가장 낮은 적에게 3 피해 | |
-| TC-CARD-002 | `ColDamageAttackCard`(Cost 1, `useColDamageAsDmg=true`) 사용, 캐스터 colDamage 7 | 이동범위 내 최근접 적에게 사용 | 피해량 = colDamage(7)로 적용(카드 자체 dmg 무시) | |
-| TC-CARD-003 | `MagicAttackCard`(Cost 3, dmg 10, `ignoreCasterColDamageBonus=true`), 캐스터 colDamage 버프 보유 | 임의 기물(`AnyPiece`)에 사용 | 버프 무관하게 정확히 10 고정 피해 | |
+| TC-CARD-002 | `ColDamageAttackCard`(Cost 1, `useColDamageAsDmg=true`, `countsAsMoveAttack=true`) 사용, 캐스터 colDamage 7 | 이동범위 내 최근접 적에게 사용 | 피해량 = colDamage(7)로 적용(카드 자체 dmg 무시). 카드 설명 끝에 "(이동공격 판정)" | 이동공격 판정 동작은 TC-MOVE-021~027 |
+| TC-CARD-003 | `MagicAttackCard`(Cost 3, dmg 10, `ignoreCasterColDamageBonus=true`), 캐스터 colDamage 버프 보유 | 임의 기물(`AnyPiece`)에 사용 | 버프 무관하게 정확히 10 고정 피해. 카드 설명은 "기물에 10의 고정 데미지를 줍니다." | |
 | TC-CARD-004 | `HeavyAttackCard`(Cost 2, dmg 6 적/2 자해) | LowestHP 적에게 사용, 대상 존재 | 적 6 피해 + 자신 2 자해가 함께 발생 | |
 | TC-CARD-005 | `HeavyAttackCard`를 대상 없는 빈 칸/사거리 내 적 없음 상황에서 사용 | 카드 사용 | 적 피해는 미발생(헛스윙)하지만 자해 2는 대상과 무관하게 별도 효과로 발생하는지 확인 | ⚠ 두 효과가 독립적으로 처리되어 실패 조건이 연동되지 않음 |
 | TC-CARD-006 | `DoubleAttackCard`(Cost 3, dmg 4, hitCount=2) | 체력 4 이하 적에게 사용 | 1타에 적이 죽고 2타는 발생하지 않음(피해·헛스윙 연출 없음, 에러 없음). 시전자 공격 애니메이션 1회, 1번 칸에 Die | |
@@ -202,13 +216,17 @@
 | TC-CARD-008 | `ExecutionerCard`(Cost 1, dmg 3)로 적을 처치 | 처치 성공 | `onKillEffect`로 자신의 `colDamageBonus` 영구 +1 (다음 전투까지 유지) | |
 | TC-CARD-009 | `ExecutionerCard`로 3연속 처치 | 3회 처치 | `colDamageBonus`가 누적되어 +3 | |
 | TC-CARD-010 | `DirectionalAttackCard`(Cost 2, dmg 5, Directional4) | 4방향 중 특정 방향에 적 배치 후 사용 | 마우스/클릭 방향으로 회전된 직선 범위에만 적중 | |
-| TC-CARD-011 | `ZoneAttackCard`(Cost 2, dmg 2, MouseCentered, `AllPiecesInRange`) | 아군·적 혼재 지역에 시전 | 팀 무관 전원 2 피해(아군도 피해 받음) | |
-| TC-CARD-012 | `FetchAttackCard`(Cost 0) | 사용 | `AttackCard` 1장이 즉시 손패에 추가 | |
+| TC-CARD-011 | `ZoneAttackCard`(Cost 2, dmg 5, MouseCentered, `AllPiecesInRange`, `ignoreCasterColDamageBonus=true`) | 아군·적 혼재 지역에 시전 | 팀 무관 전원 5 피해(아군도 피해 받음). 카드 설명은 "범위 내 모든 기물에게 5의 고정 데미지를 줍니다." | |
+| TC-CARD-012 | `FetchAttackCard`(Cost 0) | 사용 | `AttackCard` 1장이 즉시 손패에 추가 | 2026-10-05 소환사 보상 풀에서 빠져(`LoadMagicMissileCard`로 교체) 현재 정상 플레이로는 획득 경로 없음 |
 | TC-CARD-101 | `FinalAttackCard`(Cost 2, 손패 전부 버림 + 버린 카드 1장당 4 피해 1회, `hitsPerDiscarded=1`), 손패에 다른 카드 3장, 체력 충분한 적 | 적에게 드롭 | 손패 3장이 버림더미로 날아간 뒤 같은 대상에게 4 피해 3회(총 12). 피해 효과는 다시 클릭하지 않아도 같은 대상에 들어감(`useLastTarget`) | 사용한 카드 자신은 버린 수에 포함되지 않음 → 버림더미는 총 +4장 |
 | TC-CARD-102 | `FinalAttackCard`, 시전자 이동공격력 보너스 +2, 손패에 다른 카드 2장 | 적에게 사용 | 타격마다 보너스 적용 → 6 + 6 = 총 12. 카드 설명의 피해 수치도 6으로 표시 | |
 | TC-CARD-103 | `FinalAttackCard`가 손패의 유일한 카드 | 적에게 사용 | 카드는 사용되고 에너지 2 차감, 타격 없음(헛스윙 연출도 없음). 카드 정상 종료, 이어서 다른 카드 사용 가능 | 버린 카드 0장이면 피해 효과만 스킵 |
 | TC-CARD-104 | `FinalAttackCard`를 든 상태(드롭 전) | 사거리 표시 확인 후 취소 | 공격 사거리가 표시되고, 취소하면 손패가 하나도 버려지지 않은 채 그대로 남음 | 버리기는 대상을 찍는 순간 실행됨 |
 | TC-CARD-105 | `FinalAttackCard`, 손패 다른 카드 3장, 체력 8 적 | 적에게 사용 | 2타에 적 처치, 3타는 발생하지 않음(피해·헛스윙 연출 없음, 에러 없음). 피격 반응 3칸 중 2번 칸에 Die, 3번 칸은 비어 있음 | `DoubleAttackCard`와 같은 다중 타격 처리 |
+| TC-CARD-113 | `MagicMissileCard`(Cost 2, dmg 6, `AnyPiece`, `ignoreCasterColDamageBonus=true`, 소멸), 캐스터 colDamage 버프 보유 | 사거리 안 적에게 사용 | 버프 무관하게 정확히 6 피해, 에너지 2 차감, 카드는 버림더미가 아니라 소멸더미로 이동. 카드 설명은 "기물에 6의 고정 데미지를 줍니다. (소멸)" | 사거리는 `MagicAttackCard`와 같은 `AttackRangeInfo` |
+| TC-CARD-114 | `MagicVulnerableAttackCard`(Cost 2, 희귀, 2 고정 피해 × 3 + 같은 대상 취약(2) 2턴), 체력 충분한 적 | 사거리 안 적에게 드롭 | 같은 대상에게 2 피해 3회(총 6, 이 카드의 취약은 미적용). 이어서 다시 클릭하지 않아도 그 대상에게 `취약 (+2)`. 이후 `AttackCard`(dmg 3)로 공격하면 5 피해. 카드 설명은 "2의 고정 피해를 3번 줍니다. 2턴간 취약(2)을 부여합니다." | 취약은 타격이 끝난 뒤 걸림(`useLastTarget`) |
+| TC-CARD-115 | `MagicVulnerableAttackCard`, 체력 4 이하 적 | 사용 | 2타에 적 처치, 3타 없음. 취약 효과는 건너뛰고(텍스트·에러 없음) 카드 정상 종료 | 2번째 효과의 `skipIfTargetGone` |
+| TC-CARD-116 | `LoadMagicMissileCard`(Cost 0, `MagicMissileCard` 2장을 손에 추가) | 사용 → 전투 승리 후 덱 확인 | 손패에 `MagicMissileCard` 2장 추가, 에너지 변화 없음. 전투가 끝난 뒤 저장된 덱에는 `MagicMissileCard`가 남지 않음 | `FetchAttackCard`와 같은 `AddCard` 방식(전투 한정) |
 
 ### 6.2 이동/이동공격형
 
@@ -222,6 +240,10 @@
 | TC-CARD-018 | `MoveandAttackCard`(Cost 3, 이동 후 dmg 3 LowestHP) | 이동 후 사거리 내 적 존재 | 이동 완료 후 새 위치 기준으로 LowestHP 적에게 3 피해 | |
 | TC-CARD-019 | `MoveandAttackCard`로 이동 자체가 이동공격이 되어 적을 처치한 경우 | 이동 실행(충돌로 처치) | 이어지는 Damage 효과는 새 위치 기준 LowestHP 재탐색(자동 스킵되지 않음) | |
 | TC-CARD-020 | `MoveAndDrawCard`(Cost 2) | 이동 후 | 이동 완료 후 카드 1장 드로우 | |
+| TC-CARD-106 | `EmpowerMoveAttackCard`(Cost 1, 다음 이동공격 +4, 이동공격할 때까지 유지), 시전자 colDamage 5 | 사용 후 정보창 확인 → 적에게 이동공격 | 사용 시 "다음 이동공격 +4" 텍스트와 버프 파티클. 정보창에 턴 수 없이 `다음 이동공격 +4`. 이동공격 피해 9. 공격자가 다가가는 이동 애니메이션 직전(이동이 없으면 공격 애니메이션 직전)에 시전자 위에 "다음 이동공격 +4 소모" 텍스트만(파티클·사운드 없음), 버프 제거. 타격 시점에는 피해 텍스트만 | |
+| TC-CARD-107 | `MightyChargeCard`(Cost 2, 이번 턴 다음 이동공격 ×2), 시전자 colDamage 5 | ① 사용 후 이동공격 ② 사용 후 이동공격 없이 턴 종료 | ① 피해 10, 버프 소모 ② 정보창 `다음 이동공격 ×2  1턴` → 턴 종료 시 "다음 이동공격 ×2 해제" 텍스트와 함께 제거 | |
+| TC-CARD-108 | `StunningChargeCard`(Cost 2, 다음 이동공격 적중 시 기절 1턴), 스플래시 이동공격 범위를 가진 기물 | 사용 후 적 2기를 맞히는 이동공격 | 주 대상·스플래시 대상 모두 기절(텍스트 표시, 적 행동 예고가 기절로 바뀜). 다음 적 턴에 두 적 모두 행동하지 않음 | |
+| TC-CARD-109 | `EmpowerMoveAttackCard` 사용 상태, 손패에 `ColDamageAttackCard` | 손패의 카드 설명 확인 → `ColDamageAttackCard` 사용 | 설명의 피해 수치가 colDamage + 4로 파란색 표시. 사용 시 그 피해가 들어가고 버프 소모(이동공격 판정이므로) | |
 
 ### 6.3 광역(AoE) & 지속형
 
@@ -235,6 +257,8 @@
 | TC-CARD-026 | `AreaShieldCard`(Cost 1, dmg 3, `AllAlliesInRange`, Fixed) | 정상 플레이에서 획득 가능 여부 확인 | 프리팹 없음 — 스크립트만 존재, 상점/보상/직업풀 어디에도 연결 안 됨 | ⚠ orphan |
 | TC-CARD-027 | `FlameThrowingCard`(Cost 1, `OwnTurnEnd`, 3턴간 매 턴 종료 시 AoE 2 피해) | 사용 후 3번의 자기 턴 종료 경과 | 매 턴 종료마다 적 대상 2 AoE 피해가 정확히 3회 발생 후 자동 만료 | |
 | TC-CARD-028 | `FlameThrowingCard` 사용 후 캐스터가 사망 | 캐스터 사망 이후 턴 진행 | 죽은 기물의 `TurnEffect`가 더 이상 발동하지 않고 정리되는지 확인 | |
+| TC-CARD-117 | `WardZoneCard`(Cost 2, 3턴간 턴 종료 시 주변 8칸 적 3 고정 피해 + 주변 8칸 아군 2 회복), 시전자 주변에 적 1기·부상 아군 1기 | 사용 후 정보창 확인 → 아군 턴 종료 | 정보창에 "턴 종료 시 광역 피해 3", "턴 종료 시 광역 회복 2"(각 3턴). 턴 종료 시 주변 적 3 피해, 주변 아군 2 회복. 시전자 본인은 회복되지 않음 | 범위는 프리팹 `effectRange[0]` = `SurroundingRangeInfo` |
+| TC-CARD-118 | `WardZoneCard`, 시전자 이동공격력 버프 보유 | 아군 턴 종료 3회 경과 | 피해는 버프 무관하게 매번 3, 정확히 3회 발동 후 두 턴 효과 모두 만료 | |
 
 ### 6.4 소환형
 
@@ -243,7 +267,7 @@
 | TC-CARD-029 | `SummonCard`(Cost 2, autoally: HP5/colDmg5) | 빈 칸에 사용 | 근처 빈 칸(BFS, 직교 우선)에 AutoAlly 소환, 팀0·`isSummon=true`. 소환 직후 스폰 시 효과(`DefenseCard`)로 방어도 2 획득 | ⚠ 카드 설명("autoally을(를) 소환합니다.")에는 방어도 2가 표시되지 않음 |
 | TC-CARD-030 | `GreaterSummonCard`(Cost 4, HP9/colDmg7) | 빈 칸에 사용 | GreaterAutoAlly 소환, 스탯 확인 | |
 | TC-CARD-078 | `TauntSummonCard`(Cost 2, tauntAutoAlly: HP5/colDmg5, 소멸) | 빈 칸에 사용 | tauntAutoAlly(비숍) 소환 → onSpawnCards 순서대로 방어도 2(`DefenseCard`) → 영구 도발(`TauntCard`) 적용, 카드는 버림 더미가 아니라 소멸 | ⚠ 카드 설명에는 방어도 2가 표시되지 않음 |
-| TC-CARD-031 | `SummonMasteryCard`(Cost 2, +2 colDmg pending, +2 maxHp pending) 사용 후 바로 `SummonCard` 사용(동일 캐스터) | 순서대로 사용 | 소환된 기물의 colDamage/maxHp/hp에 각각 +2 보너스 적용, pending 값 소진(0으로 리셋) | |
+| TC-CARD-031 | `SummonMasteryCard`(Cost 1, +2 colDmg pending, +2 maxHp pending) 사용 후 바로 `SummonCard` 사용(동일 캐스터) | 순서대로 사용 | 소환된 기물의 colDamage/maxHp/hp에 각각 +2 보너스 적용, pending 값 소진(0으로 리셋) | |
 | TC-CARD-032 | `SummonMasteryCard`를 2회 연속 사용 후 소환 | 2회 사용 → 소환 | 보너스가 누적(각 +4)되어 적용, 상한 없음 | |
 | TC-CARD-033 | `SummonMasteryCard` 사용 후 그 전투에서 끝까지 소환을 하지 않음 | 전투 종료까지 관찰 | pending 값이 만료되지 않고 해당 기물에 계속 남아있음(다음 소환 시 뒤늦게 적용될 수 있음) | ⚠ StatusEffect가 아니므로 시각적 만료 표시 없이 무기한 잔존 |
 | TC-CARD-079 | `SummonGrowthCard`(Cost 3, Self, 영구 턴 효과 2개) 보유 | 카드 사용 후 정보창 확인 | 정보창에 "턴 종료 시 다음 소환 콜대미지 +1", "턴 종료 시 다음 소환 체력 +3" 두 버프가 턴 수 없이 표시. 사용 시점에는 다음 소환 보너스가 늘지 않음 | |
@@ -300,7 +324,10 @@
 | TC-CARD-057 | `CleanseCard`(Cost 1, 자가 디버프 전체 제거) | 자신이 Poison+Weaken 동시 보유 시 사용 | 두 디버프 모두 제거, 버프는 영향 없음 | |
 | TC-CARD-058 | `DispelCard`(Cost 1, 대상 적 버프 전체 제거, `noRangeLimit=true`) | 적이 Strengthen 보유 시 사용 | 해당 버프 제거(디버프는 영향 없음) | |
 | TC-CARD-059 | `DispelCard`를 `ChainMoveAttackBuff`를 보유한 적에게 사용 | 사용 | `ChainMoveAttackBuff`는 `StatusEffect`가 아니므로 제거되지 않음 | ⚠ 디스펠 불가 버프 |
-| TC-CARD-069 | `VulnerableTestCard`(Cost 1, 적 대상, `noRangeLimit=true`, Vulnerable 2턴/+1) | 사거리 밖 적에게 사용 | 거리 제한 없이 대상에게 `취약 (+1)` 부여, 디버프 텍스트·파티클 재생. 카드 설명은 "적을 선택해 2턴간 취약(1)을 부여합니다. 공격으로 받는 피해가 1 증가합니다." | ⚠ 검증 전용 카드. 소환사 보상 풀(`Summoner.asset`)에 임시 포함 — 소환사 기물의 전투 보상으로 획득 |
+| TC-CARD-069 | `VulnerableCard`(Cost 1, 적 대상, `noRangeLimit=true`, Vulnerable 2턴/+1) | 사거리 밖 적에게 사용 | 거리 제한 없이 대상에게 `취약 (+1)` 부여, 디버프 텍스트·파티클 재생. 카드 설명은 "2턴간 취약(1)을 부여합니다." | |
+| TC-CARD-110 | `WeakenDrawCard`(Cost 2, 사거리 안의 적에게 Weaken 2턴/-2 + 2장 드로우), 사거리 안에 이동공격력 5인 적, 덱에 카드 2장 이상 | 그 적에게 드롭 | 적에게 `약화 (-2)` 디버프 텍스트·파티클, 적 이동공격력 5 → 3. 이어서 카드 2장 드로우, 에너지 2 차감. 카드 설명은 "적에게 2턴간 약화(2)를 부여하고 카드를 2장 드로우합니다." | 드로우는 효과 1개당 1장(Draw 효과 2개) |
+| TC-CARD-111 | `WeakenDrawCard`, 시전자 사거리 밖에만 적이 있음 | 사거리 밖 적에게 드롭 | 카드가 사용되지 않음 — 약화·드로우·에너지 변화 없음 | `noRangeLimit` 없음(프리팹 `effectRange[0]` 사거리) |
+| TC-CARD-112 | TC-CARD-110 직후, 적의 행동이 `EnemyAttackCard`(5 피해) 또는 이동공격 | 적 턴 2회 진행 | 두 번의 적 행동 모두 피해가 2 줄어듦(카드 공격 5 → 3, 이동공격 5 → 3). 두 번째 적 턴 종료 시 "약화 (-2) 해제" 텍스트와 함께 이동공격력 5로 복구 | 이동공격력이 2 미만인 적은 그 값만큼만 감소(0 미만으로 내려가지 않음) |
 
 ### 6.8 특수/체인
 
@@ -335,21 +362,24 @@
 
 | ID | 사전조건 | 테스트 절차 | 기대 결과 | 비고 |
 |---|---|---|---|---|
-| TC-CARD-084 | `GraveHealCard`(Cost 1, 무덤 1 소모, 회복 2, 아군 대상, `noRangeLimit=true`), 시전자 무덤 1, 멀리 떨어진 부상 아군 | 그 아군에게 드롭 | 대상 2 회복, 시전자 무덤 1 → 0, 에너지 1 차감 | 무덤은 대상이 아니라 카드를 낸 기물의 것을 씀 |
+| TC-CARD-084 | `GraveHealCard`(Cost 1, 무덤 1 소모, 회복 3, 아군 대상, `noRangeLimit=true`), 시전자 무덤 1, 멀리 떨어진 부상 아군 | 그 아군에게 드롭 | 대상 3 회복, 시전자 무덤 1 → 0, 에너지 1 차감 | 무덤은 대상이 아니라 카드를 낸 기물의 것을 씀 |
 | TC-CARD-085 | `GraveHealCard`, 시전자 무덤 1 | 적 기물 위에 드롭 | 사용 거부(아군 대상 카드), 무덤·에너지 변화 없음 | |
-| TC-CARD-086 | `GraveAttackCard`(Cost 2, 3 피해 + 무덤 1 소모 시 같은 대상 3 피해), 시전자 무덤 1, 체력 충분한 적 | 적을 클릭해 사용 | 3 + 3 = 총 6 피해. 두 번째 타격은 다시 클릭하지 않아도 같은 대상에 들어감. 무덤 1 → 0 | |
-| TC-CARD-087 | `GraveAttackCard`, 시전자 무덤 0 | 적을 클릭해 사용 | 카드는 사용 가능, 3 피해만 들어가고 두 번째 타격은 건너뜀. 카드 정상 종료 | 첫 효과에는 무덤 비용이 없음 |
+| TC-CARD-086 | `GraveAttackCard`(Cost 1, 5 피해 + 무덤 1 소모 시 같은 대상 5 피해), 시전자 무덤 1, 체력 충분한 적 | 적을 클릭해 사용 | 5 + 5 = 총 10 피해. 두 번째 타격은 다시 클릭하지 않아도 같은 대상에 들어감. 무덤 1 → 0 | |
+| TC-CARD-087 | `GraveAttackCard`, 시전자 무덤 0 | 적을 클릭해 사용 | 카드는 사용 가능, 5 피해만 들어가고 두 번째 타격은 건너뜀. 카드 정상 종료 | 첫 효과에는 무덤 비용이 없음 |
 | TC-CARD-088 | `GraveAttackCard`, 시전자 무덤 2 | 사용 | 무덤 1만 소모되어 1이 남음 | |
-| TC-CARD-089 | `GraveAttackCard`, 시전자 무덤 1, 체력 3 이하 적 | 사용 | 1타에 적 처치, 2타는 빈 칸에 헛스윙(에러 없음) | ⚠ 2타가 헛스윙해도 무덤 1이 소모됨. 의도인지 확인 필요 |
-| TC-CARD-090 | `GraveAttackCard`, 시전자 무덤 1, 취약(+1) 적 | 사용 | 4 + 4 = 총 8 피해 | 두 타격 모두 공격 경로라 취약 적용 |
-| TC-CARD-091 | `GraveHarvestCard`(Cost 2, 3 피해, 처치 시 무덤 +1) | ① 체력 3 이하 적에게 사용 ② 체력 충분한 적에게 사용 | ① 적 처치, 시전자에게 "무덤 +1" 텍스트, 무덤 +1 ② 무덤 변화 없음 | |
+| TC-CARD-089 | `GraveAttackCard`, 시전자 무덤 1, 체력 5 이하 적 | 사용 | 1타에 적 처치, 2타는 발생하지 않음(피해·헛스윙 연출 없음, 에러 없음). 무덤 1 그대로 유지, 카드 정상 종료 | 2타 효과의 `skipIfTargetGone` — 대상이 죽었거나 없으면 그 효과는 무덤 차감 없이 스킵 |
+| TC-CARD-090 | `GraveAttackCard`, 시전자 무덤 1, 취약(+1) 적 | 사용 | 6 + 6 = 총 12 피해 | 두 타격 모두 공격 경로라 취약 적용 |
+| TC-CARD-091 | `GraveHarvestCard`(Cost 1, 6 피해, 처치 시 무덤 +1) | ① 체력 6 이하 적에게 사용 ② 체력 충분한 적에게 사용 | ① 적 처치, 시전자에게 "무덤 +1" 텍스트, 무덤 +1 ② 무덤 변화 없음 | |
 | TC-CARD-092 | 시전자 무덤 0, 손패에 `GraveHarvestCard`와 `GraveHealCard` | `GraveHarvestCard`로 적 처치 후 같은 턴에 `GraveHealCard` 사용 | 처치 직후 `GraveHealCard`가 바로 사용 가능 상태가 되고 정상 사용됨 | 무덤 증가는 연출을 기다리지 않고 즉시 반영 |
+| TC-CARD-119 | `GraveDefenseCard`(Cost 1, 무덤 전부 소모, 소모한 무덤 1당 방어도 4), 시전자 무덤 3, 방어막 보너스 0 | 사용 | 방어도 +12, 무덤 3 → 0, 에너지 1 차감. 카드 설명은 "무덤을 모두 소모하고, 소모한 만큼 방어도를 4 얻습니다." | `consumeAllGrave` + `dmgPerGrave=4`. 방어막 보너스가 있으면 그만큼 더해짐 |
+| TC-CARD-120 | `GraveDefenseCard`, 시전자 무덤 0 | 카드 상태 확인 후 사용 시도 | 사용 불가 상태로 표시, 사용 시도 시 "무덤이 부족합니다" 안내와 함께 거부 | 첫 효과 `graveCost=1` |
+| TC-CARD-121 | `GrowingGraveCard`(Cost 3, 희귀, 영구 턴 효과: 자기 턴 시작 시 무덤 +1) | 사용 후 정보창 확인 → 아군 턴 시작 3회 경과 | 정보창에 턴 수 없이 "턴 시작 시 무덤 +1". 사용 시점에는 무덤이 늘지 않고, 다음 턴 시작부터 매 턴 "무덤 +1" 텍스트와 함께 무덤 +1(3회 후 3). 전투가 끝나면 사라짐 | 2장 쓰면 턴당 +2 |
 
 ---
 
 ## 7. 상태이상/버프 시스템
 
-**관련 스크립트**: `StatusEffect.cs`, `StatusEffects.cs`, `TurnEffect.cs`, `ChainMoveAttackBuff.cs`, `Piece.ProcessStatusEffects`, `Piece.ModifyIncomingAttackDamage`, `Board.ApplyAttackDamage`(`Board.Combat.cs`), `Board.PrioritizeTauntTargets`(`Board.CardEffect.cs`)
+**관련 스크립트**: `StatusEffect.cs`, `StatusEffects.cs`(`NextMoveAttackEffect` 포함), `TurnEffect.cs`, `ChainMoveAttackBuff.cs`, `Piece.ProcessStatusEffects`, `Piece.ModifyIncomingAttackDamage`, `Board.ApplyAttackDamage`(`Board.Combat.cs`), `Board.PrioritizeTauntTargets`(`Board.CardEffect.cs`)
 
 | ID | 사전조건 | 테스트 절차 | 기대 결과 | 비고 |
 |---|---|---|---|---|
@@ -369,23 +399,23 @@
 
 ### 7.1 취약(Vulnerable)
 
-취약(+N)은 공격 경로(`AttackPiece`, `AreaAttackPiece`, `MoveAttack`)로 받는 피해에만 대상별로 N을 더한다. 공격 경로는 모두 `Board.ApplyAttackDamage`를 거친다. 독·화상 틱, 가시 반격, 자해, 자기 DoT, `DamageAllAllies`는 `GetDamage`를 직접 호출하므로 증가하지 않는다. 아래 케이스는 캐스터에게 이동공격력 보정(강화/약화/영구 보너스)이 없다고 가정한다.
+취약(+N)은 공격 경로(`AttackPiece`, `AreaAttackPiece`, `ResolveMoveAttackHit` — 이동공격·이동공격 판정)로 받는 피해에만 대상별로 N을 더한다. 공격 경로는 모두 `Board.ApplyAttackDamage`를 거친다. 독·화상 틱, 가시 반격, 자해, 자기 DoT, `DamageAllAllies`는 `GetDamage`를 직접 호출하므로 증가하지 않는다. 아래 케이스는 캐스터에게 이동공격력 보정(강화/약화/영구 보너스)이 없다고 가정한다.
 
 | ID | 사전조건 | 테스트 절차 | 기대 결과 | 비고 |
 |---|---|---|---|---|
-| TC-STATUS-014 | 적에게 `VulnerableTestCard`로 취약(+1) 부여 | `AttackCard`(dmg 3)로 해당 적 공격 | 피해 텍스트 4, 실제 체력 감소 4 | |
+| TC-STATUS-014 | 적에게 `VulnerableCard`로 취약(+1) 부여 | `AttackCard`(dmg 3)로 해당 적 공격 | 피해 텍스트 4, 실제 체력 감소 4 | |
 | TC-STATUS-015 | 취약(+1) 적, 캐스터 colDamage N | 해당 적에게 이동공격 | 주 타겟 피해 N+1(텍스트/체력 모두) | |
 | TC-STATUS-016 | 스플래시 이동공격 범위를 가진 기물, 스플래시 대상 2기 중 1기만 취약(+1) | 이동공격 실행 | 취약인 스플래시 대상만 +1, 다른 대상은 기본 피해 | 대상별로 개별 적용 |
-| TC-STATUS-017 | 범위 안에 취약(+1) 적 1기 + 일반 적 1기 | `ZoneAttackCard`(dmg 2) 시전, 또는 `FlameThrowingCard` 사용 후 턴 종료 | 취약 적 3, 일반 적 2 피해. 턴 효과 광역 피해(FlameThrowing)도 공격으로 취급되어 증가 | |
+| TC-STATUS-017 | 범위 안에 취약(+1) 적 1기 + 일반 적 1기 | `ZoneAttackCard`(dmg 5) 시전, 또는 `FlameThrowingCard`(dmg 2) 사용 후 턴 종료 | `ZoneAttackCard`면 취약 적 6·일반 적 5, `FlameThrowingCard`면 취약 적 3·일반 적 2 피해. 턴 효과 광역 피해(FlameThrowing)도 공격으로 취급되어 증가 | |
 | TC-STATUS-018 | 취약(+1) 적(체력 충분) | `DoubleAttackCard`(dmg 4, hitCount 2) 사용 | 타격마다 +1 → 5 + 5 = 총 10 | |
-| TC-STATUS-019 | 같은 적에게 `VulnerableTestCard`를 다른 턴에 2회 사용(취약(+1) 2개, 남은 턴 다름) | `AttackCard`(dmg 3)로 공격 후 턴 경과 | 둘 다 걸린 동안 3 + 1 + 1 = 5. 먼저 건 인스턴스가 만료되면 4. 두 인스턴스는 각자의 지속시간으로 독립 만료 | |
+| TC-STATUS-019 | 같은 적에게 `VulnerableCard`를 다른 턴에 2회 사용(취약(+1) 2개, 남은 턴 다름) | `AttackCard`(dmg 3)로 공격 후 턴 경과 | 둘 다 걸린 동안 3 + 1 + 1 = 5. 먼저 건 인스턴스가 만료되면 4. 두 인스턴스는 각자의 지속시간으로 독립 만료 | |
 | TC-STATUS-020 | 취약(+1) 적, 보호막 3 | `AttackCard`(dmg 3)로 공격 | 보정이 보호막보다 먼저 적용: 4 중 3은 보호막이 흡수, 체력 1 감소, 피해 텍스트 4 | |
 | TC-STATUS-021 | 취약(+1) 적, 이동공격력 0인 공격자 | 해당 적에게 이동공격 | 피해 0 유지(0 피해 공격에는 보정이 붙지 않음) | ⚠ 약화를 거는 카드가 없어 정상 플레이로 colDamage 0을 만들기 어려움. 인스펙터에서 colDamage 0으로 설정한 기물로 확인 |
-| TC-STATUS-022 | 취약(+1) 적 | ① `PoisonTestCard`로 독(2) 부여 후 적 턴 종료 ② 가시 반격·자해·자기 DoT·`DamageAllAllies` 경로 | ① 독 틱 피해 2 그대로 ② 모두 증가하지 않음 | ⚠ `VulnerableTestCard`는 적에게만 걸 수 있어, 아군 쪽 경로(가시 반격 수신, 자해, `DamageAllAllies`)는 정상 플레이로 재현 불가. 코드 확인 또는 테스트 부트스트랩 필요 |
+| TC-STATUS-022 | 취약(+1) 적 | ① `PoisonTestCard`로 독(2) 부여 후 적 턴 종료 ② 가시 반격·자해·자기 DoT·`DamageAllAllies` 경로 | ① 독 틱 피해 2 그대로 ② 모두 증가하지 않음 | ⚠ `VulnerableCard`는 적에게만 걸 수 있어, 아군 쪽 경로(가시 반격 수신, 자해, `DamageAllAllies`)는 정상 플레이로 재현 불가. 코드 확인 또는 테스트 부트스트랩 필요 |
 | TC-STATUS-023 | 취약(+1) 적 1기 + 일반 적 1기 | ① `LifeDrainCard`(dmg 2)로 둘 다 적중 ② `BloodChargeCard`로 취약 적 이동공격 | ① 자힐 = 3 + 2 = 5 ② 자힐 = colDamage + 1 | "입힌 피해" = 대상별 보정 후 피해(보호막 흡수 전). TC-MOVE-014, TC-CARD-022 참고 |
 | TC-STATUS-024 | `ChainMoveAttackBuff` 보유 아군, 단일 대상 이동공격 | ① 첫 대상만 취약(+1) ② 체인 대상만 취약(+1) | ① 첫 대상 +1, 체인 대상은 기본 피해 ② 첫 대상 기본, 체인 대상 +1 | 체인에는 보정 전 피해가 넘어가고, 체인 대상 자신의 취약만 붙음 |
 | TC-STATUS-025 | 적에게 취약(+1, 2턴) 부여 | 정보창 확인 후 적의 자기 턴 종료를 2회 경과 | 정보창 `취약 (+1)  2턴` → `1턴` → "취약 (+1) 해제" 텍스트와 함께 제거. 이후 공격은 기본 피해 | 적의 자기 턴 종료마다 감소하므로 플레이어 턴 2번 동안 유지 |
-| TC-STATUS-026 | `VulnerableTestCard`의 `statusDuration`을 -1로 변경 후 부여 | 여러 턴 경과 | 정보창에 턴 수 표시 없이 계속 유지, 만료되지 않음 | |
+| TC-STATUS-026 | `VulnerableCard`의 `statusDuration`을 -1로 변경 후 부여 | 여러 턴 경과 | 정보창에 턴 수 표시 없이 계속 유지, 만료되지 않음 | |
 | TC-STATUS-027 | 취약(+1) 적 | `DispelCard`(버프 제거) 사용 | 취약은 디버프라 제거되지 않음 | 정화(`CleanseCard`)는 자기 디버프만 제거하므로 아군 취약 재현 수단이 생기면 추가 확인 |
 
 ### 7.2 도발(Taunt)
@@ -407,6 +437,23 @@
 | TC-STATUS-038 | 도발 아군이 적 사거리 안 | 적이 자기/아군 대상 카드(`EnemyThornCard`, `EnemyChargeCard` 등) 사용 | 원래대로 자기/아군에게 적용(도발 무관) | |
 | TC-STATUS-039 | 적 프리팹 `onSpawnCards`에 `TauntCard` 연결, 자동행동 아군(소환수) 사거리 안에 그 적과 더 가까운 일반 적 | 아군 턴 종료 후 자동행동 아군 행동 | 소환수가 도발 적을 노림. 플레이어 카드는 도발 적 외 대상도 자유롭게 선택 가능(대상 제한은 미구현) | AI 우선순위는 양 진영 공용 |
 | TC-STATUS-040 | 도발을 가진 적 | `DispelCard`(버프 제거) 사용 | 도발이 제거되고 "도발 해제" 텍스트 표시. `CleanseCard`(디버프 제거)로는 제거되지 않음 | |
+
+### 7.3 다음 이동공격 버프
+
+`NextMoveAttackEffect`(`StatusEffects.cs`)를 상속한 버프 3종이다. `ApplyStatus` + `StatusEffectType.NextMoveAttackDamage`/`NextMoveAttackMultiplier`/`NextMoveAttackStatus`로 건다. 같은 종류라도 합치지 않고 걸린 만큼 따로 표시되며, 다음 이동공격 1회(이동공격 판정 포함)가 실제로 일어날 때 전부 합산해 한꺼번에 소모된다(`Piece.ConsumeNextMoveAttackBonus`). 피해 = (기본 + 가산 합) × (1 + 배율 가산분 합)이고, 대상별 취약 보정은 그 뒤에 붙는다. `statusDuration`이 음수면 이동공격할 때까지 유지, 양수면 다른 상태이상처럼 턴 종료마다 줄어 만료된다. 부여 시에는 텍스트+버프 파티클+사운드, 소모 시에는 텍스트만(공격자의 이동 애니메이션 직전, 이동이 없으면 공격 애니메이션 직전에 소모된 버프마다 텍스트 1개씩, 0.4초 간격으로 차례로), 만료·디스펠 시에는 "해제" 텍스트가 뜬다. 아래 케이스는 시전자 colDamage 5, 스플래시 없는 단일 이동공격을 가정한다.
+
+| ID | 사전조건 | 테스트 절차 | 기대 결과 | 비고 |
+|---|---|---|---|---|
+| TC-STATUS-041 | `EmpowerMoveAttackCard` 2장 | 두 장 사용 후 정보창 확인 | 부여 텍스트·파티클이 장마다 재생. 정보창에 `다음 이동공격 +4`가 두 줄 | |
+| TC-STATUS-042 | `EmpowerMoveAttackCard` 2장 사용 | 이동공격 | 피해 13(5+4+4). 두 버프 모두 제거. 이동 직전에 "다음 이동공격 +4 소모" 텍스트가 따로 2번, 0.4초 간격으로 차례로 뜸(마지막 텍스트 뒤에는 기다리지 않고 바로 이동) | |
+| TC-STATUS-043 | ① `MightyChargeCard` 2장 ② `EmpowerMoveAttackCard` + `MightyChargeCard` | 각각 이동공격 | ① 피해 15(×3, 배율은 가산) ② 피해 18((5+4)×2) | |
+| TC-STATUS-044 | `EmpowerMoveAttackCard` + `MightyChargeCard`, 취약(+1) 적 | 해당 적에게 이동공격 | 피해 19((5+4)×2+1) — 취약은 배율 뒤에 더해짐 | |
+| TC-STATUS-045 | `EmpowerMoveAttackCard` 사용, 대상 주변 착지 칸이 모두 막힘 | 이동공격 시도 | 이동공격 실패(TC-MOVE-005), 버프는 소모되지 않고 유지 | |
+| TC-STATUS-046 | `EmpowerMoveAttackCard` 사용 | 이동공격 없이 여러 턴 경과 | 만료되지 않고 유지(정보창에 턴 수 없음) | |
+| TC-STATUS-047 | `EmpowerMoveAttackCard` 사용 + `ChainMoveAttackBuff` 보유 | 단일 대상 이동공격 | 첫 타 9, 연쇄 대상도 9(같은 피해). 버프는 첫 이동공격에서 1회만 소모 | 연쇄 추가 타격은 이동공격이 아니라 버프를 소모하지 않음 |
+| TC-STATUS-048 | `EmpowerMoveAttackCard` 사용 | 이동 카드로 빈 칸 이동(충돌 없음) | 버프 유지(이동공격이 아니므로) | |
+| TC-STATUS-049 | `StunningChargeCard` 사용, 이동 효과 `hitCount`를 2로 임시 수정 | 이동공격 | 대상에게 기절이 1개만 걸림(첫 적중 때 1회) | ⚠ 현재 `hitCount`가 2 이상인 이동 카드가 없음. 임시 수정으로 확인 후 원복 |
+| TC-STATUS-050 | 다음 이동공격 버프를 가진 기물 | 버프 제거 수단(`DispelCard`) 사용 | "해제" 텍스트와 함께 제거 | ⚠ `DispelCard`는 적 대상이라 아군 버프를 지우는 수단이 정상 플레이에 없음. 적에게 버프를 거는 카드가 생기면 확인 |
 
 ---
 
@@ -465,16 +512,45 @@
 
 ## 11. 상점
 
-**관련 스크립트**: `ShopCanvas.cs`, `ShopCardSlot.cs`, `ShopRelicSlot.cs`
+**관련 스크립트**: `ShopCanvas.cs`, `ShopCardSlot.cs`, `ShopRelicSlot.cs`, `GoldDisplay.cs`, `PieceTargetPickerUI.cs`, `CardCanvas.cs`(카드 선택 패널), `CardDatabase.cs`(희귀도), `PieceDatabase.cs`(직업 풀)
+
+**규칙 요약**
+- 진열 카드 8장: 보유 기물들의 직업 `RewardCardPool` 합집합에서 시작 카드 4종(`CardDatabase.StarterCardNames`)을 뺀 풀에서 뽑는다. 풀에 희귀 카드가 있으면 1장 이상 반드시 포함하고, 나머지는 희귀도 구분 없이 균등하게 뽑는다.
+- 진열 유물 4칸: 보유하지 않은 유물만 뽑는다.
+- 가격(`ShopCanvas` 인스펙터 기본값)
+  - 카드: 일반 35G, 고급 50G, 희귀 70G. 진열할 때 ±10% 변동을 한 번 정한다. 일반 32~38G, 희귀 63~77G.
+  - 유물: 90G.
+  - 카드 제거: 50G + 25G × 런 전체 제거 횟수(`GameData.cardRemoveCount`). 상점 방문당 1회.
+- 재고는 레벨 로드 후 처음 열 때 한 번만 만든다. 닫았다 열어도 같고, 산 물건은 "매진"으로 남는다.
+- 골드는 구매 대상이 확정될 때만 빠진다. 기물 선택이나 카드 선택을 취소하면 그대로다.
+- 희귀 카드: `FinalAttackCard`, `ChainMoveAttackCard`, `SummonGrowthCard`, `WeakenDrawCard`, `MagicVulnerableAttackCard`, `GrowingGraveCard`. 나머지는 모두 일반.
 
 | ID | 사전조건 | 테스트 절차 | 기대 결과 | 비고 |
 |---|---|---|---|---|
-| TC-SHOP-001 | 상점 진입 | 카드/유물 가격 확인 | `cardPrice`/`removePrice`/`relicPrice`가 0이 아닌 의도된 값으로 설정되어 있음 | ⚠ 코드 기본값 0. `MainScene.unity` 기준 cardPrice 30, removePrice 0, relicPrice 0이라 카드 제거와 유물 구매가 무료 |
-| TC-SHOP-002 | 골드 부족 상태에서 카드/유물 구매 시도 | 구매 클릭 | "골드가 부족합니다" 안내, 골드/보유 카드 변화 없음 | |
-| TC-SHOP-003 | 카드 구매(골드 충분) | 구매 클릭 | 골드 차감 후 `PieceTargetPickerUI`로 대상 기물 선택 강제, 취소 불가 | ⚠ 구매 확정 후 대상 지정을 취소할 방법 없음 |
-| TC-SHOP-004 | 카드 제거 구매, 대상 기물의 덱이 매우 적음(1장) | 제거 진행 | 골드 차감 후 선택 패널에서 정상 처리(제거 가능 카드가 충분히 있는지 확인) | |
-| TC-SHOP-005 | 상점에 카드/유물 슬롯 8/4개 노출 | 슬롯 채우기 | `CardDatabase.PickRandomDistinct`/`RelicDatabase.PickRandomDistinct`로 중복 없이 채워짐(가중치/희귀도 없음) | |
-| TC-SHOP-006 | 상점 진입 직후 | 나가기(Exit) 버튼 상태 | 아무 것도 안 사도 즉시 나가기 가능(구매 게이팅 없음) | ⚠ 코드 주석상 임시 처리로 명시됨 |
+| TC-SHOP-001 | 새 런, 상점 진입 | 가격 확인 | 일반 카드 32~38G, 희귀 카드 63~77G(`[희귀]` 표기), 유물 90G, 제거 버튼 "카드 제거 50G" | 제거 버튼 라벨은 `removeButtonLabel` 연결 시 |
+| TC-SHOP-002 | 전사 1기만 보유 | 진열 확인 | 8장 모두 전사 `RewardCardPool` 카드. 시작 카드 4종·적 전용 카드 없음, 중복 없음 | |
+| TC-SHOP-003 | 전사 1기만 보유 | 상점 진입을 여러 런 반복 | 매번 `FinalAttackCard`/`ChainMoveAttackCard` 중 1장 이상 진열 | |
+| TC-SHOP-004 | 전사와 소환사 보유 | 진열 확인 | 두 직업 풀 합집합에서 진열, 희귀 6종 중 1장 이상 포함 | |
+| TC-SHOP-005 | 상점 진입 | 닫기 후 상점 오브젝트 다시 클릭 | 같은 카드·가격·매진 상태 그대로(다시 뽑지 않음) | |
+| TC-SHOP-006 | 골드가 카드 가격보다 적음 | 카드 클릭 | "골드가 부족합니다" 안내, 골드·덱 변화 없음. 가격 라벨은 빨간색 | |
+| TC-SHOP-007 | 전사 1기, 골드 충분 | 전사 카드 클릭 | 기물 선택 없이 골드 차감 → 전사 덱에 추가 → 슬롯 "매진". 획득 연출 카드가 상점 패널 위에 보였다가 버린 카드 더미 쪽으로 날아감. 같은 슬롯을 다시 눌러도 반응 없음 | 획득 연출은 `CardCanvas.cardFxLayer` 연결 필요 |
+| TC-SHOP-008 | 전사 2기(같은 직업), 골드 충분 | 카드 클릭 → 기물 선택창에서 취소 | 골드·덱 변화 없음, 슬롯은 그대로 판매 중 | 취소 버튼(`PieceTargetPickerUI.cancelButton`) 연결 필요 |
+| TC-SHOP-009 | 전사와 소환사, 골드 충분 | 소환사 카드 클릭 | 기물 선택 없이 소환사 덱에 추가(전사는 후보에서 빠짐) | |
+| TC-SHOP-010 | 골드 충분, 보유하지 않은 유물 진열 | 유물 클릭 | 골드 차감, 유물 획득, 파티 유물 아이콘 즉시 갱신, 슬롯 "매진" | ⚠ 지금은 팔 유물이 없어 확인 불가(유물 2종 모두 시작 유물) |
+| TC-SHOP-011 | 시작 유물만 보유 | 유물 칸 확인 | `ShieldRelic`, `VampiricFangRelic`은 진열되지 않음 | |
+| TC-SHOP-012 | `cardRemoveCount` 0, 골드 50 이상 | 카드 제거 → 기물 선택 → 카드 1장 선택 → 확인 | 카드 영구 제거, 골드 50 차감, `cardRemoveCount` 1, 버튼 "제거 완료"(비활성) | ⚠ 카드 선택 창이 상점 패널에 가려지지 않아야 함(`CardSelectionPanel` 정렬 미설정 시 가려짐) |
+| TC-SHOP-013 | TC-SHOP-012 직후(같은 방문) | 카드 제거 다시 시도 | 버튼 비활성(연결 시). 연결 안 했으면 "이번 상점에서는 더 이상 카드를 제거할 수 없습니다" 안내. 변화 없음 | |
+| TC-SHOP-014 | 세이브의 `cardRemoveCount`를 2로 수정 | 상점 진입 | 제거 가격 100G(50 + 25×2) 표시 | 런 안에서 누적. 새 런은 0부터 |
+| TC-SHOP-015 | 골드 충분 | 카드 제거 → 카드 선택 패널에서 취소 | 골드·덱·`cardRemoveCount` 변화 없음, 다시 제거 가능 | 취소 버튼(`CardCanvas.cancelSelectionBtn`) 연결 필요 |
+| TC-SHOP-016 | 골드가 제거 가격보다 적음 | 카드 제거 클릭 | "골드가 부족합니다" 안내, 버튼 라벨 빨간색 | |
+| TC-SHOP-017 | 모든 기물의 덱이 빔(비정상 데이터) | 카드 제거 클릭 | "제거할 카드가 없습니다" 안내, 골드 변화 없음 | |
+| TC-SHOP-018 | 덱이 빈 기물과 덱이 있는 기물 보유 | 카드 제거 클릭 | 덱이 빈 기물은 선택지에 없음. 남는 기물이 1기면 선택 없이 바로 카드 선택 패널 | |
+| TC-SHOP-019 | 기물 선택창 또는 카드 선택 패널이 열린 상태 | 뒤의 다른 카드·유물·닫기 버튼 클릭 | 반응 없음(진행 중인 구매/제거가 끝날 때까지 상점 조작 잠금) | |
+| TC-SHOP-020 | `GoldDisplay` 배치 | 전투 보상 골드 수령, 상점 구매·제거 | 골드 표시가 즉시 갱신 | |
+| TC-SHOP-021 | 상점 진입 직후 | 나가기(Exit) 버튼 확인 | 아무것도 사지 않아도 바로 나갈 수 있음 | 의도된 동작(골드가 모자랄 때 소프트락 방지) |
+| TC-SHOP-022 | 상점에서 구매·제거 후 나가기 | 맵에서 다음 노드 선택 후 `save.json` 확인 | gold, 덱, `cardRemoveCount`, 유물이 반영되어 저장됨 | |
+| TC-SHOP-023 | 상점에서 구매 후 노드 선택 전 강제 종료 | 재실행 후 상점 재진입 | 구매·골드가 저장 전 상태로 돌아가고 재고는 새로 뽑힘 | TC-SAVE-009와 같은 저장 시점 규칙 |
+| TC-SHOP-024 | 대화 이벤트 카드 제거, 전투 중 카드 선택 효과(버리기 등) | 패널 확인 | 취소 버튼이 보이지 않고 기존처럼 반드시 선택해야 함 | 회귀 확인 |
 
 ---
 
@@ -488,10 +564,11 @@
 | TC-RESULT-002 | `rewardGoldMin=0, rewardGoldMax=0`인 레벨 | 결과 화면 진입 | 골드 보상 슬롯 자체가 생성되지 않음 | |
 | TC-RESULT-003 | 생존 아군의 `PieceInfo.Job`이 설정됨(Warrior/Summoner) | 카드 선택 오픈 | 해당 직업의 `RewardCardPool`에서 3장 무작위 제시 | |
 | TC-RESULT-004 | 생존 아군에 `Job`이 없거나 `RewardCardPool`이 비어있음 | 카드 선택 오픈 | `CardDatabase.GetAllCardNames()` 전체에서 폴백 선택(크래시 없음) | |
-| TC-RESULT-005 | 보상 후보 풀에 `AttackCard`/`DefenseCard`/`MoveCard`/`SummonCard`가 포함될 수 있는 상황 | 카드 선택 오픈 | 4종 기본 카드는 `ExcludedFromRewards`로 절대 제시되지 않음 | |
+| TC-RESULT-005 | 보상 후보 풀에 `AttackCard`/`DefenseCard`/`MoveCard`/`SummonCard`가 포함될 수 있는 상황 | 카드 선택 오픈 | 4종 기본 카드는 `CardDatabase.StarterCardNames`로 걸러져 절대 제시되지 않음 | |
 | TC-RESULT-006 | 생존 아군 3명 | 각 아군별 카드 보상 개별 수령 | 한 아군이 보상을 골라도 다른 아군의 보상 슬롯은 독립적으로 유지 | |
 | TC-RESULT-007 | 마지막 층 클리어 | 결과 화면 이후 흐름 | `MapCanvas.ShowRunComplete()` 호출(일반 층 클리어와 다른 화면) | |
 | TC-RESULT-008 | 일반 층 클리어, `RewardType=PieceUpgrade` | 결과 화면 대신 | `Board.GrantLevelReward()`가 선택형 영구 스탯 강화 플로우로 분기(카드/골드 보상 화면 생략) | |
+| TC-RESULT-009 | 일반 전투 레벨 클리어 | 골드 슬롯 금액 확인 | `L1` 10~20G, `L2`·`summonerLevel` 15~25G 범위 안 | 상점(8번째 층) 도착 시 평균 약 230G(시작 골드 100 + 전투 보상 약 130) |
 
 ---
 
@@ -539,6 +616,13 @@
 | TC-UI-016 | 로스터가 1명뿐인 상태에서 `CardsPanel`의 SavedDeck 보기 | 확인 | 이전/다음 기물 전환 버튼(switcher)이 숨김 처리 | |
 | TC-UI-017 | 정보창(`ButtonInfo`)에서 `RestObject`/`ShopObject` 클릭 | 확인 | 각각 "휴식 지점"/"상점" 전용 placeholder 텍스트 표시, 일반 기물 스탯 UI로 빠지지 않음 | |
 | TC-UI-018 | 일반 기물 정보창에서 버프/디버프 상태 확인 | 확인 | 버프는 초록, 디버프는 빨강, 영구 효과(`duration<0`)는 지속시간 텍스트 미표시 | |
+| TC-UI-019 | 아군·적이 섞여 배치된 레벨로 전투 진입 | 게이지 목록 확인 | 아군(`teamID 0`) 항목이 모두 위, 적(그 외 teamID) 항목이 모두 아래. 같은 팀 안에서는 보드 스캔 순서(x→y) | `PieceGaugeListCanvas`의 `VerticalLayoutGroup.reverseArrangement`는 꺼져 있어야 함 |
+| TC-UI-020 | 전투 중 게이지 목록 표시 상태 | ① 아군 소환 ② 적 소환 ③ 중간 기물 사망 | ① 새 아군이 아군 블록 맨 아래(첫 적 바로 위)에 추가 ② 새 적이 목록 맨 아래에 추가 ③ 해당 항목만 빠지고 나머지 순서 유지 | |
+| TC-UI-021 | `PieceAnimator`를 쓰는 기물(Warrior/SummonerAlly/sin/sin2) | 같은 칸에서 공격·방어막·버프 카드를 여러 번 연속 사용 | 애니메이션이 끝날 때마다 기물이 원래 칸 중앙에 그대로 서 있음(조금씩 밀려나지 않음) | Animator `Apply Root Motion`이 꺼져 있어야 함. Idle/Shield/Buff 클립은 XZ 루트 모션을 포즈에 굽지 않아서, 켜져 있으면 위치가 누적해서 어긋남 |
+| TC-UI-022 | 플레이어 턴, 적 예고 범위가 여러 개 겹쳐 표시된 상태, 아무 기물도 선택하지 않음 | ① 적 A에 마우스 올림 ② 아군 B에 마우스 올림 ③ 마우스를 뗌 | ① 정보창에 A가 뜨는 동안 A의 예고 범위만 보임(다른 적 범위 숨김) ② B의 이동 범위만 보이고 적 범위는 모두 숨김 ③ 정보창이 닫히며 전체 적 예고 범위 복원 | 범위만 보이는 시점 = `ButtonInfo`가 그 기물 정보를 띄우는 시점. 기물 게이지 목록 항목 hover도 같음 |
+| TC-UI-023 | 아군 위치 고정 공격(`lockOnAllyPositions`)을 예고한 적 | 그 적에 마우스 올림 | 잠긴 절대 좌표 예고 칸이 그대로 보임(시전자 기준 오프셋으로 바뀌지 않음) | `GetActionRangeCells`를 상시 표시와 공유 |
+| TC-UI-024 | 플레이어 턴 | 아군을 클릭해 선택(또는 카드를 집어 사거리 미리보기) → 선택 해제 또는 카드 사용 완료 | 선택 중에는 그 아군의 범위(카드 사거리)만 보이고 적 예고 범위는 숨김. 정보창이 닫히면 적 예고 범위 복원 | |
+| TC-UI-025 | 아군에 hover해 적 범위가 숨은 상태 | ① 그 사이 적이 사망하거나 기절(`ShowAllEnemyRanges` 재호출) ② 마우스를 뗌 / 별도로 hover한 채 턴 종료 | ① 적 범위가 다시 켜지지 않음 ② 갱신된 예고 범위로 복원. 턴 종료 후에는 복원되지 않음 | 휴식·상점 레벨의 모닥불/상점 hover는 범위 없음·예외 없음 |
 
 ---
 
@@ -563,10 +647,10 @@
 
 | ID | 사전조건 | 테스트 절차 | 기대 결과 | 비고 |
 |---|---|---|---|---|
-| TC-JOB-001 | Summoner 기물 보상 오픈 | 보상 풀 확인 | `Summoner.asset`의 17개 카드(SummonCard, GreaterSummonCard, TauntSummonCard, EmpowerAllyCard, SummonMasteryCard, AreaHealCard, SummonGrowthCard, MagicAttackCard, ZoneAttackCard, FetchAttackCard, ImmobilizeCard, MoveAndDrawCard, SafeMoveCard, GraveHealCard, GraveAttackCard, GraveHarvestCard, VulnerableTestCard) 전부 실제 프리팹으로 존재 확인 | ⚠ `VulnerableTestCard`는 검증 전용 카드로 임시 포함 — 플레이테스트 후 제거 여부 결정 |
+| TC-JOB-001 | Summoner 기물 보상 오픈 | 보상 풀 확인 | `Summoner.asset`의 23개 카드(SummonCard, GreaterSummonCard, TauntSummonCard, EmpowerAllyCard, SummonMasteryCard, AreaHealCard, SummonGrowthCard, MagicAttackCard, ZoneAttackCard, MagicMissileCard, MagicVulnerableAttackCard, LoadMagicMissileCard, ImmobilizeCard, WeakenDrawCard, MoveAndDrawCard, SafeMoveCard, WardZoneCard, VulnerableCard, GraveHealCard, GraveAttackCard, GraveHarvestCard, GraveDefenseCard, GrowingGraveCard) 전부 실제 프리팹으로 존재 확인 | |
 | TC-JOB-002 | Warrior 기물 보상을 반복 오픈(예: 50회) | 카드명 수집 | `FinalAttackCard`도 보상으로 제시됨(프리팹이 `Database.prefab`의 `cardPrefabs`에 등록되어 `PickRandomDistinctFrom`에서 스킵되지 않음) | |
-| TC-JOB-003 | Warrior 보상 풀의 27개 카드 각각 | 보상으로 제시될 때 수치 확인 | `전사_소환사_카드목록.txt`에 명시된 코스트·수치(예: HeavyAttackCard 코스트 2·6뎀/2자해, DoubleAttackCard 코스트 3·4뎀×2)와 실제 구현이 일치 | |
-| TC-JOB-004 | `Warrior.asset`(27장)·`Summoner.asset`(17장)과 `전사_소환사_카드목록.txt` | 두 목록을 대조 | 카드 구성·개수가 일치하고, 텍스트 파일의 설명이 게임 내 카드 설명(`EffectDescription`)과 같음 | 카드를 보상 풀에 추가·제거할 때마다 텍스트 파일도 함께 갱신 |
+| TC-JOB-003 | Warrior 보상 풀의 30개 카드 각각 | 보상으로 제시될 때 수치 확인 | `전사_소환사_카드목록.txt`에 명시된 코스트·수치(예: HeavyAttackCard 코스트 2·6뎀/2자해, DoubleAttackCard 코스트 3·4뎀×2)와 실제 구현이 일치 | |
+| TC-JOB-004 | `Warrior.asset`(30장)·`Summoner.asset`(23장)과 `전사_소환사_카드목록.txt` | 두 목록을 대조 | 카드 구성·개수가 일치하고, 텍스트 파일의 설명이 게임 내 카드 설명(`EffectDescription`)과 같음 | 카드를 보상 풀에 추가·제거할 때마다 텍스트 파일도 함께 갱신 |
 | TC-JOB-005 | Job이 설정되지 않은 기물 | 보상 오픈 | `ResolveRewardPoolFor`가 전체 카드 목록으로 폴백 | |
 
 ---
@@ -589,6 +673,7 @@
 | TC-REG-008 | `Piece.onSummonCards`가 `onSpawnCards`로 이름 변경(`FormerlySerializedAs`). `autoally.prefab`은 옛 이름으로 저장됨 | `SummonCard`로 autoally 소환 | 스폰 시 효과(`DefenseCard`) 연결이 유지되어 방어도 2 획득 | ⚠ `FormerlySerializedAs`를 지우면 연결이 끊김. 프리팹을 다시 저장해 새 필드명으로 갱신 권장 |
 | TC-REG-009 | `lockedCaster`/`lockCasterForNext`가 제거되고 효과마다 시전자(`CardEffect.caster`)를 기록하는 방식으로 바뀜 | `MoveandAttackCard`, `MoveAndDrawCard`, `SummonGrowthCard`, `SummonMasteryCard`, `HeavyAttackCard`(자해) 각각 사용 | 두 번째 이후 효과가 카드를 쓴 기물의 현재 위치 기준으로 실행되고, 다른 아군에게 효과가 새지 않음 | 시전자 처리 방식 변경 회귀 테스트. TC-ENGINE-026~028 참고 |
 | TC-REG-010 | 전투 시작 유물이 즉시 적용에서 효과 큐 처리로 바뀜 | `ShieldRelic` 보유 상태로 아군 2명 이상 전투 진입 | 아군마다 방어도 +3, 첫 턴 입력·기물 전환 정상 | TC-CARD-075, TC-RELIC-001 참고 |
+| TC-REG-011 | 이동공격 타격부가 `ResolveMoveAttackHit`로, 공격 1타 처리가 `StrikeTarget`으로 공용화됨 | 일반 이동공격(처치 시 전진·생존 시 인접 칸·도착 칸 없음 실패·대각선), `ChargeCard`, `BloodChargeCard`(스플래시 포함), `LethalChargeCard`, 적 이동공격, 가시 반격, 연쇄, `DoubleAttackCard`, `FinalAttackCard`를 각각 실행 | 피해·사망·전진 위치·방어도·자힐·처치 효과·연쇄·반격과 연출 순서(다가감 → 마주봄 → 공격)가 변경 전과 동일 | 공격 범위 표시는 이제 도착 칸 기준으로 고정(예전엔 처치 후 전진한 칸 기준으로 보일 수 있었음). TC-MOVE-001~020 참고 |
 
 ---
 
@@ -603,7 +688,7 @@
 | TC-GRAVE-001 | 이전 전투에서 무덤을 쌓은 채 승리 | 다음 전투 레벨 진입 | 모든 기물의 무덤이 0에서 시작(이월되지 않음) | |
 | TC-GRAVE-002 | 아군 A, B와 소환수 C 생존 | 소환수 C가 사망 | A, B 위에 각각 "무덤 +1", 무덤 1. 소환수 사망도 집계됨 | |
 | TC-GRAVE-003 | 아군 A, 적 2기 | 적 1기 처치 | 아군 A의 무덤은 변화 없음. 남은 적 위에 "무덤 +1" 텍스트 | ⚠ 적은 무덤을 쓰는 카드가 없어 적 쪽 "무덤 +1" 연출은 의미 없는 표시. 의도 확인 필요 |
-| TC-GRAVE-004 | 아군 3기 중 2기가 체력 2 이하, `ZoneAttackCard`(팀 무관 2 피해) 범위 안 | 두 기물이 같은 공격에 함께 사망하도록 시전 | 살아남은 아군만 무덤 +2(사망 1기당 +1). 함께 죽은 두 기물은 서로의 사망으로 무덤을 받지 않음 | |
+| TC-GRAVE-004 | 아군 3기 중 2기가 체력 5 이하, `ZoneAttackCard`(팀 무관 5 피해) 범위 안 | 두 기물이 같은 공격에 함께 사망하도록 시전 | 살아남은 아군만 무덤 +2(사망 1기당 +1). 함께 죽은 두 기물은 서로의 사망으로 무덤을 받지 않음 | |
 | TC-GRAVE-005 | 사망 처리 중인 기물에 추가 피해가 겹치는 상황(예: 광역 공격 + 턴 종료 DoT) | 같은 기물이 연달아 사망 판정 | 그 기물의 사망은 무덤에 한 번만 집계 | |
 | TC-GRAVE-006 | 활성 기물의 무덤 0, 손패에 `GraveHealCard`(첫 효과 무덤 1) | 카드 상태 확인 후 사용 시도 | 카드가 사용 불가 상태로 표시되고, 사용을 시도하면 "무덤이 부족합니다" 안내와 함께 거부 | |
 | TC-GRAVE-007 | TC-GRAVE-006 상태 | 다른 아군이 사망 | 손패의 `GraveHealCard`가 즉시 사용 가능 상태로 바뀜 | |

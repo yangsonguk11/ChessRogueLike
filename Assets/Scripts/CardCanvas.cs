@@ -48,12 +48,20 @@ public class CardCanvas : MonoBehaviour
     //   selectionCountText  : "0/2 선택됨" 표시 TextMeshProUGUI
     //   selectionPromptText : 안내 문구 TextMeshProUGUI
     //   confirmSelectionBtn : 확인 Button
+    //   cancelSelectionBtn  : 취소 Button (선택) — allowCancel로 연 패널에서만 보인다. OnClick은 Awake에서 코드로 등록하므로 인스펙터에서 비워 둔다.
     [Header("카드 선택 패널")]
     [SerializeField] GameObject cardSelectionPanel;
     [SerializeField] RectTransform cardSelectionContent;
     [SerializeField] TextMeshProUGUI selectionCountText;
     [SerializeField] TextMeshProUGUI selectionPromptText;
     [SerializeField] UnityEngine.UI.Button confirmSelectionBtn;
+    [SerializeField] UnityEngine.UI.Button cancelSelectionBtn;
+
+    [Tooltip("세이브 덱 카드 획득/제거 연출(ShowAddedCard/ShowRemovedCard)용 카드를 띄울 부모(선택). " +
+        "Override Sorting으로 MainCanvas보다 위에 그려지는 Canvas를 붙여 두면 상점 패널 등 MainCanvas UI에 가리지 않는다. " +
+        "비워 두면 CardCanvas 바로 아래에 띄운다.")]
+    [SerializeField] RectTransform cardFxLayer;
+    RectTransform CardFxParent => cardFxLayer != null ? cardFxLayer : GetComponent<RectTransform>();
 
     public static event Action OnPileChanged;
     void NotifyPileChanged() => OnPileChanged?.Invoke();
@@ -125,6 +133,7 @@ public class CardCanvas : MonoBehaviour
     {
         if (instance == null) instance = this;
         HandZone.GetComponent<Image>().raycastTarget = false;
+        if (cancelSelectionBtn != null) cancelSelectionBtn.onClick.AddListener(CancelCardSelection);
     }
 
     // 기물 1명분의 카드를 스폰해 그 기물의 버림더미(초기 덱)에 채운다. 화면에는 활성 기물일 때만 보이도록
@@ -728,7 +737,7 @@ public class CardCanvas : MonoBehaviour
     // 실제 손패/덱/버린 더미 풀에는 들어가지 않는 시각 효과 전용 인스턴스라 애니메이션이 끝나면 파괴한다.
     public void ShowAddedCard(string cardname, CardPositionZone targetZone)
     {
-        GameObject obj = cardData.SpawnCard(GetComponent<RectTransform>(), cardname);
+        GameObject obj = cardData.SpawnCard(CardFxParent, cardname);
         if (obj == null) return;
 
         RectTransform rt = obj.GetComponent<RectTransform>();
@@ -748,7 +757,7 @@ public class CardCanvas : MonoBehaviour
     // 실제 손패/덱/버린 더미 풀에는 들어가지 않는 시각 효과 전용 인스턴스라 애니메이션이 끝나면 파괴한다.
     public void ShowRemovedCard(string cardname)
     {
-        GameObject obj = cardData.SpawnCard(GetComponent<RectTransform>(), cardname);
+        GameObject obj = cardData.SpawnCard(CardFxParent, cardname);
         if (obj == null) return;
 
         RectTransform rt = obj.GetComponent<RectTransform>();
@@ -881,8 +890,9 @@ public class CardCanvas : MonoBehaviour
     // ────────── 카드 선택 패널 ──────────
 
     /// <summary>카드 선택 패널을 열어 플레이어가 카드를 선택하도록 합니다.
-    /// zone이 SavedDeck이면 pieceIndex로 어느 기물의 deckCardIDs를 대상으로 할지 지정해야 합니다.</summary>
-    public void ShowCardSelectionPanel(CardZone zone, int count, CardEffect effect, Action<List<RectTransform>> onConfirm, int pieceIndex = -1)
+    /// zone이 SavedDeck이면 pieceIndex로 어느 기물의 deckCardIDs를 대상으로 할지 지정해야 합니다.
+    /// allowCancel이면 취소 버튼이 보이고, 취소 시 아무것도 처리하지 않은 채 onConfirm이 빈 목록으로 호출됩니다.</summary>
+    public void ShowCardSelectionPanel(CardZone zone, int count, CardEffect effect, Action<List<RectTransform>> onConfirm, int pieceIndex = -1, bool allowCancel = false)
     {
         AudioManager.instance?.PlayPanelOpen();
         panelRequiredCount = count;
@@ -916,6 +926,7 @@ public class CardCanvas : MonoBehaviour
         }
 
         cardSelectionPanel.SetActive(true);
+        if (cancelSelectionBtn != null) cancelSelectionBtn.gameObject.SetActive(allowCancel);
 
         foreach (var card in panelCardPool)
         {
@@ -1012,15 +1023,32 @@ public class CardCanvas : MonoBehaviour
     /// <summary>Inspector의 확인 버튼 OnClick에 연결하세요.</summary>
     public void ConfirmCardSelection()
     {
+        CloseCardSelection(new List<RectTransform>(selectedInPanel));
+    }
+
+    // 취소 버튼(allowCancel로 연 패널에서만 보임)에서 호출: 선택한 카드를 처리하지 않고 콜백을 빈 목록으로 부른다.
+    // 빈 목록으로 닫으면 ApplySavedDeckSelection도 아무것도 지우지 않는다.
+    void CancelCardSelection()
+    {
+        AudioManager.instance?.PlayButtonClick();
+        CloseCardSelection(new List<RectTransform>());
+    }
+
+    // 확인/취소 공용 닫기. selected만 처리 대상으로 넘기고, 패널 카드는 SavedDeck이면 파괴, 아니면 원래 자리로 되돌린다.
+    void CloseCardSelection(List<RectTransform> selected)
+    {
+        if (!cardSelectionMode) return; // 버튼 중복 클릭 등으로 이미 닫힌 패널을 다시 닫지 않게
         cardSelectionMode = false;
         cardSelectionPanel.SetActive(false);
 
-        var selected = new List<RectTransform>(selectedInPanel);
+        // 콜백이 곧바로 다른 선택 패널을 열 수 있으므로 호출 전에 비워 둔다.
+        var callback = panelCallback;
+        panelCallback = null;
 
         if (panelIsSavedDeck)
         {
             ApplySavedDeckSelection(selected);
-            panelCallback?.Invoke(selected);
+            callback?.Invoke(selected);
             foreach (var card in panelCardPool)
                 if (card != null) Destroy(card.gameObject);
             return;
@@ -1037,7 +1065,7 @@ public class CardCanvas : MonoBehaviour
 
         AlignCards(); // 손패 아크 레이아웃 복구
 
-        panelCallback?.Invoke(selected);
+        callback?.Invoke(selected);
     }
 
     // SavedDeck 패널 확인 시 호출: panelSavedDeckAction에 따라 선택된 카드를 처리한다.

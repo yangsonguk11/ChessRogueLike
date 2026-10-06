@@ -38,9 +38,6 @@ public class ResultCanvas : MonoBehaviour
         cardChoicePanelRoot?.SetActive(false);
     }
 
-    // 시작 덱 카드(AttackCard/DefenseCard/MoveCard/SummonCard)는 이미 누구나 갖고 있으므로 보상 후보에서 제외한다.
-    static readonly string[] ExcludedFromRewards = { "AttackCard", "DefenseCard", "MoveCard", "SummonCard" };
-
     public void EnableCanvas(int goldMin, int goldMax)
     {
         BuildRewardGrid(goldMin, goldMax);
@@ -97,7 +94,7 @@ public class ResultCanvas : MonoBehaviour
     void SpawnCardChoices(IEnumerable<string> pool, System.Action<string> onCardPicked)
     {
         ICardDatabase cardDb = CardDatabase.instance;
-        List<string> picks = cardDb.PickRandomDistinctFrom(3, pool, ExcludedFromRewards);
+        List<string> picks = cardDb.PickRandomDistinctFrom(3, pool, CardDatabase.StarterCardNames);
 
         foreach (string cardName in picks)
         {
@@ -117,9 +114,8 @@ public class ResultCanvas : MonoBehaviour
     IEnumerable<string> ResolveRewardPoolFor(int pieceIndex)
     {
         string pieceName = DataManager.Instance.Pieces[pieceIndex].pieceName;
-        PieceInfo info = PieceDatabase.instance != null ? PieceDatabase.instance.GetPieceInfo(pieceName) : null;
-        List<string> jobPool = info?.Job != null ? info.Job.RewardCardPool : null;
-        return jobPool != null && jobPool.Count > 0 ? jobPool : CardDatabase.instance.GetAllCardNames();
+        List<string> jobPool = PieceDatabase.instance != null ? PieceDatabase.instance.GetRewardCardPool(pieceName) : null;
+        return jobPool ?? CardDatabase.instance.GetAllCardNames();
     }
 
     // 기물 카드 보상 버튼 클릭 시 호출: 그 기물 직업의 카드 풀에서 3장을 보여주고, 고른 카드를

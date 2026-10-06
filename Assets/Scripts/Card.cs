@@ -13,6 +13,14 @@ public enum CardType
     Move,
 }
 
+// 카드 희귀도. 상점 가격(ShopCanvas)과 진열 보장(희귀 1장 이상)에 쓰인다.
+public enum CardRarity
+{
+    Common,
+    Uncommon,
+    Rare,
+}
+
 public enum DragDropTarget
 {
     Ally,       // teamID == 0 인 아군 기물
@@ -64,6 +72,9 @@ public abstract class Card : MonoBehaviour, ISelectable
     public string Name;
     public string Description; // 대부분 코드가 안 건드림 — 실제 플레이버 텍스트로 채워도 됨(일부 카드는 Awake에서 덮어쓰기도 하니 확인)
     public virtual string EffectDescription => "";
+    // 필드가 아닌 프로퍼티라 Awake 없이 프리팹 컴포넌트에서 바로 읽힌다(상점이 스폰 전에 진열을 고를 때 사용).
+    // 기본은 일반이고, 희귀 카드만 오버라이드한다.
+    public virtual CardRarity Rarity => CardRarity.Common;
     [Tooltip("거의 모든 카드가 Awake()에서 직접 덮어씀 — 여기 채워도 대부분 무시됨(해당 카드 클래스의 Awake() 확인).")]
     public int Cost;
     [Tooltip("거의 모든 카드가 Awake()에서 직접 덮어씀 — 여기 채워도 대부분 무시됨(해당 카드 클래스의 Awake() 확인).")]
@@ -142,6 +153,12 @@ public abstract class Card : MonoBehaviour, ISelectable
             { ignoreCasterColDamageBonus: true }      => effect.dmg,
             _                                          => Mathf.Max(0, effect.dmg + (Board.instance?.CasterColDamage ?? 0)),
         };
+        // 이동공격 판정 공격은 카드를 낸 기물에 걸린 다음 이동공격 버프(가산·배율)까지 반영해 보여준다.
+        if (effect.type == EffectType.Damage && effect.countsAsMoveAttack)
+        {
+            MoveAttackBonus bonus = CardCanvas.instance?.ActivePiece?.PeekNextMoveAttackBonus();
+            if (bonus != null) dmg = bonus.Apply(dmg);
+        }
 
         if (dmg == effect.dmg) return dmg.ToString();
         string color = dmg > effect.dmg ? "#4444FF" : "#FF4444";
@@ -419,7 +436,18 @@ public record CardEffect
     public PieceInfo summonPieceInfo { get; init; }
 
     // Damage 타입에서 사용: 같은 대상에게 이 효과를 몇 번 적용할지 (기본 1 = 기존과 동일).
+    // Move 타입이면 이동공격 충돌의 타격 수로, countsAsMoveAttack이면 이동공격 판정 타격 수로 쓰인다(Board.ResolveMoveAttackHit).
     public int hitCount { get; init; } = 1;
+
+    // Damage 타입에서 사용: true면 이동 없이 그 자리에서 때리지만 이동공격으로 판정한다(Board.MoveAttackInPlace) —
+    // 다음 이동공격 버프 소모, 기물의 이동공격 스플래시(MoveAttackRangeInfoSO, 대상 바로 앞 가상 도착 칸 기준), 연쇄 이동공격,
+    // 가시 반격, 카드의 shieldOnMoveAttack이 실제 이동공격과 똑같이 적용되고 hitCount도 그대로 반영된다. 처치해도 전진하지 않는다.
+    // 단일 대상 전용 — 범위형 targetlogic(AllEnemiesInRange 등)은 ExecuteAreaEffect가 먼저 처리하므로 적용되지 않는다.
+    public bool countsAsMoveAttack { get; init; }
+
+    // ApplyStatus + StatusEffectType.NextMoveAttackStatus에서 사용: 다음 이동공격에 맞은 대상에게 걸 상태이상
+    // (이 효과의 statusEffectType/statusDuration/statusPower를 쓴다).
+    public CardEffect onMoveAttackHitEffect { get; init; }
 
     // Damage 타입에서 사용: 0보다 크면 hitCount를 "이번 카드에서 앞 효과로 실제로 버려진 카드 수 × hitsPerDiscarded"로
     // 바꿔 실행한다(Board.ExecuteEffect). 버려진 카드가 없어 0이 되면 이 효과는 타격 없이 스킵된다.
@@ -435,6 +463,11 @@ public record CardEffect
 
     // true면 타겟을 다시 고르지 않고 직전 효과의 targetPos에 바로 적용한다(같은 대상 추가 타격 등).
     public bool useLastTarget { get; init; }
+
+    // true면 실행 시점에 대상 칸에 살아 있는 기물이 없으면(앞 효과로 죽음, 빈 칸 지정 등) 이 효과를 실행하지 않는다 —
+    // 무덤 비용도 차감되지 않는다. useLastTarget과 함께 쓰면 직전 효과의 대상과 같은 기물이어야 한다(칸에 다른 기물이
+    // 들어와 있어도 스킵). 단일 대상 효과용 — 범위형(All*InRange)에는 적용하지 않는다.
+    public bool skipIfTargetGone { get; init; }
 
     // 적 AI 전용 "아군 위치 고정 공격": effectRange를 시전자가 아니라 각 아군 위치를 중심으로 펼친다.
     // 칸은 플레이어 턴 시작 시점에 잠기고(Board.LockEnemyTelegraphs → AutoPiece.lockedTargetCells) 실행 시엔

@@ -184,16 +184,20 @@ public partial class Board
         }
     }
 
-    void ShowButtonInfo(Vector2Int button)
+    // 정보창에 기물이 뜨는 동안은 그 기물의 범위만 보이게 한다(FocusPieceRange). drawPieceRange는 hover처럼
+    // 아직 그 기물의 범위가 그려져 있지 않을 때만 true — 선택/카드 사용 중에는 selectedButtonMovable이 이미 그리고 있다.
+    void ShowButtonInfo(Vector2Int button, bool drawPieceRange = false)
     {
         ButtonInfo buttonInfo = BoardUICanvas.GetComponent<ButtonInfo>();
         buttonInfo.SetActive(true);
         buttonInfo.UpdateButtonInfo(GetButtonScript(button));
+        FocusPieceRange(button, drawPieceRange);
     }
 
     void HideButtonInfo()
     {
         BoardUICanvas.GetComponent<ButtonInfo>().SetActive(false);
+        UnfocusPieceRange();
     }
 
     // ShopCanvas.Show()에서 호출: 상점 캔버스가 대신 나타나므로 ButtonInfo(호버 정보창)는 숨긴다.

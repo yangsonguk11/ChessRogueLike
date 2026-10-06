@@ -15,7 +15,7 @@ public class GraveHealCard : Card
         {
             requiredMode = Board.BoardMode.targeting,
             type = EffectType.Heal,
-            dmg = 2,
+            dmg = 3,
             targetlogic = TargetLogic.self,
             noRangeLimit = true, // 보드 위 아군 누구에게든
             graveCost = 1,

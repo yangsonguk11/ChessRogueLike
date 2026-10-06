@@ -15,4 +15,7 @@ public enum StatusEffectType
     MovementDisabled,   // 이동 불가 (현재 게임플레이 미적용)
     Vulnerable,         // 취약: attack/moveattack으로 받는 피해 +N
     Taunt,              // 도발: 상대 AI/카드가 사거리 안의 이 기물을 우선 대상으로 삼음
+    NextMoveAttackDamage,     // 다음 이동공격 피해 +statusPower
+    NextMoveAttackMultiplier, // 다음 이동공격 피해 ×statusPower
+    NextMoveAttackStatus,     // 다음 이동공격 적중 대상에게 CardEffect.onMoveAttackHitEffect의 상태이상 부여
 }

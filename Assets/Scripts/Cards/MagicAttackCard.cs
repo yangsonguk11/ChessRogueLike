@@ -22,5 +22,5 @@ public class MagicAttackCard : Card
         };
         effects.Add(cf);
     }
-    public override string EffectDescription => $"기물에 {EffectiveDmg(effects[0])}의 데미지를 줍니다.";
+    public override string EffectDescription => $"기물에 {EffectiveDmg(effects[0])}의 고정 데미지를 줍니다.";
 }

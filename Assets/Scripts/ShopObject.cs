@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// 상점 이벤트 레벨에서 보드에 놓이는 오브젝트. RestObject와 동일한 역할이지만
-// 무엇을 파는지는 아직 정해지지 않아 스켈레톤만 있다.
+// 상점 이벤트 레벨에서 보드에 놓이는 오브젝트. Inspect 모드에서 클릭하면 ShopCanvas가 열린다
+// (Board.InputHandler). 진열·구매·카드 제거 로직은 전부 ShopCanvas에 있고, 이 기물은 클릭 대상 역할만 한다.
 public class ShopObject : Piece
 {
     public override void Awake()

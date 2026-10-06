@@ -18,9 +18,10 @@ public class ColDamageAttackCard : Card
             targetlogic = TargetLogic.NearestEnemy,
             effectRange = null,
             useColDamageAsDmg = true,
+            countsAsMoveAttack = true,
             animTrigger = "Attack",
         });
     }
 
-    public override string EffectDescription => $"이동 범위 내 적에게 {EffectiveDmg(effects[0])} 피해를 줍니다.";
+    public override string EffectDescription => $"이동 범위 내 적에게 {EffectiveDmg(effects[0])} 피해를 줍니다. (이동공격 판정)";
 }

@@ -55,7 +55,8 @@ public partial class Board
             return;
         }
 
-        // 시전자 미선택 상태: 기물 위에 올리면 정보 표시(범위는 표시하지 않음)
+        // 시전자 미선택 상태: 기물 위에 올리면 정보와 그 기물의 범위만 표시(다른 기물 범위는 ShowButtonInfo가 숨긴다).
+        // 카드를 든 상태면 카드 범위가 이미 그려져 있으므로 기물 기본 범위는 덧그리지 않는다.
         if (!isSelectedButtonActive())
         {
             Piece hoveredPiece = GetButtonScript(pos).GetPieceScript();
@@ -73,7 +74,7 @@ public partial class Board
                 CardCanvas.instance.SetActivePiece(newCaster, silent: true);
 
             if (hoveredPiece != null)
-                ShowButtonInfo(pos);
+                ShowButtonInfo(pos, drawPieceRange: pendingEffects.Count == 0);
             else
                 HideButtonInfo();
         }

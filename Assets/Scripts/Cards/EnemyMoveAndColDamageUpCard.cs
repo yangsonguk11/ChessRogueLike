@@ -23,7 +23,7 @@ public class EnemyMoveAndColDamageUpCard : Card
         {
             requiredMode = Board.BoardMode.targeting,
             type = EffectType.ColDamageUp,
-            dmg = 2,
+            dmg = 3,
             targetlogic = TargetLogic.self,
             animTrigger = "Buff",
         });

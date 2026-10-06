@@ -10,19 +10,19 @@ public class TurnEffect : StatusEffect
         get
         {
             string timing = phase == TurnPhase.OwnTurnStart ? "턴 시작 시" : "턴 종료 시";
+            bool isArea = cardEffect.targetlogic == TargetLogic.AllEnemiesInRange ||
+                          cardEffect.targetlogic == TargetLogic.AllAlliesInRange ||
+                          cardEffect.targetlogic == TargetLogic.AllPiecesInRange;
             string effectDesc = cardEffect.type switch
             {
-                EffectType.Damage => cardEffect.targetlogic == TargetLogic.AllEnemiesInRange ||
-                                      cardEffect.targetlogic == TargetLogic.AllAlliesInRange ||
-                                      cardEffect.targetlogic == TargetLogic.AllPiecesInRange
-                    ? $"광역 피해 {cardEffect.dmg}"
-                    : $"피해 {cardEffect.dmg}",
-                EffectType.Heal        => $"회복 {cardEffect.dmg}",
+                EffectType.Damage      => isArea ? $"광역 피해 {cardEffect.dmg}" : $"피해 {cardEffect.dmg}",
+                EffectType.Heal        => isArea ? $"광역 회복 {cardEffect.dmg}" : $"회복 {cardEffect.dmg}",
                 EffectType.Shield      => $"방어막 {cardEffect.dmg}",
                 EffectType.ColDamageUp => cardEffect.dmg >= 0 ? $"이동공격력 +{cardEffect.dmg}" : $"이동공격력 {cardEffect.dmg}",
                 EffectType.ShieldBonusUp => cardEffect.dmg >= 0 ? $"방어막 보너스 +{cardEffect.dmg}" : $"방어막 보너스 {cardEffect.dmg}",
                 EffectType.GrantSummonColDamage => $"다음 소환 콜대미지 +{cardEffect.dmg}",
                 EffectType.GrantSummonMaxHp     => $"다음 소환 체력 +{cardEffect.dmg}",
+                EffectType.AddGrave    => $"무덤 +{cardEffect.dmg}",
                 _                      => "효과"
             };
             return $"{timing} {effectDesc}";

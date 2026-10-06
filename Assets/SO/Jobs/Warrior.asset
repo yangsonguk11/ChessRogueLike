@@ -30,6 +30,9 @@ MonoBehaviour:
   - LifeDrainCard
   - FlameThrowingCard
   - ChainMoveAttackCard
+  - EmpowerMoveAttackCard
+  - MightyChargeCard
+  - StunningChargeCard
   - PersistentShieldCard
   - ShieldCycleCard
   - SacrificeShieldCard

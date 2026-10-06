@@ -20,7 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 1. JQL(`project = CRL AND text ~ "<클래스명/키워드>"` 등)로 변경과 관련된 이슈를 찾는다.
 2. 관련 이슈마다 무엇을 어떻게 바꿨는지(파일, 핵심 변경점)를 한국어 코멘트로 남긴다.
 3. 변경으로 문제가 해결된 이슈는 `완료`로 전환한다. 작업이 일부만 끝났으면 `진행 중`으로 둔다.
-4. 대응하는 이슈가 없는 새 작업(새 카드, 새로 발견한 버그·설계 미비 등)은 새 이슈를 만든다 — 버그성 이슈는 `[이슈] ` 접두어 + 라벨 `known-issue`, `qa`로 `CRL-4` 아래에, 카드 목록 변경은 `CRL-39` 아래에 둔다. 본문은 기존 이슈 형식(**내용** / **위치** / **관련 테스트 케이스** / **확인할 것**)을 따른다.
+4. 대응하는 이슈가 없는 새 작업(새 카드, 새로 발견한 버그·설계 미비 등)은 새 이슈를 만든다 — 버그성 이슈는 `[이슈] ` 접두어 + 라벨 `known-issue`, `qa`로 `CRL-4` 아래에, 카드 목록 변경은 `CRL-39` 아래에 둔다. 본문은 기존 이슈 형식(**내용** / **위치** / **관련 테스트 케이스** / **확인할 것**)을 따른다. 이 프로젝트는 새 이슈가 `진행 중` 상태로 생성되므로, 아직 착수하지 않은 작업이면 생성 직후 `해야 할 일`로 전환한다(전환 ID `2`).
 5. QA 문서·카드 목록 txt를 고쳤다면 대응하는 `[QA]`·`[카드 목록]` 이슈의 제목(케이스 수)·본문도 맞춰 갱신한다.
 6. 마지막 응답에 반영한 이슈 키와 한 일(코멘트/전환/생성)을 짧게 적는다.
 
@@ -75,7 +75,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 카드 추가 절차
 
-1. `Assets/Scripts/Cards/XxxCard.cs` 작성 — `Card` 상속, `Awake()`에서 `Name`/`Cost`/`type`/`dragDropTarget`/`effects`를 코드로 설정한다(인스펙터 값은 대부분 `Awake()`가 덮어씀). `EffectDescription`을 오버라이드해 카드 설명을 제공한다. 기존 카드(예: [ChainMoveAttackCard.cs](Assets/Scripts/Cards/ChainMoveAttackCard.cs))를 참고.
+1. `Assets/Scripts/Cards/XxxCard.cs` 작성 — `Card` 상속, `Awake()`에서 `Name`/`Cost`/`type`/`dragDropTarget`/`effects`를 코드로 설정한다(인스펙터 값은 대부분 `Awake()`가 덮어씀). `EffectDescription`을 오버라이드해 카드 설명을 제공한다. 희귀도는 기본 일반이며, 희귀 카드만 `public override CardRarity Rarity => CardRarity.Rare;`를 넣는다(Awake가 아닌 프로퍼티라 상점이 프리팹에서 바로 읽는다 — 가격·희귀 1장 진열 보장에 쓰임). 기존 카드(예: [ChainMoveAttackCard.cs](Assets/Scripts/Cards/ChainMoveAttackCard.cs))를 참고.
 2. Unity 메뉴 **Tools > Cards > Card Prefab Generator**([CardPrefabGenerator.cs](Assets/Editor/CardPrefabGenerator.cs))로 프리팹 생성 — `AttackCard.prefab`을 템플릿으로 복제하고, 같은 이름의 스크립트를 연결하고, `Database.prefab`의 `cardPrefabs`에 등록한다. **클래스 이름 = 프리팹 이름 = cardID**여야 한다.
 3. 프리팹의 `effectRange` 리스트(`RangeInfoSO`)를 채운다 — 대부분의 카드가 `Awake()`에서 `effectRange[0]`을 읽으므로 비어 있으면 예외가 난다.
 4. 획득 경로에 추가: 직업 보상 풀(`Assets/SO/Jobs/*.asset`) 또는 `PieceInfo`의 기본 덱. 프리팹/등록이 없는 카드 스크립트는 게임에서 도달 불가능하다.

@@ -95,10 +95,13 @@ public partial class Board
     // 시전자(caster) 애니메이션을 재생하면서, 시전자 클립에 심어둔 Animation Event(OnAnimationEvent)가
     // 호출되는 순간 targetReaction(대상이 하는 행동 — Hit/Die/Heal/Shield 애니메이션 + 텍스트/파티클 등)을
     // 시작한다. 공격/힐/실드/버프 등 시전자-대상 애니메이션을 갖는 모든 Piece*Cor가 이 함수 하나를 공유한다.
-    IEnumerator PlayCasterAndTargetReaction(Piece caster, string casterTrigger, IEnumerator targetReaction, CardEffect cardEffect = null)
+    // originPos/directionOverride는 TriggerAnimCor의 범위 표시 기준 스냅샷 — 이동공격처럼 enqueue 시점의 기준 칸·방향으로
+    // 범위를 보여주고 싶을 때만 넘긴다(안 넘기면 재생 시점의 시전자 위치·currentHoverDirection).
+    IEnumerator PlayCasterAndTargetReaction(Piece caster, string casterTrigger, IEnumerator targetReaction, CardEffect cardEffect = null,
+        Vector2Int? originPos = null, Vector2Int? directionOverride = null)
     {
         yield return Parallel(
-            TriggerAnimCor(caster, casterTrigger, cardEffect: cardEffect),
+            TriggerAnimCor(caster, casterTrigger, cardEffect: cardEffect, originPos: originPos, directionOverride: directionOverride),
             WaitAnimationEventThenRun(caster, targetReaction));
     }
 

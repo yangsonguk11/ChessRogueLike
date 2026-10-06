@@ -35,6 +35,8 @@ public class FinalAttackCard : Card
         });
     }
 
+    public override CardRarity Rarity => CardRarity.Rare;
+
     public override string EffectDescription =>
         $"손의 카드를 모두 버리고, 버린 카드 1장당 {EffectiveDmg(effects[1])}의 피해를 줍니다.";
 }

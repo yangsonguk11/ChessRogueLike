@@ -7,7 +7,7 @@ public class GraveAttackCard : Card
     {
         base.Awake();
         Name = "GraveAttackCard";
-        Cost = 2;
+        Cost = 1;
         type = CardType.Attack;
         dragDropTarget = DragDropTarget.Enemy;
 
@@ -15,7 +15,7 @@ public class GraveAttackCard : Card
         {
             requiredMode = Board.BoardMode.command,
             type = EffectType.Damage,
-            dmg = 3,
+            dmg = 5,
             targetlogic = TargetLogic.LowestHP,
             effectRange = effectRange[0],
             animTrigger = "Attack",
@@ -24,10 +24,11 @@ public class GraveAttackCard : Card
         {
             requiredMode = Board.BoardMode.command,
             type = EffectType.Damage,
-            dmg = 3,
+            dmg = 5,
             targetlogic = TargetLogic.LowestHP,
             effectRange = effectRange[0],
             useLastTarget = true, // 같은 대상에게 추가 타격 — 다시 클릭하지 않음
+            skipIfTargetGone = true, // 1타로 대상이 죽었으면 추가 타격·무덤 소모 없이 스킵
             graveCost = 1,
             animTrigger = "Attack",
         });

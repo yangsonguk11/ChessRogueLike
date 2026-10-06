@@ -7,7 +7,7 @@ public class GraveHarvestCard : Card
     {
         base.Awake();
         Name = "GraveHarvestCard";
-        Cost = 2;
+        Cost = 1;
         type = CardType.Attack;
         dragDropTarget = DragDropTarget.Enemy;
 
@@ -15,7 +15,7 @@ public class GraveHarvestCard : Card
         {
             requiredMode = Board.BoardMode.command,
             type = EffectType.Damage,
-            dmg = 3,
+            dmg = 6,
             targetlogic = TargetLogic.LowestHP,
             effectRange = effectRange[0],
             animTrigger = "Attack",

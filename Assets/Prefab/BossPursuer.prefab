@@ -198,7 +198,7 @@ MonoBehaviour:
   hoverLift: 20
   cardCanvas: {fileID: 0}
   handNumber: 0
-  damage: 12
+  damage: 16
 --- !u!114 &800000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -236,7 +236,7 @@ MonoBehaviour:
   hoverLift: 20
   cardCanvas: {fileID: 0}
   handNumber: 0
-  damage: 8
+  damage: 14
 --- !u!114 &900000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -274,7 +274,7 @@ MonoBehaviour:
   hoverLift: 20
   cardCanvas: {fileID: 0}
   handNumber: 0
-  damage: 6
+  damage: 10
 --- !u!114 &2000000
 MonoBehaviour:
   m_ObjectHideFlags: 0

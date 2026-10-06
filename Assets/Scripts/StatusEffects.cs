@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 // 독: 매 자기 턴 종료 시 고정 피해
@@ -197,5 +198,102 @@ public class WeakenEffect : StatusEffect
     {
         piece.colDamage += actualReduction;
         piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
+    }
+}
+
+// 이동공격 1회에 적용할 "다음 이동공격" 버프의 합계 — Piece.Peek/ConsumeNextMoveAttackBonus가 만든다.
+// 피해는 (기본 + flatDamage) × (1 + extraMultiplier)이고, 대상별 취약 보정은 그 뒤 Board.ApplyAttackDamage에서 붙는다.
+public class MoveAttackBonus
+{
+    public int flatDamage;      // 가산 피해 합
+    public int extraMultiplier; // 배율 가산분 합(×2 버프 하나당 +1 — ×2 두 개면 ×3)
+    public readonly List<CardEffect> onHitEffects = new List<CardEffect>(); // 적중 대상에게 걸 상태이상(statusEffectType 등)
+    public readonly List<string> consumedNames = new List<string>();      // 소모 텍스트용 버프 이름(버프마다 텍스트 1개)
+
+    public bool HasAny => consumedNames.Count > 0;
+    public int Apply(int baseDmg) => Mathf.Max(0, (baseDmg + flatDamage) * (1 + extraMultiplier));
+}
+
+// 다음 이동공격(이동공격 판정 공격 포함) 1회를 강화하는 버프 공통. 같은 종류라도 합치지 않고 걸린 만큼 따로 들고 있다가,
+// 이동공격이 실제로 일어나는 순간 Board가 전부 합산해 한꺼번에 소모한다(Piece.ConsumeNextMoveAttackBonus).
+// duration이 음수면 이동공격할 때까지 유지, 양수면 다른 상태이상처럼 턴 종료마다 줄어 만료된다.
+// 부여 텍스트/파티클은 ApplyStatusToTarget의 StatusTextReaction이 재생하므로 OnApply에서는 띄우지 않는다.
+public abstract class NextMoveAttackEffect : StatusEffect
+{
+    public override bool IsBuff => true;
+
+    public abstract void AddTo(MoveAttackBonus bonus);
+
+    public override void OnApply(Piece piece) => CardCanvas.instance?.RefreshAllCardViews();
+    // 턴 만료·디스펠로 사라질 때만 호출된다 — 이동공격으로 소모될 때는 Piece가 OnRemove 없이 빼고 "소모" 텍스트를 따로 띄운다.
+    public override void OnRemove(Piece piece)
+    {
+        piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
+        CardCanvas.instance?.RefreshAllCardViews();
+    }
+}
+
+// 다음 이동공격 피해 +N
+public class NextMoveAttackDamageEffect : NextMoveAttackEffect
+{
+    public readonly int bonusDamage;
+    public override string DisplayName => $"다음 이동공격 +{bonusDamage}";
+
+    public NextMoveAttackDamageEffect(int duration, int bonusDamage)
+    {
+        this.duration = duration;
+        this.bonusDamage = bonusDamage;
+    }
+
+    public override void AddTo(MoveAttackBonus bonus) => bonus.flatDamage += bonusDamage;
+}
+
+// 다음 이동공격 피해 ×M — 여러 개면 배율 가산분(M - 1)끼리 더한다.
+public class NextMoveAttackMultiplierEffect : NextMoveAttackEffect
+{
+    public readonly int multiplier;
+    public override string DisplayName => $"다음 이동공격 ×{multiplier}";
+
+    public NextMoveAttackMultiplierEffect(int duration, int multiplier)
+    {
+        this.duration = duration;
+        this.multiplier = multiplier;
+    }
+
+    public override void AddTo(MoveAttackBonus bonus) => bonus.extraMultiplier += Mathf.Max(0, multiplier - 1);
+}
+
+// 다음 이동공격에 맞은 대상(주 대상 + 스플래시)마다 inflict의 상태이상을 1회 건다.
+public class NextMoveAttackStatusEffect : NextMoveAttackEffect
+{
+    public readonly CardEffect inflict;
+    public override string DisplayName => $"다음 이동공격 적중 시 {StatusLabel(inflict)}";
+
+    public NextMoveAttackStatusEffect(int duration, CardEffect inflict)
+    {
+        this.duration = duration;
+        this.inflict = inflict;
+    }
+
+    public override void AddTo(MoveAttackBonus bonus)
+    {
+        if (inflict != null && inflict.statusEffectType != StatusEffectType.None)
+            bonus.onHitEffects.Add(inflict);
+    }
+
+    static string StatusLabel(CardEffect e)
+    {
+        if (e == null) return "효과 없음";
+        string name = e.statusEffectType switch
+        {
+            StatusEffectType.Poison     => $"독({e.statusPower})",
+            StatusEffectType.Burning    => $"화상({e.statusPower})",
+            StatusEffectType.Stun       => "기절",
+            StatusEffectType.Weaken     => $"약화({e.statusPower})",
+            StatusEffectType.Vulnerable => $"취약({e.statusPower})",
+            StatusEffectType.MovementDisabled => "이동 불가",
+            _ => e.statusEffectType.ToString(),
+        };
+        return $"{name} {e.statusDuration}턴";
     }
 }

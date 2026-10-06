@@ -6,7 +6,7 @@ public class SummonMasteryCard : Card
     {
         base.Awake();
         Name = "SummonMasteryCard";
-        Cost = 2;
+        Cost = 1;
         type = CardType.Skill;
         dragDropTarget = DragDropTarget.Self;
 

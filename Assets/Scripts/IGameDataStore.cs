@@ -12,6 +12,11 @@ public interface IGameDataStore
     string NextLevelName { get; }
     int CurrentFloor { get; }
     int CurrentNodeX { get; }
+    int Gold { get; }
+    int CardRemoveCount { get; }
+
+    // 골드가 바뀔 때마다 새 잔액과 함께 발생한다.
+    event System.Action<int> GoldChanged;
 
     void SaveToFile();
     PieceData BuildPieceData(PieceInfo info, List<string> deckCardIDs);
@@ -28,6 +33,7 @@ public interface IGameDataStore
     bool RemoveCardFromDeck(int pieceIndex, int cardIndex);
     void AddGold(int amount);
     bool SpendGold(int amount);
+    void RecordCardRemoval();
     void GenerateMap(List<NodeRow> mapdata);
     bool LoadMap();
     void SetNextLevel(string levelName, int floor, int nodeX);

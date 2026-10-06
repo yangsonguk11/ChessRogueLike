@@ -15,22 +15,31 @@ public class PieceTargetPickerUI : MonoBehaviour
     [SerializeField] GameObject pieceButtonPrefab; // TextMeshProUGUI + UnityEngine.UI.Button 필요
     [SerializeField] TextMeshProUGUI promptText;
 
+    [Tooltip("panelRoot 안의 취소 버튼(선택). Show에 onCancel을 넘긴 경우에만 보인다. OnClick은 코드가 등록하므로 인스펙터에서 비워 둔다.")]
+    [SerializeField] UnityEngine.UI.Button cancelButton;
+
     readonly List<GameObject> spawnedButtons = new List<GameObject>();
     Action<int> onPicked;
+    Action onCancel;
 
     void Awake()
     {
         if (instance == null) instance = this;
         panelRoot?.SetActive(false);
+        if (cancelButton != null) cancelButton.onClick.AddListener(Cancel);
     }
 
-    public void Show(IReadOnlyList<PieceData> pieces, Action<int> onPicked, string prompt = "카드를 받을 기물을 선택하세요")
+    // onCancel을 넘기면 취소 버튼이 보이고, 취소 시 onPicked 대신 onCancel이 호출된다.
+    // 넘기지 않으면(기존 호출부) 취소 버튼이 숨겨져 반드시 기물을 골라야 한다.
+    public void Show(IReadOnlyList<PieceData> pieces, Action<int> onPicked, string prompt = "카드를 받을 기물을 선택하세요", Action onCancel = null)
     {
         AudioManager.instance?.PlayPanelOpen();
         this.onPicked = onPicked;
+        this.onCancel = onCancel;
         ClearButtons();
 
         if (promptText != null) promptText.text = prompt;
+        if (cancelButton != null) cancelButton.gameObject.SetActive(onCancel != null);
 
         for (int i = 0; i < pieces.Count; i++)
         {
@@ -54,7 +63,19 @@ public class PieceTargetPickerUI : MonoBehaviour
         ClearButtons();
         var callback = onPicked;
         onPicked = null;
+        onCancel = null;
         callback?.Invoke(index);
+    }
+
+    void Cancel()
+    {
+        AudioManager.instance?.PlayButtonClick();
+        panelRoot?.SetActive(false);
+        ClearButtons();
+        var callback = onCancel;
+        onPicked = null;
+        onCancel = null;
+        callback?.Invoke();
     }
 
     void ClearButtons()

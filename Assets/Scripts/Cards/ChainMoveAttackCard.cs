@@ -20,5 +20,7 @@ public class ChainMoveAttackCard : Card
         });
     }
 
-    public override string EffectDescription => "이동 공격 시 이동 범위 내 적에게 한 번 더 같은 피해를 줍니다. (버프, 소멸)";
+    public override CardRarity Rarity => CardRarity.Rare;
+
+    public override string EffectDescription => "이동 공격 시 이동 범위 내 다른 적에게 한 번 더 같은 피해를 줍니다. 다른 적이 없으면 공격한 적에게 줍니다. (버프, 소멸)";
 }

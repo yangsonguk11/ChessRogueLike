@@ -11,8 +11,10 @@ public partial class Board
     // 무덤 비용(CardEffect.graveCost)을 내는 기물 — 아군 카드는 카드를 낸 기물(ActivePiece), 적/자동행동
     // 카드는 UseCard 시점의 selectedButton 기물(TurnControl이 미리 세팅). 카드 사용 동안 고정된다.
     Piece currentCardCaster;
-    // CardEffect.useLastTarget이 재사용하는 직전 효과의 targetPos
+    // CardEffect.useLastTarget이 재사용하는 직전 효과의 targetPos와, 그 시점에 그 칸에 있던 기물(빈 칸이면 null) —
+    // 기물은 skipIfTargetGone이 "같은 대상이 아직 거기 있는지" 판정할 때 쓴다.
     Vector2Int lastEffectTargetPos = new Vector2Int(-1, -1);
+    Piece lastEffectTargetPiece;
     // 이번 카드 사용 중 카드 효과(DiscardHand/SelectAndDiscard)로 실제로 버려진 카드 수 — CardEffect.hitsPerDiscarded가 읽는다.
     // 직전 효과 하나가 아니라 카드 전체 누적이라, 사이에 다른 효과가 끼어도 유지된다.
     int discardedThisCard;
@@ -39,6 +41,7 @@ public partial class Board
             ? CardCanvas.instance?.ActivePiece
             : (isSelectedButtonActive() ? GetButtonScript(selectedButton).GetPieceScript() : null);
         lastEffectTargetPos = new Vector2Int(-1, -1);
+        lastEffectTargetPiece = null;
         discardedThisCard = 0;
         effectApplied = false;
         currentActiveCard = card;
@@ -373,10 +376,18 @@ public partial class Board
 
         AddMovableButtons(selectedButton, effect.effectRange.GetAbleRange());
 
+        return PickLowestHPTarget(selectedButtonMovable, targetTeam, effect, selectedButton);
+    }
+
+    // candidates(보드 안 칸) 중 targetTeam 기물이 있는 칸에서 체력(hp)이 가장 낮은 칸을 고른다. 닿는 도발 기물이 있으면
+    // 그중에서만 고른다. 체력이 같으면 candidates 순서상 먼저 나온 칸, 대상이 없으면 (-1,-1).
+    // 선택 상태(selectedButton/하이라이트)를 건드리지 않으므로 연쇄 이동공격처럼 카드 처리 도중에도 쓸 수 있다.
+    Vector2Int PickLowestHPTarget(List<Vector2Int> candidates, int targetTeam, CardEffect effect, Vector2Int casterPos)
+    {
         int lowestHP = int.MaxValue;
         Vector2Int target = new Vector2Int(-1, -1);
 
-        foreach (Vector2Int pos in PrioritizeTauntTargets(selectedButtonMovable, targetTeam, effect, selectedButton))
+        foreach (Vector2Int pos in PrioritizeTauntTargets(candidates, targetTeam, effect, casterPos))
         {
             Piece p = GetButtonScript(pos).GetPieceScript();
             if (p != null && p.teamID == targetTeam && p.hp < lowestHP)
@@ -477,11 +488,26 @@ public partial class Board
     CardEffect ApplyDiscardedHits(CardEffect e) =>
         e.hitsPerDiscarded > 0 ? e with { hitCount = discardedThisCard * e.hitsPerDiscarded } : e;
 
+    // skipIfTargetGone 판정 — 실행 시점에 대상 칸에 살아 있는 기물이 없으면 true. useLastTarget이면 직전 효과의 대상과
+    // 같은 기물이어야 한다. 로직이 동기라 앞 효과로 죽은 기물은 이미 칸에서 빠져 있다(ClearDeadPieceOccupancy).
+    bool IsTargetGone(CardEffect e, Vector2Int targetPos)
+    {
+        if (!e.skipIfTargetGone) return false;
+        if (e.targetlogic == TargetLogic.AllEnemiesInRange || e.targetlogic == TargetLogic.AllAlliesInRange
+            || e.targetlogic == TargetLogic.AllPiecesInRange) return false;
+        if (targetPos.x < 0 || targetPos.x >= N || targetPos.y < 0 || targetPos.y >= M) return true;
+        Piece p = GetPieceAt(targetPos);
+        if (p == null || p.hp <= 0) return true;
+        return e.useLastTarget && !ReferenceEquals(lastEffectTargetPiece, null) && p != lastEffectTargetPiece;
+    }
+
     void ExecuteEffect(CardEffect cardEffect, Vector2Int targetPos = default)
     {
-        cardEffect = PayGrave(cardEffect);
-        cardEffect = ApplyDiscardedHits(cardEffect);
+        // 아래 기록이 lastEffectTargetPiece를 덮기 전에 판정한다.
+        bool targetGone = IsTargetGone(cardEffect, targetPos);
         lastEffectTargetPos = targetPos;
+        lastEffectTargetPiece = targetPos.x >= 0 && targetPos.x < N && targetPos.y >= 0 && targetPos.y < M
+            ? GetPieceAt(targetPos) : null;
 
         // effectApplied가 false→true로 바뀌는 지금 이 순간이 이 카드의 첫 효과가 실제로 처리되기 시작하는
         // 시점이다(그 전까지는 CardCanvas.CancelCardUsage/RevertNowUsingCardToHeld로 언제든 취소 가능하고,
@@ -500,6 +526,14 @@ public partial class Board
 
         effectApplied = true;
         CardCanvas.instance.isCardEffecting = true;
+
+        // 대상이 죽었거나 없어 실행하지 않는 효과(skipIfTargetGone) — 아래 hitsPerDiscarded 0타 스킵과 같은 방식으로,
+        // 카드 사용 처리는 위에서 끝났고 호출부가 ScheduleNextCardEffect로 큐를 이어간다. 무덤은 아래 PayGrave보다
+        // 먼저 빠져나가므로 차감되지 않는다.
+        if (targetGone) return;
+
+        cardEffect = PayGrave(cardEffect);
+        cardEffect = ApplyDiscardedHits(cardEffect);
 
         // 버려진 카드가 없어 타격 수가 0이면 스킵 — AttackPiece 타격 루프의 Mathf.Max(1, hitCount)가 0타를 1타로 바꾸지 않게.
         // 카드 사용(에너지 차감 등)은 위에서 이미 처리됐고, 호출부가 이어서 ScheduleNextCardEffect를 부르므로 큐도 멈추지 않는다.
@@ -565,7 +599,10 @@ public partial class Board
                 Piece caster = GetButtonScript(selectedButton).GetPieceScript();
                 int resolvedDmg = ResolveDamageWithColDamage(cardEffect, caster);
                 // 다중 타격(hitCount/hitsPerDiscarded)도 한 번 호출 — 피해는 타격마다 따로 들어가고, 시전자 애니메이션은 1회만 재생된다.
-                AttackPiece(selectedButton, targetPos, resolvedDmg, cardEffect, cardEffect.hitCount);
+                if (cardEffect.countsAsMoveAttack)
+                    MoveAttackInPlace(selectedButton, targetPos, resolvedDmg, cardEffect);
+                else
+                    AttackPiece(selectedButton, targetPos, resolvedDmg, cardEffect, cardEffect.hitCount);
                 break;
             }
             case EffectType.Heal:
@@ -919,7 +956,7 @@ public partial class Board
     {
         if (target == null || cardEffect == null || cardEffect.statusEffectType == StatusEffectType.None) return null;
         StatusEffect effect = CreateStatusEffect(cardEffect.statusEffectType, cardEffect.statusDuration, cardEffect.statusPower,
-            cardEffect.effectRange, cardEffect.targetlogic);
+            cardEffect.effectRange, cardEffect.targetlogic, cardEffect.onMoveAttackHitEffect);
         if (effect == null) return null;
         target.AddStatusEffect(effect);
         return effect;
@@ -944,8 +981,9 @@ public partial class Board
         return (cardEffect.cleanseBuffs ? "무효화" : "정화", cardEffect.cleanseBuffs, new Color(0.6f, 0.85f, 1f));
     }
 
+    // onMoveAttackHit: NextMoveAttackStatus가 다음 이동공격 적중 대상에게 걸 상태이상(CardEffect.onMoveAttackHitEffect).
     StatusEffect CreateStatusEffect(StatusEffectType type, int duration, int power,
-        RangeInfoSO range = null, TargetLogic targetLogic = TargetLogic.AllEnemiesInRange)
+        RangeInfoSO range = null, TargetLogic targetLogic = TargetLogic.AllEnemiesInRange, CardEffect onMoveAttackHit = null)
     {
         return type switch
         {
@@ -968,6 +1006,9 @@ public partial class Board
             StatusEffectType.MovementDisabled   => new MovementDisabledEffect(duration),
             StatusEffectType.Vulnerable         => new VulnerableEffect(duration, power),
             StatusEffectType.Taunt              => new TauntEffect(duration),
+            StatusEffectType.NextMoveAttackDamage     => new NextMoveAttackDamageEffect(duration, power),
+            StatusEffectType.NextMoveAttackMultiplier => new NextMoveAttackMultiplierEffect(duration, power),
+            StatusEffectType.NextMoveAttackStatus     => new NextMoveAttackStatusEffect(duration, onMoveAttackHit),
             _                                   => null,
         };
     }
@@ -1082,6 +1123,7 @@ public partial class Board
         ClearHoverRange();
         currentCardCaster = null;
         lastEffectTargetPos = new Vector2Int(-1, -1);
+        lastEffectTargetPiece = null;
         discardedThisCard = 0;
         ClearSelectedButton();
         CancelPieceSelection();

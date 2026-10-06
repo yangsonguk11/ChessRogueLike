@@ -14,6 +14,8 @@ public class DataManager : MonoBehaviour, IGameDataStore
     public GameData currentData = new GameData();
     public PieceInfo basicPieceinfo;
     public PieceInfo summonerPieceinfo;
+    [Tooltip("새 게임 시작 시 보유 골드")]
+    [SerializeField] int startingGold = 100;
     private string savePath;
 
     public IReadOnlyList<PieceData> Pieces => currentData.pieceData;
@@ -23,6 +25,12 @@ public class DataManager : MonoBehaviour, IGameDataStore
     public string NextLevelName => currentData.nextLevelName;
     public int CurrentFloor => currentData.currentFloor;
     public int CurrentNodeX => currentData.currentNodeX;
+    public int Gold => currentData.gold;
+    public int CardRemoveCount => currentData.cardRemoveCount;
+
+    // 골드가 바뀔 때마다 새 잔액과 함께 발생한다(GoldDisplay, ShopCanvas 가격 색 갱신용).
+    // DataManager는 DontDestroyOnLoad라 씬 오브젝트가 구독했다면 파괴될 때 반드시 해제해야 한다.
+    public event System.Action<int> GoldChanged;
 
     void Awake()
     {
@@ -77,7 +85,7 @@ public class DataManager : MonoBehaviour, IGameDataStore
         }
     }
 
-    // 새 게임 시작 시 기본 데이터(기물 2장, 기본 유물, 진행 상태)를 구성한다. startingPiece로 지정한 기물 2장으로 로스터를 채운다.
+    // 새 게임 시작 시 기본 데이터(기물 2장, 기본 유물, 시작 골드, 진행 상태)를 구성한다. startingPiece로 지정한 기물 2장으로 로스터를 채운다.
     void InitializeDefaultData(PieceInfo startingPiece)
     {
         if (currentData.mapData == null) currentData.mapData = new List<NodeRow>();
@@ -111,6 +119,8 @@ public class DataManager : MonoBehaviour, IGameDataStore
         currentData.nextLevelName = "";
         currentData.currentFloor = 0;
         currentData.currentNodeX = -1;
+        currentData.gold = startingGold;
+        currentData.cardRemoveCount = 0;
     }
 
     // 세이브 삭제 후, 지정한 기물 2장으로 시작 로스터를 구성한다 (대체 시작 기물 테스트/선택용)
@@ -120,6 +130,7 @@ public class DataManager : MonoBehaviour, IGameDataStore
         if (File.Exists(savePath)) File.Delete(savePath);
         currentData = new GameData();
         InitializeDefaultData(startingPiece);
+        GoldChanged?.Invoke(currentData.gold);
     }
 
     // startingPieceIndex로 시작 기물을 선택해 리셋한다 (0: 기본 기물, 1: 소환사)
@@ -224,6 +235,7 @@ public class DataManager : MonoBehaviour, IGameDataStore
         if (amount <= 0) return;
         currentData.gold += amount;
         AudioManager.instance?.PlayGoldAcquired();
+        GoldChanged?.Invoke(currentData.gold);
     }
 
     // gold가 충분하면 차감하고 true, 부족하면 아무 것도 하지 않고 false를 반환한다.
@@ -232,7 +244,14 @@ public class DataManager : MonoBehaviour, IGameDataStore
         if (amount < 0) return false;
         if (currentData.gold < amount) return false;
         currentData.gold -= amount;
+        if (amount > 0) GoldChanged?.Invoke(currentData.gold);
         return true;
+    }
+
+    // 상점에서 카드를 제거할 때마다 호출. 런 전체 누적 횟수라 다음 제거 가격 산정(ShopCanvas)에 쓰인다.
+    public void RecordCardRemoval()
+    {
+        currentData.cardRemoveCount++;
     }
 
     public void GenerateMap(List<NodeRow> mapdata)
@@ -284,12 +303,15 @@ public class DataManager : MonoBehaviour, IGameDataStore
         PlayerPrefs.DeleteKey(PendingStartingPieceIndexPrefKey);
         currentData = new GameData();
         LoadFromFile();
+        GoldChanged?.Invoke(currentData.gold);
     }
 }
 [System.Serializable]
 public class GameData
 {
     public int gold;
+    // 런 전체에서 상점 카드 제거를 한 횟수(제거 가격 누적용). 이 필드가 없는 이전 세이브는 JsonUtility가 0으로 채운다.
+    public int cardRemoveCount;
     // 기물별 고유 덱 도입 이전(팀 공용 덱) 세이브에서만 값이 들어있음. JsonUtility가 필드명으로만 매칭하므로
     // 이전 세이브와의 호환을 위해 이름을 그대로 유지한다. MigrateLegacyDeckIfNeeded가 소비 후 비운다.
     public List<string> deckCardIDs = new List<string>();
