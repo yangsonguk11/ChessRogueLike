@@ -22,7 +22,7 @@ public partial class Board
             CardEffect effect = pendingEffects.Peek();
             if (effect.areaTargetMode != AreaTargetMode.Fixed)
             {
-                ClearHoverRange();
+                hoverRangeButtons.Clear();
 
                 List<Vector2Int> offsets = effect.effectRange?.GetAbleRange();
                 if (offsets != null)
@@ -43,20 +43,15 @@ public partial class Board
                         offsets = RotateOffsets(offsets, dir);
                     }
 
-                    foreach (Vector2Int offset in offsets)
-                    {
-                        Vector2Int target = center + offset;
-                        if (target.x < 0 || target.x >= N || target.y < 0 || target.y >= M) continue;
-                        GetButtonScript(target).RangeOn(0);
-                        hoverRangeButtons.Add(target);
-                    }
+                    hoverRangeButtons.AddRange(CellsInBoard(center, offsets));
                 }
+                RefreshRangeDisplay();
             }
             return;
         }
 
-        // 시전자 미선택 상태: 기물 위에 올리면 정보와 그 기물의 범위만 표시(다른 기물 범위는 ShowButtonInfo가 숨긴다).
-        // 카드를 든 상태면 카드 범위가 이미 그려져 있으므로 기물 기본 범위는 덧그리지 않는다.
+        // 시전자 미선택 상태: 기물 위에 올리면 정보창 + 3순위 "기물 선택" 범위(ShowButtonInfo). 카드를 든 상태면
+        // 1순위(조준)가 켜져 있어 이 범위는 가려진다.
         if (!isSelectedButtonActive())
         {
             Piece hoveredPiece = GetButtonScript(pos).GetPieceScript();
@@ -74,7 +69,7 @@ public partial class Board
                 CardCanvas.instance.SetActivePiece(newCaster, silent: true);
 
             if (hoveredPiece != null)
-                ShowButtonInfo(pos, drawPieceRange: pendingEffects.Count == 0);
+                ShowButtonInfo(pos);
             else
                 HideButtonInfo();
         }
@@ -102,9 +97,8 @@ public partial class Board
 
     public void ClearHoverRange()
     {
-        foreach (Vector2Int v in hoverRangeButtons)
-            GetButtonScript(v).RangeOff(0);
         hoverRangeButtons.Clear();
+        RefreshRangeDisplay();
     }
 
     // 기준 방향(-1,0 = 인스펙터 위쪽 행)에서 dir 방향으로 오프셋 목록을 회전

@@ -32,6 +32,8 @@ public class CardCanvas : MonoBehaviour
     }
     [SerializeField] GameObject HandZone;
     [SerializeField] RectTransform CardNowUsingPos;
+    [Tooltip("사용이 끝나 보드 연출을 기다리는 카드를 모아 두는 자리(씬 usedCardZone). 비워 두면 CardNowUsingPos를 쓴다.")]
+    [SerializeField] RectTransform UsedCardPos;
     [SerializeField] RectTransform DiscardZone;
     [SerializeField] RectTransform DeckZone;
     [SerializeField] RectTransform ExileZone;
@@ -40,6 +42,10 @@ public class CardCanvas : MonoBehaviour
     [SerializeField] float radius;        // 부채꼴 반지름 (클수록 더 펼쳐짐)
     [SerializeField] float angleBetween;  // 카드 사이의 각도
     [SerializeField] float heightOffset;  // 부채꼴의 수직 위치 보정
+    [Tooltip("호버·드래그 중인 손패 카드를 앞으로 꺼낼 때 쓰는 sortingOrder. MainCanvas(2)보다 크고 CardFxLayer(4)보다 " +
+        "작게 둔다. 카드 선택 패널(3)과 같지만 패널이 열려 있을 땐 꺼내지 않으므로 겹치지 않는다.")]
+    [SerializeField] int hoveredCardSortingOrder = 3;
+    public int HoveredCardSortingOrder => hoveredCardSortingOrder;
 
     // ── 카드 선택 패널 ──────────────────────────────────────────
     // Unity Inspector에서 연결 필요:
@@ -111,11 +117,11 @@ public class CardCanvas : MonoBehaviour
     Coroutine batchDrawCoroutine;
     Vector2Int pendingFirstTarget = new Vector2Int(-1, -1);
 
-    // 로직은 끝났지만(FinishUseCard) 그 카드가 유발한 보드 연출은 아직 재생 중이라 NowUsing 자리에서
+    // 로직은 끝났지만(FinishUseCard) 그 카드가 유발한 보드 연출은 아직 재생 중이라 UsedCardPos 자리에서
     // 대기 중인 카드들. Board.FinishCardUsage가 enqueue하는 신호(OnUsedCardAnimationsComplete)가 이
     // 카드들이 실제로 쓰인 순서와 동일한 순서(motionQueue는 FIFO)로 도착하므로, 그냥 앞에서부터 꺼내면 된다.
     Queue<(RectTransform card, bool exile)> awaitingFlyOut = new Queue<(RectTransform, bool)>();
-    // 대기 중인 카드가 둘 이상 겹칠 때 NowUsing 자리에 완전히 포개지지 않도록 살짝 옆으로 비켜 세운다.
+    // 대기 중인 카드가 둘 이상일 때 UsedCardPos 자리에 완전히 포개지지 않도록 한 장씩 살짝 비켜 세운다.
     static readonly Vector3 WaitingCardStackOffset = new Vector3(-28f, -20f, 0f);
 
     // ── 카드 이동 애니메이션 스케줄링 ────────────────────────────
@@ -132,6 +138,7 @@ public class CardCanvas : MonoBehaviour
     private void Awake()
     {
         if (instance == null) instance = this;
+        // HandZone은 레이캐스트 대상이 아니라 사각형(IsScreenPointInHandZone)으로만 판정한다 — 켜 두면 보드 호버를 가린다.
         HandZone.GetComponent<Image>().raycastTarget = false;
         if (cancelSelectionBtn != null) cancelSelectionBtn.onClick.AddListener(CancelCardSelection);
     }
@@ -204,13 +211,11 @@ public class CardCanvas : MonoBehaviour
             return;
         cards[handNum].GetComponent<Card>().SelectedTrue();
         ExcludeAlignCards(cards[handNum].GetComponent<Card>().handNumber);
-        HandZone.GetComponent<Image>().raycastTarget = true;
     }
 
-    public void CardUnSelected()           
+    public void CardUnSelected()
     {
         AlignCards();
-        HandZone.GetComponent<Image>().raycastTarget = false;
     }
     public bool UseCard(int handnum)
     {
@@ -250,12 +255,11 @@ public class CardCanvas : MonoBehaviour
         ClearnowusingCard();
         nowusingCard = cardToUse;
         AlignCards();
-        HandZone.GetComponent<Image>().raycastTarget = false;
         CommitNowUsingCard();
         return true;
     }
 
-    // nowusingCard를 보드 사용(타겟팅 카드면 board.UseCard)과 NowUsing 위치 이동 애니메이션으로 커밋.
+    // nowusingCard를 보드 사용(타겟팅 카드면 board.UseCard)과 NowUsing 위치 이동 애니메이션(타겟팅 카드만)으로 커밋.
     // 최초 사용 시와, HandZone으로 되돌아와 재커밋할 때 공통으로 쓰인다.
     void CommitNowUsingCard()
     {
@@ -268,8 +272,8 @@ public class CardCanvas : MonoBehaviour
         if (cardComp.NeedsTargeting())
             CardDragArrow.instance?.Show(nowusingCard);
         board.SetCasterIndicator(activePiece, true); // 카드 종류 상관없이 들고 있는 동안 시전자 칸 표시
+        if (!cardComp.NeedsTargeting()) return; // 타겟팅이 필요 없는 카드는 NowUsing으로 보내지 않고 마우스를 계속 따라가게 둔다
         usingCardMoving = true;
-        NudgeWaitingCardsAside(); // 연출 대기 중인 카드가 있으면 NowUsing 자리를 이 카드에게 비워준다
         RectTransform usingCard = nowusingCard;
         EnqueueMove(usingCard, GetZonePosition(CardPositionZone.NowUsing), Quaternion.identity, 0.35f, () =>
         {
@@ -284,8 +288,7 @@ public class CardCanvas : MonoBehaviour
         }, bypassGap: true);
     }
 
-    // 이미 커밋된 nowusingCard를 매 드래그 프레임 처리. HandZone의 raycastTarget은 꺼진 채로 유지해야
-    // 보드가 호버를 인식할 수 있으므로, hovered 목록이 아니라 HandZone의 RectTransform 영역으로 직접 판정한다.
+    // 이미 커밋된 nowusingCard를 매 드래그 프레임 처리. HandZone 진입·이탈은 IsScreenPointInHandZone으로 판정한다.
     public void HandleCommittedCardDrag(Vector2 screenPos)
     {
         bool overHandZone = IsScreenPointInHandZone(screenPos);
@@ -294,6 +297,8 @@ public class CardCanvas : MonoBehaviour
         {
             if (!overHandZone)
                 RevertNowUsingCardToHeld();
+            else if (!nowusingCard.GetComponent<Card>().NeedsTargeting())
+                nowusingCard.position = screenPos; // 타겟팅이 필요 없는 카드는 HandZone 안에서도 마우스 중앙을 따라간다
         }
         else
         {
@@ -305,7 +310,9 @@ public class CardCanvas : MonoBehaviour
         }
     }
 
-    bool IsScreenPointInHandZone(Vector2 screenPos)
+    // 포인터가 HandZone 사각형 안인지. 들고 있는 카드가 포인터 아래에서 레이캐스트를 막고 있어도 판정되도록
+    // 레이캐스트가 아니라 RectTransform 영역으로 직접 계산한다(호출 시점의 크기·앵커를 그대로 따른다).
+    public bool IsScreenPointInHandZone(Vector2 screenPos)
     {
         return RectTransformUtility.RectangleContainsScreenPoint(HandZone.GetComponent<RectTransform>(), screenPos, null);
     }
@@ -321,8 +328,12 @@ public class CardCanvas : MonoBehaviour
         CardDragArrow.instance?.Hide();
         nowUsingCardHeld = true;
 
-        usingCardMoving = true;
-        EnqueueMove(nowusingCard, Mouse.current.position.ReadValue(), Quaternion.identity, 0.35f, () => usingCardMoving = false, bypassGap: true);
+        // 타겟팅이 필요 없는 카드는 이미 마우스 아래 있으므로 날아오는 연출 없이 바로 따라간다.
+        if (nowusingCard.GetComponent<Card>().NeedsTargeting())
+        {
+            usingCardMoving = true;
+            EnqueueMove(nowusingCard, Mouse.current.position.ReadValue(), Quaternion.identity, 0.35f, () => usingCardMoving = false, bypassGap: true);
+        }
     }
 
     public void ClearnowusingCard()         
@@ -390,17 +401,16 @@ public class CardCanvas : MonoBehaviour
         }
         if (newCards.Count == 0) return;
 
-        AlignCards();
+        foreach (var c in newCards) HoldForEntrance(c); // 정렬이 새 카드를 덱에서 미리 끌어가지 않게
+        AlignCards(); // 기존 손패는 새 자리로 미끄러지고, 새 카드는 슬롯만 기억한다
         NotifyPileChanged();
         AudioManager.instance?.PlayCardDraw();
 
         foreach (var c in newCards)
         {
-            Vector3 targetPos = c.position;
-            Quaternion targetRot = c.localRotation;
             c.position = GetZonePosition(CardPositionZone.Deck);
             c.localRotation = Quaternion.identity;
-            EnqueueMove(c, targetPos, targetRot, 0.3f);
+            EnqueueMoveToHand(c, 0.3f);
         }
     }
     // 턴 시작 시 아군 기물 전원을 처리: 각자 5장 드로우. 활성 기물은 기존 애니메이션 경로
@@ -521,7 +531,7 @@ public class CardCanvas : MonoBehaviour
             // 카드 로직은 여기서 완전히 끝난다 — 이 시점부터 다음 카드를 집을 수 있어야 한다(카드 예약).
             // 하지만 이 카드가 보드에 일으킨 연출(공격/이동 애니메이션 등)은 아직 재생 중일 수 있으므로,
             // 버림/소멸 더미로 날아가는 건 그 연출이 실제로 끝났다는 신호(OnUsedCardAnimationsComplete)를
-            // 받을 때까지 미룬다 — 그때까지는 NowUsing 위치 근처에 그대로(또는 살짝 비켜서) 머문다.
+            // 받을 때까지 미룬다 — 그때까지는 UsedCardPos 자리에 다른 대기 카드들과 함께 정렬돼 머문다.
             isCardEffecting = false;
             bool exile = card.ShouldExileOnUse();
             if (exile) Exilecards.Add(usedCard);
@@ -529,6 +539,10 @@ public class CardCanvas : MonoBehaviour
 
             pendingCardFlights++;
             awaitingFlyOut.Enqueue((usedCard, exile));
+            // NowUsing으로 가던 이동이 아래 정렬 이동에 끊기면 그 완료 콜백이 불리지 않으므로 여기서 직접 풀어 둔다
+            // (안 풀면 다음 카드가 손에 들린 상태에서 마우스를 따라가지 못한다).
+            usingCardMoving = false;
+            ArrangeAwaitingCards();
         }
         else
         {
@@ -544,7 +558,7 @@ public class CardCanvas : MonoBehaviour
     {
         if (awaitingFlyOut.Count == 0) return;
         var (usedCard, exile) = awaitingFlyOut.Dequeue();
-        if (usedCard == null) { pendingCardFlights--; return; }
+        if (usedCard == null) { pendingCardFlights--; ArrangeAwaitingCards(); return; }
 
         if (exile)
         {
@@ -556,22 +570,29 @@ public class CardCanvas : MonoBehaviour
             AudioManager.instance?.PlayCardDiscard();
             EnqueueMove(usedCard, GetZonePosition(CardPositionZone.Discard), Quaternion.identity, 0.15f, () => pendingCardFlights--);
         }
+        ArrangeAwaitingCards(); // 남은 대기 카드를 한 칸씩 앞으로 당긴다
     }
 
-    // 연출 대기 중인 카드(awaitingFlyOut)는 끝날 때까지 원래 NowUsing 자리에 그대로 머문다 — 대기 카드가
-    // 하나뿐이면 이 함수를 부를 일이 없으므로 계속 정확히 NowUsing 위치에 있다. 새 카드가 그 자리를
-    // 막 차지하려는 순간(CommitNowUsingCard)에만, 지금까지 대기 중이던 카드들을 큐 순서대로 살짝 옆으로
-    // 비켜 세워 새 카드와 겹치지 않게 한다(먼저 끝날 카드일수록 NowUsing에 더 가깝게).
-    void NudgeWaitingCardsAside()
+    // 연출 대기 중인 카드(awaitingFlyOut)를 UsedCardPos 자리에 큐 순서대로 겹쳐 세운다(먼저 끝날 카드일수록
+    // 기준점에 더 가깝게). 대기 목록이 바뀔 때마다(FinishUseCard로 들어올 때, OnUsedCardAnimationsComplete로
+    // 나갈 때) 다시 불러서, 새로 도착한 카드가 남아 있는 카드와 같은 칸에 겹치지 않게 한다.
+    // 조준 중인 카드는 CardNowUsingPos에 따로 있으므로 그 자리를 비워 둘 필요가 없다.
+    // 그리는 순서도 큐 순서에 맞춘다 — 카드를 집을 때 SetAsLastSibling이 걸려 나중에 쓴 카드일수록 위에 그려지므로,
+    // 그대로 두면 먼저 쓴(지금 연출 중이고 곧 날아갈) 카드가 뒤 카드에 가려진다.
+    void ArrangeAwaitingCards()
     {
-        if (awaitingFlyOut.Count == 0) return;
-        Vector3 baseline = GetZonePosition(CardPositionZone.NowUsing);
-        int i = 1;
-        foreach (var (waitingCard, _) in awaitingFlyOut)
+        Vector3 baseline = (UsedCardPos != null ? UsedCardPos : CardNowUsingPos).position;
+        var waiting = awaitingFlyOut.ToArray();
+        for (int i = 0; i < waiting.Length; i++)
         {
-            if (waitingCard != null)
-                EnqueueMove(waitingCard, baseline + WaitingCardStackOffset * i, Quaternion.identity, 0.15f, null, bypassGap: true);
-            i++;
+            if (waiting[i].card != null)
+                EnqueueMove(waiting[i].card, baseline + WaitingCardStackOffset * i, Quaternion.identity, 0.2f, null, bypassGap: true);
+        }
+        // 최신 카드부터 맨 뒤 형제로 보내, 먼저 쓴 카드가 맨 위에 그려지게 한다.
+        for (int i = waiting.Length - 1; i >= 0; i--)
+        {
+            if (waiting[i].card != null)
+                waiting[i].card.SetAsLastSibling();
         }
     }
 
@@ -582,7 +603,23 @@ public class CardCanvas : MonoBehaviour
     // 카드(NowUsing 진입/되돌아오기)까지 그 간격에 밀리면 안 되므로 그런 호출에서만 true로 넘긴다.
     void EnqueueMove(RectTransform card, Vector3 pos, Quaternion rot, float duration, Action onComplete = null, bool bypassGap = false)
     {
+        StartCardMove(card, DOTween.Sequence()
+            .Join(card.DOMove(pos, duration).SetEase(Ease.OutCubic))
+            .Join(card.DOLocalRotateQuaternion(rot, duration).SetEase(Ease.OutCubic)), onComplete, bypassGap);
+    }
+
+    // 손패로 들어오는 등장 연출(드로우·손패 추가). 목표는 카드의 현재 슬롯을 매 프레임 따라간다(Card.HandSlotTween).
+    void EnqueueMoveToHand(RectTransform card, float duration)
+    {
+        StartCardMove(card, card.GetComponent<Card>().HandSlotTween(duration), null, false);
+    }
+
+    // EnqueueMove/EnqueueMoveToHand 공통부 — 이전 이동을 끊고 간격 예약을 거쳐 move를 재생한다. 끝나면 손패 카드는
+    // 지금 있어야 할 자세(슬롯·호버)로 마저 정착한다(날아오는 사이 정렬·호버가 바뀌었을 수 있음).
+    void StartCardMove(RectTransform card, Tween move, Action onComplete, bool bypassGap)
+    {
         CancelCardMove(card);
+        card.GetComponent<Card>()?.CancelHoverPose(); // 손패 자세 트윈이 이동 트윈과 위치·회전을 다투지 않게
 
         float delay = bypassGap ? 0f : Mathf.Max(0f, nextMoveStartTime - Time.time);
         if (!bypassGap)
@@ -590,9 +627,25 @@ public class CardCanvas : MonoBehaviour
 
         activeCardMoves[card] = DOTween.Sequence()
             .SetDelay(delay)
-            .Join(card.DOMove(pos, duration).SetEase(Ease.OutCubic))
-            .Join(card.DOLocalRotateQuaternion(rot, duration).SetEase(Ease.OutCubic))
-            .OnComplete(() => { activeCardMoves.Remove(card); onComplete?.Invoke(); });
+            .Append(move)
+            .OnComplete(() =>
+            {
+                activeCardMoves.Remove(card);
+                if (cards.Contains(card)) card.GetComponent<Card>().SettleToHandPose();
+                onComplete?.Invoke();
+            });
+    }
+
+    // 이동 연출이 걸려 있는지(딜레이 대기·등장 대기 포함). 정렬이 날아가는 카드를 끌어가거나 호버 자세를 걸지 않는 데 쓴다.
+    public bool IsCardMoving(RectTransform card) => activeCardMoves.ContainsKey(card);
+
+    // 등장 연출을 기다리는 카드(motionQueue 대기·화면 중앙 1초 연출) — 정렬이 미리 손패로 끌어가거나 호버 자세가
+    // 걸리지 않게 이동 중으로 취급한다. 실제 이동이 시작되면 CancelCardMove가 이 자리표시(null)를 지운다.
+    void HoldForEntrance(RectTransform card)
+    {
+        CancelCardMove(card);
+        card.GetComponent<Card>()?.CancelHoverPose();
+        activeCardMoves[card] = null;
     }
 
     // 대기 중이든(딜레이 구간) 실행 중이든, 이 카드에 걸린 이동 Sequence를 핸들로 직접 죽인다.
@@ -613,12 +666,34 @@ public class CardCanvas : MonoBehaviour
     {
         if (card == null) yield break;
         CancelCardMove(card);
-        Tween t = DOTween.Sequence()
+        card.GetComponent<Card>()?.CancelHoverPose(); // 손패 자세 트윈을 버리고 현재 위치에서 날아간다
+        yield return TrackCardMoveCor(card, DOTween.Sequence()
             .Join(card.DOMove(pos, duration).SetEase(Ease.OutCubic))
-            .Join(card.DOLocalRotateQuaternion(rot, duration).SetEase(Ease.OutCubic));
+            .Join(card.DOLocalRotateQuaternion(rot, duration).SetEase(Ease.OutCubic)));
+    }
+
+    // motionQueue용 손패 등장 연출(배치 드로우). 목표는 카드의 현재 슬롯을 따라간다. 기다리는 사이 카드가 손패를
+    // 떠났으면 그 이동이 카드를 맡고 있으므로 건너뛴다.
+    IEnumerator MoveCardToHandCor(RectTransform card, float duration)
+    {
+        if (card == null || !cards.Contains(card)) yield break;
+        CancelCardMove(card);
+        Card cardComp = card.GetComponent<Card>();
+        cardComp.CancelHoverPose();
+        yield return TrackCardMoveCor(card, cardComp.HandSlotTween(duration));
+    }
+
+    // 코루틴 이동의 등록·대기·정리. 기다리는 사이 다른 이동이 이 카드를 맡았다면(기록이 바뀜) 그 기록을 지우지
+    // 않는다 — 지우면 새 이동이 "이동 중 아님"으로 보여 정렬 트윈과 동시에 카드를 움직이게 된다.
+    IEnumerator TrackCardMoveCor(RectTransform card, Tween t)
+    {
         activeCardMoves[card] = t;
         yield return t.WaitForCompletion();
-        activeCardMoves.Remove(card);
+        if (activeCardMoves.TryGetValue(card, out Tween current) && current == t)
+        {
+            activeCardMoves.Remove(card);
+            if (cards.Contains(card)) card.GetComponent<Card>().SettleToHandPose();
+        }
     }
 
     private void UpdateCurrentEnergy()
@@ -634,6 +709,7 @@ public class CardCanvas : MonoBehaviour
         {
             RectTransform newCard = Deckcards.Dequeue();
             cards.Add(newCard);
+            HoldForEntrance(newCard); // 등장 연출(BatchDrawAnim → motionQueue)이 시작되기 전까지 정렬이 끌어가지 않게
             pendingDrawCards.Add(newCard);
             NotifyPileChanged();
             batchDrawCoroutine ??= StartCoroutine(BatchDrawAnim());
@@ -648,18 +724,16 @@ public class CardCanvas : MonoBehaviour
         pendingDrawCards.Clear();
         batchDrawCoroutine = null;
 
-        AlignCards();  // 최종 손패 크기 기준으로 한 번만 정렬
+        AlignCards();  // 최종 손패 크기 기준으로 한 번만 정렬 — 새 카드는 DrawCard에서 등장 대기로 걸어 둬 슬롯만 기억한다
         AudioManager.instance?.PlayCardDraw();
 
         foreach (var c in toDraw)
         {
-            Vector3 targetPos = c.position;
-            Quaternion targetRot = c.localRotation;
             c.position = GetZonePosition(CardPositionZone.Deck);
             c.localRotation = Quaternion.identity;
             // motionQueue로 넘겨서, 같은 카드효과 체인에서 먼저 재생 중인 보드 애니메이션(예: 이동)이
             // 끝난 뒤에야 드로우 연출이 시작되게 한다(MoveAndDrawCard 등).
-            board.EnqueueBoardAnimation(MoveCardVisualCor(c, targetPos, targetRot, 0.3f));
+            board.EnqueueBoardAnimation(MoveCardToHandCor(c, 0.3f));
         }
     }
 
@@ -693,8 +767,8 @@ public class CardCanvas : MonoBehaviour
     // 전투 중 새 카드를 실제로 추가한다. 화면 중심에 나타나 1초 머물다 targetZone으로 날아가는
     // 카드 자체가 그대로 targetZone의 더미/손패에 들어가는 실제 카드이며, 별도의 연출용 인스턴스는 만들지 않는다.
     // 리스트 소속(로직)은 여기서 즉시 정해지고, 화면상 이동은 이후 애니메이션(EnqueueMove)이 따라잡는다.
-    // Hand로 추가하는 경우도 마찬가지 — DrawCard/DrawTurnStartCards와 같은 방식으로, AlignCards가
-    // 즉시 계산해준 최종 부채꼴 슬롯 위치까지 화면 중앙에서 날아가는 걸로 보이게 한다.
+    // Hand로 추가하는 경우도 마찬가지 — DrawCard/DrawTurnStartCards와 같은 방식으로, 화면 중앙에서 이 카드의
+    // 부채꼴 슬롯(날아오는 사이 다시 정렬되면 바뀐 슬롯)까지 날아가는 걸로 보이게 한다.
     public void AddCardDuringCombat(string cardname, CardPositionZone targetZone = CardPositionZone.Discard)
     {
         GameObject obj = cardData.SpawnCard(GetComponent<RectTransform>(), cardname);
@@ -707,14 +781,10 @@ public class CardCanvas : MonoBehaviour
         if (targetZone == CardPositionZone.Hand)
         {
             cards.Add(rt);
-            AlignCards(); // 이 카드를 포함한 최종 슬롯 위치/회전을 즉시 계산(로직)
+            HoldForEntrance(rt); // 화면 중앙에서 1초 보여주는 동안 정렬이 끌어가지 않게
+            AlignCards(); // 기존 손패는 새 자리로 미끄러지고, 이 카드는 슬롯만 기억한다
             NotifyPileChanged();
-
-            Vector3 handTargetPos = rt.position;
-            Quaternion handTargetRot = rt.localRotation;
-            rt.position = GetZonePosition(CardPositionZone.Center);
-            rt.localRotation = Quaternion.identity;
-            StartCoroutine(ShowAddedCardToHandRoutine(rt, handTargetPos, handTargetRot));
+            StartCoroutine(ShowAddedCardToHandRoutine(rt));
             return;
         }
 
@@ -727,10 +797,12 @@ public class CardCanvas : MonoBehaviour
         StartCoroutine(ShowAddedCardRoutine(rt, GetZonePosition(targetZone)));
     }
 
-    IEnumerator ShowAddedCardToHandRoutine(RectTransform rt, Vector3 targetPos, Quaternion targetRot)
+    IEnumerator ShowAddedCardToHandRoutine(RectTransform rt)
     {
         yield return new WaitForSeconds(1f);
-        EnqueueMove(rt, targetPos, targetRot, 0.3f);
+        // 기다리는 사이 손패를 떠났으면 그 이동이 카드를 맡고 있으므로 건드리지 않는다.
+        if (cards.Contains(rt))
+            EnqueueMoveToHand(rt, 0.3f);
     }
 
     // 덱에 카드가 추가됐을 때 화면 중심에 잠깐 보여준 뒤 targetZone 위치로 이동시키는 연출용 카드.
@@ -976,9 +1048,13 @@ public class CardCanvas : MonoBehaviour
         float totalWidth = (panelCardPool.Count - 1) * spacing;
         for (int i = 0; i < panelCardPool.Count; i++)
         {
-            panelCardPool[i].localPosition = new Vector3(-totalWidth / 2f + i * spacing, 0f, 0f);
-            panelCardPool[i].localRotation = Quaternion.identity;
-            panelCardPool[i].GetComponent<Card>()?.ScaleDefault();
+            // 손패에서 걸린 호버 자세나 진행 중이던 이동을 패널로 끌고 오지 않게 끊고, 패널 자리를 슬롯으로 기억시켜
+            // 즉시 놓는다(패널 안 호버도 이 자리 기준).
+            CancelCardMove(panelCardPool[i]);
+            Card panelCard = panelCardPool[i].GetComponent<Card>();
+            panelCard.CancelHoverPose();
+            panelCard.SetHandPose(new Vector3(-totalWidth / 2f + i * spacing, 0f, 0f), Quaternion.identity, snap: true);
+            panelCard.ScaleDefault();
         }
     }
 
@@ -1057,6 +1133,7 @@ public class CardCanvas : MonoBehaviour
         foreach (var card in panelCardPool)
         {
             var (originalParent, worldPos) = savedCardStates[card];
+            card.GetComponent<Card>()?.CancelHoverPose(); // 패널에서 걸린 호버 자세를 손패로 끌고 오지 않게
             card.SetParent(originalParent, true);
             card.position = worldPos;
             card.localRotation = Quaternion.identity;
@@ -1278,10 +1355,9 @@ public class CardCanvas : MonoBehaviour
         {
             var (pos, rot) = ComputeCardTransform(i, count);
             cards[i].SetSiblingIndex(i);
-            cards[i].localPosition = pos;
-            cards[i].localRotation = rot;
 
             Card cardComp = cards[i].GetComponent<Card>();
+            cardComp.SetHandPose(pos, rot); // 호버 중인 카드는 새 슬롯 기준으로 호버 자세(리프트·똑바로)를 유지
             cardComp.OnUnSelected -= CardUnSelected;
             cardComp.OnUnSelected += CardUnSelected;
             cardComp.cardCanvas = gameObject;
@@ -1324,8 +1400,7 @@ public class CardCanvas : MonoBehaviour
             var (pos, rot) = ComputeCardTransform(i, count);
             RectTransform card = (i >= excludeCard && excludeCard >= 0) ? cards[i + 1] : cards[i];
             card.SetSiblingIndex(i);
-            card.localPosition = pos;
-            card.localRotation = rot;
+            card.GetComponent<Card>().SetHandPose(pos, rot);
         }
         if (excludeCard >= 0)
             cards[excludeCard].SetAsLastSibling();

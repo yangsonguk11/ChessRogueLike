@@ -398,7 +398,7 @@ public partial class Board : MonoBehaviour
     // baseColDamage(강화 전 수치)를 뺀 나머지 — 영구 강화분(colDamageBonus)과 이번 전투의 임시 버프를 합친 값
     public int CasterColDamage => CardCanvas.instance?.ActivePiece?.ColDamageDelta ?? 0;
     public int CasterShieldBonus => CardCanvas.instance?.ActivePiece?.ShieldBonusDelta ?? 0;
-    // useColDamageAsDmg 카드(예: ColDamageAttackCard)용 — 강화 전 기본치까지 포함한 이동공격력 전체 수치
+    // useColDamageAsDmg 카드(예: ColDamageAttackCard)용 — 강화 전 기본치까지 포함한 힘 전체 수치
     public int CasterFullColDamage => CardCanvas.instance?.ActivePiece?.colDamage ?? 0;
 
     public Piece GetPieceAt(Vector2Int pos) => GetButtonScript(pos)?.GetPieceScript();

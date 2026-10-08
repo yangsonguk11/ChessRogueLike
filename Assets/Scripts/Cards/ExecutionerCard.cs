@@ -30,5 +30,5 @@ public class ExecutionerCard : Card
     }
 
     public override string EffectDescription =>
-        $"적에게 {EffectiveDmg(effects[0])} 피해를 줍니다. 처치 시 이동공격력이 영구적으로 {effects[0].onKillEffect.dmg} 오릅니다.";
+        $"적에게 {EffectiveDmg(effects[0])} 피해를 줍니다. 처치 시 힘이 영구적으로 {effects[0].onKillEffect.dmg} 오릅니다.";
 }

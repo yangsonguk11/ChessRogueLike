@@ -22,5 +22,5 @@ public class EmpowerAllyCard : Card
     }
 
     public override string EffectDescription =>
-        $"자신을 제외한 아군 기물 1체를 선택해 이동공격력을 영구적으로 {effects[0].dmg} 올립니다.";
+        $"자신을 제외한 아군 기물 1체를 선택해 힘을 영구적으로 {effects[0].dmg} 올립니다.";
 }

@@ -49,16 +49,16 @@ public partial class Board
         }
 
         useEligibilityHighlights = HighlightMatchingPieces(new[] { filter });
+        RefreshRangeDisplay();
     }
 
     // 드래그로 카드를 놓은 칸이 실제로 유효한지 검사. pendingUseHasRangeLimit가 false면(사거리 제한이 없거나
-    // 애초에 계산하지 않은 카드) 어디든 유효 — 그 외엔 픽업 시점에 하이라이트해둔 selectedButtonMovable 안인지 확인한다.
+    // 애초에 계산하지 않은 카드) 어디든 유효 — 그 외엔 픽업 시점에 계산해둔 selectedButtonMovable 안인지 확인한다.
     public bool IsValidDropPos(Vector2Int pos) => !pendingUseHasRangeLimit || selectedButtonMovable.Contains(pos);
 
     void ClearUseEligibilityPreview()
     {
-        foreach (var (pos, teamID) in useEligibilityHighlights)
-            GetButtonScript(pos).RangeOff(teamID);
         useEligibilityHighlights.Clear();
+        RefreshRangeDisplay();
     }
 }

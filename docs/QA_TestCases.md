@@ -1,6 +1,6 @@
 # ChessRogueLike QA 테스트 케이스
 
-이 문서는 `Assets/Scripts/` 전체(Board 16개 partial class, Piece/Card 핵심 엔진, `Cards/` 폴더 카드 82종, 매니저/UI/맵/상점/다이얼로그/유물 시스템)와 `Assets/LevelData.cs`, `Assets/CardsPanel.cs`, `Assets/SO/Jobs/*.asset`, `전사_소환사_카드목록.txt`를 근거로 작성된 QA 테스트 케이스 모음이다.
+이 문서는 `Assets/Scripts/` 전체(Board 16개 partial class, Piece/Card 핵심 엔진, `Cards/` 폴더 카드 83종, 매니저/UI/맵/상점/다이얼로그/유물 시스템)와 `Assets/LevelData.cs`, `Assets/CardsPanel.cs`, `Assets/SO/Jobs/*.asset`, `전사_소환사_카드목록.txt`를 근거로 작성된 QA 테스트 케이스 모음이다.
 
 ## 사용법
 
@@ -8,6 +8,7 @@
 - **표 컬럼**: `ID | 사전조건 | 테스트 절차 | 기대 결과 | 비고`
 - **비고란**: 코드 분석 중 발견된 버그성 이슈/설계 미비 사항은 관련 케이스의 비고란에 `⚠` 표시로 남긴다. 정상 동작 확인이 목적인 일반 케이스는 비고란을 비워둔다.
 - 모든 케이스는 실제 스크립트의 정확한 수치·조건을 근거로 하며, 코드가 변경되면 함께 갱신되어야 한다.
+- **용어**: 게임 화면의 "힘"은 기물 스탯 `colDamage`(이동공격 피해의 기준, 이전 표기 "이동공격력")를 말한다. 기물 정보창 라벨, 카드 설명, 상태 텍스트("힘 +N") 모두 이 용어를 쓴다.
 
 ## 목차
 
@@ -50,6 +51,7 @@
 - 적이 죽으면 다른 적 전원에게도 "무덤 +1" 텍스트가 뜸. 적은 무덤을 쓰는 카드가 없어 의미 없는 연출 (섹션 18)
 - 소환 카드 설명에 소환수의 스폰 시 효과(`autoally`·`tauntAutoAlly`의 방어도 2)가 표시되지 않음 (섹션 6.4)
 - `autoally.prefab`이 `onSpawnCards`의 옛 이름(`onSummonCards`)으로 저장되어 있어 `FormerlySerializedAs`에 의존함 (섹션 17)
+- 손패 부채꼴 위치(`CardCanvas.heightOffset`)가 화면 중앙 기준이라, CanvasScaler(너비 기준)에서 16:9가 아닌 비율이면 손패가 화면 아래로 잘리거나(21:9) 위로 떠 보임(16:10·4:3) (섹션 14)
 
 ---
 
@@ -76,6 +78,7 @@
 | TC-SAVE-015 | 게임 진행 중 | "세이브 초기화" 실행 | 맵 진행/로스터/유물 모두 초기화되고 새 게임과 동일한 시작 상태로 복귀 | |
 | TC-SAVE-016 | `SummonerPieceInfo` 이름 변경(`Summoner` → `SummonerAlly`) 전에 소환사로 시작한 세이브 | 이어하기로 전투 레벨 진입 후 결과 화면까지 진행 | 소환사 기물이 정상 스폰되고, 보상 카드가 소환사 보상 풀에서 제시됨 | ⚠ 세이브의 `pieceName`이 `Summoner`로 남아 있으면 `PieceDatabase.GetPiece`가 프리팹을 찾지 못해 스폰 실패(에러 로그), 보상도 전체 카드 풀로 폴백됨. 마이그레이션 또는 세이브 초기화 안내 필요 |
 | TC-SAVE-017 | `cardRemoveCount` 필드가 없는 이전 세이브 | 이어하기 후 상점 진입 | `cardRemoveCount`가 0으로 읽혀 제거 가격 50G, 크래시 없음 | |
+| TC-SAVE-018 | 소환사로 새 게임 시작(세이브의 `pieceName`이 `SummonerAlly`) | 첫 전투 레벨 진입 | 소환사 기물이 플레이어 스폰 위치에 정상 스폰, "플레이어 기물 스폰 실패" 에러 로그 없음 | 플레이어 기물은 세이브의 `pieceName`으로 프리팹을 찾으며 `PieceDatabase.GetPiece`는 대소문자를 구분한다. 프리팹 파일 이름이 `PieceInfo.PieceName`과 대소문자까지 같아야 함. 2026-10-07 `summonerAlly.prefab` → `SummonerAlly.prefab`으로 수정 |
 
 ---
 
@@ -190,9 +193,9 @@
 | TC-ENGINE-021 | `effects[0].effectRange`가 비어있는 커스텀 카드(데이터 오류 상황) | 카드 `Awake()` 실행 | 인덱싱 시 예외 발생 여부 확인(리그레션 방지용 데이터 무결성 점검) | |
 | TC-ENGINE-022 | `Card.IsSelectable()` 확인 | 카드가 `CardCanvas.instance.cards`에서 이미 제거된 상태(다른 코루틴 처리 중)에 클릭 | 실제 리스트 멤버십 기준으로 선택 불가 처리(캐시된 플래그로 인한 오탐 없음) | |
 | TC-ENGINE-023 | 카드 사용 완료 애니메이션이 여러 장 동시에 대기 중(`pendingCardFlights`) | 연속으로 여러 카드를 빠르게 사용 | 각 카드가 올바른 파일-존(버림/추방)으로, 올바른 순서로 날아가 애니메이션이 꼬이지 않음 | ⚠ FIFO 가정에 의존하므로 다중 카드 동시 처리 스트레스 테스트 필요 |
-| TC-ENGINE-024 | 손패의 카드를 자신의 손패 영역 위로 빠르게 드래그 인/아웃 반복 | 반복 드래그 | 카드가 의도치 않게 중복 사용되지 않음 | ⚠ `Card.MouseDrag`의 손패-호버 자동사용 경로 재현 테스트 |
+| TC-ENGINE-024 | 손패의 카드를 자신의 손패 영역 위로 빠르게 드래그 인/아웃 반복 | 반복 드래그 | 카드가 의도치 않게 중복 사용되지 않음 | ⚠ `Card.MouseDrag`의 HandZone 진입 자동사용 경로 재현 테스트. 진입 판정은 HandZone 사각형(`CardCanvas.IsScreenPointInHandZone`) 기준 |
 | TC-ENGINE-025 | 카드 선택 패널(`ShowCardSelectionPanel`)을 대상 풀이 0장인 상태로 오픈(예: 빈 버림더미에서 카드 선택) | 패널 오픈 | 빈 목록으로 즉시 자동 확정(교착 없음) | |
-| TC-ENGINE-026 | 두 번째 효과가 `targeting`·`self`인 아군 카드(`SummonGrowthCard`: 턴 효과(다음 소환 콜대미지) → 턴 효과(다음 소환 체력)) | 카드 사용 | 두 번째 효과가 클릭 없이 카드를 쓴 기물에게 바로 적용되고 카드가 정상 종료(교착 없음) | 후속 효과는 카드를 쓴 기물을 현재 위치에서 다시 선택한 것처럼 처리 |
+| TC-ENGINE-026 | 두 번째 효과가 `targeting`·`self`인 아군 카드(`SummonGrowthCard`: 턴 효과(다음 소환 힘) → 턴 효과(다음 소환 체력)) | 카드 사용 | 두 번째 효과가 클릭 없이 카드를 쓴 기물에게 바로 적용되고 카드가 정상 종료(교착 없음) | 후속 효과는 카드를 쓴 기물을 현재 위치에서 다시 선택한 것처럼 처리 |
 | TC-ENGINE-027 | 두 번째 효과가 `command`인 아군 카드(`MoveandAttackCard`) — 빈 칸 이동 / 아군 충돌로 이동 실패 / 이동공격 후 적 생존 / 이동공격으로 적 처치 | 각각 카드 사용 | 두 번째 효과의 사거리가 시전자의 실제 위치(이동 칸 / 원래 칸 / 인접 칸 / 적이 있던 칸) 기준으로 표시되고 클릭으로 실행 | |
 | TC-ENGINE-028 | 효과가 여러 개인 카드의 앞 효과로 시전자가 사망(자해 등) | 카드 사용 | 남은 효과는 건너뛰고 카드가 정상 종료 | |
 
@@ -200,7 +203,7 @@
 
 ## 6. 개별 카드 기능
 
-**관련 스크립트**: `Assets/Scripts/Cards/*.cs` (82종), `Assets/Prefab/Cards/*.prefab`
+**관련 스크립트**: `Assets/Scripts/Cards/*.cs` (83종), `Assets/Prefab/Cards/*.prefab`
 
 ### 6.1 기본 공격형
 
@@ -219,7 +222,7 @@
 | TC-CARD-011 | `ZoneAttackCard`(Cost 2, dmg 5, MouseCentered, `AllPiecesInRange`, `ignoreCasterColDamageBonus=true`) | 아군·적 혼재 지역에 시전 | 팀 무관 전원 5 피해(아군도 피해 받음). 카드 설명은 "범위 내 모든 기물에게 5의 고정 데미지를 줍니다." | |
 | TC-CARD-012 | `FetchAttackCard`(Cost 0) | 사용 | `AttackCard` 1장이 즉시 손패에 추가 | 2026-10-05 소환사 보상 풀에서 빠져(`LoadMagicMissileCard`로 교체) 현재 정상 플레이로는 획득 경로 없음 |
 | TC-CARD-101 | `FinalAttackCard`(Cost 2, 손패 전부 버림 + 버린 카드 1장당 4 피해 1회, `hitsPerDiscarded=1`), 손패에 다른 카드 3장, 체력 충분한 적 | 적에게 드롭 | 손패 3장이 버림더미로 날아간 뒤 같은 대상에게 4 피해 3회(총 12). 피해 효과는 다시 클릭하지 않아도 같은 대상에 들어감(`useLastTarget`) | 사용한 카드 자신은 버린 수에 포함되지 않음 → 버림더미는 총 +4장 |
-| TC-CARD-102 | `FinalAttackCard`, 시전자 이동공격력 보너스 +2, 손패에 다른 카드 2장 | 적에게 사용 | 타격마다 보너스 적용 → 6 + 6 = 총 12. 카드 설명의 피해 수치도 6으로 표시 | |
+| TC-CARD-102 | `FinalAttackCard`, 시전자 힘 보너스 +2, 손패에 다른 카드 2장 | 적에게 사용 | 타격마다 보너스 적용 → 6 + 6 = 총 12. 카드 설명의 피해 수치도 6으로 표시 | |
 | TC-CARD-103 | `FinalAttackCard`가 손패의 유일한 카드 | 적에게 사용 | 카드는 사용되고 에너지 2 차감, 타격 없음(헛스윙 연출도 없음). 카드 정상 종료, 이어서 다른 카드 사용 가능 | 버린 카드 0장이면 피해 효과만 스킵 |
 | TC-CARD-104 | `FinalAttackCard`를 든 상태(드롭 전) | 사거리 표시 확인 후 취소 | 공격 사거리가 표시되고, 취소하면 손패가 하나도 버려지지 않은 채 그대로 남음 | 버리기는 대상을 찍는 순간 실행됨 |
 | TC-CARD-105 | `FinalAttackCard`, 손패 다른 카드 3장, 체력 8 적 | 적에게 사용 | 2타에 적 처치, 3타는 발생하지 않음(피해·헛스윙 연출 없음, 에러 없음). 피격 반응 3칸 중 2번 칸에 Die, 3번 칸은 비어 있음 | `DoubleAttackCard`와 같은 다중 타격 처리 |
@@ -258,7 +261,7 @@
 | TC-CARD-027 | `FlameThrowingCard`(Cost 1, `OwnTurnEnd`, 3턴간 매 턴 종료 시 AoE 2 피해) | 사용 후 3번의 자기 턴 종료 경과 | 매 턴 종료마다 적 대상 2 AoE 피해가 정확히 3회 발생 후 자동 만료 | |
 | TC-CARD-028 | `FlameThrowingCard` 사용 후 캐스터가 사망 | 캐스터 사망 이후 턴 진행 | 죽은 기물의 `TurnEffect`가 더 이상 발동하지 않고 정리되는지 확인 | |
 | TC-CARD-117 | `WardZoneCard`(Cost 2, 3턴간 턴 종료 시 주변 8칸 적 3 고정 피해 + 주변 8칸 아군 2 회복), 시전자 주변에 적 1기·부상 아군 1기 | 사용 후 정보창 확인 → 아군 턴 종료 | 정보창에 "턴 종료 시 광역 피해 3", "턴 종료 시 광역 회복 2"(각 3턴). 턴 종료 시 주변 적 3 피해, 주변 아군 2 회복. 시전자 본인은 회복되지 않음 | 범위는 프리팹 `effectRange[0]` = `SurroundingRangeInfo` |
-| TC-CARD-118 | `WardZoneCard`, 시전자 이동공격력 버프 보유 | 아군 턴 종료 3회 경과 | 피해는 버프 무관하게 매번 3, 정확히 3회 발동 후 두 턴 효과 모두 만료 | |
+| TC-CARD-118 | `WardZoneCard`, 시전자 힘 버프 보유 | 아군 턴 종료 3회 경과 | 피해는 버프 무관하게 매번 3, 정확히 3회 발동 후 두 턴 효과 모두 만료 | |
 
 ### 6.4 소환형
 
@@ -270,8 +273,8 @@
 | TC-CARD-031 | `SummonMasteryCard`(Cost 1, +2 colDmg pending, +2 maxHp pending) 사용 후 바로 `SummonCard` 사용(동일 캐스터) | 순서대로 사용 | 소환된 기물의 colDamage/maxHp/hp에 각각 +2 보너스 적용, pending 값 소진(0으로 리셋) | |
 | TC-CARD-032 | `SummonMasteryCard`를 2회 연속 사용 후 소환 | 2회 사용 → 소환 | 보너스가 누적(각 +4)되어 적용, 상한 없음 | |
 | TC-CARD-033 | `SummonMasteryCard` 사용 후 그 전투에서 끝까지 소환을 하지 않음 | 전투 종료까지 관찰 | pending 값이 만료되지 않고 해당 기물에 계속 남아있음(다음 소환 시 뒤늦게 적용될 수 있음) | ⚠ StatusEffect가 아니므로 시각적 만료 표시 없이 무기한 잔존 |
-| TC-CARD-079 | `SummonGrowthCard`(Cost 3, Self, 영구 턴 효과 2개) 보유 | 카드 사용 후 정보창 확인 | 정보창에 "턴 종료 시 다음 소환 콜대미지 +1", "턴 종료 시 다음 소환 체력 +3" 두 버프가 턴 수 없이 표시. 사용 시점에는 다음 소환 보너스가 늘지 않음 | |
-| TC-CARD-080 | `SummonGrowthCard` 사용 | 아군 턴 종료를 2회 거친 뒤 `SummonCard` 사용 | 턴 종료마다 "다음 소환 강화 +1", "다음 소환 체력 +3" 텍스트. 소환된 autoally는 colDamage 5+2=7, 최대·현재 체력 5+6=11, 시전자의 다음 소환 보너스는 0으로 리셋 | |
+| TC-CARD-079 | `SummonGrowthCard`(Cost 3, Self, 영구 턴 효과 2개) 보유 | 카드 사용 후 정보창 확인 | 정보창에 "턴 종료 시 다음 소환 힘 +1", "턴 종료 시 다음 소환 체력 +3" 두 버프가 턴 수 없이 표시. 사용 시점에는 다음 소환 보너스가 늘지 않음 | |
+| TC-CARD-080 | `SummonGrowthCard` 사용 | 아군 턴 종료를 2회 거친 뒤 `SummonCard` 사용 | 턴 종료마다 "다음 소환 힘 +1", "다음 소환 체력 +3" 텍스트. 소환된 autoally는 colDamage 5+2=7, 최대·현재 체력 5+6=11, 시전자의 다음 소환 보너스는 0으로 리셋 | |
 | TC-CARD-081 | TC-CARD-080 직후(소환으로 보너스 소모) | 아군 턴 종료 1회 후 다시 소환 | 턴 효과는 영구라 그대로 남아 있고, 소모 후 다음 턴 종료부터 다시 +1/+3씩 쌓임 | |
 | TC-CARD-082 | `SummonGrowthCard`를 같은 기물이 2회 사용 | 아군 턴 종료 1회 | 정보창에 턴 효과 4개, 턴 종료당 보너스 +2/+6 | 중첩 상한 없음 |
 | TC-CARD-083 | `SummonGrowthCard` 사용 후 턴 종료 1회(+1/+3), 이어서 `SummonMasteryCard`(+2/+2) 사용 | `SummonCard` 사용 | 두 보너스가 합산되어 소환수에 colDamage +3, 체력 +5 적용 | 시전자가 사망하면 턴 효과도 함께 사라져 더 이상 쌓이지 않음 |
@@ -319,15 +322,18 @@
 |---|---|---|---|---|
 | TC-CARD-053 | `StunCard`(Cost 1, LowestHP 적에게 Stun 1턴) | 사용 | 대상이 다음 자기 행동을 스킵(플레이어: 카드 사용 불가 / 적: `StunnedCard`로 대체) | |
 | TC-CARD-054 | `ImmobilizeCard`(Cost 1, `MovementDisabledEffect` 2턴, `noRangeLimit=true`) | 사거리 밖 먼 적에게 사용 | 거리 제한 없이 적용 성공, 2턴간 이동 카드 사용 불가 | |
-| TC-CARD-055 | `PoisonTestCard`(테스트 전용 카드, Poison 2턴/2뎀, `noRangeLimit=true`) | 사용 | 정상 동작하나, 정식 카드 채택 여부는 플레이테스트 후 결정 예정임을 인지 | ⚠ 코드 주석상 임시/검증용 카드 |
+| TC-CARD-055 | `PoisonTestCard`(테스트 전용 카드, Poison 2턴/2뎀, `noRangeLimit=true`) | 사용 | 정상 동작하나, 정식 카드 채택 여부는 플레이테스트 후 결정 예정임을 인지 | ⚠ 코드 주석상 임시/검증용 카드. 보상 풀에 들어간 정식 독 카드는 `CurseCard`(TC-CARD-122) |
 | TC-CARD-056 | `ThornCard`(자가 Thorn, 코드상 duration 2 / power 3) | 카드 설명 텍스트와 실제 지속시간 비교 | 설명 텍스트는 `duration-1`(1턴)로 표기되지만 실제로는 2턴 지속 | ⚠ 툴팁-실제값 불일치, 또한 프리팹 없어 정상 플레이 도달 불가(orphan) |
 | TC-CARD-057 | `CleanseCard`(Cost 1, 자가 디버프 전체 제거) | 자신이 Poison+Weaken 동시 보유 시 사용 | 두 디버프 모두 제거, 버프는 영향 없음 | |
 | TC-CARD-058 | `DispelCard`(Cost 1, 대상 적 버프 전체 제거, `noRangeLimit=true`) | 적이 Strengthen 보유 시 사용 | 해당 버프 제거(디버프는 영향 없음) | |
 | TC-CARD-059 | `DispelCard`를 `ChainMoveAttackBuff`를 보유한 적에게 사용 | 사용 | `ChainMoveAttackBuff`는 `StatusEffect`가 아니므로 제거되지 않음 | ⚠ 디스펠 불가 버프 |
 | TC-CARD-069 | `VulnerableCard`(Cost 1, 적 대상, `noRangeLimit=true`, Vulnerable 2턴/+1) | 사거리 밖 적에게 사용 | 거리 제한 없이 대상에게 `취약 (+1)` 부여, 디버프 텍스트·파티클 재생. 카드 설명은 "2턴간 취약(1)을 부여합니다." | |
-| TC-CARD-110 | `WeakenDrawCard`(Cost 2, 사거리 안의 적에게 Weaken 2턴/-2 + 2장 드로우), 사거리 안에 이동공격력 5인 적, 덱에 카드 2장 이상 | 그 적에게 드롭 | 적에게 `약화 (-2)` 디버프 텍스트·파티클, 적 이동공격력 5 → 3. 이어서 카드 2장 드로우, 에너지 2 차감. 카드 설명은 "적에게 2턴간 약화(2)를 부여하고 카드를 2장 드로우합니다." | 드로우는 효과 1개당 1장(Draw 효과 2개) |
+| TC-CARD-110 | `WeakenDrawCard`(Cost 2, 사거리 안의 적에게 Weaken 2턴/-2 + 2장 드로우), 사거리 안에 힘 5인 적, 덱에 카드 2장 이상 | 그 적에게 드롭 | 적에게 `약화 (-2)` 디버프 텍스트·파티클, 적 힘 5 → 3. 이어서 카드 2장 드로우, 에너지 2 차감. 카드 설명은 "적에게 2턴간 약화(2)를 부여하고 카드를 2장 드로우합니다." | 드로우는 효과 1개당 1장(Draw 효과 2개) |
 | TC-CARD-111 | `WeakenDrawCard`, 시전자 사거리 밖에만 적이 있음 | 사거리 밖 적에게 드롭 | 카드가 사용되지 않음 — 약화·드로우·에너지 변화 없음 | `noRangeLimit` 없음(프리팹 `effectRange[0]` 사거리) |
-| TC-CARD-112 | TC-CARD-110 직후, 적의 행동이 `EnemyAttackCard`(5 피해) 또는 이동공격 | 적 턴 2회 진행 | 두 번의 적 행동 모두 피해가 2 줄어듦(카드 공격 5 → 3, 이동공격 5 → 3). 두 번째 적 턴 종료 시 "약화 (-2) 해제" 텍스트와 함께 이동공격력 5로 복구 | 이동공격력이 2 미만인 적은 그 값만큼만 감소(0 미만으로 내려가지 않음) |
+| TC-CARD-112 | TC-CARD-110 직후, 적의 행동이 `EnemyAttackCard`(5 피해) 또는 이동공격 | 적 턴 2회 진행 | 두 번의 적 행동 모두 피해가 2 줄어듦(카드 공격 5 → 3, 이동공격 5 → 3). 두 번째 적 턴 종료 시 "약화 (-2) 해제" 텍스트와 함께 힘 5로 복구 | 힘이 2 미만인 적은 그 값만큼만 감소(0 미만으로 내려가지 않음) |
+| TC-CARD-122 | `CurseCard`(Cost 1, 사거리 안의 적에게 Poison 3턴/3), 사거리 안에 체력 충분한 적 | 그 적에게 드롭 → 적 턴 3회 진행 | 사용 시 `독 (3)` 디버프 텍스트·파티클, 에너지 1 차감. 적의 턴이 끝날 때마다 3 피해(3회, 총 9), 세 번째 피해 뒤 "독 (3) 해제" 텍스트와 함께 제거. 카드 설명은 "적에게 3턴간 독(3)을 부여합니다." | 사거리는 프리팹 `effectRange[0]` = `AttackRangeInfo` |
+| TC-CARD-123 | `CurseCard`, 시전자 사거리 밖에만 적이 있음 | 사거리 밖 적에게 드롭 | 카드가 사용되지 않음 — 독·에너지 변화 없음 | `noRangeLimit` 없음 |
+| TC-CARD-124 | `CurseCard`로 독(3)을 건 적이 취약(+1) 상태, 시전자 힘 버프 보유 | 적 턴 종료 | 독 피해는 그대로 3 | 독은 공격 경로가 아니라 힘·취약이 붙지 않음(TC-STATUS-022) |
 
 ### 6.8 특수/체인
 
@@ -351,10 +357,10 @@
 | TC-CARD-094 | 위와 동일 | 모든 아군이 예고 칸에서 벗어난 채 턴 종료 | 피해 없이 보스 헛스윙 연출 + 잠긴 칸 표시만 재생, 전투 진행 정상 | |
 | TC-CARD-095 | 위와 동일, 예고가 떠 있는 상태 | 플레이어 턴에 보스를 기절시킴 | 예고 칸이 즉시 사라짐. 기절이 풀린 다음 플레이어 턴에 그 시점 아군 위치로 다시 잠김 | |
 | TC-CARD-096 | 위와 동일, 패턴별 범위(아군 칸만 12 / 십자 8 / 3x3 6) | 6턴 순환 관측 | 패턴 순서(낙뢰 → 이동 → 십자 → 이동 → 3x3 → 이동)와 범위·피해가 일치. 보드 밖 칸은 예고에서 제외 | |
-| TC-CARD-097 | `BossRageCard`(onSpawnCards, 매 자기 턴 종료 이동공격력 +2 영구), `L3-Berserker` | 전투 시작 → 적 턴 종료마다 관측 | 스폰 즉시 턴 효과 부여, 적 턴 종료마다 "이동공격력 +2" 표시, 머리 위 행동 예고 숫자도 함께 증가 | 데미지 강요 보스 |
+| TC-CARD-097 | `BossRageCard`(onSpawnCards, 매 자기 턴 종료 힘 +2 영구), `L3-Berserker` | 전투 시작 → 적 턴 종료마다 관측 | 스폰 즉시 턴 효과 부여, 적 턴 종료마다 "힘 +2" 표시, 머리 위 행동 예고 숫자도 함께 증가 | 데미지 강요 보스 |
 | TC-CARD-098 | 위와 동일 | `DispelCard`로 보스의 버프 제거 | 턴 종료 성장 중단(이미 오른 수치는 유지) | |
-| TC-CARD-099 | `BossFrenzyCard`(주변 피해 + ColDamageDelta) | Berserker/Colossus로 여러 사이클 관측 | 피해가 기본 수치 + 이번 전투에서 오른 이동공격력만큼 증가 | |
-| TC-CARD-100 | `BossRegenerateCard`(자가 회복 15) / `BossEmpowerCard`(이동공격력 +3), `L3-Colossus` | 5턴 순환 관측(지진 → 재생 → 지진 → 축적 → 이동) | 이동은 5턴에 1번·상하좌우 1칸만. 회복은 maxhp를 넘지 않음. 축적 이후 지진·충돌 피해 증가 | 스케일 강요 보스 |
+| TC-CARD-099 | `BossFrenzyCard`(주변 피해 + ColDamageDelta) | Berserker/Colossus로 여러 사이클 관측 | 피해가 기본 수치 + 이번 전투에서 오른 힘만큼 증가 | |
+| TC-CARD-100 | `BossRegenerateCard`(자가 회복 15) / `BossEmpowerCard`(힘 +3), `L3-Colossus` | 5턴 순환 관측(지진 → 재생 → 지진 → 축적 → 이동) | 이동은 5턴에 1번·상하좌우 1칸만. 회복은 maxhp를 넘지 않음. 축적 이후 지진·충돌 피해 증가 | 스케일 강요 보스 |
 
 ### 6.10 무덤형
 
@@ -399,7 +405,7 @@
 
 ### 7.1 취약(Vulnerable)
 
-취약(+N)은 공격 경로(`AttackPiece`, `AreaAttackPiece`, `ResolveMoveAttackHit` — 이동공격·이동공격 판정)로 받는 피해에만 대상별로 N을 더한다. 공격 경로는 모두 `Board.ApplyAttackDamage`를 거친다. 독·화상 틱, 가시 반격, 자해, 자기 DoT, `DamageAllAllies`는 `GetDamage`를 직접 호출하므로 증가하지 않는다. 아래 케이스는 캐스터에게 이동공격력 보정(강화/약화/영구 보너스)이 없다고 가정한다.
+취약(+N)은 공격 경로(`AttackPiece`, `AreaAttackPiece`, `ResolveMoveAttackHit` — 이동공격·이동공격 판정)로 받는 피해에만 대상별로 N을 더한다. 공격 경로는 모두 `Board.ApplyAttackDamage`를 거친다. 독·화상 틱, 가시 반격, 자해, 자기 DoT, `DamageAllAllies`는 `GetDamage`를 직접 호출하므로 증가하지 않는다. 아래 케이스는 캐스터에게 힘 보정(강화/약화/영구 보너스)이 없다고 가정한다.
 
 | ID | 사전조건 | 테스트 절차 | 기대 결과 | 비고 |
 |---|---|---|---|---|
@@ -410,7 +416,7 @@
 | TC-STATUS-018 | 취약(+1) 적(체력 충분) | `DoubleAttackCard`(dmg 4, hitCount 2) 사용 | 타격마다 +1 → 5 + 5 = 총 10 | |
 | TC-STATUS-019 | 같은 적에게 `VulnerableCard`를 다른 턴에 2회 사용(취약(+1) 2개, 남은 턴 다름) | `AttackCard`(dmg 3)로 공격 후 턴 경과 | 둘 다 걸린 동안 3 + 1 + 1 = 5. 먼저 건 인스턴스가 만료되면 4. 두 인스턴스는 각자의 지속시간으로 독립 만료 | |
 | TC-STATUS-020 | 취약(+1) 적, 보호막 3 | `AttackCard`(dmg 3)로 공격 | 보정이 보호막보다 먼저 적용: 4 중 3은 보호막이 흡수, 체력 1 감소, 피해 텍스트 4 | |
-| TC-STATUS-021 | 취약(+1) 적, 이동공격력 0인 공격자 | 해당 적에게 이동공격 | 피해 0 유지(0 피해 공격에는 보정이 붙지 않음) | ⚠ 약화를 거는 카드가 없어 정상 플레이로 colDamage 0을 만들기 어려움. 인스펙터에서 colDamage 0으로 설정한 기물로 확인 |
+| TC-STATUS-021 | 취약(+1) 적, 힘 0인 공격자 | 해당 적에게 이동공격 | 피해 0 유지(0 피해 공격에는 보정이 붙지 않음) | ⚠ 약화를 거는 카드가 없어 정상 플레이로 colDamage 0을 만들기 어려움. 인스펙터에서 colDamage 0으로 설정한 기물로 확인 |
 | TC-STATUS-022 | 취약(+1) 적 | ① `PoisonTestCard`로 독(2) 부여 후 적 턴 종료 ② 가시 반격·자해·자기 DoT·`DamageAllAllies` 경로 | ① 독 틱 피해 2 그대로 ② 모두 증가하지 않음 | ⚠ `VulnerableCard`는 적에게만 걸 수 있어, 아군 쪽 경로(가시 반격 수신, 자해, `DamageAllAllies`)는 정상 플레이로 재현 불가. 코드 확인 또는 테스트 부트스트랩 필요 |
 | TC-STATUS-023 | 취약(+1) 적 1기 + 일반 적 1기 | ① `LifeDrainCard`(dmg 2)로 둘 다 적중 ② `BloodChargeCard`로 취약 적 이동공격 | ① 자힐 = 3 + 2 = 5 ② 자힐 = colDamage + 1 | "입힌 피해" = 대상별 보정 후 피해(보호막 흡수 전). TC-MOVE-014, TC-CARD-022 참고 |
 | TC-STATUS-024 | `ChainMoveAttackBuff` 보유 아군, 단일 대상 이동공격 | ① 첫 대상만 취약(+1) ② 체인 대상만 취약(+1) | ① 첫 대상 +1, 체인 대상은 기본 피해 ② 첫 대상 기본, 체인 대상 +1 | 체인에는 보정 전 피해가 넘어가고, 체인 대상 자신의 취약만 붙음 |
@@ -594,7 +600,7 @@
 
 ## 14. UI/입력/애니메이션 타이밍
 
-**관련 스크립트**: `Board.InputHandler.cs`, `Board.Animation.cs`, `EndTurnButton.cs`, `AnnouncementUI.cs`, `CardDragArrow.cs`, `ISelectable.cs`, `CameraFX.cs`, `GameSpeedManager.cs`, `PieceGaugeListUI.cs`, `ButtonInfo.cs`, `Assets/CardsPanel.cs`
+**관련 스크립트**: `Board.InputHandler.cs`, `Board.Animation.cs`, `Board.RangeUI.cs`(범위 표시 우선순위 `RefreshRangeDisplay`), `Card.cs`(손패 호버·드래그), `CardCanvas.cs`(HandZone), `EndTurnButton.cs`, `AnnouncementUI.cs`, `CardDragArrow.cs`, `ISelectable.cs`, `CameraFX.cs`, `GameSpeedManager.cs`, `PieceGaugeListUI.cs`, `ButtonInfo.cs`, `Assets/CardsPanel.cs`
 
 | ID | 사전조건 | 테스트 절차 | 기대 결과 | 비고 |
 |---|---|---|---|---|
@@ -605,7 +611,7 @@
 | TC-UI-005 | 종료 턴 버튼 5개 조건(플레이어 턴/큐 미진행/전투 미종료/카드 미처리/대기 애니메이션 없음) 중 하나라도 거짓 | 매 조건별 개별 검증 | 해당 조건이 거짓인 동안 버튼이 비활성 상태 유지 | |
 | TC-UI-006 | 마우스 없는 환경(터치 전용 디바이스) | `CardDragArrow` 활성 상태에서 프레임 진행 | `Mouse.current`가 null이어도 예외 발생하지 않음 | ⚠ 현재 null 가드 미비, 크래시 가능성 점검 |
 | TC-UI-007 | 카드/버튼/유물 아이콘에 마우스를 빠르게 반복 호버(in/out) | 반복 호버 | `ScaleAnimator`가 이전 트윈을 kill하고 새로 시작해 스케일이 누적/꼬이지 않음 | |
-| TC-UI-008 | 서로 다른 소스(호버 + 선택)가 같은 칸의 범위 하이라이트를 동시에 요청 | 하나의 소스가 해제 | 참조 카운트 방식으로 다른 소스가 남아있으면 하이라이트 유지, 모두 해제되면 꺼짐 | |
+| TC-UI-008 | 같은 순위의 범위 두 개가 같은 칸에 겹침(예: 카드 사거리 + 범위 효과 미리보기) | 하나를 해제(마우스를 다른 칸으로) | 남은 범위는 그대로 보임. 해제 순서와 무관 | 칸 표시는 `Board.RefreshRangeDisplay`가 각 기능의 목록에서 매번 다시 그림(우선순위: 1 조준 > 2 행동 > 3 기물 선택 > 4 평상시) |
 | TC-UI-009 | `AnnouncementUI`가 메시지 표시 중 | 새 메시지 발생 | 기존 표시를 즉시 중단하고 새 메시지로 갱신(경고음은 `isWarning=true`인 경우만) | |
 | TC-UI-010 | `PieceGaugeListUI` 표시 중 기물 스폰/사망 발생 | 매 프레임 확인 | 게이지 목록이 프레임마다 보드 전체를 스캔해 항상 최신 상태 반영 | ⚠ 매 프레임 전수 스캔이라 보드가 커질 경우 성능 확인 필요 |
 | TC-UI-011 | 카드 덱이 없는 오브젝트(RestObject/ShopObject/NPC)를 게이지 목록에서 확인 | 확인 | 핸드/덱 카운트 텍스트가 숨김 처리(예외 없음) | |
@@ -619,10 +625,26 @@
 | TC-UI-019 | 아군·적이 섞여 배치된 레벨로 전투 진입 | 게이지 목록 확인 | 아군(`teamID 0`) 항목이 모두 위, 적(그 외 teamID) 항목이 모두 아래. 같은 팀 안에서는 보드 스캔 순서(x→y) | `PieceGaugeListCanvas`의 `VerticalLayoutGroup.reverseArrangement`는 꺼져 있어야 함 |
 | TC-UI-020 | 전투 중 게이지 목록 표시 상태 | ① 아군 소환 ② 적 소환 ③ 중간 기물 사망 | ① 새 아군이 아군 블록 맨 아래(첫 적 바로 위)에 추가 ② 새 적이 목록 맨 아래에 추가 ③ 해당 항목만 빠지고 나머지 순서 유지 | |
 | TC-UI-021 | `PieceAnimator`를 쓰는 기물(Warrior/SummonerAlly/sin/sin2) | 같은 칸에서 공격·방어막·버프 카드를 여러 번 연속 사용 | 애니메이션이 끝날 때마다 기물이 원래 칸 중앙에 그대로 서 있음(조금씩 밀려나지 않음) | Animator `Apply Root Motion`이 꺼져 있어야 함. Idle/Shield/Buff 클립은 XZ 루트 모션을 포즈에 굽지 않아서, 켜져 있으면 위치가 누적해서 어긋남 |
-| TC-UI-022 | 플레이어 턴, 적 예고 범위가 여러 개 겹쳐 표시된 상태, 아무 기물도 선택하지 않음 | ① 적 A에 마우스 올림 ② 아군 B에 마우스 올림 ③ 마우스를 뗌 | ① 정보창에 A가 뜨는 동안 A의 예고 범위만 보임(다른 적 범위 숨김) ② B의 이동 범위만 보이고 적 범위는 모두 숨김 ③ 정보창이 닫히며 전체 적 예고 범위 복원 | 범위만 보이는 시점 = `ButtonInfo`가 그 기물 정보를 띄우는 시점. 기물 게이지 목록 항목 hover도 같음 |
+| TC-UI-022 | 플레이어 턴, 적 예고 범위가 여러 개 겹쳐 표시된 상태, 아무 기물도 선택하지 않음 | ① 적 A에 마우스 올림 ② 아군 B에 마우스 올림 ③ 마우스를 뗌 | ① 정보창에 A가 뜨는 동안 A의 예고 범위와 A 칸 초록만 보임(다른 적 범위 숨김) ② B의 이동 범위와 B 칸 초록만 보이고 적 범위는 모두 숨김 ③ 정보창이 닫히며 전체 적 예고 범위 복원(초록 없음) | 3순위 "기물 선택" — 켜지는 시점 = `ButtonInfo`가 그 기물 정보를 띄우는 시점. 기물 게이지 목록 항목 hover, 카드 없는 클릭 선택도 같은 경로 |
 | TC-UI-023 | 아군 위치 고정 공격(`lockOnAllyPositions`)을 예고한 적 | 그 적에 마우스 올림 | 잠긴 절대 좌표 예고 칸이 그대로 보임(시전자 기준 오프셋으로 바뀌지 않음) | `GetActionRangeCells`를 상시 표시와 공유 |
-| TC-UI-024 | 플레이어 턴 | 아군을 클릭해 선택(또는 카드를 집어 사거리 미리보기) → 선택 해제 또는 카드 사용 완료 | 선택 중에는 그 아군의 범위(카드 사거리)만 보이고 적 예고 범위는 숨김. 정보창이 닫히면 적 예고 범위 복원 | |
-| TC-UI-025 | 아군에 hover해 적 범위가 숨은 상태 | ① 그 사이 적이 사망하거나 기절(`ShowAllEnemyRanges` 재호출) ② 마우스를 뗌 / 별도로 hover한 채 턴 종료 | ① 적 범위가 다시 켜지지 않음 ② 갱신된 예고 범위로 복원. 턴 종료 후에는 복원되지 않음 | 휴식·상점 레벨의 모닥불/상점 hover는 범위 없음·예외 없음 |
+| TC-UI-024 | 플레이어 턴 | ① 카드 없이 아군 클릭 ② 그 상태에서 카드를 집음 ③ 카드 사용(연출 종료까지) 또는 선택 해제 | ① 그 아군의 이동 범위와 그 칸 초록만 보이고 적 예고 범위 숨김 ② 카드 사거리·사용 가능 칸·카드 주인 초록만 보임(1순위) ③ 연출이 끝나거나 선택을 해제하면 적 예고 범위 복원 | 카드 없는 클릭 선택은 판정용 사거리(`selectedButtonMovable`)를 채우지 않음 |
+| TC-UI-025 | 아군에 hover해 3순위가 켜진 상태 | ① 그 사이 적이 사망하거나 기절(`ShowAllEnemyRanges` 재호출) ② 마우스를 뗌 / 별도로 hover한 채 턴 종료 | ① 적 예고 범위가 보이지 않음 ② 갱신된 예고 범위로 보임. 턴 종료 후에는 적 예고 범위 없음 | 휴식·상점 레벨의 모닥불/상점 hover는 범위·초록 없음, 예외 없음 |
+| TC-UI-026 | 소환사가 `ZoneAttackCard`(MouseCentered) 보유, 시전자에서 떨어진 칸에 범위 안 적 | 떨어진 칸을 중심으로 사용 | 공격 애니메이션 동안 표시되는 범위가 **클릭한 칸 중심**으로 펼쳐지고, 실제로 피해를 받은 칸과 일치(시전자 중심으로 그려지지 않음) | 범위 효과는 `ExecuteAreaEffect`의 실제 중심(`actualCenter`)을 `rangeOrigin`으로 넘김 |
+| TC-UI-027 | 전사가 `DirectionalAttackCard` 2장 보유, 앞 카드 연출이 진행 중일 때 다음 카드를 사용할 수 있는 상태(카드 예약) | 첫 카드를 위쪽으로 사용 → 그 공격 애니메이션이 재생되기 전에 두 번째 카드를 아래쪽으로 바로 사용 | 첫 공격 애니메이션의 범위는 위쪽(실제로 맞은 방향), 두 번째는 아래쪽으로 표시됨. 겨눈 방향을 따라 앞 범위가 돌아가지 않음 | 범위 칸·방향은 효과 처리(motionQueue에 넣는) 시점에 계산, 켜고 끄기만 재생 시점. 카드를 들고 겨누는 동안에는 1순위(조준)가 우선이라 연출 범위는 숨음(TC-UI-030) |
+| TC-UI-028 | 카드 예약이 가능한 상태 | 공격 카드 사용 직후, 그 연출이 재생되기 전에 같은 기물로 이동 카드 사용 | 공격 애니메이션 범위가 공격할 때 서 있던 칸 기준으로 표시됨(이동 후 칸 기준으로 그려지지 않음) | |
+| TC-UI-029 | 플레이어 턴, 적 예고 범위 표시 중 | 적을 처치하는 공격 카드 사용 | 연출 큐가 도는 동안 적 예고 범위가 꺼짐. 공격 애니메이션 동안 시전자 칸 초록 + 공격 범위만 보임. 사망 연출 등 행동 연출 사이에는 아무 범위도 없음. 큐가 끝나면 적 예고 범위 복원 | 2순위 "행동" — 큐가 도는 동안은 내용이 없어도 켜진 것으로 봄 |
+| TC-UI-030 | 카드 예약 가능, 앞 카드 연출 재생 중 | 다음 카드를 집음 → 내려놓음(취소) | 집는 즉시 조준 범위(사거리·사용 가능 칸·카드 주인 초록)만 보이고 연출 범위는 숨음. 취소하면 남은 연출의 범위로 돌아감 | 1순위 > 2순위 |
+| TC-UI-031 | 적 턴 | 적 행동 관찰 | 행동하는 적의 AI 선택 범위(빨강)와 행동 범위, 그 적 칸 초록만 보임. 적 예고 범위·정보창 기물 범위는 보이지 않음 | AI 선택 범위와 행동 범위는 같은 2순위라 함께 보임. 플레이어가 행동할 수 없을 때(`IsPlayerActionable == false`)의 사거리는 2순위로 분류 |
+| TC-UI-032 | 자기 대상 버프 카드(예: `ColDamageUpCard`) | 사용 | 연출 동안 시전자 칸 초록만 보이고 범위 칸은 없음 | |
+| TC-UI-033 | `DirectionalAttackCard`를 듦 | 보드 위에서 마우스 이동 | 카드 사거리와 방향 미리보기가 함께 보이고(같은 1순위), 카드 주인 칸 초록 | 미리보기는 시전자 팀과 무관하게 파랑 |
+| TC-UI-034 | 플레이어 턴, 손패 5장 이상 | 가운데 카드와 양 끝 카드에 각각 마우스 올림 → 뗌 | 올리면 1.3배(250×300 → 325×390)로 커지고, 최소 y +20 그리고 아랫변이 화면 아래 끝에 잘리지 않을 만큼 올라오며(양 끝 카드 포함), 기울기가 0으로 똑바로 서고, 왼쪽 이웃 카드에 가려지지 않고 맨 앞에 그려짐. 떼면 원래 크기·높이·부채꼴 기울기·겹침 순서로 돌아감(0.12초) | 맨 앞 표시는 카드에 붙인 하위 Canvas의 `overrideSorting`(sortingOrder = `CardCanvas.hoveredCardSortingOrder`, 기본 3)으로 처리 — 형제 순서·`handNumber`는 바뀌지 않음 |
+| TC-UI-035 | 손패 여러 장, 한 카드를 호버해 맨 앞에 꺼낸 상태 | ① 확대된 카드가 이웃 카드를 덮은 부분으로 마우스 이동 ② 그 카드를 집어 드래그 ③ 손패로 되돌려 놓음 | ① 호버가 앞에 그려진 카드에 그대로 유지(뒤 카드로 넘어가지 않음) ② 드래그 중에도 카드가 MainCanvas UI(턴 종료 버튼 등)보다 앞에 그려지고, 들고 있는 카드에 가려진 손패 카드·기물 게이지 목록은 호버·클릭에 반응하지 않음(소리·확대 없음) ③ 원래 부채꼴 순서로 정렬되고 앞으로 꺼낸 상태가 풀림 | 레이캐스트 우선순위도 sortingOrder를 따름. 들고 있는 카드는 `blocksRaycasts`를 끄지 않음 |
+| TC-UI-036 | 카드 선택 패널(`SelectAndDiscard` 등, 손패 대상)이 열린 상태 | 패널 안 카드에 마우스 올림 → 클릭 | 카드가 패널 뒤로 숨거나 패널 밖으로 튀어나오지 않고, 기존처럼 확대·선택 토글만 동작 | 패널(하위 Canvas, Sort Order 3)이 열려 있는 동안에는 앞으로 꺼내지 않음 |
+| TC-UI-037 | 게임 창 비율을 16:9 / 16:10 / 21:9로 바꿔 각각 전투 진입 | ① 손패 카드를 집어 조금만(손패 위쪽 경계 아래에서) 움직임 ② 보드 맨 위 줄·양끝 칸을 대상으로 타겟팅 카드 사용 | ① 카드가 사용(NowUsing으로 이동)되지 않고 손에 들린 상태 유지 ② 카드가 손에 들린 상태로 되돌아가지 않고 대상 칸에 사용됨 | HandZone 앵커가 화면 높이에 맞춰 늘어나도록(아래 끝은 손패와 같은 화면 중앙 기준) 설정돼 있어야 함. ⚠ 손패 위치(`heightOffset`)가 화면 중앙 기준이라 21:9에선 손패 아래 절반가량이 화면 밖으로 잘림 |
+| TC-UI-038 | 손패 4장 이상, 드로우 카드 보유 | ① 손패 끝 카드에 마우스를 올린 채 다른 카드효과로 드로우가 일어나 손패가 다시 정렬됨 ② 마우스를 뗌 ③ 다른 카드를 집어 손패 위로 지나가게 드래그한 뒤 손패로 되돌려 놓음 ④ 드로우 연출로 날아오는 카드에 마우스를 올림 | ① 호버한 카드가 들린 채 똑바로 선 상태로 새 자리로 미끄러져 감 ② 새 자리의 부채꼴 기울기·높이로 돌아감(옛 자리 각도로 돌아가지 않음) ③ 들고 있는 카드에 가려진 카드들은 반응하지 않고, 놓은 뒤 모두 제자리 기울기·높이로 미끄러져 정렬됨 ④ 날아오는 동안엔 호버 자세가 걸리지 않고, 도착 후 마우스가 위에 있으면 들려 올라옴 | 정렬(`AlignCards`/`ExcludeAlignCards`)은 `Card.SetHandPose`로 슬롯 자세를 넘기고, 이동 연출·선택 패널 배치 시작 시 `Card.CancelHoverPose`로 호버 자세를 버림 |
+| TC-UI-039 | 플레이어 턴, 손패에 타겟팅 카드(`AttackCard`)와 타겟팅 없는 카드(`ColDamageUpCard`(Self), `DrawCard`(Inspect)) 보유 | ① 각 카드를 집어 HandZone 안으로 끌고 다님 ② HandZone 밖(손패 쪽)으로 내렸다가 다시 올림 ③ 보드 위에 놓음 / 보드 밖에 놓음 | ① 타겟팅 카드는 NowUsing 위치로 가고 화살표가 나옴. 타겟팅 없는 카드는 이동하지 않고 계속 카드 중앙이 마우스를 따라감 ② 타겟팅 없는 카드는 멈칫하지 않고 계속 따라감 ③ 보드 위에 놓으면 지금처럼 사용되고, 사용이 끝나면 `usedCardZone`으로 모였다가 보드 연출이 끝날 때 버림/소멸 더미로 날아감. 보드 밖에 놓으면 손패로 돌아감 | 구분 기준은 `Card.NeedsTargeting()`. 기물을 클릭해 고르는 카드(`EmpowerAllyCard`, `SquadTrainingCard`)도 `NeedsTargeting() == false`라 마우스를 따라가며, 놓은 자리에 남은 카드에 가려진 기물은 클릭되지 않음 |
+| TC-UI-040 | 플레이어 턴, 손패 4장 이상, 드로우 카드(`DrawCard`·`MoveAndDrawCard`) 보유 | ① 카드 사용 / 버림·소멸 효과 / 카드를 집었다가 손패에 다시 놓기 / 우클릭 취소 ② 턴 시작 5장 드로우가 날아오는 도중 곧바로 카드를 집음 ③ `MoveAndDrawCard` 사용 직후(드로우 연출이 보드 연출 뒤에서 대기 중) 다른 카드를 사용 ④ 재정렬이 진행 중일 때 다른 카드에 호버 | ① 남은 손패가 순간이동하지 않고 0.2초 동안 새 자리로 미끄러지고, 집었던 카드도 제자리로 미끄러져 돌아감 ② 날아오던 카드들이 멈추지 않고 바뀐 새 자리로 휘어 들어감 ③ 대기 중인 드로우 카드가 덱 근처에서 미리 끌려오지 않고, 차례가 되면 그때의 자기 자리로 날아감. 손패를 떠난 카드는 날아오지 않음 ④ 카드가 중간에 멈추거나 떨리지 않고 호버 자세로 이어짐 | 손패 안 자세(정렬·호버)는 카드당 트윈 하나(`Card.SettleToHandPose`)로 현재 위치에서 이어 감. 등장 연출은 `Card.HandSlotTween`이 매 프레임 슬롯을 따라감. 등장 대기 카드는 `CardCanvas.HoldForEntrance`로 정렬에서 제외 |
+| TC-UI-041 | 플레이어 턴, 카드 예약 가능, `usedCardZone`(`CardCanvas.UsedCardPos`) 연결됨, 공격 카드 3장·`ColDamageUpCard` 보유 | ① 공격 카드 3장을 앞 카드 연출이 끝나기 전에 연달아 사용 ② 그 사이 다음 카드를 집어 조준 ③ `ColDamageUpCard`를 보드에 놓아 사용 | ① 사용이 끝난 카드들이 `usedCardZone`에 큐 순서대로 (−28, −20)씩 겹쳐 쌓이되 먼저 쓴 카드가 맨 위에 그려져 가려지지 않고(나중 카드는 그 뒤로 비켜 보임), 연출이 끝나는 순서대로 버림/소멸 더미로 날아가며, 남은 카드는 한 칸씩 앞으로 당겨짐 ② 조준 중인 카드는 `usingCardZone`에 따로 있어 대기 카드와 겹치지 않음 ③ 놓은 자리에 남지 않고 `usedCardZone`으로 모임 | 정렬은 `CardCanvas.ArrangeAwaitingCards`(대기 목록이 들어오고 나갈 때마다). `UsedCardPos`가 비어 있으면 `CardNowUsingPos`에 모여 조준 중인 카드와 겹칠 수 있음 |
 
 ---
 
@@ -647,10 +669,10 @@
 
 | ID | 사전조건 | 테스트 절차 | 기대 결과 | 비고 |
 |---|---|---|---|---|
-| TC-JOB-001 | Summoner 기물 보상 오픈 | 보상 풀 확인 | `Summoner.asset`의 23개 카드(SummonCard, GreaterSummonCard, TauntSummonCard, EmpowerAllyCard, SummonMasteryCard, AreaHealCard, SummonGrowthCard, MagicAttackCard, ZoneAttackCard, MagicMissileCard, MagicVulnerableAttackCard, LoadMagicMissileCard, ImmobilizeCard, WeakenDrawCard, MoveAndDrawCard, SafeMoveCard, WardZoneCard, VulnerableCard, GraveHealCard, GraveAttackCard, GraveHarvestCard, GraveDefenseCard, GrowingGraveCard) 전부 실제 프리팹으로 존재 확인 | |
+| TC-JOB-001 | Summoner 기물 보상 오픈 | 보상 풀 확인 | `Summoner.asset`의 24개 카드(SummonCard, GreaterSummonCard, TauntSummonCard, EmpowerAllyCard, SummonMasteryCard, AreaHealCard, SummonGrowthCard, MagicAttackCard, ZoneAttackCard, MagicMissileCard, MagicVulnerableAttackCard, CurseCard, LoadMagicMissileCard, ImmobilizeCard, WeakenDrawCard, MoveAndDrawCard, SafeMoveCard, WardZoneCard, VulnerableCard, GraveHealCard, GraveAttackCard, GraveHarvestCard, GraveDefenseCard, GrowingGraveCard) 전부 실제 프리팹으로 존재 확인 | |
 | TC-JOB-002 | Warrior 기물 보상을 반복 오픈(예: 50회) | 카드명 수집 | `FinalAttackCard`도 보상으로 제시됨(프리팹이 `Database.prefab`의 `cardPrefabs`에 등록되어 `PickRandomDistinctFrom`에서 스킵되지 않음) | |
 | TC-JOB-003 | Warrior 보상 풀의 30개 카드 각각 | 보상으로 제시될 때 수치 확인 | `전사_소환사_카드목록.txt`에 명시된 코스트·수치(예: HeavyAttackCard 코스트 2·6뎀/2자해, DoubleAttackCard 코스트 3·4뎀×2)와 실제 구현이 일치 | |
-| TC-JOB-004 | `Warrior.asset`(30장)·`Summoner.asset`(23장)과 `전사_소환사_카드목록.txt` | 두 목록을 대조 | 카드 구성·개수가 일치하고, 텍스트 파일의 설명이 게임 내 카드 설명(`EffectDescription`)과 같음 | 카드를 보상 풀에 추가·제거할 때마다 텍스트 파일도 함께 갱신 |
+| TC-JOB-004 | `Warrior.asset`(30장)·`Summoner.asset`(24장)과 `전사_소환사_카드목록.txt` | 두 목록을 대조 | 카드 구성·개수가 일치하고, 텍스트 파일의 설명이 게임 내 카드 설명(`EffectDescription`)과 같음 | 카드를 보상 풀에 추가·제거할 때마다 텍스트 파일도 함께 갱신 |
 | TC-JOB-005 | Job이 설정되지 않은 기물 | 보상 오픈 | `ResolveRewardPoolFor`가 전체 카드 목록으로 폴백 | |
 
 ---

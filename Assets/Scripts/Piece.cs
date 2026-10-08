@@ -22,14 +22,14 @@ public abstract class Piece : MonoBehaviour
     [Tooltip("hp와 동일 조건 — Ally는 SetPieceData가 덮어씀, Enemy/AutoAlly는 여기 값이 그대로 쓰임.")]
     public int colDamage;
     [ReadOnlyInInspector] public int baseColDamage; // Awake()에서 항상 colDamage를 그대로 복사함 — 여기 채워도 덮어써짐
-    public int colDamageBonus; // 영구 강화로 누적된 이동공격력 보너스. 전투 시작 시 colDamage에 합산된다.
+    public int colDamageBonus; // 영구 강화로 누적된 힘 보너스. 전투 시작 시 colDamage에 합산된다.
     public int ColDamageDelta => colDamage - baseColDamage;
     [Tooltip("hp와 동일 조건 — Ally는 SetPieceData가 덮어씀, Enemy/AutoAlly는 여기 값이 그대로 쓰임.")]
     public int shieldBonus;
     [ReadOnlyInInspector] public int baseShieldBonus; // Awake()에서 항상 shieldBonus를 그대로 복사함 — 여기 채워도 덮어써짐
     public int shieldBonusBonus; // 영구 강화로 누적된 방어막 보너스. 전투 시작 시 shieldBonus에 합산된다.
     public int ShieldBonusDelta => shieldBonus - baseShieldBonus;
-    public int summonColDamagePending; // 다음 소환에 물려줄 콜대미지 보너스 (SummonMasteryCard가 쌓고, 소환 시 소모)
+    public int summonColDamagePending; // 다음 소환에 물려줄 힘 보너스 (SummonMasteryCard가 쌓고, 소환 시 소모)
     public int summonMaxHpPending;     // 다음 소환에 물려줄 체력 보너스
     // 같은 팀 기물이 죽을 때마다 쌓이는 자원(Board.AddGraveToTeammates). CardEffect.graveCost 등으로 소모한다.
     // 전투 한정 — GetPieceData/SetPieceData에 넣지 않으므로 전투마다 0부터 시작한다.
@@ -317,7 +317,7 @@ public abstract class Piece : MonoBehaviour
     void ShowColDamageReaction(int delta)
     {
         if (delta != 0)
-            ShowStatusText(delta > 0 ? $"이동공격력 +{delta}" : $"이동공격력 {delta}", delta > 0, new Color(1f, 0.27f, 0.27f));
+            ShowStatusText(delta > 0 ? $"힘 +{delta}" : $"힘 {delta}", delta > 0, new Color(1f, 0.27f, 0.27f));
     }
     // AddColDamage(showReaction: false)와 짝을 이루는, 텍스트/파티클/사운드만 따로 재생하는 버전 —
     // PlayCasterAndTargetReaction의 targetReaction으로 넘겨서 캐스터 애니메이션과 동기화할 때 사용.

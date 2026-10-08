@@ -30,5 +30,5 @@ public class WarmUpDamageCard : Card
     // 이 시점의 Cost는 이미 이번 사용의 ReduceCost가 반영된 값이다.
     public override bool ShouldExileOnUse() => Cost <= 0;
 
-    public override string EffectDescription => "이동공격력을 3 올립니다. 코스트가 1 감소합니다. (코스트가 0이 되면 소멸)";
+    public override string EffectDescription => "힘을 3 올립니다. 코스트가 1 감소합니다. (코스트가 0이 되면 소멸)";
 }

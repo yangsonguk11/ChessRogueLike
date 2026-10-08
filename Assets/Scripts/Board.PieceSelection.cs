@@ -11,6 +11,8 @@ public partial class Board
     PieceSelectFilter[] pieceSelectFilters;
     readonly List<Vector2Int> pieceSelectedPositions = new List<Vector2Int>();
     Action<List<Piece>> pieceSelectCallback;
+    // 고를 수 있는 기물 칸 하이라이트(1순위 "조준" 범위로 표시됨)
+    List<(Vector2Int pos, int teamID)> pieceSelectHighlights = new List<(Vector2Int, int)>();
 
     public bool PieceSelectionActive => pieceSelectCallback != null;
 
@@ -22,8 +24,8 @@ public partial class Board
         return true;
     }
 
-    // filters를 만족하는 기물이 있는 칸 전체에 RangeOn 하이라이트를 켜고, 어떤 칸에 어떤 팀으로 켰는지
-    // 기록해 반환한다. RequestPieceSelection과 카드 픽업 시점 미리보기(ShowUseEligibilityPreview)가 공용으로 쓴다.
+    // filters를 만족하는 기물이 있는 칸과 그 팀 목록(하이라이트용). 칸을 직접 켜지 않는다 — 호출부가 목록에 담고
+    // RefreshRangeDisplay를 부른다. RequestPieceSelection과 카드 픽업 시점 미리보기(ShowUseEligibilityPreview)가 공용으로 쓴다.
     List<(Vector2Int pos, int teamID)> HighlightMatchingPieces(PieceSelectFilter[] filters)
     {
         var result = new List<(Vector2Int, int)>();
@@ -33,8 +35,6 @@ public partial class Board
                 Vector2Int pos = new Vector2Int(x, y);
                 Piece p = GetPieceAt(pos);
                 if (p == null || !MatchesFilters(pos, p, filters)) continue;
-
-                GetButtonScript(pos).RangeOn(p.teamID);
                 result.Add((pos, p.teamID));
             }
         return result;
@@ -66,29 +66,22 @@ public partial class Board
         pieceSelectCallback = onConfirm;
         boardmode = BoardMode.targeting;
 
-        HighlightMatchingPieces(filters);
+        pieceSelectHighlights = HighlightMatchingPieces(filters);
+        RefreshRangeDisplay();
     }
 
-    // 카드 사용이 취소/종료될 때 진행 중이던 기물 선택을 무효화한다. RequestPieceSelection에서
-    // 필터에 매칭되는 칸들에 걸어둔 RangeOn 하이라이트를 FinishPieceSelection과 동일하게 직접
-    // RangeOff로 꺼주고, 이미 클릭해둔 칸의 "선택됨" 표시(SelectedTrue)도 함께 정리한다.
+    // 카드 사용이 취소/종료될 때 진행 중이던 기물 선택을 무효화한다. 하이라이트를 끄고,
+    // 이미 클릭해둔 칸의 "선택됨" 표시(SelectedTrue)도 함께 정리한다.
     public void CancelPieceSelection()
     {
-        for (int x = 0; x < N; x++)
-            for (int y = 0; y < M; y++)
-            {
-                Vector2Int pos = new Vector2Int(x, y);
-                Piece p = GetPieceAt(pos);
-                if (p == null || !MatchesFilters(pos, p, pieceSelectFilters)) continue;
-
-                GetButtonScript(pos).RangeOff(p.teamID);
-                if (pieceSelectedPositions.Contains(pos))
-                    GetButtonScript(pos).SelectedFalse();
-            }
+        foreach (Vector2Int pos in pieceSelectedPositions)
+            GetButtonScript(pos).SelectedFalse();
 
         pieceSelectedPositions.Clear();
         pieceSelectFilters = null;
         pieceSelectCallback = null;
+        pieceSelectHighlights.Clear();
+        RefreshRangeDisplay();
     }
 
     public void HandlePieceSelectionClick(Vector2Int pos)
@@ -122,7 +115,6 @@ public partial class Board
                 Piece p = GetPieceAt(pos);
                 if (p == null || !MatchesFilters(pos, p, pieceSelectFilters)) continue;
 
-                GetButtonScript(pos).RangeOff(p.teamID);
                 if (pieceSelectedPositions.Contains(pos))
                 {
                     GetButtonScript(pos).SelectedFalse();
@@ -133,6 +125,8 @@ public partial class Board
         pieceSelectedPositions.Clear();
         pieceSelectFilters = null;
         boardmode = BoardMode.Inspect;
+        pieceSelectHighlights.Clear();
+        RefreshRangeDisplay();
 
         var callback = pieceSelectCallback;
         pieceSelectCallback = null;

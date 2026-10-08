@@ -4,36 +4,107 @@ using UnityEngine;
 
 public partial class Board
 {
+    // 사거리 — 표시(1순위 카드 사거리 / 2순위 AI 선택 범위)와 판정(드롭 검증, 클릭 대상, AI 대상 계산)에 함께 쓰인다.
     List<Vector2Int> selectedButtonMovable = new List<Vector2Int>();
     int selectedMovableTeam = 0;
 
-    // 카드를 들고 있는 동안(usecard 진입~사용/취소) 시전자 칸에 표시를 켜고 끈다. 종류 상관없이 카드를
-    // 든 시점부터 무조건 켜지고, ResetBoardAfterCardUse에서 끈다.
-    // 끌 때 피스의 "현재" 위치를 다시 찾으면 그 사이 피스가 이동한 경우 엉뚱한 칸을 끄게 되어(원래 칸은 계속
-    // 켜진 채로 남음) 켰던 버튼 자체를 기억해뒀다가 그대로 끈다. 이동은 PieceMoveCor에서 같이 옮겨준다.
+    // 카드를 들고 있는 동안(usecard 진입~사용/취소) 카드 주인 칸에 초록 표시(1순위). 종류 상관없이 카드를
+    // 든 시점부터 무조건 켜지고, ResetBoardAfterCardUse에서 끈다. 기물 대신 버튼을 기억하고, 기물이 이동하면
+    // RelocateCasterIndicator가 같이 옮긴다.
     Button casterIndicatorButton;
 
-    public void SetCasterIndicator(Piece piece, bool active)
+    // 3순위 "기물 선택"(카드 사용 전): 정보창(ButtonInfo)에 뜬 기물의 범위와 그 칸 초록.
+    bool inspectedActive;
+    Vector2Int inspectedCell;
+    int inspectedRangeTeam;
+    readonly List<Vector2Int> inspectedRangeCells = new List<Vector2Int>();
+
+    // ── 범위 표시 ──────────────────────────────────────────────
+    // 범위는 각 기능이 Board의 자기 목록에 담아두고, 칸에 그리는 건 이 함수 하나가 한다 — 목록을 바꾼 기능은
+    // RefreshRangeDisplay만 부르면 된다. 높은 순위에 켤 것이 있으면 낮은 순위는 모두 끄고, 같은 순위끼리는 함께 보인다.
+    //  1. 조준(플레이어가 카드를 겨누는 중): 카드 사거리, 범위 효과 미리보기, 카드 사용 가능 기물, 기물 선택 요청 / 초록 = 카드 주인
+    //  2. 행동(motionQueue 재생 중, 적·자동 아군의 선택): AI 선택 범위, 행동 연출 범위 / 초록 = 행동 중인 시전자.
+    //     큐가 도는 동안은 내용이 없어도 켜진 것으로 본다 — 연출 사이(사망 등)에는 아무 범위도 보이지 않는다.
+    //  3. 기물 선택(카드 사용 전): 정보창에 뜬 기물의 범위 / 초록 = 그 기물
+    //  4. 평상시: 적 예고 범위
+    // 적·자동 아군 턴에는 AI가 selectedButton을 거쳐 selectedButtonMovable을 채우므로, 플레이어가 행동할 수 없을 때의
+    // 사거리는 1순위(조준)가 아니라 2순위(AI 선택)로 본다.
+    void RefreshRangeDisplay()
     {
-        if (active)
+        if (Buttons == null) return;
+
+        var ally = new HashSet<Vector2Int>();
+        var enemy = new HashSet<Vector2Int>();
+        var caster = new HashSet<Vector2Int>();
+        void AddCell(Vector2Int c, int team) => (team == 0 ? ally : enemy).Add(c);
+        void Add(IEnumerable<Vector2Int> cells, int team)
         {
-            casterIndicatorButton = GetButtonForPiece(piece);
-            casterIndicatorButton?.SetCasterIndicator(true);
+            foreach (Vector2Int c in cells) AddCell(c, team);
+        }
+
+        bool actionable = TurnManager.instance == null || TurnManager.instance.IsPlayerActionable;
+        bool hasMovable = !movableButtonsSilent && selectedButtonMovable.Count > 0;
+
+        if (actionable && (hasMovable || hoverRangeButtons.Count > 0 || useEligibilityHighlights.Count > 0
+                           || pieceSelectHighlights.Count > 0 || casterIndicatorButton != null))
+        {
+            if (hasMovable) Add(selectedButtonMovable, selectedMovableTeam);
+            Add(hoverRangeButtons, 0);
+            foreach (var (pos, team) in useEligibilityHighlights) AddCell(pos, team);
+            foreach (var (pos, team) in pieceSelectHighlights) AddCell(pos, team);
+            if (casterIndicatorButton != null) caster.Add(casterIndicatorButton.GetLocation());
+        }
+        else if (queuecoroutineworking || currentActionDisplay != null || (!actionable && hasMovable))
+        {
+            if (!actionable && hasMovable) Add(selectedButtonMovable, selectedMovableTeam);
+            if (currentActionDisplay != null)
+            {
+                Add(currentActionDisplay.cells, currentActionDisplay.team);
+                caster.Add(currentActionDisplay.casterCell);
+            }
+        }
+        else if (inspectedActive)
+        {
+            Add(inspectedRangeCells, inspectedRangeTeam);
+            caster.Add(inspectedCell);
         }
         else
         {
-            casterIndicatorButton?.SetCasterIndicator(false);
-            casterIndicatorButton = null;
+            Add(enemyAlwaysOnRange, 1);
         }
+
+        for (int x = 0; x < N; x++)
+            for (int y = 0; y < M; y++)
+            {
+                var pos = new Vector2Int(x, y);
+                GetButtonScript(pos).SetRangeVisual(ally.Contains(pos), enemy.Contains(pos), caster.Contains(pos));
+            }
+    }
+
+    // origin + offsets 중 보드 안의 칸만.
+    List<Vector2Int> CellsInBoard(Vector2Int origin, IEnumerable<Vector2Int> offsets)
+    {
+        var cells = new List<Vector2Int>();
+        foreach (Vector2Int offset in offsets)
+        {
+            Vector2Int c = origin + offset;
+            if (c.x >= 0 && c.x < N && c.y >= 0 && c.y < M) cells.Add(c);
+        }
+        return cells;
+    }
+
+    public void SetCasterIndicator(Piece piece, bool active)
+    {
+        casterIndicatorButton = active ? GetButtonForPiece(piece) : null;
+        RefreshRangeDisplay();
     }
 
     // 시전자 표시가 켜진 버튼(button1)에서 다른 칸(button2)으로 피스가 실제로 이동했을 때 표시도 함께 옮긴다.
     void RelocateCasterIndicator(Button button1, Button button2)
     {
         if (casterIndicatorButton != button1) return;
-        button1.SetCasterIndicator(false);
-        button2.SetCasterIndicator(true);
         casterIndicatorButton = button2;
+        RefreshRangeDisplay();
     }
 
     void OnSelectBoard()
@@ -47,6 +118,14 @@ public partial class Board
         {
             ExecuteEffect(pendingEffects.Dequeue(), selectedButton);
             ScheduleNextCardEffect();
+            return;
+        }
+
+        // 플레이어가 카드 없이 기물을 고른 경우는 3순위 "기물 선택" — hover와 같은 경로(ShowButtonInfo)로 그 기물의
+        // 범위만 보여주고, 판정용 사거리(selectedButtonMovable)는 카드를 쓸 때(또는 AI가 고를 때)만 채운다.
+        if (pendingEffects.Count == 0 && (TurnManager.instance == null || TurnManager.instance.IsPlayerActionable))
+        {
+            ShowButtonInfo(selectedButton);
             return;
         }
 
@@ -108,27 +187,18 @@ public partial class Board
     {
         Piece caster = GetButtonScript(casterPos).GetPieceScript();
         if (caster == null) return;
-        for (int i = selectedButtonMovable.Count - 1; i >= 0; i--)
+        selectedButtonMovable.RemoveAll(pos =>
         {
-            Piece p = GetButtonScript(selectedButtonMovable[i]).GetPieceScript();
-            if (p != null && p.teamID != caster.teamID)
-            {
-                GetButtonScript(selectedButtonMovable[i]).RangeOff(selectedMovableTeam);
-                selectedButtonMovable.RemoveAt(i);
-            }
-        }
+            Piece p = GetButtonScript(pos).GetPieceScript();
+            return p != null && p.teamID != caster.teamID;
+        });
+        RefreshRangeDisplay();
     }
 
     void FilterOccupiedFromMovable(Vector2Int casterPos)
     {
-        for (int i = selectedButtonMovable.Count - 1; i >= 0; i--)
-        {
-            if (GetButtonScript(selectedButtonMovable[i]).GetPieceScript() != null)
-            {
-                GetButtonScript(selectedButtonMovable[i]).RangeOff(selectedMovableTeam);
-                selectedButtonMovable.RemoveAt(i);
-            }
-        }
+        selectedButtonMovable.RemoveAll(pos => GetButtonScript(pos).GetPieceScript() != null);
+        RefreshRangeDisplay();
     }
 
     void OnUnSelectBoard()
@@ -140,18 +210,18 @@ public partial class Board
         HideButtonInfo();
     }
 
-    // FillAllMovableButtonsSilent로 채운 칸은 RangeOn을 호출하지 않았으므로,
-    // HideMovableButtons에서도 RangeOff를 호출하면 안 됨 (다른 곳에서 켜둔 같은 칸의 표시를 잘못 꺼버리게 됨).
+    // 보드 전체가 대상인 효과(noRangeLimit 등)의 판정용 사거리 — 목록은 채우되 표시하지 않는다.
     bool movableButtonsSilent = false;
 
     void FillAllMovableButtonsSilent(Vector2Int casterPos)
     {
-        HideMovableButtons();
+        selectedButtonMovable.Clear();
         selectedMovableTeam = GetButtonScript(casterPos).GetPieceScript()?.teamID ?? 0;
         for (int x = 0; x < N; x++)
             for (int y = 0; y < M; y++)
                 selectedButtonMovable.Add(new Vector2Int(x, y));
         movableButtonsSilent = true;
+        RefreshRangeDisplay();
     }
 
     void ShowMovableButtons(Vector2Int casterPos, GameObject p, List<Vector2Int> effectableButton = default)
@@ -164,40 +234,49 @@ public partial class Board
 
     void HideMovableButtons()
     {
-        if (!movableButtonsSilent)
-            foreach (Vector2Int v in selectedButtonMovable)
-                GetButtonScript(v).RangeOff(selectedMovableTeam);
         selectedButtonMovable.Clear();
         movableButtonsSilent = false;
+        RefreshRangeDisplay();
     }
 
     void AddMovableButtons(Vector2Int casterPos, List<Vector2Int> list)
     {
-        HideMovableButtons();
         selectedMovableTeam = GetButtonScript(casterPos).GetPieceScript()?.teamID ?? 0;
-        foreach (Vector2Int v in list)
-        {
-            Vector2Int m = casterPos + v;
-            if (m.x < 0 || m.x >= N || m.y < 0 || m.y >= M) continue;
-            GetButtonScript(m).RangeOn(selectedMovableTeam);
-            selectedButtonMovable.Add(m);
-        }
+        selectedButtonMovable.Clear();
+        selectedButtonMovable.AddRange(CellsInBoard(casterPos, list));
+        movableButtonsSilent = false;
+        RefreshRangeDisplay();
     }
 
-    // 정보창에 기물이 뜨는 동안은 그 기물의 범위만 보이게 한다(FocusPieceRange). drawPieceRange는 hover처럼
-    // 아직 그 기물의 범위가 그려져 있지 않을 때만 true — 선택/카드 사용 중에는 selectedButtonMovable이 이미 그리고 있다.
-    void ShowButtonInfo(Vector2Int button, bool drawPieceRange = false)
+    // 정보창 표시 + 3순위 "기물 선택" 범위. hover와 카드 없는 클릭 선택이 함께 쓰고, 카드/AI 경로(ShowCasterEffectRange)도
+    // 정보창을 띄우려고 부르지만 그때는 1·2순위가 켜져 있어 이 범위는 가려진다.
+    // 범위: AutoPiece(적·자동 아군)는 다음 행동 범위(잠긴 칸 포함), 그 외 기물은 이동 범위. 모닥불·상점(teamID 2)은 표시 없음.
+    void ShowButtonInfo(Vector2Int button)
     {
         ButtonInfo buttonInfo = BoardUICanvas.GetComponent<ButtonInfo>();
         buttonInfo.SetActive(true);
         buttonInfo.UpdateButtonInfo(GetButtonScript(button));
-        FocusPieceRange(button, drawPieceRange);
+
+        inspectedRangeCells.Clear();
+        Piece piece = GetPieceAt(button);
+        inspectedActive = piece != null && (piece.teamID == 0 || piece.teamID == 1);
+        if (inspectedActive)
+        {
+            inspectedCell = button;
+            inspectedRangeTeam = piece.teamID;
+            inspectedRangeCells.AddRange(piece is AutoPiece auto
+                ? GetActionRangeCells(auto, button)
+                : CellsInBoard(button, piece.GetMoveableButton()));
+        }
+        RefreshRangeDisplay();
     }
 
     void HideButtonInfo()
     {
         BoardUICanvas.GetComponent<ButtonInfo>().SetActive(false);
-        UnfocusPieceRange();
+        inspectedActive = false;
+        inspectedRangeCells.Clear();
+        RefreshRangeDisplay();
     }
 
     // ShopCanvas.Show()에서 호출: 상점 캔버스가 대신 나타나므로 ButtonInfo(호버 정보창)는 숨긴다.

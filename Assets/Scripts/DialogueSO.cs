@@ -36,7 +36,7 @@ public class DialogueSO : ScriptableObject
         [Tooltip("0보다 크면 플레이어가 보드에서 아군 기물을 이 수치만큼 직접 선택해야 하며, 선택된 기물들에게 아래 permanentColDamageBonus/permanentShieldBonusBonus가 적용된다.")]
         public int permanentStatSelectCount;
 
-        [Tooltip("permanentStatSelectCount로 선택된 아군 기물의 공격력을 영구적으로 이 수치만큼 증가시킨다 (음수면 감소, 0이면 변화 없음).")]
+        [Tooltip("permanentStatSelectCount로 선택된 아군 기물의 힘을 영구적으로 이 수치만큼 증가시킨다 (음수면 감소, 0이면 변화 없음).")]
         public int permanentColDamageBonus;
 
         [Tooltip("permanentStatSelectCount로 선택된 아군 기물의 방어막 보너스를 영구적으로 이 수치만큼 증가시킨다 (음수면 감소, 0이면 변화 없음).")]

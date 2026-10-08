@@ -25,6 +25,7 @@ MonoBehaviour:
   - ZoneAttackCard
   - MagicMissileCard
   - MagicVulnerableAttackCard
+  - CurseCard
   - LoadMagicMissileCard
   - ImmobilizeCard
   - WeakenDrawCard

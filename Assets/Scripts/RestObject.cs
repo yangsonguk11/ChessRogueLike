@@ -13,7 +13,7 @@ public class RestObject : Piece
 
     [Header("강화 설정")]
     public int upgradeSelectCount = 1;      // 강화 대상으로 선택할 아군 수
-    public int upgradeColDamageBonus = 1;   // 선택된 아군에게 영구로 더할 콜대미지
+    public int upgradeColDamageBonus = 1;   // 선택된 아군에게 영구로 더할 힘
     public int upgradeShieldBonusBonus = 0; // 선택된 아군에게 영구로 더할 방어막 보너스
 
     public override void Awake()

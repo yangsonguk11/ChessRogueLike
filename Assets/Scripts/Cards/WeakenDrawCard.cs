@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// 사거리 안의 적에게 약화(이동공격력 감소)를 걸고 카드를 드로우한다 — 드로우는 효과 1개당 1장이라 Draw 효과를 장수만큼 둔다.
+// 사거리 안의 적에게 약화(힘 감소)를 걸고 카드를 드로우한다 — 드로우는 효과 1개당 1장이라 Draw 효과를 장수만큼 둔다.
 public class WeakenDrawCard : Card
 {
     public override void Awake()

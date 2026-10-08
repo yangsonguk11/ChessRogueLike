@@ -15,7 +15,7 @@ MonoBehaviour:
   _pieceName: BossColossus
   _teamID: 1
   _isSummon: 0
-  _maxHp: 160
+  _maxHp: 120
   _colDamage: 3
   _shieldBonus: 0
   _rangeInfoSO: {fileID: 11400000, guid: b0551000000000000000000000000013, type: 2}

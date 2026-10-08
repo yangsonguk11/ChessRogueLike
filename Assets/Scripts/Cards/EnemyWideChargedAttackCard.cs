@@ -1,7 +1,7 @@
 using UnityEngine;
 
-// 적 전용: 넓은 범위(EnemyAttackCard와 동일한 RangeInfoSO)에 기본 10 데미지 + 이동공격력 보너스를 가한다.
-// 텔레그래프형 적(White Knight 5)의 사이클 3단계 — 1단계에서 쌓인 이동공격력(+5)만큼 데미지가 추가로 붙어
+// 적 전용: 넓은 범위(EnemyAttackCard와 동일한 RangeInfoSO)에 기본 10 데미지 + 힘 보너스를 가한다.
+// 텔레그래프형 적(White Knight 5)의 사이클 3단계 — 1단계에서 쌓인 힘(+5)만큼 데미지가 추가로 붙어
 // 첫 사이클 기준 10 + 5 = 15 데미지가 나온다. ColDamageUp은 영구 누적이라 사이클을 반복할수록 더 세진다.
 public class EnemyWideChargedAttackCard : Card
 {

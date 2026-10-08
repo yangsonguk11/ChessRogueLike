@@ -452,8 +452,8 @@ public partial class Board
         return bestMovePos;
     }
 
-    // useColDamageAsDmg면 이동공격력 전체 수치를 그대로 사용(이동공격 충돌 데미지와 동일 기준),
-    // Damage 타입이면 dmg에 콜대미지 Delta(영구 강화분 + 이번 전투 임시 버프분)를 가산
+    // useColDamageAsDmg면 힘 전체 수치를 그대로 사용(이동공격 충돌 데미지와 동일 기준),
+    // Damage 타입이면 dmg에 힘 Delta(영구 강화분 + 이번 전투 임시 버프분)를 가산
     int ResolveDamageWithColDamage(CardEffect cardEffect, Piece caster)
     {
         if (cardEffect.useColDamageAsDmg)
@@ -738,7 +738,7 @@ public partial class Board
                     caster.summonColDamagePending += cardEffect.dmg;
                     // 다른 버프 카드와 동일하게 animTrigger 재생 + 상태 텍스트/파티클/사운드 표시.
                     motionQueue.Enqueue(PlayCasterAndTargetReaction(caster, cardEffect?.animTrigger,
-                        caster.StatusTextReaction($"다음 소환 강화 +{cardEffect.dmg}", true, new Color(1f, 0.27f, 0.27f)), cardEffect));
+                        caster.StatusTextReaction($"다음 소환 힘 +{cardEffect.dmg}", true, new Color(1f, 0.27f, 0.27f)), cardEffect));
                     StartMotionQueue();
                 }
                 break;
@@ -852,7 +852,7 @@ public partial class Board
         {
             int delta = caster.summonColDamagePending;
             newPiece.AddColDamage(delta, showReaction: false);
-            reactions.Add(newPiece.StatusTextReaction($"이동공격력 +{delta}", true, new Color(1f, 0.27f, 0.27f)));
+            reactions.Add(newPiece.StatusTextReaction($"힘 +{delta}", true, new Color(1f, 0.27f, 0.27f)));
         }
         if (caster.summonMaxHpPending != 0)
         {
@@ -935,7 +935,8 @@ public partial class Board
         ApplyStatusToTarget(caster, targets, cardEffect);
     }
 
-    void ApplyStatusToTarget(Piece caster, List<Vector2Int> targets, CardEffect cardEffect)
+    // rangeOrigin: 애니메이션 중 범위 표시의 기준 칸(범위 효과에서 시전자 칸이 아닌 중심을 쓸 때만).
+    void ApplyStatusToTarget(Piece caster, List<Vector2Int> targets, CardEffect cardEffect, Vector2Int? rangeOrigin = null)
     {
         var reactions = new List<IEnumerator>();
         foreach (Vector2Int pos in targets)
@@ -945,7 +946,7 @@ public partial class Board
             if (effect != null)
                 reactions.Add(target.StatusTextReaction(effect.DisplayName, effect.IsBuff, effect.EffectColor));
         }
-        motionQueue.Enqueue(PlayCasterAndTargetReaction(caster, cardEffect?.animTrigger, Parallel(reactions.ToArray()), cardEffect));
+        motionQueue.Enqueue(PlayCasterAndTargetReaction(caster, cardEffect?.animTrigger, Parallel(reactions.ToArray()), cardEffect, originPos: rangeOrigin));
         StartMotionQueue();
     }
 
@@ -1042,6 +1043,9 @@ public partial class Board
             : userTeam;
         var targets = new List<Vector2Int>();
         var cells = new List<Vector2Int>();
+        // 애니메이션 중 범위 표시의 기준 칸 — 실제로 범위를 펼친 중심과 같게 넘긴다. MouseCentered면 클릭한 칸이라
+        // 시전자 칸과 다르다(넘기지 않으면 TriggerAnimCor가 시전자 칸 기준으로 그려 실제로 맞은 칸과 어긋남).
+        Vector2Int rangeOrigin = selectedButton;
 
         if (cardEffect.lockOnAllyPositions)
         {
@@ -1067,6 +1071,7 @@ public partial class Board
 
             foreach (Vector2Int offset in offsets)
                 cells.Add(actualCenter + offset);
+            rangeOrigin = actualCenter;
         }
 
         foreach (Vector2Int pos in cells)
@@ -1091,16 +1096,16 @@ public partial class Board
         switch (cardEffect.type)
         {
             case EffectType.Damage:
-                AreaAttackPiece(selectedButton, targets, ResolveDamageWithColDamage(cardEffect, caster), cardEffect);
+                AreaAttackPiece(selectedButton, targets, ResolveDamageWithColDamage(cardEffect, caster), cardEffect, rangeOrigin);
                 break;
             case EffectType.Shield:
-                AreaShieldPiece(targets, ResolveShieldWithBonus(cardEffect, caster), cardEffect);
+                AreaShieldPiece(targets, ResolveShieldWithBonus(cardEffect, caster), cardEffect, rangeOrigin);
                 break;
             case EffectType.Heal:
-                AreaHealPiece(targets, cardEffect.dmg, cardEffect);
+                AreaHealPiece(targets, cardEffect.dmg, cardEffect, rangeOrigin);
                 break;
             case EffectType.ApplyStatus:
-                ApplyStatusToTarget(caster, targets, cardEffect);
+                ApplyStatusToTarget(caster, targets, cardEffect, rangeOrigin);
                 break;
             case EffectType.AddGrave:
                 foreach (Vector2Int pos in targets)

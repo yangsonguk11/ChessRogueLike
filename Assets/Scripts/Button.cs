@@ -59,7 +59,15 @@ public class Button : MonoBehaviour, ISelectable
 
 
     public void SetDeckActive(bool active) => DeckActiveObj?.SetActive(active);
-    public void SetCasterIndicator(bool active) => CasterIndicatorObj?.SetActive(active);
+
+    // 범위 표시(파랑=아군 범위, 빨강=적 범위, 초록=시전자). 무엇을 켤지는 Board.RefreshRangeDisplay가
+    // 우선순위에 따라 정해서 모든 칸에 한꺼번에 적용한다 — 칸이 직접 상태를 쌓지 않는다.
+    public void SetRangeVisual(bool ally, bool enemy, bool caster)
+    {
+        AllyRangeObj.SetActive(ally);
+        EnemyRangeObj.SetActive(enemy);
+        CasterIndicatorObj?.SetActive(caster);
+    }
 
     public GameObject GetPiece() { if (piece) return piece; else return null; }
     public Piece GetPieceScript() { if (piece) return piece.GetComponent<Piece>(); else return null; }
@@ -111,27 +119,6 @@ public class Button : MonoBehaviour, ISelectable
         ScaleHover();
     }
 
-    int allyRangeRefCount = 0;
-    int enemyRangeRefCount = 0;
-
-    public void RangeOn(int teamID)
-    {
-        if (teamID == 0) { allyRangeRefCount++;  AllyRangeObj.SetActive(true); }
-        else             { enemyRangeRefCount++; EnemyRangeObj.SetActive(true); }
-    }
-    public void RangeOff(int teamID)
-    {
-        if (teamID == 0)
-        {
-            allyRangeRefCount = Mathf.Max(0, allyRangeRefCount - 1);
-            if (allyRangeRefCount == 0) AllyRangeObj.SetActive(false);
-        }
-        else
-        {
-            enemyRangeRefCount = Mathf.Max(0, enemyRangeRefCount - 1);
-            if (enemyRangeRefCount == 0) EnemyRangeObj.SetActive(false);
-        }
-    }
     public Vector2Int GetLocation() { return location; }
     void SetLocation(int _x, int _y)
     {

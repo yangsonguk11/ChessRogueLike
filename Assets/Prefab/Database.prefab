@@ -109,6 +109,7 @@ MonoBehaviour:
   - {fileID: 8950236184682274632, guid: aadc886cca3f4ef9b2da20fab9c9f3de, type: 3}
   - {fileID: 8950236184682274632, guid: efda4e69cf8141dc80f500386c820066, type: 3}
   - {fileID: 8950236184682274632, guid: a203b0eff7e04b79bfaa9c9599427e17, type: 3}
+  - {fileID: 8950236184682274632, guid: 7f1a0f8615b04974a782762cd5e35bbc, type: 3}
   spritesPrefabs:
   - {fileID: 8983308741282738250, guid: 4cd8a850886c3d84192f6b9fe63b7103, type: 3}
   - {fileID: 8983308741282738250, guid: acfd85d4bfd6ed04789af40e579bad12, type: 3}
@@ -179,24 +180,20 @@ MonoBehaviour:
   - levels:
     - {fileID: 11400000, guid: 19387901c67acba43a1c093a9bdcb7e8, type: 2}
   - levels:
-    - {fileID: 11400000, guid: d564be8c8e84a494d8475bc69cc69160, type: 2}
     - {fileID: 11400000, guid: 28fc3c0e3e081494dbc4f5e44131784c, type: 2}
   - levels:
-    - {fileID: 11400000, guid: d564be8c8e84a494d8475bc69cc69160, type: 2}
     - {fileID: 11400000, guid: 28fc3c0e3e081494dbc4f5e44131784c, type: 2}
   - levels:
     - {fileID: 11400000, guid: d564be8c8e84a494d8475bc69cc69160, type: 2}
-    - {fileID: 11400000, guid: 28fc3c0e3e081494dbc4f5e44131784c, type: 2}
   - levels:
     - {fileID: 11400000, guid: 28fc3c0e3e081494dbc4f5e44131784c, type: 2}
   - levels:
-    - {fileID: 11400000, guid: 28fc3c0e3e081494dbc4f5e44131784c, type: 2}
+    - {fileID: 11400000, guid: 5f4a354edaae2d840bd0efa6f53a65ce, type: 2}
   - levels:
     - {fileID: 11400000, guid: 49a264bc093d14947b49c22b255ab160, type: 2}
   - levels:
     - {fileID: 11400000, guid: 4c2f5deb5e169364f8814f291f6f4911, type: 2}
   - levels:
-    - {fileID: 11400000, guid: 5f4a354edaae2d840bd0efa6f53a65ce, type: 2}
     - {fileID: 11400000, guid: b0551000000000000000000000000041, type: 2}
     - {fileID: 11400000, guid: b0551000000000000000000000000042, type: 2}
     - {fileID: 11400000, guid: b0551000000000000000000000000043, type: 2}

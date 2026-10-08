@@ -105,13 +105,10 @@ public abstract class Card : MonoBehaviour, ISelectable
     [SerializeField] TextMeshProUGUI typeText;
     [SerializeField] TextMeshProUGUI effectText;
 
-    CanvasGroup _canvasGroup;
-
     public virtual void Awake()
     {
         defaultScale = transform.localScale;
         cardCanvas = GameObject.Find("CardCanvas");
-        _canvasGroup = GetComponent<CanvasGroup>();
     }
 
     void Start()
@@ -210,17 +207,19 @@ public abstract class Card : MonoBehaviour, ISelectable
     public void SelectedTrue()
     {
         selected = true;
+        CancelHoverPose(); // 잡은 뒤엔 마우스가 위치를 정하므로 호버 자세를 되돌리는 트윈 없이 버린다
         transform.localRotation = Quaternion.Euler(0, 0, 0);
         ScaleHover();
-        ClearHoverLift(); // 잡는 순간엔 리프트 없이 원래처럼 스케일만
+        SetFront(true);    // 호버로 꺼낸 상태를 드래그 중에도 유지 — 잡자마자 MainCanvas UI 뒤로 숨지 않게
     }
 
     [HideInInspector] public Vector3 defaultScale;
-    float hoverScale = 1.1f;
+    float hoverScale = 1.3f;
     float speed = 10f;
     [SerializeField] float hoverLift = 20f;
-    bool isHoverLifted;
-    float restY; // 리프트 안 걸렸을 때의 "바닥" localPosition.y
+    bool inHoverPose;         // 호버 의도 — 이동 연출 중에 들어온 호버도 기록해 두고, 연출이 끝나 정착할 때 반영한다
+    Vector3 restPos;          // 정렬(AlignCards 등)이 정해 준 슬롯 localPosition
+    Quaternion restRotation;  // 정렬이 정해 준 슬롯 기울기
 
     public GameObject cardCanvas;
     public int handNumber;
@@ -230,10 +229,12 @@ public abstract class Card : MonoBehaviour, ISelectable
 
     float ScaleDuration => Mathf.Clamp(3f / Mathf.Max(speed, 0.01f), 0.05f, 1f);
 
+    // 확대가 풀리는 모든 경로(호버 해제·선택 해제·선택 패널 정리)에서 앞으로 꺼낸 상태도 같이 푼다.
     public void ScaleDefault()
     {
         DOTween.Kill(transform);
         transform.DOScale(defaultScale, ScaleDuration).SetEase(Ease.OutBack);
+        SetFront(false);
     }
     public void ScaleHover()
     {
@@ -241,36 +242,120 @@ public abstract class Card : MonoBehaviour, ISelectable
         transform.DOScale(defaultScale * hoverScale, ScaleDuration).SetEase(Ease.OutBack);
     }
 
-    // 호버 리프트용 — 선택(드래그) 중인 카드는 리프트를 걸지 않는다는 조건만 IsSelectable에 추가.
+    // 호버 자세용 — 선택(드래그) 중인 카드는 호버 자세를 걸지 않는다는 조건만 IsSelectable에 추가.
     bool IsHandCard() => !selected && IsSelectable();
 
-    // 리프트는 SetId(this)로 관리되는 제네릭 트윈이라(target이 transform이 아님) ScaleHover/ScaleDefault의
-    // DOTween.Kill(transform)에 걸리지 않는다 — 그래서 호출 순서를 신경 쓸 필요가 없다.
-    // restY 갱신은 DOTween.IsTweening(this)로 "이전 리프트 트윈이 이미 끝났는지"를 확인해서만 한다 —
-    // 아직 살아있는 도중(반복 호버로 중간에 다시 걸린 경우)엔 갱신하지 않아야 드리프트가 안 생긴다.
+    // 손패 안에서의 자세(슬롯 정렬 + 호버)는 카드 하나당 제네릭 트윈 하나(SetId(this), target 없음)로 움직인다.
+    // 새 목표가 오면 진행 중인 트윈을 죽이고 현재 위치에서 이어 가므로 겹쳐도 중간에 멈추지 않는다. target이
+    // transform이 아니라 ScaleHover/ScaleDefault의 DOTween.Kill(transform)에도 걸리지 않는다.
+    // 날아오거나 나가는 이동 연출(CardCanvas.activeCardMoves) 중에는 슬롯·호버 의도만 기록하고, 연출이 끝나면
+    // CardCanvas가 SettleToHandPose를 불러 마저 정착시킨다.
     const float LiftDuration = 0.12f;
+    const float AlignDuration = 0.2f;
 
-    void ApplyHoverLift()
+    void ApplyHoverPose()
     {
-        if (isHoverLifted) return;
-        isHoverLifted = true;
-        if (!DOTween.IsTweening(this))
-            restY = transform.localPosition.y;
-        DOTween.Kill(this);
-        DOTween.To(() => transform.localPosition.y,
-            y => { Vector3 p = transform.localPosition; p.y = y; transform.localPosition = p; },
-            restY + hoverLift, LiftDuration).SetEase(Ease.OutQuad).SetId(this);
+        if (inHoverPose) return;
+        inHoverPose = true;
+        SettleToHandPose(LiftDuration);
     }
 
-    void ClearHoverLift()
+    void ClearHoverPose()
     {
-        if (!isHoverLifted) return;
-        isHoverLifted = false;
-        DOTween.Kill(this);
-        DOTween.To(() => transform.localPosition.y,
-            y => { Vector3 p = transform.localPosition; p.y = y; transform.localPosition = p; },
-            restY, LiftDuration).SetEase(Ease.OutQuad).SetId(this);
+        if (!inHoverPose) return;
+        inHoverPose = false;
+        SettleToHandPose(LiftDuration);
     }
+
+    // 지금 있어야 할 자세(슬롯, 호버 중이면 호버 자세)로 트윈한다. 잡혀 있거나(마우스가 위치를 정함) 이동 연출
+    // 중이면 아무것도 하지 않는다.
+    public void SettleToHandPose(float duration = AlignDuration)
+    {
+        if (selected || CardCanvas.instance == null || CardCanvas.instance.IsCardMoving(GetComponent<RectTransform>())) return;
+        if (inHoverPose)
+            // 최소 hoverLift만큼, 그리고 확대된 카드의 아랫변이 부모(손패는 화면) 아래 끝에 잘리지 않을 만큼 올리고 똑바로 세운다.
+            TweenPose(new Vector3(restPos.x, Mathf.Max(restPos.y + hoverLift, ((RectTransform)transform.parent).rect.yMin + ((RectTransform)transform).rect.height * defaultScale.y * hoverScale / 2f), restPos.z), Quaternion.identity, duration);
+        else
+            TweenPose(restPos, restRotation, duration);
+    }
+
+    void TweenPose(Vector3 pos, Quaternion rot, float duration)
+    {
+        DOTween.Kill(this);
+        Vector3 fromPos = transform.localPosition;
+        Quaternion fromRot = transform.localRotation;
+        DOTween.To(() => 0f, t =>
+        {
+            transform.localPosition = Vector3.LerpUnclamped(fromPos, pos, t);
+            transform.localRotation = Quaternion.SlerpUnclamped(fromRot, rot, t);
+        }, 1f, duration).SetEase(Ease.OutQuad).SetId(this);
+    }
+
+    // 카드를 다른 곳(마우스·이동 연출·선택 패널)이 직접 배치할 때 호출 — 되돌리는 트윈 없이 호버 자세만 버린다.
+    public void CancelHoverPose()
+    {
+        DOTween.Kill(this);
+        inHoverPose = false;
+    }
+
+    // AlignCards/ExcludeAlignCards(와 선택 패널 배치)가 슬롯 자세를 정할 때 호출. 슬롯을 기억하고 그쪽으로 미끄러진다.
+    // snap이면 트윈 없이 바로 놓는다(선택 패널은 지금처럼 즉시 배치).
+    public void SetHandPose(Vector3 pos, Quaternion rot, bool snap = false)
+    {
+        restPos = pos;
+        restRotation = rot;
+        if (snap)
+        {
+            DOTween.Kill(this);
+            transform.localPosition = pos;
+            transform.localRotation = rot;
+            return;
+        }
+        SettleToHandPose();
+    }
+
+    // 손패로 들어오는 등장 연출(드로우·손패 추가)용 트윈. 출발 자세는 실제로 움직이기 시작할 때(딜레이가 끝난 뒤) 잡고,
+    // 목표는 매 프레임 지금 슬롯(rest)을 읽는다 — 날아오는 중에 손패가 다시 정렬돼도 멈추지 않고 새 자리로 휘어 들어간다.
+    public Tween HandSlotTween(float duration)
+    {
+        bool started = false;
+        Vector3 fromPos = default;
+        Quaternion fromRot = default;
+        return DOTween.To(() => 0f, t =>
+        {
+            if (!started)
+            {
+                started = true;
+                fromPos = transform.localPosition;
+                fromRot = transform.localRotation;
+            }
+            transform.localPosition = Vector3.LerpUnclamped(fromPos, restPos, t);
+            transform.localRotation = Quaternion.SlerpUnclamped(fromRot, restRotation, t);
+        }, 1f, duration).SetEase(Ease.OutCubic);
+    }
+
+    // 호버·드래그 중인 손패 카드를 이웃 카드(와 MainCanvas UI)보다 앞에 그린다. 형제 순서는 AlignCards/
+    // ExcludeAlignCards가 부채꼴 순서·handNumber와 함께 관리하므로 건드리지 않고, 카드에 붙인 하위 Canvas의
+    // overrideSorting만 켜고 끈다(카드 선택 패널·CardFxLayer와 같은 방식). 끄면 부모 Canvas 정렬을 그대로 따른다.
+    // 손패 카드만 필요하므로 처음 꺼낼 때 붙인다 — 적 행동 카드(AutoPiece) 같은 UI 밖 카드에는 붙지 않는다.
+    Canvas frontCanvas;
+
+    void SetFront(bool front)
+    {
+        if (front && frontCanvas == null)
+        {
+            frontCanvas = gameObject.AddComponent<Canvas>();
+            frontCanvas.additionalShaderChannels = frontCanvas.rootCanvas.additionalShaderChannels; // TMP용 채널을 루트와 맞춤
+            // 하위 Canvas의 그래픽은 부모 Canvas의 레이캐스터가 잡지 못하므로 EventTrigger가 계속 동작하도록 따로 붙인다.
+            gameObject.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+        }
+        if (frontCanvas == null || frontCanvas.overrideSorting == front) return;
+        frontCanvas.overrideSorting = front;
+        if (front) frontCanvas.sortingOrder = CardCanvas.instance.HoveredCardSortingOrder;
+    }
+
+    // 호버 중에 비활성화되면(기물 전환 등) MouseExit이 오지 않으므로 여기서 풀어 둔다.
+    void OnDisable() => SetFront(false);
 
     public void MouseEnter()
     {
@@ -281,7 +366,12 @@ public abstract class Card : MonoBehaviour, ISelectable
         AudioManager.instance?.PlayCardHover();
         ScaleHover();
         if (IsHandCard())
-            ApplyHoverLift();
+        {
+            ApplyHoverPose();
+            // 카드 선택 패널이 열려 있을 땐 꺼내지 않는다 — 패널도 하위 Canvas라 정렬 순서가 겹친다.
+            if (!CardCanvas.cardSelectionMode)
+                SetFront(true);
+        }
     }
 
     public void MouseExit()
@@ -290,7 +380,7 @@ public abstract class Card : MonoBehaviour, ISelectable
             || (CardCanvas.cardSelectionMode && CardCanvas.instance.IsSelectedInPanel(GetComponent<RectTransform>()));
         if (!keepScale)
             ScaleDefault();
-        ClearHoverLift(); // selected여도 리프트는 항상 풀어준다 — 선택 중엔 스케일만 유지되는 게 맞음
+        ClearHoverPose(); // selected여도 호버 자세는 항상 풀어준다 — 선택 중엔 스케일만 유지되는 게 맞음
     }
     public System.Action<string> onClickOverride;
 
@@ -312,19 +402,16 @@ public abstract class Card : MonoBehaviour, ISelectable
             return;
         }
         // 로직상 이미 손패를 떠난 카드(연출 대기 중이라 화면엔 아직 손패 자리에 남아있을 수 있음)는
-        // 집을 수 없다.
+        // 집을 수 없다. 집은 카드는 레이캐스트를 계속 막아 그 아래 깔린 카드·UI가 반응하지 않게 하고,
+        // HandZone 진입은 MouseDrag에서 사각형으로 판정한다.
         if (!selected && IsSelectable())
-        {
             CardCanvas.instance.CardSelected(handNumber);
-            _canvasGroup.blocksRaycasts = false;
-        }
     }
 
     public void MouseUp(BaseEventData data)
     {
         bool clearAfterDragUse = selected && CardCanvas.instance.nowusingCard == GetComponent<RectTransform>();
         if (selected) SelectedFalse();
-        _canvasGroup.blocksRaycasts = true;
         if (clearAfterDragUse)
             CardCanvas.instance.OnDragCardReleased(((PointerEventData)data).position);
         else
@@ -350,18 +437,13 @@ public abstract class Card : MonoBehaviour, ISelectable
 
         this.transform.position = pointerData.position;
 
-        foreach (GameObject obj in pointerData.hovered)
+        if (CardCanvas.instance.IsScreenPointInHandZone(pointerData.position))
         {
-            if (obj.name == "HandZone")
+            if (!CardCanvas.instance.UseCard(handNumber))
             {
-                if (!CardCanvas.instance.UseCard(handNumber))
-                {
-                    SelectedFalse();
-                    _canvasGroup.blocksRaycasts = true;
-                    CardCanvas.instance.CardUnSelected();
-                    CardDragArrow.instance?.Hide();
-                }
-                return;
+                SelectedFalse();
+                CardCanvas.instance.CardUnSelected();
+                CardDragArrow.instance?.Hide();
             }
         }
     }

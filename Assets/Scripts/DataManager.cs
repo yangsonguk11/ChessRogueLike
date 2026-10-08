@@ -71,7 +71,6 @@ public class DataManager : MonoBehaviour, IGameDataStore
         {
             string json = File.ReadAllText(savePath);
             currentData = JsonUtility.FromJson<GameData>(json);
-            MigrateLegacyDeckIfNeeded();
         }
         else
         {
@@ -145,21 +144,6 @@ public class DataManager : MonoBehaviour, IGameDataStore
         1 => summonerPieceinfo,
         _ => basicPieceinfo,
     };
-
-    // 기물별 덱 도입 이전 세이브 호환: 팀 공용이던 legacyDeckCardIDs를 0번 기물의 덱으로 한 번만 옮긴다.
-    void MigrateLegacyDeckIfNeeded()
-    {
-        if (currentData.deckCardIDs == null || currentData.deckCardIDs.Count == 0) return;
-        if (currentData.pieceData == null || currentData.pieceData.Count == 0) return;
-
-        PieceData first = currentData.pieceData[0];
-        if (first.deckCardIDs == null) first.deckCardIDs = new List<string>();
-        if (first.deckCardIDs.Count == 0)
-            first.deckCardIDs.AddRange(currentData.deckCardIDs);
-        currentData.pieceData[0] = first;
-
-        currentData.deckCardIDs.Clear();
-    }
 
     // PieceInfo + 시작 덱으로 PieceData를 조립 (기본 스탯 그대로, hp는 만피로 시작)
     public PieceData BuildPieceData(PieceInfo info, List<string> deckCardIDs)

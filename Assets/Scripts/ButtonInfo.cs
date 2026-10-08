@@ -57,7 +57,7 @@ public class ButtonInfo : MonoBehaviour
         hp.text = string.Format("HP: {0}/{1}", p.hp, p.maxhp);
         shield.text = "방어막: " + p.shield;
         shieldBonus.text = "방어막 보너스: " + BuildShieldBonusText(p);
-        colDamage.text = "충돌 피해: " + BuildColDamageText(p);
+        colDamage.text = "힘: " + BuildColDamageText(p);
         statusEffects.text = BuildStatusText(p);
     }
 

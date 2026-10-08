@@ -28,5 +28,5 @@ public class SummonMasteryCard : Card
         });
     }
 
-    public override string EffectDescription => "다음에 소환할 기물의 ColDamage, 체력을 2씩 올립니다. (소환 시 소모됨)";
+    public override string EffectDescription => "다음에 소환할 기물의 힘, 체력을 2씩 올립니다. (소환 시 소모됨)";
 }

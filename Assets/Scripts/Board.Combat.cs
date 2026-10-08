@@ -479,7 +479,8 @@ public partial class Board
         StartMotionQueue();
     }
 
-    void AreaAttackPiece(Vector2Int casterPos, List<Vector2Int> targets, int dmg, CardEffect cardEffect = null)
+    // rangeOrigin: 애니메이션 중 범위 표시의 기준 칸 — 범위 중심이 시전자 칸이 아닐 때(MouseCentered) 넘긴다.
+    void AreaAttackPiece(Vector2Int casterPos, List<Vector2Int> targets, int dmg, CardEffect cardEffect = null, Vector2Int? rangeOrigin = null)
     {
         if (casterPos.x < 0 || casterPos.y < 0 || targets.Count == 0) return;
 
@@ -524,7 +525,7 @@ public partial class Board
             textCoroutines.Add(caster.HealText(healed));
         }
 
-        motionQueue.Enqueue(PieceAreaAttackCor(caster, hitTargets, cardEffect?.animTrigger, cardEffect, textCoroutines));
+        motionQueue.Enqueue(PieceAreaAttackCor(caster, hitTargets, cardEffect?.animTrigger, cardEffect, textCoroutines, rangeOrigin));
         foreach (var d in deathCoroutines)
             motionQueue.Enqueue(d);
 
@@ -567,7 +568,7 @@ public partial class Board
         StartMotionQueue();
     }
 
-    void AreaShieldPiece(List<Vector2Int> targets, int dmg, CardEffect cardEffect = null)
+    void AreaShieldPiece(List<Vector2Int> targets, int dmg, CardEffect cardEffect = null, Vector2Int? rangeOrigin = null)
     {
         Button casterBtn = GetButtonScript(selectedButton);
         Piece caster = casterBtn.GetPieceScript();
@@ -587,12 +588,12 @@ public partial class Board
                 textCoroutines.Add(p.StatusTextReaction(shieldStatusEffect.DisplayName, shieldStatusEffect.IsBuff, shieldStatusEffect.EffectColor));
         }
 
-        motionQueue.Enqueue(PieceAreaShieldCor(caster, shieldedPieces, cardEffect?.animTrigger, cardEffect, textCoroutines));
+        motionQueue.Enqueue(PieceAreaShieldCor(caster, shieldedPieces, cardEffect?.animTrigger, cardEffect, textCoroutines, rangeOrigin));
 
         StartMotionQueue();
     }
 
-    void AreaHealPiece(List<Vector2Int> targets, int dmg, CardEffect cardEffect = null)
+    void AreaHealPiece(List<Vector2Int> targets, int dmg, CardEffect cardEffect = null, Vector2Int? rangeOrigin = null)
     {
         Button casterBtn = GetButtonScript(selectedButton);
         Piece caster = casterBtn.GetPieceScript();
@@ -611,7 +612,7 @@ public partial class Board
                 textCoroutines.Add(p.StatusTextReaction(healAreaStatusEffect.DisplayName, healAreaStatusEffect.IsBuff, healAreaStatusEffect.EffectColor));
         }
 
-        motionQueue.Enqueue(PieceAreaHealCor(caster, healedPieces, cardEffect?.animTrigger, cardEffect, textCoroutines));
+        motionQueue.Enqueue(PieceAreaHealCor(caster, healedPieces, cardEffect?.animTrigger, cardEffect, textCoroutines, rangeOrigin));
 
         StartMotionQueue();
     }
