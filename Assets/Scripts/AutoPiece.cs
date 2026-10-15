@@ -22,6 +22,10 @@ public class AutoPiece : Piece
         Movenum = 0;
         nextMove = actionCards[0];
         stunnedCard = gameObject.AddComponent<StunnedCard>();
+        // 행동 카드의 수치 미리보기(보드 칸 정보창의 다음 행동 카드 이미지)는 이 기물의 힘·방어막 보너스로 보여준다.
+        foreach (Card card in actionCards)
+            if (card != null) card.previewCasterOverride = this;
+        stunnedCard.previewCasterOverride = this;
     }
 
     void Start()
@@ -59,6 +63,18 @@ public class AutoPiece : Piece
         nextMove = actionCards[Movenum];
         return nextMove;
     }
+
+    // 행동 패턴 자체를 다른 카드 목록으로 교체하고 첫 카드부터 다시 순환한다(예: GuardianPiece의 격노 전환).
+    // 예고 텍스트도 바로 갱신한다 — 범위 예고는 호출 직후 기물 사망 연출(DeathCor)의 ShowAllEnemyRanges가 다시 그린다.
+    protected void SwitchActionCards(List<Card> cards)
+    {
+        if (cards == null || cards.Count == 0) return;
+        actionCards = cards;
+        Movenum = 0;
+        nextMove = actionCards[0];
+        lockedTargetCells = null;
+        ActionText();
+    }
     public override void ActionText()
     {
         Card card = GetNextMove();
@@ -89,6 +105,7 @@ public class AutoPiece : Piece
             EffectType.ColDamageUp => $"<sprite name=\"Damage\"><space=10>+{effect.dmg}",
             EffectType.ShieldBonusUp => $"<sprite name=\"Shield\"><space=10>+{effect.dmg}",
             EffectType.Stun        => "<sprite name=\"Stun\">",
+            EffectType.AddCard     => "<sprite name=\"Negative\">", // 상대 덱에 카드를 넣는 방해 행동
             // Damage/Shield/Move/Heal/Positive/Negative 6개 아이콘 중 어디에도 안 맞는 효과(Charge 포함)는
             // 전용 아이콘 없이 자연스럽게 Unknown으로 표시한다.
             _                      => "<sprite name=\"Unknown\">"

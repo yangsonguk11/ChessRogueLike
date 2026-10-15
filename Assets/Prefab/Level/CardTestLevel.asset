@@ -18,7 +18,7 @@ MonoBehaviour:
   - position: {x: 4, y: 3}
     name:
   - position: {x: 2, y: 3}
-    name: White Knight 1
+    name: Enemy-StrikerKnight
   levelType: 0
   eventType: 0
   eventObjectPosition: {x: 0, y: 0}

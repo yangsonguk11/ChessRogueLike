@@ -174,6 +174,36 @@ public class MovementDisabledEffect : StatusEffect
     public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
 }
 
+// 소멸 저주: 지속되는 동안 이 기물이 뽑는 카드에 소멸(exileOnUse)을 붙인다 — 실제 부여는 CardCanvas.DrawCardsData.
+// 붙은 소멸은 카드 인스턴스에 남으므로 저주가 풀려도 그 전투 동안 유지된다(원본 덱에는 남지 않음).
+public class ExileOnDrawEffect : StatusEffect
+{
+    public override string DisplayName => "소멸 저주";
+    public override bool IsBuff => false;
+    public override Color EffectColor => new Color(0.65f, 0.4f, 0.9f); // 소멸 저주 보라
+
+    public ExileOnDrawEffect(int duration)
+    {
+        this.duration = duration;
+    }
+    public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
+}
+
+// 결속: BondPiece가 스스로 거는 영구 버프. 실제 강화(동료 사망 시 완전 회복 + 힘 증가)는 BondPiece.OnTeammateDied가 하고,
+// 이 효과는 정보창 표시와 디스펠 대상 역할만 한다 — 지워지면 강화가 멈춘다. 카드로 거는 일이 없어 StatusEffectType은 없다.
+public class BondEffect : StatusEffect
+{
+    public override string DisplayName => "결속";
+    public override bool IsBuff => true;
+    public override Color EffectColor => new Color(1f, 0.55f, 0.2f); // 결속 주황
+
+    public BondEffect()
+    {
+        duration = -1;
+    }
+    public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
+}
+
 // 약화: colDamage 감소, 해제 시 원복
 public class WeakenEffect : StatusEffect
 {

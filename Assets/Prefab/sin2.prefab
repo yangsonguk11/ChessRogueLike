@@ -217,7 +217,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 84543820acf85bd47b76b933317ebbab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Rook
-  pieceInfo: {fileID: 11400000, guid: 9b16472a2e113a741a3e068e3f9f8357, type: 2}
+  pieceInfo: {fileID: 11400000, guid: 0fe1ba390242158408e91efab38dc8e7, type: 2}
   pieceCanvas: {fileID: 7808086467999899524}
   name: 
   hp: 50

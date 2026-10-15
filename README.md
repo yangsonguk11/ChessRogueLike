@@ -56,8 +56,8 @@ Assets/
 
 카드 한 장은 `Card.effects`(`List<CardEffect>`)를 가지며, `Board`는 이를 큐(`Queue<CardEffect> pendingEffects`)에 담아 **등록된 순서대로 하나씩** 처리합니다. 관련 코드: [Board.CardEffect.cs](Assets/Scripts/Board.CardEffect.cs).
 
-1. **카드 선택/드롭**: 손패에서 카드를 클릭하거나 드래그해 보드에 드롭하면 `CardCanvas.UseCard(handnum)` → `CommitNowUsingCard()`를 거쳐, 타겟팅이 필요한 카드는 `Board.UseCard(Card card)`가 호출됩니다.
-2. **`Board.UseCard`**: 이전 상태(`effectApplied` 등)를 초기화하고, `card.effects`를 전부 카드 시전자를 기록한 사본(`CardEffect.caster`)으로 `pendingEffects` 큐에 채운 뒤 `ProcessNextCardEffect()`를 시작합니다. 효과마다 이 시전자의 현재 위치를 시전자 칸으로 쓰므로, 앞 효과로 이동했으면 다음 효과는 새 위치 기준으로 처리됩니다.
+1. **카드 잡기**: 손패에서 카드를 드래그해 사용 영역에 들이면 `CardCanvas.UseCard(handnum)`이 사용 가능 여부를 검사하고 `Card.PrepareUseEffects`로 이번 사용 효과(`Card.UseEffects`)를 정합니다 — 시전자가 이동 불가면 처음 나오는 이동 효과부터 뒤는 빠지고, 남는 효과가 없으면 거부됩니다. 이어서 `CommitNowUsingCard()`가 `Board.ShowUseEligibilityPreview`로 범위만 미리 보여줍니다(**효과 큐는 아직 비어 있음**). 조준 카드(`Card.NeedsTargeting` — 이번 사용 효과 중 처음 나오는 command/targeting 효과가 있음, 단 Self 카드의 self 효과는 제외)는 NowUsing 자리로 가고 화살표가 뜹니다.
+2. **사용 확정(드롭) → `Board.UseCard`**: 드롭(조준 완료) 순간 `CardCanvas`가 `Board.UseCard(Card card)`를 호출합니다. 이전 상태(`effectApplied` 등)를 초기화하고, `card.UseEffects`를 카드 시전자를 기록한 사본(`CardEffect.caster`)으로 `pendingEffects` 큐에 채운 뒤 `ProcessNextCardEffect()`를 시작합니다. 조준 카드는 이어서 시전자 확정(`ConfirmCasterOnDrop`)과 드롭 칸 클릭(`ButtonClicked`)으로 첫 조준 효과까지 실행됩니다. 효과마다 이 시전자의 현재 위치를 시전자 칸으로 쓰므로, 앞 효과로 이동했으면 다음 효과는 새 위치 기준으로 처리됩니다.
 3. **`ProcessNextCardEffect`**: 큐의 다음 효과(`Peek`)를 보고 진행 방식을 분기합니다.
    - **적 카드(`User.Enemy`)**: `ProcessEnemyCardEffect`가 `TargetLogic`(`NearestEnemy` / `LowestHP` / `self` / `AllXInRange` 등)에 따라 대상을 자동으로 계산해 즉시 실행합니다.
    - **아군 카드(`User.Ally`)**: 효과의 `requiredMode`에 따라

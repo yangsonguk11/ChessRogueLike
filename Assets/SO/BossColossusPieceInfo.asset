@@ -12,13 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e4dbbf5546730bb49820b9d1b68e5d31, type: 3}
   m_Name: BossColossusPieceInfo
   m_EditorClassIdentifier: Assembly-CSharp::PieceInfo
-  _pieceName: BossColossus
+  _pieceName: Boss-Colossus
   _teamID: 1
   _isSummon: 0
-  _maxHp: 120
+  _maxHp: 160
   _colDamage: 3
   _shieldBonus: 0
   _rangeInfoSO: {fileID: 11400000, guid: b0551000000000000000000000000013, type: 2}
-  _moveAttackRangeInfoSO: {fileID: 0}
+  _moveAttackRangeInfoSO: {fileID: 11400000, guid: 88159582bbcc08e4daf911f1a52c6d21, type: 2}
   _defaultDeckCardIDs: []
   _job: {fileID: 0}

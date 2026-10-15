@@ -1254,8 +1254,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 5.2237, y: 21.4196}
-  m_SizeDelta: {x: 1510.4473, y: 650}
+  m_AnchoredPosition: {x: 5.2237, y: 100}
+  m_SizeDelta: {x: 1510.4473, y: 800}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &229027416
 MonoBehaviour:
@@ -4871,7 +4871,7 @@ MonoBehaviour:
   UnSeenEvent: {fileID: 992647663}
   HandZone: {fileID: 229027414}
   CardNowUsingPos: {fileID: 1833840005}
-  UsedCardPos: {fileID: 0}
+  UsedCardPos: {fileID: 1867301559}
   DiscardZone: {fileID: 1709148942}
   DeckZone: {fileID: 403344652}
   ExileZone: {fileID: 648545954}
@@ -8270,7 +8270,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1867301559}
   m_Layer: 5
-  m_Name: usingCardZone (1)
+  m_Name: UsedCardZone
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10727,6 +10727,10 @@ PrefabInstance:
       propertyPath: basicPieceinfo
       value: 
       objectReference: {fileID: 11400000, guid: 042a7cc1d50ce5f4aacf437f5a1249ba, type: 2}
+    - target: {fileID: 7461927350218046512, guid: 639ed4e90abdf214fbb2e62aa82e1f41, type: 3}
+      propertyPath: m_Volume
+      value: 0.5
+      objectReference: {fileID: 0}
     - target: {fileID: 8396835437337102601, guid: 639ed4e90abdf214fbb2e62aa82e1f41, type: 3}
       propertyPath: m_LocalPosition.x
       value: 372.40643
@@ -10954,10 +10958,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5845322441005520208, guid: b89ee0a901e13614ab33535754b08c1c, type: 3}
-      propertyPath: 'floorPools.Array.data[0].levels.Array.data[0]'
-      value: 
-      objectReference: {fileID: 11400000, guid: 19387901c67acba43a1c093a9bdcb7e8, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

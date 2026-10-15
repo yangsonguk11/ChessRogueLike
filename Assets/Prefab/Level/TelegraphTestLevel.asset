@@ -20,11 +20,11 @@ MonoBehaviour:
   - position: {x: 4, y: 4}
     name: 
   - position: {x: 1, y: 3}
-    name: White Knight 5
+    name: Enemy-ChargeKnight
   - position: {x: 2, y: 2}
-    name: White Knight 1
+    name: Enemy-StrikerKnight
   - position: {x: 2, y: 4}
-    name: White Knight 1
+    name: Enemy-StrikerKnight
   - position: {x: 5, y: 3}
     name: summoner
   levelType: 0

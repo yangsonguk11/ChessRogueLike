@@ -220,6 +220,19 @@ public class CardCanvas : MonoBehaviour
     public bool UseCard(int handnum)
     {
         Card card = cards[handnum].GetComponent<Card>();
+        // 사용 불가 카드는 다른 어떤 조건보다 먼저 거부한다(코스트 부족 안내가 대신 뜨지 않게).
+        if (card.IsUnplayable)
+        {
+            AnnouncementUI.instance?.Show("사용할 수 없는 카드입니다");
+            return false;
+        }
+        // 이동 불가면 처음 나오는 이동 효과부터 뒤는 이번 사용에서 뺀다. 남는 효과가 없으면(첫 효과가 이동) 쓸 수 없다.
+        card.PrepareUseEffects(activePiece);
+        if (card.UseEffects.Count == 0)
+        {
+            AnnouncementUI.instance?.Show("이동 불가 상태입니다");
+            return false;
+        }
         // isCardEffecting이면서 nowusingCard가 없으면 보드가 실제 효과 처리 중 → 차단
         // nowusingCard가 있으면 아직 애니메이션/대기 중이므로 교체 허용
         if (card.Cost > currentenergy)
@@ -259,16 +272,17 @@ public class CardCanvas : MonoBehaviour
         return true;
     }
 
-    // nowusingCard를 보드 사용(타겟팅 카드면 board.UseCard)과 NowUsing 위치 이동 애니메이션(타겟팅 카드만)으로 커밋.
+    // nowusingCard를 사용 대기 상태로 커밋: 범위 미리보기(타겟팅/기물 선택/Self 카드)와 NowUsing 위치 이동 애니메이션(타겟팅 카드만).
+    // 효과는 아직 큐에 넣지 않는다 — 사용이 확정되는 드롭(조준 완료) 때 board.UseCard가 넣는다(OnDragCardReleased/ConfirmAim).
     // 최초 사용 시와, HandZone으로 되돌아와 재커밋할 때 공통으로 쓰인다.
     void CommitNowUsingCard()
     {
         AudioManager.instance?.PlayCardCommit();
         nowUsingCardHeld = false;
         Card cardComp = nowusingCard.GetComponent<Card>();
-        if (cardComp.NeedsTargeting() || cardComp.effects[0].pieceSelectCount > 0
+        if (cardComp.NeedsTargeting() || cardComp.UseEffects[0].pieceSelectCount > 0
             || cardComp.dragDropTarget == DragDropTarget.Self)
-            board.UseCard(cardComp);
+            board.ShowUseEligibilityPreview(cardComp);
         if (cardComp.NeedsTargeting())
             CardDragArrow.instance?.Show(nowusingCard);
         board.SetCasterIndicator(activePiece, true); // 카드 종류 상관없이 들고 있는 동안 시전자 칸 표시
@@ -283,9 +297,19 @@ public class CardCanvas : MonoBehaviour
             {
                 Vector2Int target = pendingFirstTarget;
                 pendingFirstTarget = new Vector2Int(-1, -1);
-                board.ButtonClicked(target);
+                ConfirmAim(nowusingCard.GetComponent<Card>(), target);
             }
         }, bypassGap: true);
+    }
+
+    // 조준 완료 = 사용 확정: 이때 효과를 큐에 넣고(board.UseCard), 시전자 확정(self 효과 실행) 후 드롭 칸을 첫 조준 효과의 클릭으로 넘긴다.
+    // self 효과가 앞에 있는 카드(ShieldMoveCard)는 self 효과가 실행된 뒤 다음 조준 효과가 클릭을 기다리고 있다가 이 칸으로 실행된다.
+    void ConfirmAim(Card card, Vector2Int pos)
+    {
+        board.UseCard(card);
+        board.ConfirmCasterOnDrop();
+        if (nowusingCard != null)
+            board.ButtonClicked(pos);
     }
 
     // 이미 커밋된 nowusingCard를 매 드래그 프레임 처리. HandZone 진입·이탈은 IsScreenPointInHandZone으로 판정한다.
@@ -390,15 +414,7 @@ public class CardCanvas : MonoBehaviour
     }
     public void DrawTurnStartCards()
     {
-        var newCards = new List<RectTransform>();
-        for (int i = 0; i < 5; i++)
-        {
-            if (Deckcards.Count == 0) DiscardtoDeck();
-            if (Deckcards.Count == 0) break;
-            var card = Deckcards.Dequeue();
-            cards.Add(card);
-            newCards.Add(card);
-        }
+        List<RectTransform> newCards = DrawCardsData(activePiece, 5);
         if (newCards.Count == 0) return;
 
         foreach (var c in newCards) HoldForEntrance(c); // 정렬이 새 카드를 덱에서 미리 끌어가지 않게
@@ -424,28 +440,53 @@ public class CardCanvas : MonoBehaviour
             if (piece == activePiece)
                 DrawTurnStartCards();
             else
-                DrawCardsDataOnly(piece.pieceDeck, 5);
+                DrawCardsData(piece, 5);
         }
         GetMaxEnergy();
         NotifyPileChanged();
     }
 
-    // 비활성 기물용: 애니메이션 없이 덱에서 count장을 손패로 옮긴다. 덱이 부족하면 버림더미를 셔플해 보충.
-    void DrawCardsDataOnly(PieceDeck pd, int count)
+    // 모든 드로우의 공통 로직(연출 없음): piece의 덱에서 count장을 손패로 옮기고 뽑은 카드를 돌려준다. 덱이 부족하면
+    // 버림더미를 셔플해 보충한다. 화면에 띄운 기물의 경로(DrawTurnStartCards/DrawCard)는 이 위에 연출만 얹는다.
+    // 뽑는 순간의 처리(소멸 저주 등)는 여기 한 곳에서 한다.
+    List<RectTransform> DrawCardsData(Piece piece, int count)
     {
+        var drawn = new List<RectTransform>();
+        PieceDeck pd = piece?.pieceDeck;
+        if (pd == null) return drawn;
         for (int i = 0; i < count; i++)
         {
-            if (pd.Deck.Count == 0) ShuffleDiscardIntoDeckDataOnly(pd);
+            if (pd.Deck.Count == 0) ShuffleDiscardIntoDeck(pd);
             if (pd.Deck.Count == 0) break;
-            pd.Hand.Add(pd.Deck.Dequeue());
+            RectTransform card = pd.Deck.Dequeue();
+            pd.Hand.Add(card);
+            ApplyDrawCurse(piece, card);
+            drawn.Add(card);
         }
+        return drawn;
     }
 
-    void ShuffleDiscardIntoDeckDataOnly(PieceDeck pd)
+    // 소멸 저주(ExileOnDrawEffect)에 걸린 기물이 뽑은 카드에 소멸을 붙인다 — DrawCardsData 전용.
+    // 카드 인스턴스의 exileOnUse라 저주가 풀려도 그 전투 동안 남는다. 이미 소멸이거나 쓸 수 없는 카드는 건너뛴다.
+    void ApplyDrawCurse(Piece owner, RectTransform rt)
     {
-        if (pd.Discard.Count == 0) return;
+        if (!owner.activeEffects.Exists(e => e is ExileOnDrawEffect)) return;
+        Card card = rt.GetComponent<Card>();
+        if (card == null || card.exileOnUse || card.IsUnplayable) return;
+        card.exileOnUse = true;
+        card.RefreshView();
+    }
+
+    // 버림더미를 섞어 덱으로 옮긴다. 카드 위치를 덱 칸으로 스냅한다 — 화면에 없는 기물의 카드는 꺼져 있어 무해하다.
+    void ShuffleDiscardIntoDeck(PieceDeck pd)
+    {
+        if (pd == null || pd.Discard.Count == 0) return;
         var shuffled = pd.Discard.OrderBy(_ => UnityEngine.Random.value).ToList();
-        foreach (var card in shuffled) pd.Deck.Enqueue(card);
+        foreach (var card in shuffled)
+        {
+            card.position = GetZonePosition(CardPositionZone.Deck);
+            pd.Deck.Enqueue(card);
+        }
         pd.Discard.Clear();
     }
 
@@ -474,7 +515,7 @@ public class CardCanvas : MonoBehaviour
         {
             Card card = rt.GetComponent<Card>();
             if (card == null) continue;
-            bool canUse = playerTurn && !boardProcessing && !stunned && card.Cost <= currentenergy && card.CanUse()
+            bool canUse = playerTurn && !boardProcessing && !stunned && !card.IsUnplayable && card.Cost <= currentenergy && card.CanUse()
                 && card.HasGraveForFirstEffect(activePiece);
             rt.GetComponent<CanvasGroup>().interactable = canUse;
         }
@@ -535,7 +576,8 @@ public class CardCanvas : MonoBehaviour
             isCardEffecting = false;
             bool exile = card.ShouldExileOnUse();
             if (exile) Exilecards.Add(usedCard);
-            else { Discardcards.Add(usedCard); NotifyPileChanged(); }
+            else Discardcards.Add(usedCard);
+            NotifyPileChanged();
 
             pendingCardFlights++;
             awaitingFlyOut.Enqueue((usedCard, exile));
@@ -563,7 +605,7 @@ public class CardCanvas : MonoBehaviour
         if (exile)
         {
             AudioManager.instance?.PlayCardExile();
-            EnqueueMove(usedCard, GetZonePosition(CardPositionZone.Exile), Quaternion.identity, 0.25f, () => pendingCardFlights--);
+            StartCardMove(usedCard, ExileFadeTween(usedCard, 0.25f), () => pendingCardFlights--, false);
         }
         else
         {
@@ -606,6 +648,20 @@ public class CardCanvas : MonoBehaviour
         StartCardMove(card, DOTween.Sequence()
             .Join(card.DOMove(pos, duration).SetEase(Ease.OutCubic))
             .Join(card.DOLocalRotateQuaternion(rot, duration).SetEase(Ease.OutCubic)), onComplete, bypassGap);
+    }
+
+    // 소멸 연출: 날아가지 않고 지금 자리에서 사라진 뒤 소멸 더미 자리로 옮겨 다시 보이게 한다.
+    Sequence ExileFadeTween(RectTransform card, float duration)
+    {
+        CanvasGroup cg = card.GetComponent<CanvasGroup>();
+        return DOTween.Sequence()
+            .Append(cg.DOFade(0f, duration).SetEase(Ease.OutCubic))
+            .AppendCallback(() =>
+            {
+                card.position = GetZonePosition(CardPositionZone.Exile);
+                card.localRotation = Quaternion.identity;
+                cg.alpha = 1f;
+            });
     }
 
     // 손패로 들어오는 등장 연출(드로우·손패 추가). 목표는 카드의 현재 슬롯을 매 프레임 따라간다(Card.HandSlotTween).
@@ -672,6 +728,15 @@ public class CardCanvas : MonoBehaviour
             .Join(card.DOLocalRotateQuaternion(rot, duration).SetEase(Ease.OutCubic)));
     }
 
+    // MoveCardVisualCor의 소멸판 — motionQueue 순서에 맞춰 ExileFadeTween을 재생한다(ExileHand 효과).
+    public IEnumerator ExileCardVisualCor(RectTransform card, float duration)
+    {
+        if (card == null) yield break;
+        CancelCardMove(card);
+        card.GetComponent<Card>()?.CancelHoverPose();
+        yield return TrackCardMoveCor(card, ExileFadeTween(card, duration));
+    }
+
     // motionQueue용 손패 등장 연출(배치 드로우). 목표는 카드의 현재 슬롯을 따라간다. 기다리는 사이 카드가 손패를
     // 떠났으면 그 이동이 카드를 맡고 있으므로 건너뛴다.
     IEnumerator MoveCardToHandCor(RectTransform card, float duration)
@@ -703,12 +768,8 @@ public class CardCanvas : MonoBehaviour
 
     public void DrawCard()
     {
-        if (Deckcards.Count == 0)
-            DiscardtoDeck();
-        if (Deckcards.Count != 0)
+        foreach (RectTransform newCard in DrawCardsData(activePiece, 1))
         {
-            RectTransform newCard = Deckcards.Dequeue();
-            cards.Add(newCard);
             HoldForEntrance(newCard); // 등장 연출(BatchDrawAnim → motionQueue)이 시작되기 전까지 정렬이 끌어가지 않게
             pendingDrawCards.Add(newCard);
             NotifyPileChanged();
@@ -737,22 +798,6 @@ public class CardCanvas : MonoBehaviour
         }
     }
 
-    void DiscardtoDeck()
-    {
-        if (Discardcards.Count == 0) return;
-
-        var shuffledCards = Discardcards.OrderBy(_ => UnityEngine.Random.value).ToList();
-
-        foreach (var card in shuffledCards)
-        {
-            card.position = GetZonePosition(CardPositionZone.Deck);
-            Deckcards.Enqueue(card);
-        }
-
-        Discardcards.Clear();
-        NotifyPileChanged();
-    }
-
     public void GetMaxEnergy()
     {
         currentenergy = maxenergy;
@@ -764,37 +809,64 @@ public class CardCanvas : MonoBehaviour
         UnSeenEvent?.SetActive(visible);
     }
 
-    // 전투 중 새 카드를 실제로 추가한다. 화면 중심에 나타나 1초 머물다 targetZone으로 날아가는
-    // 카드 자체가 그대로 targetZone의 더미/손패에 들어가는 실제 카드이며, 별도의 연출용 인스턴스는 만들지 않는다.
-    // 리스트 소속(로직)은 여기서 즉시 정해지고, 화면상 이동은 이후 애니메이션(EnqueueMove)이 따라잡는다.
-    // Hand로 추가하는 경우도 마찬가지 — DrawCard/DrawTurnStartCards와 같은 방식으로, 화면 중앙에서 이 카드의
-    // 부채꼴 슬롯(날아오는 사이 다시 정렬되면 바뀐 슬롯)까지 날아가는 걸로 보이게 한다.
-    public void AddCardDuringCombat(string cardname, CardPositionZone targetZone = CardPositionZone.Discard)
+    // 전투 중 target 기물의 전투 덱(pieceDeck)에 새 카드를 넣는다 — 원본 덱(DataManager의 deckCardIDs)은 건드리지
+    // 않으므로 전투가 끝나면 사라진다. targetZone은 Hand/Deck(맨 아래)이고 그 밖은 버림 더미다.
+    // 소속(로직)은 여기서 즉시 확정하고, 연출은 반환하는 코루틴이 맡는다 — 호출부가 재생 시점을 정한다(Board는
+    // motionQueue에 넣어 시전 연출에 맞추고, 즉시 보여줄 곳은 StartCoroutine). 그때까지 카드는 꺼 둔다.
+    // 연출: 재생 시점에 target이 화면에 표시 중인 기물이면 화면 중앙에서 1초 보여준 뒤 해당 더미/손패 슬롯으로 날린다.
+    // 아니면 카드를 꺼 둔 채 더미 자리에 두고, 그 기물로 전환할 때 SetPileActive가 다른 카드와 함께 보여준다.
+    public IEnumerator AddCardDuringCombat(Piece target, string cardname, CardPositionZone targetZone)
     {
+        PieceDeck pd = target?.pieceDeck;
+        if (pd == null) return null;
+
         GameObject obj = cardData.SpawnCard(GetComponent<RectTransform>(), cardname);
-        if (obj == null) return;
+        if (obj == null) return null;
 
         RectTransform rt = obj.GetComponent<RectTransform>();
-        rt.position = GetZonePosition(CardPositionZone.Center);
         rt.localRotation = Quaternion.identity;
+        obj.SetActive(false);
 
-        if (targetZone == CardPositionZone.Hand)
+        CardPositionZone zone = targetZone == CardPositionZone.Hand || targetZone == CardPositionZone.Deck
+            ? targetZone : CardPositionZone.Discard;
+        if (zone == CardPositionZone.Hand) pd.Hand.Add(rt);
+        else if (zone == CardPositionZone.Deck) pd.Deck.Enqueue(rt);
+        else pd.Discard.Add(rt);
+
+        bool shownNow = target == activePiece;
+        rt.position = GetZonePosition(shownNow ? CardPositionZone.Center : zone);
+        if (shownNow && zone == CardPositionZone.Hand)
         {
-            cards.Add(rt);
-            HoldForEntrance(rt); // 화면 중앙에서 1초 보여주는 동안 정렬이 끌어가지 않게
+            HoldForEntrance(rt); // 연출을 기다리는 동안 정렬이 끌어가지 않게
             AlignCards(); // 기존 손패는 새 자리로 미끄러지고, 이 카드는 슬롯만 기억한다
-            NotifyPileChanged();
-            StartCoroutine(ShowAddedCardToHandRoutine(rt));
-            return;
         }
-
-        if (targetZone == CardPositionZone.Deck)
-            Deckcards.Enqueue(rt);
-        else
-            Discardcards.Add(rt);
         NotifyPileChanged();
 
-        StartCoroutine(ShowAddedCardRoutine(rt, GetZonePosition(targetZone)));
+        return RevealAddedCard(target, rt, zone);
+    }
+
+    IEnumerator RevealAddedCard(Piece target, RectTransform rt, CardPositionZone zone)
+    {
+        if (rt == null) yield break;
+        if (target != activePiece)
+        {
+            // 기다리는 사이 다른 기물로 전환했다 — 연출 없이 더미 자리로 돌려놓는다(전환해 오면 SetPileActive가 켠다).
+            CancelCardMove(rt);
+            rt.position = GetZonePosition(zone);
+            yield break;
+        }
+
+        rt.position = GetZonePosition(CardPositionZone.Center);
+        rt.gameObject.SetActive(true);
+        if (zone == CardPositionZone.Hand)
+        {
+            HoldForEntrance(rt);
+            yield return ShowAddedCardToHandRoutine(rt);
+            // 1초 사이 다른 기물로 전환했으면 등장 자리표시를 풀어 둔다 — 전환해 오면 정렬이 손패 슬롯에 놓는다.
+            if (!cards.Contains(rt)) CancelCardMove(rt);
+        }
+        else
+            yield return ShowAddedCardRoutine(rt, GetZonePosition(zone));
     }
 
     IEnumerator ShowAddedCardToHandRoutine(RectTransform rt)
@@ -953,7 +1025,7 @@ public class CardCanvas : MonoBehaviour
         if (nowusingCard == card)
             nowusingCard = null;
         Exilecards.Add(card);
-        EnqueueMove(card, GetZonePosition(CardPositionZone.Exile), Quaternion.identity, 0.25f);
+        StartCardMove(card, ExileFadeTween(card, 0.25f), null, false);
         if (wasInHand)
             AlignCards();
         NotifyPileChanged();
@@ -1224,10 +1296,13 @@ public class CardCanvas : MonoBehaviour
             return;
         }
         Card card = nowusingCard.GetComponent<Card>();
-        // pieceSelectCount 카드는 board.UseCard()가 이미 픽업(CommitNowUsingCard) 시점에 호출됐고, 이후
-        // 상호작용은 드롭 위치가 아니라 보드 클릭(HandlePieceSelectionClick)으로 진행되므로 여기선 아무것도 안 한다.
-        if (card.effects[0].pieceSelectCount > 0)
+        // pieceSelectCount 카드는 놓는 순간 사용이 확정된다 — 효과를 큐에 넣으면 기물 선택 모드가 시작되고,
+        // 이후 상호작용은 드롭 위치가 아니라 보드 클릭(HandlePieceSelectionClick)으로 진행된다.
+        if (card.UseEffects[0].pieceSelectCount > 0)
+        {
+            board.UseCard(card);
             return;
+        }
 
         // 캐스터는 항상 카드를 낸 기물(activePiece)로 고정이므로, 어떤 카드든 실제로 뭔가 실행되기 전에
         // 제일 먼저 캐스터 상태 제약을 검사한다. self 타겟 카드는 캐스터가 확정되는 순간 바로 실행되기
@@ -1250,7 +1325,8 @@ public class CardCanvas : MonoBehaviour
         {
             if (card.dragDropTarget == DragDropTarget.Self)
             {
-                // CommitNowUsingCard에서 이미 board.UseCard()로 무장 완료 — 캐스터(카드 주인)만 확정하면 즉시 실행된다.
+                // 드롭 = 사용 확정: 효과를 큐에 넣고 캐스터(카드 주인)를 확정하면 즉시 실행된다.
+                board.UseCard(card);
                 board.ConfirmCasterOnDrop();
             }
             else if (board.boardmode == Board.BoardMode.Inspect)
@@ -1282,12 +1358,10 @@ public class CardCanvas : MonoBehaviour
         }
 
         AudioManager.instance?.PlayCardTargetConfirm();
-        board.ConfirmCasterOnDrop();
-        if (nowusingCard == null) return;
-
         CardDragArrow.instance?.Hide();
+        // 카드가 아직 NowUsing 자리로 날아가는 중이면 도착한 뒤에 사용을 확정한다(CommitNowUsingCard의 도착 콜백).
         if (!usingCardMoving)
-            board.ButtonClicked(boardPos);
+            ConfirmAim(card, boardPos);
         else
             pendingFirstTarget = boardPos;
     }
@@ -1302,20 +1376,6 @@ public class CardCanvas : MonoBehaviour
         {
             AnnouncementUI.instance?.Show("이동 전에만 사용할 수 있습니다");
             return false;
-        }
-
-        foreach (var effect in caster.activeEffects)
-        {
-            switch (effect)
-            {
-                case MovementDisabledEffect:
-                    if (card.effects.Count > 0 && card.effects[0].type == EffectType.Move)
-                    {
-                        AnnouncementUI.instance?.Show("이동 불가 상태입니다");
-                        return false;
-                    }
-                    break;
-            }
         }
         return true;
     }

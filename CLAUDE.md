@@ -60,14 +60,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### 기물과 데이터
 - `Piece` → `AutoPiece`(적 + 자동행동 아군; `actionCards`를 순환하며 다음 행동을 예고, 기절 시 `StunnedCard`로 대체). `teamID == 0`이 아군, `1`이 적.
-- `PieceInfo`(SO, `Assets/SO/`)가 기물 템플릿(스탯, 사거리 `RangeInfoSO`, 기본 덱, 직업 `JobInfo`). `JobInfo`(`Assets/SO/Jobs/`)의 `RewardCardPool`이 전투 보상 카드 풀.
-- `LevelData`(SO, `Assets/Prefab/Level/`)가 전투/이벤트 레벨. `placements`의 `name`이 비면 플레이어 스폰 위치, 채워져 있으면 `PieceDatabase`의 프리팹 이름. `LevelDatabase.floorPools`가 층별 랜덤 레벨 풀. 이벤트 레벨(휴식·상점·이벤트)은 `Board.IsEventLevel`이라 턴이 흐르지 않는다.
+- `PieceInfo`(SO, `Assets/SO/`, 적은 `Assets/SO/Enemies/`)가 기물 기본 정보의 **유일한 원본**이다(이름, 체력·힘·방어막 보너스, 진영·소환수 여부, 이동/이동공격 범위, 기본 덱, 직업 `JobInfo`). `Piece.Awake`가 이 값으로 기물을 채우고, 아군은 이어서 `SetPieceData`가 세이브의 진행 상황(현재 체력, 영구 강화, 덱)으로 덮어쓴다. 프리팹의 `name`/`hp`/`maxhp`/`colDamage`/`shieldBonus`는 런타임 표시용이라 프리팹에서 고쳐도 무시된다. `JobInfo`(`Assets/SO/Jobs/`)의 `RewardCardPool`이 전투 보상 카드 풀.
+- `PieceInfo._pieceName`이 기물 이름 겸 조회 키다(화면 표시, 레벨 배치, 소환·합류, 세이브, 보상 풀). `PieceDatabase.GetPiece`가 이 이름으로 `PiecePrefabs`에서 프리팹을 찾으므로 프리팹 파일 이름은 자유다. 등록된 기물끼리 이름이 겹치면 `PieceDatabase.OnValidate`가 경고한다.
+- `LevelData`(SO, `Assets/Prefab/Level/`)가 전투/이벤트 레벨. `placements`의 `name`이 비면 플레이어 스폰 위치, 채워져 있으면 기물 이름(`PieceInfo.PieceName`). `LevelDatabase.floorPools`가 층별 랜덤 레벨 풀. 이벤트 레벨(휴식·상점·이벤트)은 `Board.IsEventLevel`이라 턴이 흐르지 않는다.
 - 데이터 조회 싱글턴(`CardDatabase`, `PieceDatabase`, `RelicDatabase` 등)은 `Assets/Prefab/Database.prefab`에 붙어 있고, 소비 측은 `I*Database` 인터페이스 타입으로 받는다.
 
 ### 세이브는 "이름 문자열"로 참조한다
 `DataManager`가 `Application.persistentDataPath/save.json`에 `JsonUtility`로 저장한다(파일 기록은 맵에서 다음 노드를 고를 때만). 저장 데이터는 모두 이름으로 원본을 찾는다:
 - 카드 = 카드 **프리팹 이름**(`Card.cardID`, `CardDatabase.SpawnCard`가 채움)
-- 기물 = `PieceInfo.PieceName` / 프리팹 이름
+- 기물 = `PieceInfo.PieceName`(프리팹 파일 이름 아님)
 - 유물 = **클래스 이름** (`RelicDatabase.CreateRelic`이 `Type.GetType` 리플렉션으로 생성)
 - 레벨 = `LevelData` 에셋 이름
 

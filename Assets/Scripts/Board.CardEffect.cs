@@ -19,24 +19,17 @@ public partial class Board
     // 직전 효과 하나가 아니라 카드 전체 누적이라, 사이에 다른 효과가 끼어도 유지된다.
     int discardedThisCard;
 
-    // 이름과 달리 카드를 "실제로 사용"하는 함수가 아니라, 이제부터 처리할 카드를 보드에 등록(무장)하는 함수다.
-    // currentActiveCard/시전자를 세팅하고 effects를 pendingEffects에 채운 뒤, 첫 효과가 요구하는 모드
-    // (boardmode)로 전환해 타겟 입력을 기다린다. 효과 적용과 에너지 차감은 모두 ExecuteEffect(effectApplied가
-    // true가 되는 순간)에서 일어난다.
-    // 호출 시점은 카드 종류마다 다르다:
-    //  - 타겟팅(NeedsTargeting)/pieceSelectCount/Self 카드: CardCanvas.CommitNowUsingCard가 카드를 "집는"
-    //    시점(드롭 전)에 호출 — 첫 효과가 타겟을 기다리므로 아직 아무것도 적용되지 않았고 취소도 가능하다.
-    //  - 그 외(DrawCard처럼 효과가 전부 Inspect인 카드): CardCanvas.OnDragCardReleased가 "드롭" 시점에 호출.
-    // 큐 맨 앞 효과가 위치가 필요 없는 Inspect면 ProcessNextCardEffect가 이 호출 안에서 곧바로 ExecuteEffect까지
-    // 실행하므로, 그 경우엔 UseCard 호출 중에 효과 적용·에너지 차감이 함께 일어난다(DrawCard는 드롭 시점).
+    // 카드 사용 확정 — currentActiveCard/시전자를 세팅하고 이번 사용 효과(card.UseEffects)를 pendingEffects에
+    // 채운 뒤, 첫 효과가 요구하는 모드(boardmode)로 전환해 입력을 기다린다(Inspect면 이 호출 안에서 바로 실행).
+    // 효과 적용과 에너지 차감은 모두 ExecuteEffect(effectApplied가 true가 되는 순간)에서 일어난다.
+    // 아군 카드는 사용이 확정되는 드롭(조준 완료) 시점에 CardCanvas가 호출한다 — 카드를 집은 동안은
+    // ShowUseEligibilityPreview로 범위만 보여주고 큐는 비워 둔다(사용 시 발동 효과 등이 큐 앞에 끼어들 수 있도록).
+    // 적/자동 아군은 행동 차례에 TurnControl이 호출한다.
     public void UseCard(Card card)
     {
-        Debug.Log($"UseCard: {card.name} (user: {card.user}, effects: {card.effects.Count})");
+        Debug.Log($"UseCard: {card.name} (user: {card.user}, effects: {card.UseEffects.Count})");
         if (card.user == User.Ally)
-        {
-            ClearSelectedButton();
             ShowUseEligibilityPreview(card);
-        }
         currentCardCaster = card.user == User.Ally
             ? CardCanvas.instance?.ActivePiece
             : (isSelectedButtonActive() ? GetButtonScript(selectedButton).GetPieceScript() : null);
@@ -46,7 +39,7 @@ public partial class Board
         effectApplied = false;
         currentActiveCard = card;
         pendingEffects.Clear();
-        foreach (var effect in card.effects)
+        foreach (var effect in card.UseEffects)
             pendingEffects.Enqueue(effect with { caster = currentCardCaster });
         ProcessNextCardEffect();
     }
@@ -123,7 +116,7 @@ public partial class Board
         // 2번째 이후면 이 효과만 건너뛴다. 로직이 동기라 앞 효과가 만든 무덤 변화가 여기서 바로 반영된다.
         if (nextEffect.graveCost > 0 && (currentCardCaster == null || !currentCardCaster.HasGrave(nextEffect.graveCost)))
         {
-            if (pendingEffects.Count == currentActiveCard.effects.Count) pendingEffects.Clear();
+            if (pendingEffects.Count == currentActiveCard.UseEffects.Count) pendingEffects.Clear();
             else pendingEffects.Dequeue();
             ScheduleNextCardEffect();
             return;
@@ -176,7 +169,7 @@ public partial class Board
             ExecuteEffect(pendingEffects.Dequeue());
             ScheduleNextCardEffect();
         }
-        else if (nextEffect.caster != null && pendingEffects.Count < currentActiveCard.effects.Count)
+        else if (nextEffect.caster != null && pendingEffects.Count < currentActiveCard.UseEffects.Count)
         {
             // 후속 효과(첫 효과가 아님 — 위 무덤 판정과 같은 기준, 앞에 끼워 넣은 소환 시 효과는 이미 소진됨):
             // 카드를 쓴 기물을 현재 위치에서 다시 선택한 것처럼 처리한다 — self 타겟이면 OnSelectBoard가 바로
@@ -558,6 +551,16 @@ public partial class Board
         StartMotionQueue();
     }
 
+    // EnqueueCardMoves의 소멸판 — 날아가는 대신 그 자리에서 사라진 뒤 소멸 더미로 옮기는 연출(ExileCardVisualCor)을 넣는다.
+    void EnqueueCardExileFades(List<(RectTransform card, Vector3 pos, Quaternion rot)> moves, float duration)
+    {
+        if (moves.Count == 0) return;
+        foreach (var (card, _, _) in moves)
+            motionQueue.Enqueue(CardCanvas.instance.ExileCardVisualCor(card, duration));
+        motionQueue.Enqueue(CardCanvas.instance.AlignCardsCor());
+        StartMotionQueue();
+    }
+
     // 카드/예약효과(TurnEffect·유물 등) 공용: CardEffect 하나를 targetPos 기준으로 실제로 적용한다.
     // currentActiveCard/pendingEffects/effectApplied 같은 "지금 실제 카드를 쓰는 중" 상태는 전혀 건드리지
     // 않으므로, 다른 카드가 한창 처리되는 도중에 끼어들어도(진행 중인 카드의 pendingEffects를 훼손하지 않고)
@@ -588,7 +591,9 @@ public partial class Board
                 if (moveCaster != null && moveCaster.activeEffects.Exists(e => e is MovementDisabledEffect))
                 {
                     pendingEffects.Clear();
-                    AnnouncementUI.instance?.Show("이동 불가 상태입니다");
+                    // 막힌 기물 위에 "이동 불가!" 텍스트(이동 불가 상태 색, 파티클·사운드 없음)를 띄우고 흔든다.
+                    EnqueueBoardAnimation(moveCaster.StatusTextReaction("이동 불가!", false, new Color(0.6f, 0.6f, 0.6f), textOnly: true));
+                    EnqueueBoardAnimation(ImmobileShakeCor(moveCaster));
                     break;
                 }
                 MovePiece(selectedButton, targetPos, cardEffect);
@@ -671,14 +676,25 @@ public partial class Board
                 EnqueueCardMoves(CardCanvas.instance.HandtoDeckCount(cardEffect.dmg), 0.2f);
                 break;
             case EffectType.ExileHand:
-                EnqueueCardMoves(CardCanvas.instance.HandtoExileCount(cardEffect.dmg), 0.25f);
+                EnqueueCardExileFades(CardCanvas.instance.HandtoExileCount(cardEffect.dmg), 0.25f);
                 break;
             case EffectType.HandToDeckTop:
                 EnqueueCardMoves(CardCanvas.instance.HandtoDeckTop(cardEffect.dmg), 0.2f);
                 break;
             case EffectType.AddCard:
-                CardCanvas.instance.AddCardDuringCombat(cardEffect.addCardID, cardEffect.addCardZone);
+            {
+                // 대상을 고르지 않는 카드(Inspect — FetchAttackCard 등)는 시전자 자신의 덱에 넣는다. 이때 targetPos는
+                // 기본값 (0,0)이라 칸으로 판정하면 안 된다. 그 외에는 targetPos 칸의 기물(적 행동은 ResolveEnemyTarget이 풀어 둔 대상).
+                Piece caster = isSelectedButtonActive() ? GetButtonScript(selectedButton).GetPieceScript() : null;
+                Piece recipient = cardEffect.requiredMode == BoardMode.Inspect
+                    ? cardEffect.caster ?? currentCardCaster ?? CardCanvas.instance?.ActivePiece
+                    : targetPos.x >= 0 && targetPos.x < N && targetPos.y >= 0 && targetPos.y < M ? GetPieceAt(targetPos) : null;
+                IEnumerator reaction = AddCardReaction(recipient, cardEffect);
+                if (reaction == null) break;
+                motionQueue.Enqueue(PlayCasterAndTargetReaction(caster, cardEffect.animTrigger, reaction, cardEffect));
+                StartMotionQueue();
                 break;
+            }
             case EffectType.Cleanse:
             {
                 Piece caster = GetButtonScript(selectedButton).GetPieceScript();
@@ -797,7 +813,7 @@ public partial class Board
         GameObject prefab = piecedatabase.GetPiece(info.PieceName);
         if (prefab == null)
         {
-            Debug.LogError($"[Board] 소환 실패: '{info.PieceName}' 을(를) PieceDatabase에서 찾을 수 없습니다.");
+            Debug.LogError($"[Board] 소환 실패: '{info.PieceName}' 을(를) PieceDatabase에서 찾을 수 없습니다(PieceInfo 이름 기준).");
             return;
         }
 
@@ -1010,6 +1026,7 @@ public partial class Board
             StatusEffectType.NextMoveAttackDamage     => new NextMoveAttackDamageEffect(duration, power),
             StatusEffectType.NextMoveAttackMultiplier => new NextMoveAttackMultiplierEffect(duration, power),
             StatusEffectType.NextMoveAttackStatus     => new NextMoveAttackStatusEffect(duration, onMoveAttackHit),
+            StatusEffectType.ExileOnDraw        => new ExileOnDrawEffect(duration),
             _                                   => null,
         };
     }
@@ -1112,7 +1129,30 @@ public partial class Board
                     GetButtonScript(pos).GetPieceScript()?.AddGrave(cardEffect.dmg);
                 CardCanvas.instance?.UpdateCardInteractability();
                 break;
+            case EffectType.AddCard:
+            {
+                var reactions = new List<IEnumerator>();
+                foreach (Vector2Int pos in targets)
+                {
+                    IEnumerator r = AddCardReaction(GetButtonScript(pos).GetPieceScript(), cardEffect);
+                    if (r != null) reactions.Add(r);
+                }
+                motionQueue.Enqueue(PlayCasterAndTargetReaction(caster, cardEffect.animTrigger, Parallel(reactions.ToArray()), cardEffect, rangeOrigin));
+                StartMotionQueue();
+                break;
+            }
         }
+    }
+
+    // AddCard: recipient의 전투 덱에 카드를 넣고(로직 즉시 — 원본 덱은 그대로), 연출을 돌려준다. 화면에 표시 중인
+    // 기물이면 카드 등장 연출, 아니면 보드 위 그 기물에 "카드 +1" 텍스트(카드는 그 기물로 전환할 때 보인다).
+    // 전투 덱이 없는 기물(적, 덱 없는 소환수)이면 null.
+    IEnumerator AddCardReaction(Piece recipient, CardEffect cardEffect)
+    {
+        IEnumerator reveal = CardCanvas.instance?.AddCardDuringCombat(recipient, cardEffect.addCardID, cardEffect.addCardZone);
+        if (reveal == null) return null;
+        if (recipient == CardCanvas.instance.ActivePiece) return reveal;
+        return Parallel(reveal, recipient.StatusTextReaction("카드 +1", false, new Color(0.75f, 0.6f, 1f), textOnly: true));
     }
 
     public void CancelCardUsage()

@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 // 카드 테스트 씬 전용: 아군 턴이 시작될 때마다(적 턴이 끝나고 돌아올 때 포함) CardDatabase에 등록된
@@ -27,6 +28,9 @@ public class CardTestHandDealer : MonoBehaviour
 
         ICardDatabase cardDb = CardDatabase.instance;
         foreach (string cardName in cardDb.GetAllCardNames())
-            CardCanvas.instance.AddCardDuringCombat(cardName, CardPositionZone.Hand);
+        {
+            IEnumerator reveal = CardCanvas.instance.AddCardDuringCombat(CardCanvas.instance.ActivePiece, cardName, CardPositionZone.Hand);
+            if (reveal != null) CardCanvas.instance.StartCoroutine(reveal);
+        }
     }
 }

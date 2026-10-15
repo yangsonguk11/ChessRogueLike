@@ -9,23 +9,25 @@ using UnityEngine.Serialization;
 [RequireComponent(typeof(PieceEffect))]
 public abstract class Piece : MonoBehaviour
 {
-    [Tooltip("필수 입력 — Awake()에서 teamID를 이 값의 TeamID로 덮어씀. Enemy/AutoPiece 계열은 RangeInfoSO도 여기서만 읽음.")]
+    [Tooltip("필수 입력 — 기물 기본 정보의 유일한 원본. Awake()가 이름·체력·힘·방어막 보너스·진영·소환수 여부를 여기서 채우고, 이동/이동공격 범위도 여기서 읽는다.\n아군은 이어서 SetPieceData가 세이브의 진행 상황(현재 체력, 영구 강화, 덱)으로 덮어쓴다.")]
     [SerializeField] PieceInfo pieceInfo;
     public PieceInfo Info => pieceInfo;
     public PieceCanvas pieceCanvas;
 
-    public new string name;
-    [Tooltip("Ally(플레이어 로스터)로 스폰되면 SetPieceData가 덮어씀 — 여기 값은 무시됨.\nEnemy/AutoAlly처럼 레벨에 직접 배치·소환되는 기물은 SetPieceData를 안 거치므로 여기 값을 그대로 씀 — 0으로 두면 즉시 사망 판정된다.")]
-    public int hp;
-    [Tooltip("hp와 동일 조건 — Ally는 SetPieceData가 덮어씀, Enemy/AutoAlly는 여기 값이 그대로 쓰임.")]
-    public int maxhp;
-    [Tooltip("hp와 동일 조건 — Ally는 SetPieceData가 덮어씀, Enemy/AutoAlly는 여기 값이 그대로 쓰임.")]
-    public int colDamage;
+    // 아래 name/hp/maxhp/colDamage/shieldBonus는 Awake()가 pieceInfo에서 채우는 런타임 값이다 — 프리팹에 남은 값은 무시된다.
+    [Tooltip("PieceInfo에서 설정 — 런타임 값 표시용(= PieceInfo.PieceName)")]
+    [ReadOnlyInInspector] public new string name;
+    [Tooltip("PieceInfo에서 설정 — 런타임 값 표시용")]
+    [ReadOnlyInInspector] public int hp;
+    [Tooltip("PieceInfo에서 설정 — 런타임 값 표시용")]
+    [ReadOnlyInInspector] public int maxhp;
+    [Tooltip("PieceInfo에서 설정 — 런타임 값 표시용")]
+    [ReadOnlyInInspector] public int colDamage;
     [ReadOnlyInInspector] public int baseColDamage; // Awake()에서 항상 colDamage를 그대로 복사함 — 여기 채워도 덮어써짐
     public int colDamageBonus; // 영구 강화로 누적된 힘 보너스. 전투 시작 시 colDamage에 합산된다.
     public int ColDamageDelta => colDamage - baseColDamage;
-    [Tooltip("hp와 동일 조건 — Ally는 SetPieceData가 덮어씀, Enemy/AutoAlly는 여기 값이 그대로 쓰임.")]
-    public int shieldBonus;
+    [Tooltip("PieceInfo에서 설정 — 런타임 값 표시용")]
+    [ReadOnlyInInspector] public int shieldBonus;
     [ReadOnlyInInspector] public int baseShieldBonus; // Awake()에서 항상 shieldBonus를 그대로 복사함 — 여기 채워도 덮어써짐
     public int shieldBonusBonus; // 영구 강화로 누적된 방어막 보너스. 전투 시작 시 shieldBonus에 합산된다.
     public int ShieldBonusDelta => shieldBonus - baseShieldBonus;
@@ -170,6 +172,12 @@ public abstract class Piece : MonoBehaviour
     }
     public virtual void Awake()
     {
+        // 기본 정보는 PieceInfo가 유일한 원본이다. 아군은 이어서 SetPieceData가 세이브 값으로 덮어쓰고,
+        // 이벤트 오브젝트(NPC/휴식/상점)는 자기 Awake에서 체력을 따로 정한다.
+        name = pieceInfo.PieceName;
+        hp = maxhp = pieceInfo.MaxHp;
+        colDamage = pieceInfo.ColDamage;
+        shieldBonus = pieceInfo.ShieldBonus;
         baseColDamage = colDamage;
         baseShieldBonus = shieldBonus;
         teamID = pieceInfo.TeamID;
@@ -198,9 +206,10 @@ public abstract class Piece : MonoBehaviour
     {
         if (pieceEffect != null && shield <= 0) pieceEffect.SetVisible(false);
     }
+    // 아군 진행 상황(세이브)을 덮어쓴다. 이름은 Awake가 PieceInfo에서 채운 값을 그대로 쓰고,
+    // data.pieceName은 이 프리팹을 찾을 때(PieceDatabase.GetPiece)만 쓰인다.
     public void SetPieceData(PieceData data)
     {
-        name = data.pieceName;
         hp = data.hp;
         maxhp = data.maxHp;
         baseColDamage = data.colDamage;
@@ -236,7 +245,7 @@ public abstract class Piece : MonoBehaviour
     {
         return new PieceData
         {
-            pieceName = name,
+            pieceName = pieceInfo.PieceName, // 조회 키 — 다음 전투에서 PieceDatabase.GetPiece가 이 이름으로 프리팹을 찾는다
             teamID = teamID,
             hp = hp,
             maxHp = maxhp,
@@ -351,6 +360,12 @@ public abstract class Piece : MonoBehaviour
         ProcessStatusEffects();
     }
     public virtual void OnTurnEndOther()
+    {
+
+    }
+    // 같은 팀 기물이 쓰러졌을 때 Board.ClearDeadPieceOccupancy가 사망 판정 즉시 호출한다.
+    // livingTeammates: 자신을 뺀, 아직 살아있는(hp > 0) 같은 팀 기물 수. 예) GuardianPiece의 패턴 전환.
+    public virtual void OnTeammateDied(int livingTeammates)
     {
 
     }

@@ -72,9 +72,15 @@ public abstract class Card : MonoBehaviour, ISelectable
     public string Name;
     public string Description; // 대부분 코드가 안 건드림 — 실제 플레이버 텍스트로 채워도 됨(일부 카드는 Awake에서 덮어쓰기도 하니 확인)
     public virtual string EffectDescription => "";
+    // 호버 정보창에 띄울 용어 중 EffectDescription에 안 나오는 것(KeywordGlossary의 대표 표기). 설명 텍스트에 있는
+    // 용어와 카드 데이터로 알 수 있는 용어(소멸·상태이상·무덤 등)는 CardTooltipContent가 알아서 찾는다.
+    public virtual IEnumerable<string> ExtraKeywords => Array.Empty<string>();
     // 필드가 아닌 프로퍼티라 Awake 없이 프리팹 컴포넌트에서 바로 읽힌다(상점이 스폰 전에 진열을 고를 때 사용).
     // 기본은 일반이고, 희귀 카드만 오버라이드한다.
     public virtual CardRarity Rarity => CardRarity.Common;
+    // true면 어떤 경우에도 사용할 수 없는 카드(손패 자리만 차지) — CardCanvas.UseCard가 막고, 코스트 숫자도 숨긴다.
+    // Rarity와 같은 이유로 프로퍼티다. 버리기·덱으로 되돌리기 같은 다른 효과의 대상은 그대로 된다.
+    public virtual bool IsUnplayable => false;
     [Tooltip("거의 모든 카드가 Awake()에서 직접 덮어씀 — 여기 채워도 대부분 무시됨(해당 카드 클래스의 Awake() 확인).")]
     public int Cost;
     [Tooltip("거의 모든 카드가 Awake()에서 직접 덮어씀 — 여기 채워도 대부분 무시됨(해당 카드 클래스의 Awake() 확인).")]
@@ -108,6 +114,9 @@ public abstract class Card : MonoBehaviour, ISelectable
     public virtual void Awake()
     {
         defaultScale = transform.localScale;
+        // 레이아웃 그룹이 크기를 바꾸기 전(스폰 직후)의 프리팹 크기. 적 기물에 붙은 행동 카드처럼 UI 밖의 카드는
+        // RectTransform이 없으므로(정보창도 띄우지 않음) 건너뛴다.
+        if (transform is RectTransform rt) designSize = rt.rect.size;
         cardCanvas = GameObject.Find("CardCanvas");
     }
 
@@ -118,12 +127,27 @@ public abstract class Card : MonoBehaviour, ISelectable
 
     public void RefreshView()
     {
-        costText?.SetText(Cost.ToString());
-        nameText?.SetText(Name);
-        descriptionText?.SetText(Description);
-        typeText?.SetText(type.ToDisplayString());
-        effectText?.SetText(EffectDescription);
+        Card src = faceSource != null ? faceSource : this;
+        costText?.SetText(src.Cost.ToString());
+        if (costText != null) costText.gameObject.SetActive(!src.IsUnplayable); // 사용 불가 카드는 코스트 숫자 없음
+        nameText?.SetText(src.Name);
+        descriptionText?.SetText(src.Description);
+        typeText?.SetText(src.type.ToDisplayString());
+        // 소멸 표시는 카드별 문구가 아니라 exileOnUse 하나로 붙인다 — 전투 중 부여된 소멸(소멸 저주)도 똑같이 보인다.
+        effectText?.SetText(src.exileOnUse ? src.EffectDescription + " (소멸)" : src.EffectDescription);
     }
+
+    // 이 카드(보드 칸 정보창의 표시용 템플릿)에 다른 카드의 이름·코스트·종류·설명을 대신 보여준다. 적 행동 카드처럼
+    // 프리팹이 없어 직접 띄울 수 없는 카드도 이렇게 카드 이미지로 보여줄 수 있다(TooltipView.FillCardFace).
+    Card faceSource;
+    public void ShowFaceOf(Card source)
+    {
+        faceSource = source;
+        RefreshView();
+    }
+
+    // 수치 미리보기의 시전자를 고정한다 — 적·자동 아군의 행동 카드는 그 기물(AutoPiece.Awake가 채움)의 힘·방어막 보너스로 보여준다.
+    [NonSerialized] public Piece previewCasterOverride;
 
     public event Action OnSelected;
     public event Action OnUnSelected;
@@ -141,19 +165,44 @@ public abstract class Card : MonoBehaviour, ISelectable
     }
 
 
+    // 카드 수치 미리보기(EffectiveDmg/EffectiveShield)에 반영할 시전자. CardCanvas가 보여주는 기물의 전투 더미
+    // (손패·덱·버림·소멸)에 든 카드이거나 지금 사용 중인 카드일 때만 그 기물이다. 보상·상점·덱 보기처럼 더미 밖에
+    // 따로 스폰된 카드는 시전자가 없으므로, 기물의 힘·방어막 보너스(전투 중 임시 버프 포함)를 빼고 카드 기본 수치를 보여준다.
+    Piece PreviewCaster
+    {
+        get
+        {
+            if (previewCasterOverride != null) return previewCasterOverride;
+            CardCanvas canvas = CardCanvas.instance;
+            Piece active = canvas != null ? canvas.ActivePiece : null;
+            // 기물에 붙은 행동 카드처럼 UI 밖의 카드는 RectTransform이 아니므로 더미에 들 수 없다.
+            if (active == null || active.pieceDeck == null || !(transform is RectTransform rt)) return null;
+            PieceDeck deck = active.pieceDeck;
+            bool inPiles = canvas.nowusingCard == rt || deck.Hand.Contains(rt) || deck.Discard.Contains(rt)
+                || deck.Exile.Contains(rt) || deck.Deck.Contains(rt);
+            return inPiles ? active : null;
+        }
+    }
+
     protected string EffectiveDmg(CardEffect effect)
     {
+        Piece caster = PreviewCaster;
+        // 힘만큼 피해를 주는 카드는 시전자가 없으면 수치 대신 "힘만큼"으로 표시한다.
+        if (effect.type == EffectType.Damage && effect.useColDamageAsDmg && caster == null)
+            return "힘만큼";
+
         int dmg = effect switch
         {
             { type: not EffectType.Damage }          => effect.dmg,
-            { useColDamageAsDmg: true }               => Mathf.Max(0, Board.instance?.CasterFullColDamage ?? 0),
+            { useColDamageAsDmg: true }               => Mathf.Max(0, caster.colDamage),
             { ignoreCasterColDamageBonus: true }      => effect.dmg,
-            _                                          => Mathf.Max(0, effect.dmg + (Board.instance?.CasterColDamage ?? 0)),
+            // ColDamageDelta = baseColDamage(강화 전 수치)를 뺀 나머지 — 영구 강화분과 이번 전투의 임시 버프를 합친 값
+            _                                          => Mathf.Max(0, effect.dmg + (caster != null ? caster.ColDamageDelta : 0)),
         };
         // 이동공격 판정 공격은 카드를 낸 기물에 걸린 다음 이동공격 버프(가산·배율)까지 반영해 보여준다.
-        if (effect.type == EffectType.Damage && effect.countsAsMoveAttack)
+        if (effect.type == EffectType.Damage && effect.countsAsMoveAttack && caster != null)
         {
-            MoveAttackBonus bonus = CardCanvas.instance?.ActivePiece?.PeekNextMoveAttackBonus();
+            MoveAttackBonus bonus = caster.PeekNextMoveAttackBonus();
             if (bonus != null) dmg = bonus.Apply(dmg);
         }
 
@@ -164,9 +213,10 @@ public abstract class Card : MonoBehaviour, ISelectable
 
     protected string EffectiveShield(CardEffect effect)
     {
-        int amount = effect.type != EffectType.Shield || effect.ignoreCasterShieldBonus
+        Piece caster = PreviewCaster;
+        int amount = effect.type != EffectType.Shield || effect.ignoreCasterShieldBonus || caster == null
             ? effect.dmg
-            : Mathf.Max(0, effect.dmg + (Board.instance?.CasterShieldBonus ?? 0));
+            : Mathf.Max(0, effect.dmg + caster.ShieldBonusDelta);
 
         if (amount == effect.dmg) return amount.ToString();
         string color = amount > effect.dmg ? "#4444FF" : "#FF4444";
@@ -186,10 +236,27 @@ public abstract class Card : MonoBehaviour, ISelectable
     public bool HasGraveForFirstEffect(Piece caster) =>
         effects.Count == 0 || effects[0].graveCost <= 0 || (caster != null && caster.HasGrave(effects[0].graveCost));
 
-    // 첫 번째 CardEffect의 requiredMode로 보드/기물 타겟팅이 필요한 카드인지 판단.
-    // self 타겟 카드는 대상이 항상 카드를 낸 기물 자신이라 실질적으로 타겟팅할 게 없으므로 제외한다.
-    public bool NeedsTargeting() => effects.Count > 0 && effects[0].requiredMode != Board.BoardMode.Inspect
-        && dragDropTarget != DragDropTarget.Self;
+    // 이번 사용에 쓸 효과 — 카드를 잡을 때(CardCanvas.UseCard) PrepareUseEffects가 시전자 상태로 정한다.
+    // 잡은 적 없는 카드(적·자동 아군 행동 카드)는 effects 그대로. 카드 설명·툴팁은 계속 effects(원본)를 쓴다.
+    [NonSerialized] List<CardEffect> useEffects;
+    public List<CardEffect> UseEffects => useEffects ?? effects;
+
+    // 시전자가 이동 불가면 처음 나오는 이동 효과부터 끝까지 뺀다(그 앞 효과만 쓴다).
+    public void PrepareUseEffects(Piece caster)
+    {
+        bool immobile = caster != null && caster.activeEffects.Exists(e => e is MovementDisabledEffect);
+        int moveIndex = immobile ? effects.FindIndex(e => e.type == EffectType.Move) : -1;
+        useEffects = moveIndex >= 0 ? effects.GetRange(0, moveIndex) : null;
+    }
+
+    // 플레이어가 보드에서 대상을 골라야 하는 첫 효과의 인덱스(없으면 -1): 이번 사용 효과 중 처음 나오는 command/targeting 효과.
+    // 단, Self 카드의 self 효과는 드롭만으로 시전자에게 실행되므로 조준으로 치지 않는다.
+    public int AimEffectIndex => UseEffects.FindIndex(e =>
+        (e.requiredMode == Board.BoardMode.command || e.requiredMode == Board.BoardMode.targeting)
+        && !(dragDropTarget == DragDropTarget.Self && e.targetlogic == TargetLogic.self));
+
+    // 조준 카드인지 — 잡으면 NowUsing 자리로 가고 화살표가 뜨며, 드롭한 칸이 첫 조준 효과의 대상이 된다.
+    public bool NeedsTargeting() => AimEffectIndex >= 0;
 
     // ISelectable 계약 — 실제로 지금 손패 리스트(CardCanvas.cards)에 들어있는 카드인지로 판정한다.
     // handNumber는 카드가 손패를 떠나는 모든 경로(HandtoDiscardCount/HandtoDeckTop/HandtoExileCount 등,
@@ -207,6 +274,7 @@ public abstract class Card : MonoBehaviour, ISelectable
     public void SelectedTrue()
     {
         selected = true;
+        HideTooltip();
         CancelHoverPose(); // 잡은 뒤엔 마우스가 위치를 정하므로 호버 자세를 되돌리는 트윈 없이 버린다
         transform.localRotation = Quaternion.Euler(0, 0, 0);
         ScaleHover();
@@ -233,14 +301,17 @@ public abstract class Card : MonoBehaviour, ISelectable
     public void ScaleDefault()
     {
         DOTween.Kill(transform);
-        transform.DOScale(defaultScale, ScaleDuration).SetEase(Ease.OutBack);
+        targetScale = defaultScale;
+        transform.DOScale(targetScale, ScaleDuration).SetEase(Ease.OutBack);
         SetFront(false);
     }
     public void ScaleHover()
     {
         DOTween.Kill(transform);
-        transform.DOScale(defaultScale * hoverScale, ScaleDuration).SetEase(Ease.OutBack);
+        targetScale = defaultScale * hoverScale;
+        transform.DOScale(targetScale, ScaleDuration).SetEase(Ease.OutBack);
     }
+    Vector3 targetScale; // 진행 중인 스케일 트윈의 목표 — 정보창이 확대 도중에도 최종 크기로 화면 넘침을 판정하게
 
     // 호버 자세용 — 선택(드래그) 중인 카드는 호버 자세를 걸지 않는다는 조건만 IsSelectable에 추가.
     bool IsHandCard() => !selected && IsSelectable();
@@ -351,31 +422,85 @@ public abstract class Card : MonoBehaviour, ISelectable
         }
         if (frontCanvas == null || frontCanvas.overrideSorting == front) return;
         frontCanvas.overrideSorting = front;
-        if (front) frontCanvas.sortingOrder = CardCanvas.instance.HoveredCardSortingOrder;
+        // 손패 카드는 정해진 순서(MainCanvas 위)로, 상점·보상처럼 다른 캔버스에 있는 카드는 그 캔버스 바로 위로 꺼낸다 —
+        // 손패용 고정값을 쓰면 정렬 순서가 더 높은 상점/보상 화면 뒤로 숨는다.
+        if (front)
+            frontCanvas.sortingOrder = IsSelectable()
+                ? CardCanvas.instance.HoveredCardSortingOrder
+                : SortingOrderOf(transform.parent) + 1;
+    }
+
+    // t가 실제로 그려지는 정렬 순서 — 자신 또는 가장 가까운 조상 중 루트이거나 overrideSorting이 켜진 Canvas의 값.
+    public static int SortingOrderOf(Transform t)
+    {
+        for (; t != null; t = t.parent)
+        {
+            Canvas c = t.GetComponent<Canvas>();
+            if (c != null && c.enabled && (c.isRootCanvas || c.overrideSorting))
+                return c.sortingOrder;
+        }
+        return 0;
     }
 
     // 호버 중에 비활성화되면(기물 전환 등) MouseExit이 오지 않으므로 여기서 풀어 둔다.
-    void OnDisable() => SetFront(false);
+    void OnDisable()
+    {
+        SetFront(false);
+        HideTooltip();
+    }
+
+    // ── 호버 정보창(범위·용어 설명) ──────────────────────────
+    // 카드의 자식으로 처음 호버될 때 만든다(TooltipView). 설명 수치가 힘 등에 따라 바뀌므로 매 호버마다 다시 구성한다.
+    TooltipView tooltip;
+    // 카드의 원래 크기. 덱 보기 패널처럼 Grid Layout Group 셀에 들어가면 RectTransform 크기가 셀 크기로 바뀌지만,
+    // 카드 그림·텍스트는 중앙 앵커의 고정 크기라 보이는 카드는 그대로다 — 정보창은 이 크기를 카드 경계로 쓴다.
+    Vector2 designSize;
+
+    void ShowTooltip()
+    {
+        if (tooltip == null)
+        {
+            TMP_FontAsset font = effectText != null ? effectText.font : nameText != null ? nameText.font : null;
+            tooltip = TooltipView.Create(GetComponent<RectTransform>(), font);
+        }
+        float current = transform.localScale.x;
+        float scaleRatio = Mathf.Approximately(current, 0f) ? 1f : targetScale.x / current;
+        // 보이는 카드의 경계 — rect 중심에 원래 크기로 펼친다(designSize 주석 참고).
+        Rect bounds = new Rect(((RectTransform)transform).rect.center - designSize * 0.5f, designSize);
+        tooltip.Show(CardTooltipContent.Build(this), bounds, scaleRatio);
+    }
+
+    void HideTooltip()
+    {
+        if (tooltip != null) tooltip.Hide(); // 씬 종료 중 OnDisable에선 이미 파괴됐을 수 있어 Unity null 검사로
+    }
+
+    // 상점·보상 카드(onClickOverride로 클릭 동작을 주입받은 카드)는 손패가 아니지만 호버(확대·앞으로 꺼내기·정보창)를 허용한다.
+    bool IsExternalCard() => onClickOverride != null;
 
     public void MouseEnter()
     {
         // 카드 선택 패널(cardSelectionMode)은 손패가 아닌 덱/버림더미 카드도 보여주므로 그때는
         // IsSelectable(cards 소속 여부)과 무관하게 호버를 허용한다. 그 외(평소 손패 화면)에는
         // 로직상 이미 손패를 떠났지만 연출 대기 중이라 화면에 남아있는 카드는 호버 자체가 되면 안 된다.
-        if (!CardCanvas.cardSelectionMode && !IsSelectable()) return;
+        if (!IsExternalCard() && !CardCanvas.cardSelectionMode && !IsSelectable()) return;
         AudioManager.instance?.PlayCardHover();
         ScaleHover();
-        if (IsHandCard())
+        if (IsExternalCard())
+            SetFront(true); // 확대된 카드가 이웃 슬롯 위로 그려지게. 손패 자세(슬롯 정렬·리프트)는 손패 전용이라 쓰지 않는다
+        else if (IsHandCard())
         {
             ApplyHoverPose();
             // 카드 선택 패널이 열려 있을 땐 꺼내지 않는다 — 패널도 하위 Canvas라 정렬 순서가 겹친다.
             if (!CardCanvas.cardSelectionMode)
                 SetFront(true);
         }
+        if (!selected) ShowTooltip(); // 드래그 중인 카드에는 띄우지 않는다
     }
 
     public void MouseExit()
     {
+        HideTooltip();
         bool keepScale = selected
             || (CardCanvas.cardSelectionMode && CardCanvas.instance.IsSelectedInPanel(GetComponent<RectTransform>()));
         if (!keepScale)

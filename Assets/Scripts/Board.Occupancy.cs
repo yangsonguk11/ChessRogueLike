@@ -49,7 +49,10 @@ public partial class Board
         if (dead.teamID == 1) enemyPositions.Remove(pos);
         else if (dead is AutoPiece) autoAllyPositions.Remove(pos);
 
+        if (dead.deathCounted) return;
+        dead.deathCounted = true;
         AddGraveToTeammates(dead);
+        NotifyTeammateDeath(dead);
     }
 
     // 모든 사망 경로가 위 ClearDeadPieceOccupancy를 거치므로 여기서 한 번에 집계한다. 사망 판정과 같은
@@ -57,15 +60,30 @@ public partial class Board
     // hp <= 0 필터: 같은 광역 공격에서 함께 죽었지만 아직 점유가 해제되지 않은 기물은 '살아있는' 기물이 아니다.
     void AddGraveToTeammates(Piece dead)
     {
-        if (dead.deathCounted) return;
-        dead.deathCounted = true;
+        foreach (Piece p in GetLivingTeammates(dead))
+            p.AddGrave(1);
+        CardCanvas.instance?.UpdateCardInteractability(); // 첫 효과 무덤 조건이 풀렸을 수 있음
+    }
+
+    // 살아남은 팀원에게 사망을 알린다(Piece.OnTeammateDied). 무덤과 같은 hp 기준이라, 광역으로 함께 죽은
+    // 기물은 남은 수에서 빠진다 — 마지막 동료들이 한 번에 쓰러져도 첫 사망 시점에 "0명 남음"으로 전달된다.
+    void NotifyTeammateDeath(Piece dead)
+    {
+        List<Piece> living = GetLivingTeammates(dead);
+        foreach (Piece p in living)
+            p.OnTeammateDied(living.Count - 1);
+    }
+
+    List<Piece> GetLivingTeammates(Piece dead)
+    {
+        var result = new List<Piece>();
         for (int x = 0; x < N; x++)
             for (int y = 0; y < M; y++)
             {
                 Piece p = GetButtonScript(new Vector2Int(x, y)).GetPieceScript();
                 if (p == null || p == dead || p.teamID != dead.teamID || p.hp <= 0) continue;
-                p.AddGrave(1);
+                result.Add(p);
             }
-        CardCanvas.instance?.UpdateCardInteractability(); // 첫 효과 무덤 조건이 풀렸을 수 있음
+        return result;
     }
 }

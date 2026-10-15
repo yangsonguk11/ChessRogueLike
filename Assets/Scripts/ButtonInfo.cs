@@ -80,27 +80,12 @@ public class ButtonInfo : MonoBehaviour
         }
     }
 
-    string BuildColDamageText(Piece p)
-    {
-        int diff = p.colDamage - p.baseColDamage;
-        if (diff == 0)
-            return p.colDamage.ToString();
+    string BuildColDamageText(Piece p) => BoardTooltipContent.ValueWithDelta(p.colDamage, p.baseColDamage);
 
-        string color = diff < 0 ? "#FF4444" : "#4444FF";
-        string sign = diff < 0 ? "-" : "+";
-        return $"{p.colDamage} <color={color}>({sign}{Mathf.Abs(diff)})</color>";
-    }
+    string BuildShieldBonusText(Piece p) => BoardTooltipContent.ValueWithDelta(p.shieldBonus, p.baseShieldBonus);
 
-    string BuildShieldBonusText(Piece p)
-    {
-        int diff = p.shieldBonus - p.baseShieldBonus;
-        if (diff == 0)
-            return p.shieldBonus.ToString();
-
-        string color = diff < 0 ? "#FF4444" : "#4444FF";
-        string sign = diff < 0 ? "-" : "+";
-        return $"{p.shieldBonus} <color={color}>({sign}{Mathf.Abs(diff)})</color>";
-    }
+    // 보드 칸 정보창(BoardTooltipHost)이 같은 한글 폰트를 쓰도록 넘겨준다 — TMP 기본 폰트엔 한글이 없다.
+    public TMP_FontAsset Font => piecename != null ? piecename.font : null;
 
     string BuildStatusText(Piece p)
     {

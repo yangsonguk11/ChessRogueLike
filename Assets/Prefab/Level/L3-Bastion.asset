@@ -20,7 +20,7 @@ MonoBehaviour:
   - position: {x: 6, y: 3}
     name: 
   - position: {x: 3, y: 3}
-    name: Boss
+    name: Boss-Bastion
   levelType: 0
   eventType: 0
   eventObjectPosition: {x: 0, y: 0}

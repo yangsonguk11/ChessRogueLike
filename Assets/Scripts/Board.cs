@@ -245,7 +245,7 @@ public partial class Board : MonoBehaviour
             GameObject prefab = piecedatabase.GetPiece(piecedata.pieceName);
             if (prefab == null)
             {
-                Debug.LogError($"[Board] 플레이어 기물 스폰 실패: '{piecedata.pieceName}' 을(를) PieceDatabase에서 찾을 수 없습니다. (spawnPos={spawnPos})");
+                Debug.LogError($"[Board] 플레이어 기물 스폰 실패: '{piecedata.pieceName}' 을(를) PieceDatabase에서 찾을 수 없습니다(PieceInfo 이름 기준). (spawnPos={spawnPos})");
                 spawnIdx++;
                 continue;
             }
@@ -266,7 +266,7 @@ public partial class Board : MonoBehaviour
             GameObject prefab = piecedatabase.GetPiece(placement.name);
             if (prefab == null)
             {
-                Debug.LogError($"[Board] 기물 스폰 실패: '{placement.name}' 을(를) PieceDatabase에서 찾을 수 없습니다. (pos={placement.position})");
+                Debug.LogError($"[Board] 기물 스폰 실패: '{placement.name}' 을(를) PieceDatabase에서 찾을 수 없습니다(PieceInfo 이름 기준). (pos={placement.position})");
                 continue;
             }
             GameObject piece = Instantiate(prefab);
@@ -350,7 +350,7 @@ public partial class Board : MonoBehaviour
         GameObject prefab = piecedatabase.GetPiece(info.PieceName);
         if (prefab == null)
         {
-            Debug.LogError($"[Board] 기물 스폰 실패: '{info.PieceName}' 을(를) PieceDatabase에서 찾을 수 없습니다.");
+            Debug.LogError($"[Board] 기물 스폰 실패: '{info.PieceName}' 을(를) PieceDatabase에서 찾을 수 없습니다(PieceInfo 이름 기준).");
             return false;
         }
 
@@ -394,12 +394,6 @@ public partial class Board : MonoBehaviour
     }
 
     public Piece casterPiece;
-
-    // baseColDamage(강화 전 수치)를 뺀 나머지 — 영구 강화분(colDamageBonus)과 이번 전투의 임시 버프를 합친 값
-    public int CasterColDamage => CardCanvas.instance?.ActivePiece?.ColDamageDelta ?? 0;
-    public int CasterShieldBonus => CardCanvas.instance?.ActivePiece?.ShieldBonusDelta ?? 0;
-    // useColDamageAsDmg 카드(예: ColDamageAttackCard)용 — 강화 전 기본치까지 포함한 힘 전체 수치
-    public int CasterFullColDamage => CardCanvas.instance?.ActivePiece?.colDamage ?? 0;
 
     public Piece GetPieceAt(Vector2Int pos) => GetButtonScript(pos)?.GetPieceScript();
 

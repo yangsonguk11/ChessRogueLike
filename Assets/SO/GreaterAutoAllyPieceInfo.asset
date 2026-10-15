@@ -15,10 +15,10 @@ MonoBehaviour:
   _pieceName: GreaterAutoAlly
   _teamID: 0
   _isSummon: 1
-  _maxHp: 9
-  _colDamage: 7
+  _maxHp: 15
+  _colDamage: 8
   _shieldBonus: 0
   _rangeInfoSO: {fileID: 11400000, guid: c3f46dc319874fce97a3aa5c202168f5, type: 2}
-  _moveAttackRangeInfoSO: {fileID: 0}
+  _moveAttackRangeInfoSO: {fileID: 11400000, guid: 88159582bbcc08e4daf911f1a52c6d21, type: 2}
   _defaultDeckCardIDs: []
   _job: {fileID: 0}

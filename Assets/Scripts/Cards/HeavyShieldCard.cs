@@ -21,5 +21,5 @@ public class HeavyShieldCard : Card
         });
     }
 
-    public override string EffectDescription => $"자신에게 방어도 {EffectiveShield(effects[0])}를 부여합니다. (소멸)";
+    public override string EffectDescription => $"자신에게 방어도 {EffectiveShield(effects[0])}를 부여합니다.";
 }

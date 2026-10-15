@@ -12,10 +12,12 @@ public class PieceDatabase : MonoBehaviour
         if (instance == null) instance = this;
     }
 
-    public GameObject GetPiece(string cardName)
+    // 기물 이름(PieceInfo.PieceName)으로 프리팹을 찾는다 — 레벨 배치(LevelData.placements.name), 소환·합류(PieceInfo),
+    // 세이브의 아군(PieceData.pieceName)이 모두 이 이름을 쓴다. 프리팹 파일 이름과는 무관하다.
+    public GameObject GetPiece(string pieceName)
     {
-        GameObject c = PiecePrefabs.Find(p => p.name == cardName);
-        return c;
+        return PiecePrefabs.Find(p => p != null && p.GetComponent<Piece>() is Piece piece
+                                      && piece.Info != null && piece.Info.PieceName == pieceName);
     }
 
     // 별도로 관리되는 PieceInfo 목록 없이, 이미 채워져 있는 PiecePrefabs 각각의 Piece.Info에서
@@ -38,4 +40,30 @@ public class PieceDatabase : MonoBehaviour
         List<string> pool = GetPieceInfo(pieceName)?.Job?.RewardCardPool;
         return pool != null && pool.Count > 0 ? pool : null;
     }
+
+#if UNITY_EDITOR
+    // 기물 이름이 조회 키이므로 등록된 기물끼리 겹치거나 비면 안 된다 — Database.prefab을 수정할 때 바로 경고한다.
+    void OnValidate()
+    {
+        if (PiecePrefabs == null) return;
+        var seen = new Dictionary<string, GameObject>();
+        foreach (GameObject prefab in PiecePrefabs)
+        {
+            if (prefab == null) continue;
+            Piece piece = prefab.GetComponent<Piece>();
+            if (piece == null || piece.Info == null)
+            {
+                Debug.LogWarning($"[PieceDatabase] '{prefab.name}'에 Piece 또는 PieceInfo가 없습니다.", prefab);
+                continue;
+            }
+            string key = piece.Info.PieceName;
+            if (string.IsNullOrEmpty(key))
+                Debug.LogWarning($"[PieceDatabase] '{prefab.name}'의 PieceInfo 이름이 비어 있습니다.", prefab);
+            else if (seen.TryGetValue(key, out GameObject other))
+                Debug.LogWarning($"[PieceDatabase] PieceInfo 이름 '{key}'이(가) '{other.name}'과 '{prefab.name}'에 중복됩니다.", prefab);
+            else
+                seen[key] = prefab;
+        }
+    }
+#endif
 }

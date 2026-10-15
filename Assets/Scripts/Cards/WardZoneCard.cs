@@ -1,4 +1,4 @@
-// 시전자에게 턴 효과 두 개를 건다 — 턴 종료마다 주변 적에게 고정 피해, 주변 아군 회복.
+// 시전자에게 턴 효과 두 개를 건다 — 턴 종료마다 주변 적에게 마법 데미지, 주변 아군 회복.
 // 범위는 프리팹 effectRange[0](주변 8칸)이고 시전자 칸은 포함하지 않는다(FlameThrowingCard와 같은 방식).
 public class WardZoneCard : Card
 {
@@ -48,5 +48,5 @@ public class WardZoneCard : Card
     }
 
     public override string EffectDescription =>
-        $"{effects[0].turnDuration}턴 동안 턴 종료 시 주변 적에게 {effects[0].onTurnEndEffect.dmg} 고정 데미지, 주변 아군을 {effects[1].onTurnEndEffect.dmg} 회복합니다.";
+        $"{effects[0].turnDuration}턴 동안 턴 종료 시 주변 적에게 {effects[0].onTurnEndEffect.dmg} 마법 데미지, 주변 아군을 {effects[1].onTurnEndEffect.dmg} 회복합니다.";
 }

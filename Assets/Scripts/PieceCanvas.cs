@@ -24,8 +24,6 @@ public class PieceCanvas : MonoBehaviour
         TextMeshProUGUI tmp = textobj.GetComponent<TextMeshProUGUI>();
         tmp.text = text;
         textobj.transform.localPosition = new Vector3(0, 3f, 0);
-        tmp.ForceMeshUpdate(); // sprite 서브메시(아이콘 머티리얼)가 생성되어야 fontMaterials에 잡힌다
-        BringToFrontOfRangeHatch(tmp);
         currentText = textobj;
 
     }
@@ -38,7 +36,6 @@ public class PieceCanvas : MonoBehaviour
     public void InvokeDamageText(int dmg)
     {
         GameObject textobj = Instantiate(DamageText, transform);
-        BringToFrontOfRangeHatch(textobj.GetComponent<TextMeshProUGUI>());
         textobj.GetComponent<TextMeshProUGUI>().text = dmg.ToString();
         FloatAndFade(textobj);
     }
@@ -49,20 +46,12 @@ public class PieceCanvas : MonoBehaviour
     {
         GameObject textobj = Instantiate(DamageText, transform);
         TextMeshProUGUI tmp = textobj.GetComponent<TextMeshProUGUI>();
-        BringToFrontOfRangeHatch(tmp);
         tmp.text = text;
         tmp.color = isBuff ? buffColor : effectColor;
         FloatAndFade(textobj);
     }
 
-    // RangeHatch 셰이더가 Queue=Transparent+1로 그려져서 기본 Transparent(3000) 큐인
-    // 텍스트/스프라이트를 가려버리는 문제 보정. 인스턴스 머티리얼 큐를 그보다 높여서
-    // 항상 RangeHatch 위에 그려지도록 한다.
-    void BringToFrontOfRangeHatch(TextMeshProUGUI tmp)
-    {
-        foreach (Material mat in tmp.fontMaterials)
-            mat.renderQueue = 3002;
-    }
+    // 텍스트는 범위 표시(RangeHatch, Queue=Transparent-1)보다 나중에 그려지므로 렌더 큐를 따로 올릴 필요가 없다.
     void FloatAndFade(GameObject textobj)
     {
         TextMeshProUGUI text = textobj.GetComponent<TextMeshProUGUI>();

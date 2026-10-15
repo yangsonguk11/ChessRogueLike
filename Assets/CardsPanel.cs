@@ -1,12 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
 public class CardsPanel : MonoBehaviour
 {
-    public enum ViewMode { SavedDeck, RuntimeDeck, Discard }
+    public enum ViewMode { SavedDeck, RuntimeDeck, Discard, Exile }
 
     [SerializeField] CardDatabase cardDatabase;
     [SerializeField] GameObject rootPanel;
@@ -60,16 +61,24 @@ public class CardsPanel : MonoBehaviour
     }
     void OnDestroy() => CardCanvas.OnPileChanged -= OnPileChanged;
 
-    void OnPileChanged()
+    bool IsRuntimeMode => currentMode != ViewMode.SavedDeck;
+
+    // 드로우 5장처럼 한 프레임에 더미 변경이 여러 번 알려져도 패널은 프레임 끝에 한 번만 다시 만든다.
+    // 이 컴포넌트는 rootPanel 아래에 있어 닫혀 있는 동안엔 LateUpdate가 돌지 않고, 다시 열 때 Open()이 직접 Refresh한다.
+    bool refreshPending;
+
+    void OnPileChanged() => refreshPending = true;
+
+    void LateUpdate()
     {
-        if (rootPanel != null && rootPanel.activeSelf &&
-            (currentMode == ViewMode.RuntimeDeck || currentMode == ViewMode.Discard))
+        if (refreshPending && rootPanel != null && rootPanel.activeSelf && IsRuntimeMode)
             Refresh();
     }
 
     public void ShowSavedDeck() => Toggle(ViewMode.SavedDeck);
     public void ShowDeck()      => Toggle(ViewMode.RuntimeDeck);
     public void ShowDiscard()   => Toggle(ViewMode.Discard);
+    public void ShowExile()     => Toggle(ViewMode.Exile);
 
     // 덱/버림/저장덱 보기 버튼의 EventTrigger(PointerEnter)에서 호출 — stock UnityEngine.UI.Button은
     // 호버 이벤트가 없어서 Show*()처럼 OnClick에 바로 연결할 수 없기 때문에 EventTrigger로 별도 연결한다.
@@ -98,9 +107,11 @@ public class CardsPanel : MonoBehaviour
 
     void Refresh()
     {
+        refreshPending = false;
         ClearCards();
         RectTransform container = GetComponent<RectTransform>();
         var pieces = DataManager.Instance.Pieces;
+        CardCanvas canvas = CardCanvas.instance;
 
         switch (currentMode)
         {
@@ -116,13 +127,24 @@ public class CardsPanel : MonoBehaviour
                 break;
 
             case ViewMode.RuntimeDeck:
-                if (CardCanvas.instance != null)
-                    SpawnFromCards(new List<RectTransform>(CardCanvas.instance.Deckcards), container);
+                // 덱은 셔플이 끝난 Queue라 그대로 보여주면 다음 드로우 순서가 드러난다 — 코스트·카드 순으로 정렬해 숨긴다.
+                if (canvas != null)
+                    SpawnFromCards(canvas.Deckcards
+                        .Select(rt => rt.GetComponent<Card>())
+                        .Where(c => c != null)
+                        .OrderBy(c => c.Cost)
+                        .ThenBy(c => CardIdOf(c), System.StringComparer.Ordinal)
+                        .ToList(), container);
                 break;
 
             case ViewMode.Discard:
-                if (CardCanvas.instance != null)
-                    SpawnFromCards(CardCanvas.instance.Discardcards, container);
+                if (canvas != null)
+                    SpawnFromCards(canvas.Discardcards.Select(rt => rt.GetComponent<Card>()).Where(c => c != null).ToList(), container);
+                break;
+
+            case ViewMode.Exile:
+                if (canvas != null)
+                    SpawnFromCards(canvas.Exilecards.Select(rt => rt.GetComponent<Card>()).Where(c => c != null).ToList(), container);
                 break;
         }
 
@@ -132,26 +154,35 @@ public class CardsPanel : MonoBehaviour
 
         if (titleText != null)
         {
-            string label;
-            if (currentMode == ViewMode.Discard) label = "버린 카드";
-            else if (currentMode == ViewMode.SavedDeck)
+            string pileLabel = currentMode switch
             {
-                string pieceName = (viewedPieceIndex >= 0 && viewedPieceIndex < pieces.Count) ? pieces[viewedPieceIndex].pieceName : "";
-                label = string.IsNullOrEmpty(pieceName) ? "덱" : $"{pieceName}의 덱";
-            }
-            else label = "덱";
+                ViewMode.Discard => "버린 카드",
+                ViewMode.Exile => "소멸 카드",
+                _ => "덱"
+            };
+            // 저장 덱은 보고 있는 로스터 기물, 전투 더미는 지금 화면에 표시 중인 기물의 이름을 붙인다.
+            string pieceName = currentMode == ViewMode.SavedDeck
+                ? ((viewedPieceIndex >= 0 && viewedPieceIndex < pieces.Count) ? pieces[viewedPieceIndex].pieceName : "")
+                : canvas?.ActivePiece?.Info?.PieceName;
+            string label = string.IsNullOrEmpty(pieceName) ? pileLabel : $"{pieceName}의 {pileLabel}";
             titleText.text = $"{label} ({spawnedCards.Count}장)";
         }
     }
 
-    void SpawnFromCards(List<RectTransform> source, RectTransform container)
+    // 세이브와 같은 기준(프리팹 이름 = cardID)으로 찾는다. 표시 이름(Name)은 프리팹 이름과 다를 수 있다.
+    static string CardIdOf(Card card) => !string.IsNullOrEmpty(card.cardID) ? card.cardID : card.Name;
+
+    // 전투 더미의 카드는 실제 오브젝트를 옮기지 않고 같은 프리팹을 새로 띄운 뒤, 얼굴을 원본 카드로 맞춘다
+    // (ShowFaceOf) — 전투 중 바뀐 코스트나 활성 기물의 힘 보너스처럼 원본에만 있는 상태가 그대로 보이게.
+    void SpawnFromCards(List<Card> source, RectTransform container)
     {
-        foreach (RectTransform rt in source)
+        foreach (Card card in source)
         {
-            Card card = rt.GetComponent<Card>();
-            if (card == null) continue;
-            GameObject obj = cardDatabase.SpawnCard(container, card.Name);
-            if (obj != null) { spawnedCards.Add(obj); RegisterPreview(obj); }
+            GameObject obj = cardDatabase.SpawnCard(container, CardIdOf(card));
+            if (obj == null) continue;
+            obj.GetComponent<Card>()?.ShowFaceOf(card);
+            spawnedCards.Add(obj);
+            RegisterPreview(obj);
         }
     }
 

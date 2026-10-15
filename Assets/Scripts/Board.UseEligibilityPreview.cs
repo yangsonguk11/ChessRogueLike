@@ -11,11 +11,23 @@ public partial class Board
     // 미리 계산해둔 상태 — 드롭 시 IsValidDropPos가 이 사거리를 기준으로 검증해야 한다는 뜻.
     bool pendingUseHasRangeLimit;
 
-    void ShowUseEligibilityPreview(Card card)
+    // 카드를 들고만 있는 동안(효과 큐는 아직 비어 있음) 겨누는 조준 효과 — 호버 범위 미리보기가 큐 대신 이걸 본다.
+    CardEffect previewAimEffect;
+
+    // 지금 겨누는 효과: 효과 처리 중이면 큐 맨 앞, 카드를 들고만 있으면 미리보기 중인 조준 효과.
+    CardEffect CurrentAimEffect() => pendingEffects.Count > 0 ? pendingEffects.Peek() : previewAimEffect;
+
+    // 카드를 집었을 때(CardCanvas.CommitNowUsingCard)와 사용 확정 때(UseCard) 호출. 범위는 이번 사용 효과 중
+    // 처음 나오는 조준 효과(Card.AimEffectIndex, 없으면 첫 효과) 기준이다.
+    public void ShowUseEligibilityPreview(Card card)
     {
+        ClearSelectedButton();
         pendingUseHasRangeLimit = false;
-        if (card.effects.Count == 0) return;
-        CardEffect first = card.effects[0];
+        List<CardEffect> effects = card.UseEffects;
+        if (effects.Count == 0) return;
+        int aimIndex = card.AimEffectIndex;
+        previewAimEffect = aimIndex >= 0 ? effects[aimIndex] : null;
+        CardEffect first = effects[Mathf.Max(0, aimIndex)];
         if (first.pieceSelectCount > 0) return;
 
         // BoardMode.command는 ButtonClicked에서 항상 캐스터 선택을 먼저 요구하므로 first.noRangeLimit와 무관하게 캐스터형으로 취급.
@@ -58,6 +70,7 @@ public partial class Board
 
     void ClearUseEligibilityPreview()
     {
+        previewAimEffect = null;
         useEligibilityHighlights.Clear();
         RefreshRangeDisplay();
     }

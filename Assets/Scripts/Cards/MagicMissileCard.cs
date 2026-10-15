@@ -1,4 +1,4 @@
-// MagicAttackCard의 작은 버전 — 사거리 안 기물 하나에게 힘과 무관한 고정 피해를 주고 소멸한다.
+// MagicAttackCard의 작은 버전 — 사거리 안 기물 하나에게 힘과 무관한 마법 데미지를 주고 소멸한다.
 // LoadMagicMissileCard가 전투 중 손에 넣어주는 카드이기도 하다.
 public class MagicMissileCard : Card
 {
@@ -22,5 +22,5 @@ public class MagicMissileCard : Card
         });
     }
 
-    public override string EffectDescription => $"기물에 {EffectiveDmg(effects[0])}의 고정 데미지를 줍니다. (소멸)";
+    public override string EffectDescription => $"기물에 {EffectiveDmg(effects[0])}의 마법 데미지를 줍니다.";
 }

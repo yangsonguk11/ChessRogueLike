@@ -77,8 +77,30 @@ public partial class Board
             for (int y = 0; y < M; y++)
             {
                 var pos = new Vector2Int(x, y);
-                GetButtonScript(pos).SetRangeVisual(ally.Contains(pos), enemy.Contains(pos), caster.Contains(pos));
+                GetButtonScript(pos).SetRangeVisual(RangeOutline(ally, pos), RangeOutline(enemy, pos), RangeOutline(caster, pos));
             }
+    }
+
+    // 범위 칸 하나의 테두리 마스크 — 같은 범위끼리 붙은 변에는 테두리를 그리지 않아 영역 바깥쪽만 선이 남는다.
+    // edges: 그 쪽 이웃이 범위 밖이면 그 변에 테두리. 1=+x 2=-x 4=+y 8=-y (보드 y+1 = 월드 +Z).
+    // corners: 두 변 쪽 이웃은 범위 안인데 그 사이 대각선 칸만 밖일 때(오목한 모서리) 모서리에만 테두리.
+    //          1=(+x,+y) 2=(-x,+y) 4=(+x,-y) 8=(-x,-y). 셰이더 쪽 해석은 RangeHatch.shader.
+    static (bool on, int edges, int corners) RangeOutline(HashSet<Vector2Int> cells, Vector2Int pos)
+    {
+        if (!cells.Contains(pos)) return (false, 0, 0);
+
+        bool px = cells.Contains(pos + Vector2Int.right);
+        bool nx = cells.Contains(pos + Vector2Int.left);
+        bool py = cells.Contains(pos + Vector2Int.up);
+        bool ny = cells.Contains(pos + Vector2Int.down);
+
+        int edges = (px ? 0 : 1) | (nx ? 0 : 2) | (py ? 0 : 4) | (ny ? 0 : 8);
+        int corners = 0;
+        if (px && py && !cells.Contains(pos + new Vector2Int(1, 1))) corners |= 1;
+        if (nx && py && !cells.Contains(pos + new Vector2Int(-1, 1))) corners |= 2;
+        if (px && ny && !cells.Contains(pos + new Vector2Int(1, -1))) corners |= 4;
+        if (nx && ny && !cells.Contains(pos + new Vector2Int(-1, -1))) corners |= 8;
+        return (true, edges, corners);
     }
 
     // origin + offsets 중 보드 안의 칸만.

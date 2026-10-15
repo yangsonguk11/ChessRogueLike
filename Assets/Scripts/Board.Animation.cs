@@ -94,6 +94,15 @@ public partial class Board
         button2.SnapPieceToCell();
     }
 
+    // 이동 불가로 이동이 막혔을 때 기물을 화면 좌우로 짧게 흔든다. 순수 비주얼 — piece는 enqueue 시점에 받는다.
+    // DOPunchPosition은 현재 위치를 기준으로 흔들고 그 자리로 자동 복귀한다(bumpOnArrival과 같은 방식).
+    IEnumerator ImmobileShakeCor(Piece piece)
+    {
+        if (piece == null) yield break;
+        Vector3 right = Camera.main != null ? Camera.main.transform.right : Vector3.right;
+        yield return piece.transform.DOPunchPosition(right * 0.12f, 0.35f, 10, 0.5f).WaitForCompletion();
+    }
+
     const float AnimationEventFallbackTimeout = 1.2f; // 이벤트가 아직 안 심어진 클립을 위한 안전장치
 
     // 시전자(caster) 애니메이션을 재생하면서, 시전자 클립에 심어둔 Animation Event(OnAnimationEvent)가

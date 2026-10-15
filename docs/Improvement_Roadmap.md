@@ -50,7 +50,8 @@
 6. **CameraFX 연결** (A2) — 이미 있는 함수를 타격 순간에 부른다. `Piece.DamageText`에서 공격 피해(isAttack)일 때 피해/최대HP에 비례한 `Shake`, 아군이 맞았으면 붉은 `Flash`. 처치 순간에 실행되는 `Piece.PieceDeathSound`에서 `HitStop(0.05)`과 더 센 흔들림. 독·화상 틱은 제외한다. 완료 기준: 타격마다 흔들리고 처치 때 멈칫하며, 3배속에서도 과하지 않다.
 7. **턴 배너 비차단** (A8) — `TurnManager`가 `AnnouncementUI.currentRoutine`을 기다리지 않고 바로 턴 처리로 넘어가게 하고, 배너 표시 시간을 1.0초에서 0.5초로 줄인다. 완료 기준: 턴 시작 대기가 1.6초에서 0.3초 이하로 준다.
 8. **이동 이징·점프** (C2) — `PieceMoveCor`의 `DOMove(…Linear)`를 `DOJump(pos2, 0.3~0.5, 1, duration)`(OutQuad)으로 바꾸고 착지에 `DOPunchScale` 스쿼시를 넣는다. 완료 기준: 기물을 들어 올렸다 놓는 느낌이 나고 이동 시간은 그대로다.
-9. **데미지 텍스트 머티리얼** (G3) — renderQueue 3002를 넣은 TMP 머티리얼 프리셋을 `DamageText.prefab`에 지정하고 `BringToFrontOfRangeHatch`를 없앤다. 완료 기준: 연속 피격 때 배치 수가 줄고, 텍스트는 여전히 범위 표시 위에 보인다.
+9. ✅ **데미지 텍스트 머티리얼** (G3) — renderQueue 3002를 넣은 TMP 머티리얼 프리셋을 `DamageText.prefab`에 지정하고 `BringToFrontOfRangeHatch`를 없앤다. 완료 기준: 연속 피격 때 배치 수가 줄고, 텍스트는 여전히 범위 표시 위에 보인다.
+   - 2026-10-12 적용(33번과 함께): 프리셋 대신 범위 셰이더 큐를 Transparent-1로 내려 텍스트가 자연히 위에 그려지게 하고, `BringToFrontOfRangeHatch`를 지웠다.
 10. **카드 일러스트 압축** (H5) — 원본을 4의 배수 크기로 다시 저장하거나(912×1179 → 912×1180) Sprite Atlas V2(내장)로 묶고, Max Size를 실제 표시 크기(512~1024)에 맞춘다. 완료 기준: Inspector의 포맷이 BC7/DXT5로 표시된다.
 11. **세이브 원자적 저장** (I10) — 임시 파일에 쓴 뒤 `File.Replace(tmp, save, save.bak)`로 바꾸고(첫 저장은 Move), 불러오다 실패하면 `.bak`에서 복구한다. 완료 기준: 저장 중 강제 종료해도 세이브가 남는다.
 
@@ -83,7 +84,8 @@
 
 ### 4단계 — 비주얼 완성도
 
-33. **범위 표시 셰이더** (D1→D2, CRL-53) — 먼저 HLSL·SRP Batcher·줄무늬 안티에일리어싱으로 옮기고, 다음에 보드 전체 쿼드 1장 + N×M 데이터 텍스처로 합쳐 바깥 테두리만 그린다(`RangeOn/RangeOff` 참조 카운트를 텍스처 갱신으로). 완료 기준: 붙은 칸 사이 내부선과 renderQueue 땜질이 없어진다.
+33. ✅ **범위 표시 셰이더** (D1→D2, CRL-53) — 먼저 HLSL·SRP Batcher·줄무늬 안티에일리어싱으로 옮기고, 다음에 보드 전체 쿼드 1장 + N×M 데이터 텍스처로 합쳐 바깥 테두리만 그린다(`RangeOn/RangeOff` 참조 카운트를 텍스처 갱신으로). 완료 기준: 붙은 칸 사이 내부선과 renderQueue 땜질이 없어진다.
+   - 2026-10-12 적용: 셰이더를 URP HLSL(SRP Batcher 호환, 줄무늬·테두리 안티에일리어싱)로 다시 썼다. 바깥 테두리는 데이터 텍스처 대신 칸별 이웃 마스크로 구현했다 — `Board.RefreshRangeDisplay`가 이미 칸별 범위 집합을 한 번에 계산하므로 `RangeOutline`이 변·오목 모서리 마스크를 만들고 `Button.SetRangeVisual`이 MaterialPropertyBlock으로 넘긴다. 큐는 Transparent-1, 적 범위는 줄무늬 방향을 반대로(`_StripeDirection: -1`) 해 아군 범위와 겹치면 격자무늬가 된다.
 34. **환경 프로필·디오라마** (E1·E2·E3·E5) — 층별로 스카이·포그·Volume·조명·환경 프리팹·BGM을 묶은 SO, 보드에 초점을 맞춘 Bokeh DOF, 바람 흔들림 Shader Graph, 분위기 파티클. 완료 기준: 층마다 분위기가 달라진다.
 35. **툰 셰이딩·외곽선** (D5) — Shader Graph 커스텀 라이팅 툰 셰이더 + 이미 있는 QuickOutline으로 선택·팀 표시. 완료 기준: 체스말과 인간형 모델의 질감이 맞는다.
 36. **카메라 연출** (E6·A10·A4) — DOTween 카메라 리그로 행동하는 기물 쪽으로 살짝 이동, 마지막 처치 슬로모·줌. FOV 30~40도 검토한다.

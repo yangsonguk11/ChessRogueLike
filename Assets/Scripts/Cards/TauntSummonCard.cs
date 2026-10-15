@@ -23,5 +23,5 @@ public class TauntSummonCard : Card
         };
         effects.Add(cf);
     }
-    public override string EffectDescription => $"도발 상태의 {pieceToSummon?.PieceName}을(를) 소환합니다. (소멸)";
+    public override string EffectDescription => $"도발 상태의 {pieceToSummon?.PieceName}을(를) 소환합니다.";
 }

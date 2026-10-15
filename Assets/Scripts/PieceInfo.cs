@@ -4,6 +4,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "NewPieceInfo", menuName = "PieceInfo")]
 public class PieceInfo : ScriptableObject
 {
+    [Tooltip("기물 이름 겸 조회 키 — 레벨 배치(LevelData.placements.name)·소환·합류·세이브·보상 풀 조회와 화면 표시에 모두 쓰인다.\n등록된 기물끼리 겹치면 안 된다(PieceDatabase가 경고). 프리팹 파일 이름과는 무관.")]
     [SerializeField] string _pieceName;
     [SerializeField] int _teamID;
     [SerializeField] bool _isSummon;

@@ -1,4 +1,4 @@
-// 적 전용: 자신에게 가시(Thorn)를 부여한다. 가시형 적(White Knight 4)의 사이클 1단계.
+// 적 전용: 자신에게 가시(Thorn)를 부여한다. 가시형 적(Enemy-ThornKnight)의 사이클 1단계.
 public class EnemyThornCard : Card
 {
     public override void Awake()

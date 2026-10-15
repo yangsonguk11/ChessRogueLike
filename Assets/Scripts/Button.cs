@@ -44,12 +44,14 @@ public class Button : MonoBehaviour, ISelectable
     {
         ScaleHover();
         boardScript?.ButtonHovered(location);
+        boardScript?.ShowTileTooltip(this);
     }
 
     public void MouseExit()
     {
         if(!selected) ScaleDefault();
         boardScript?.ButtonUnhovered();
+        boardScript?.HideTileTooltip();
     }
     public void MouseDown()
     {
@@ -62,11 +64,32 @@ public class Button : MonoBehaviour, ISelectable
 
     // 범위 표시(파랑=아군 범위, 빨강=적 범위, 초록=시전자). 무엇을 켤지는 Board.RefreshRangeDisplay가
     // 우선순위에 따라 정해서 모든 칸에 한꺼번에 적용한다 — 칸이 직접 상태를 쌓지 않는다.
-    public void SetRangeVisual(bool ally, bool enemy, bool caster)
+    // edges/corners는 RangeHatch 셰이더가 범위 영역의 바깥쪽에만 테두리를 그리도록 넘기는 마스크다(Board.RangeOutline).
+    public void SetRangeVisual((bool on, int edges, int corners) ally, (bool on, int edges, int corners) enemy,
+        (bool on, int edges, int corners) caster)
     {
-        AllyRangeObj.SetActive(ally);
-        EnemyRangeObj.SetActive(enemy);
-        CasterIndicatorObj?.SetActive(caster);
+        ApplyRangeLayer(AllyRangeObj, ally);
+        ApplyRangeLayer(EnemyRangeObj, enemy);
+        ApplyRangeLayer(CasterIndicatorObj, caster);
+    }
+
+    static readonly int EdgeMaskId = Shader.PropertyToID("_EdgeMask");
+    static readonly int CornerMaskId = Shader.PropertyToID("_CornerMask");
+    MaterialPropertyBlock rangeBlock;
+
+    void ApplyRangeLayer(GameObject layer, (bool on, int edges, int corners) state)
+    {
+        if (layer == null) return;
+        layer.SetActive(state.on);
+        if (!state.on) return;
+
+        Renderer rangeRenderer = layer.GetComponent<Renderer>();
+        if (rangeRenderer == null) return;
+        rangeBlock ??= new MaterialPropertyBlock();
+        rangeRenderer.GetPropertyBlock(rangeBlock);
+        rangeBlock.SetFloat(EdgeMaskId, state.edges);
+        rangeBlock.SetFloat(CornerMaskId, state.corners);
+        rangeRenderer.SetPropertyBlock(rangeBlock);
     }
 
     public GameObject GetPiece() { if (piece) return piece; else return null; }

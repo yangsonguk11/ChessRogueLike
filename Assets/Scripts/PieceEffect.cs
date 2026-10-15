@@ -9,7 +9,8 @@ public class PieceEffect : MonoBehaviour
     [SerializeField] float radius = 1f;
     [SerializeField] float heightOffset = 0.5f;
     [SerializeField] float degreesPerSecond = 180f;
-    [SerializeField] Vector3 axis = Vector3.forward;
+    // 월드 기준 회전축(RotateAround). 보드가 XZ 평면이라 Vector3.up이어야 기물 주위를 수평으로 돈다.
+    [SerializeField] Vector3 axis = Vector3.up;
 
     GameObject[] spawned;
     bool visible = true;

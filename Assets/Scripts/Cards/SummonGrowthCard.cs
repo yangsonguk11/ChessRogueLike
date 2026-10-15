@@ -9,6 +9,7 @@ public class SummonGrowthCard : Card
         Cost = 3;
         type = CardType.Skill;
         dragDropTarget = DragDropTarget.Self;
+        exileOnUse = true;
 
         effects.Add(new CardEffect // 1번째: self 즉시실행
         {
@@ -50,5 +51,5 @@ public class SummonGrowthCard : Card
     public override CardRarity Rarity => CardRarity.Rare;
 
     public override string EffectDescription =>
-        $"매 턴 종료 시 다음에 소환할 기물의 힘을 {effects[0].onTurnEndEffect.dmg}, 체력을 {effects[1].onTurnEndEffect.dmg} 올립니다. (소환 시 소모됨)";
+        $"매 턴 종료 시 다음에 소환할 기물의 힘을 {effects[0].onTurnEndEffect.dmg}, 체력을 {effects[1].onTurnEndEffect.dmg} 올립니다. (소환 시 소모됨) (소멸)";
 }

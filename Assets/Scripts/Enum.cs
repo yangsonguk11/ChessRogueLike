@@ -18,4 +18,5 @@ public enum StatusEffectType
     NextMoveAttackDamage,     // 다음 이동공격 피해 +statusPower
     NextMoveAttackMultiplier, // 다음 이동공격 피해 ×statusPower
     NextMoveAttackStatus,     // 다음 이동공격 적중 대상에게 CardEffect.onMoveAttackHitEffect의 상태이상 부여
+    ExileOnDraw,              // 소멸 저주: 지속되는 동안 뽑는 카드에 소멸 부여(CardCanvas.DrawCardsData)
 }

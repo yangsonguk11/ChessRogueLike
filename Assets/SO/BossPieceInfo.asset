@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e4dbbf5546730bb49820b9d1b68e5d31, type: 3}
   m_Name: BossPieceInfo
   m_EditorClassIdentifier: Assembly-CSharp::PieceInfo
-  _pieceName: BOSS
+  _pieceName: Boss-Bastion
   _teamID: 1
-  _maxHp: 20
+  _maxHp: 50
   _colDamage: 5
   _rangeInfoSO: {fileID: 11400000, guid: 35d0d714c9e81e94ba8bb12c5d295a0e, type: 2}
+  _moveAttackRangeInfoSO: {fileID: 11400000, guid: 88159582bbcc08e4daf911f1a52c6d21, type: 2}

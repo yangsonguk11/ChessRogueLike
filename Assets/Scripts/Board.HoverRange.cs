@@ -12,14 +12,15 @@ public partial class Board
         // 캐스터 선택 전에도 마우스 위치 기준으로 미리보기를 보여줘야 함.
         // Directional4/8도 마찬가지로, 캐스터 확정(드롭)은 아직 안 됐어도 카드를 든 채로 보드를 훑는 동안
         // 방향 미리보기가 나와야 하므로, 카드 소유 기물(activePiece) 위치를 캐스터 삼아 미리 보여준다.
-        CardEffect pendingEffect = pendingEffects.Count > 0 ? pendingEffects.Peek() : null;
+        // 카드를 들고만 있는 동안은 효과 큐가 비어 있으므로 미리보기 중인 조준 효과를 본다(CurrentAimEffect).
+        CardEffect pendingEffect = CurrentAimEffect();
         bool previewableWithoutCaster = pendingEffect != null &&
             (pendingEffect.areaTargetMode == AreaTargetMode.MouseCentered ||
              pendingEffect.areaTargetMode == AreaTargetMode.Directional4 ||
              pendingEffect.areaTargetMode == AreaTargetMode.Directional8);
-        if (pendingEffects.Count > 0 && (isSelectedButtonActive() || previewableWithoutCaster))
+        if (pendingEffect != null && (isSelectedButtonActive() || previewableWithoutCaster))
         {
-            CardEffect effect = pendingEffects.Peek();
+            CardEffect effect = pendingEffect;
             if (effect.areaTargetMode != AreaTargetMode.Fixed)
             {
                 hoverRangeButtons.Clear();

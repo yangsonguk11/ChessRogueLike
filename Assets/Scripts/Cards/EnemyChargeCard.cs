@@ -1,5 +1,5 @@
 // 적 전용: 아무 효과 없이 한 턴을 흘려보내며 "차지 중" 아이콘만 표시한다.
-// 텔레그래프형 적(White Knight 5)의 사이클 2단계 — 다음 턴에 강화된 광역 공격이 온다는 걸 예고한다.
+// 텔레그래프형 적(Enemy-ChargeKnight)의 사이클 2단계 — 다음 턴에 강화된 광역 공격이 온다는 걸 예고한다.
 public class EnemyChargeCard : Card
 {
     public override void Awake()

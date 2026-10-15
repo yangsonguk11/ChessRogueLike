@@ -20,9 +20,9 @@ MonoBehaviour:
   - position: {x: 5, y: 3}
     name: 
   - position: {x: 2, y: 3}
-    name: White Knight 1
+    name: Enemy-StrikerKnight
   - position: {x: 1, y: 3}
-    name: White Rook
+    name: Enemy-GrowingRook
   levelType: 0
   eventType: 0
   eventObjectPosition: {x: 0, y: 0}
