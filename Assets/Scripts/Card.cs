@@ -133,9 +133,15 @@ public abstract class Card : MonoBehaviour, ISelectable
         nameText?.SetText(src.Name);
         descriptionText?.SetText(src.Description);
         typeText?.SetText(src.type.ToDisplayString());
-        // 소멸 표시는 카드별 문구가 아니라 exileOnUse 하나로 붙인다 — 전투 중 부여된 소멸(소멸 저주)도 똑같이 보인다.
-        effectText?.SetText(src.exileOnUse ? src.EffectDescription + " (소멸)" : src.EffectDescription);
+        // 소멸 표시는 카드별 문구가 아니라 ShowsExile 하나로 붙인다 — 소멸 저주로 이번에 소멸할 카드도 똑같이 보인다.
+        effectText?.SetText(src.ShowsExile ? src.EffectDescription + " (소멸)" : src.EffectDescription);
     }
+
+    // 지금 사용하면 소멸하는지(표시용): 원래 소멸 카드이거나, 화면에 띄운 기물의 더미 카드인데 그 기물이 소멸 저주에 걸려 있으면 true.
+    // 실제 소멸 판정은 CardCanvas.FinishUseCard가 한다. 동적으로 소멸하는 카드(WarmUpDamageCard 등)의 조건은 여기 반영하지 않는다.
+    // 적·자동 아군 행동 카드(previewCasterOverride)는 CardCanvas를 거치지 않아 저주로 소멸하지 않고, 사용 불가 카드는 쓸 수 없으므로 제외한다.
+    public bool ShowsExile => exileOnUse
+        || (previewCasterOverride == null && !IsUnplayable && (PreviewCaster?.HasExileCurse() ?? false));
 
     // 이 카드(보드 칸 정보창의 표시용 템플릿)에 다른 카드의 이름·코스트·종류·설명을 대신 보여준다. 적 행동 카드처럼
     // 프리팹이 없어 직접 띄울 수 없는 카드도 이렇게 카드 이미지로 보여줄 수 있다(TooltipView.FillCardFace).
@@ -619,16 +625,21 @@ public record CardEffect
     // 디버프지만 적 대상이면 버프). TurnEffect.IsBuff가 이 값을 그대로 읽는다. 그 외의 곳에서는 안 쓰임.
     public bool isBuff { get; init; }
 
-    // Damage 계열 효과가 대상을 처치했을 때 시전자를 대상으로 실행할 CardEffect (예: 처치 시 ColDamageUp)
+    // Damage 계열 효과가 대상을 처치했을 때 시전자를 대상으로 실행할 CardEffect (예: 처치 시 ColDamageUp).
+    // 처치 시점에 바로 실행하지 않고 효과 큐 맨 앞에 끼워 넣어(Board.TriggerOnKillEffect) 다음 효과를 꺼낼 때 실행된다.
     public CardEffect onKillEffect { get; init; }
+
+    // 대상이 시전자로 이미 정해진 효과 — 효과 큐(Board.ProcessNextCardEffectStep)가 입력 모드(requiredMode)를 보지 않고
+    // 시전자 칸에서 바로 실행한다. 처치 시 효과·기물 선택 결과처럼 엔진이 큐 앞에 끼워 넣는 효과용이며 카드 정의에서는 쓰지 않는다.
+    public bool executeOnCaster { get; init; }
 
     // SelectAndDiscard / SelectAndChangeCost 타입에서 사용
     public CardZone cardZone { get; init; } = CardZone.Hand;   // 선택 대상 존
     public int selectCount { get; init; } = 1;                 // 선택할 카드 수 (0 = 제한 없음)
 
     // 0보다 크면 (requiredMode는 보통 Inspect) UseCard 이후 카드 효과 처리 중에 보드에서 아군 기물을
-    // 이 수치만큼 직접 클릭해 고르게 한다(Board.RequestPieceSelection). 고른 기물 각각에게 이 CardEffect
-    // 자신이 그대로 적용된다 (ExecuteCardEffectOnPiece가 지원하는 타입만: Heal/Shield/ColDamageUp류 등).
+    // 이 수치만큼 직접 클릭해 고르게 한다(Board.RequestPieceSelection). 고른 기물 각각을 시전자로 한 이 CardEffect
+    // 사본이 효과 큐 맨 앞에 들어가 그 기물 칸에서 실행된다(executeOnCaster).
     public int pieceSelectCount { get; init; }
     public bool excludeCasterFromPieceSelection { get; init; } // true면 pieceSelectCount 선택 대상에서 카드를 낸 기물 자신을 제외
     public int costChange { get; init; } = 0;                  // 코스트 변화량 (SelectAndChangeCost용)

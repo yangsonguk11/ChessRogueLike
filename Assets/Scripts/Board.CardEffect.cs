@@ -94,6 +94,22 @@ public partial class Board
             return;
         }
 
+        // 엔진이 끼워 넣은 효과(처치 시 효과·기물 선택 결과): 대상이 이미 시전자로 정해져 있어 입력 모드를 보지 않고 바로 실행한다.
+        // 직전 대상·선택 칸은 되돌려 카드의 이후 효과(useLastTarget, 후속 효과의 시전자 칸)에 새지 않게 한다.
+        if (nextEffect.executeOnCaster)
+        {
+            pendingEffects.Dequeue();
+            if (nextEffect.caster != null && (nextEffect.graveCost <= 0 || nextEffect.caster.HasGrave(nextEffect.graveCost)))
+            {
+                var saved = (_selectedButton, lastEffectTargetPos, lastEffectTargetPiece);
+                _selectedButton = FindPiecePos(nextEffect.caster);
+                ExecuteEffect(nextEffect, _selectedButton);
+                (_selectedButton, lastEffectTargetPos, lastEffectTargetPiece) = saved;
+            }
+            ScheduleNextCardEffect();
+            return;
+        }
+
         // 카드 주인이 아닌 기물이 시전하는 효과(소환 시 효과): 적 카드 규칙대로 자동 실행한다(ProcessEnemyCardEffect가
         // 그 기물 위치를 시전자로 잡음). 실행하는 동안 바뀐 선택 상태는 되돌려 카드의 이후 효과로 새지 않게 한다 —
         // 자동 실행은 이 호출 안에서 끝나고 ScheduleNextCardEffect는 드레인 중이라 다음 패스만 예약한다.
@@ -502,23 +518,7 @@ public partial class Board
         lastEffectTargetPiece = targetPos.x >= 0 && targetPos.x < N && targetPos.y >= 0 && targetPos.y < M
             ? GetPieceAt(targetPos) : null;
 
-        // effectApplied가 false→true로 바뀌는 지금 이 순간이 이 카드의 첫 효과가 실제로 처리되기 시작하는
-        // 시점이다(그 전까지는 CardCanvas.CancelCardUsage/RevertNowUsingCardToHeld로 언제든 취소 가능하고,
-        // 이 지점부턴 취소가 막힌다 — EffectApplied 프로퍼티 참고). 카드 하나당 딱 한 번만 발동해야 하므로
-        // 아직 false일 때만(=이 카드의 첫 효과일 때만) 호출한다. relicsOnCardUsed를 전부 큐에 모아
-        // 동기적으로 순차 처리하고 나서(TriggerRelicsOnCardUsed 내부), 곧바로 아래에서 카드 자신의
-        // 첫 효과(cardEffect)로 자연스럽게 이어진다 — 유물 효과 전부가 카드 효과보다 반드시 먼저 끝난다.
-        // 에너지 차감도 여기서 먼저 끝내둔다 — 카드 자신의 효과(예: ReduceCost)가 이후 Cost를 바꾸더라도
-        // 이번 사용분 차감엔 영향이 없도록(예전엔 모든 효과가 끝난 뒤 FinishUseCard에서 차감해서, 카드가
-        // 자기 코스트를 스스로 깎으면 이번 판 차감액까지 할인돼버리는 문제가 있었다).
-        if (!effectApplied && currentActiveCard != null && currentActiveCard.user == User.Ally)
-        {
-            TriggerRelicsOnCardUsed(selectedButton, targetPos);
-            CardCanvas.instance.DeductEnergyForCard(currentActiveCard);
-        }
-
-        effectApplied = true;
-        CardCanvas.instance.isCardEffecting = true;
+        MarkCardEffectStarted(targetPos);
 
         // 대상이 죽었거나 없어 실행하지 않는 효과(skipIfTargetGone) — 아래 hitsPerDiscarded 0타 스킵과 같은 방식으로,
         // 카드 사용 처리는 위에서 끝났고 호출부가 ScheduleNextCardEffect로 큐를 이어간다. 무덤은 아래 PayGrave보다
@@ -533,6 +533,28 @@ public partial class Board
         if (cardEffect.hitsPerDiscarded > 0 && cardEffect.hitCount <= 0) return;
 
         ApplyCardEffectNow(cardEffect, targetPos);
+    }
+
+    // 카드 사용 확정 처리 — 효과가 실제로 처리되기 시작할 때 ExecuteEffect와 ApplyPieceSelectionEffect(기물 선택 확정)가 호출한다.
+    void MarkCardEffectStarted(Vector2Int targetPos)
+    {
+        // effectApplied가 false→true로 바뀌는 지금 이 순간이 이 카드의 첫 효과가 실제로 처리되기 시작하는
+        // 시점이다(그 전까지는 CardCanvas.CancelCardUsage/RevertNowUsingCardToHeld로 언제든 취소 가능하고,
+        // 이 지점부턴 취소가 막힌다 — EffectApplied 프로퍼티 참고). 카드 하나당 딱 한 번만 발동해야 하므로
+        // 아직 false일 때만(=이 카드의 첫 효과일 때만) 호출한다. relicsOnCardUsed를 전부 큐에 모아
+        // 동기적으로 순차 처리하고 나서(TriggerRelicsOnCardUsed 내부), 곧바로 호출부에서 카드 자신의
+        // 첫 효과로 자연스럽게 이어진다 — 유물 효과 전부가 카드 효과보다 반드시 먼저 끝난다.
+        // 에너지 차감도 여기서 먼저 끝내둔다 — 카드 자신의 효과(예: ReduceCost)가 이후 Cost를 바꾸더라도
+        // 이번 사용분 차감엔 영향이 없도록(예전엔 모든 효과가 끝난 뒤 FinishUseCard에서 차감해서, 카드가
+        // 자기 코스트를 스스로 깎으면 이번 판 차감액까지 할인돼버리는 문제가 있었다).
+        if (!effectApplied && currentActiveCard != null && currentActiveCard.user == User.Ally)
+        {
+            TriggerRelicsOnCardUsed(selectedButton, targetPos);
+            CardCanvas.instance.DeductEnergyForCard(currentActiveCard);
+        }
+
+        effectApplied = true;
+        CardCanvas.instance.isCardEffecting = true;
     }
 
     // CardCanvas의 손패↔덱/버림/소멸 로직 메서드(HandtoDiscardCount 등)가 돌려준 "이동해야 할 카드"
@@ -561,7 +583,8 @@ public partial class Board
         StartMotionQueue();
     }
 
-    // 카드/예약효과(TurnEffect·유물 등) 공용: CardEffect 하나를 targetPos 기준으로 실제로 적용한다.
+    // 카드/예약효과(TurnEffect·유물 등) 공용: CardEffect 하나를 targetPos 기준으로 실제로 적용한다. 처치 시 효과·기물 선택
+    // 결과도 효과 큐(executeOnCaster)를 거쳐 여기로 온다 — 게임의 모든 CardEffect가 이 함수 하나로 실행된다.
     // currentActiveCard/pendingEffects/effectApplied 같은 "지금 실제 카드를 쓰는 중" 상태는 전혀 건드리지
     // 않으므로, 다른 카드가 한창 처리되는 도중에 끼어들어도(진행 중인 카드의 pendingEffects를 훼손하지 않고)
     // 안전하게 호출할 수 있다. 캐스터는 selectedButton으로 넘겨받는다(호출부가 미리 세팅).
@@ -638,12 +661,14 @@ public partial class Board
                 ApplyTurnEffectToTarget(targetPos, cardEffect);
                 break;
             case EffectType.ColDamageUp:
+            case EffectType.BaseColDamageUp:
             {
                 Piece caster = GetButtonScript(selectedButton).GetPieceScript();
                 Piece p = GetButtonScript(targetPos).GetPieceScript();
                 if (p != null)
                 {
-                    p.AddColDamage(cardEffect.dmg, showReaction: false);
+                    // Base*는 colDamageBonus도 함께 올려 GetPieceData 저장을 거쳐 다음 전투로도 이어지게 한다(영구 강화).
+                    p.AddColDamage(cardEffect.dmg, permanent: cardEffect.type == EffectType.BaseColDamageUp, showReaction: false);
                     motionQueue.Enqueue(PlayCasterAndTargetReaction(caster, cardEffect?.animTrigger, p.ColDamageUpReaction(cardEffect.dmg), cardEffect));
                     StartMotionQueue();
                     CardCanvas.instance?.RefreshAllCardViews();
@@ -652,15 +677,29 @@ public partial class Board
                 break;
             }
             case EffectType.ShieldBonusUp:
+            case EffectType.BaseShieldBonusUp:
             {
                 Piece caster = GetButtonScript(selectedButton).GetPieceScript();
                 Piece p = GetButtonScript(targetPos).GetPieceScript();
                 if (p != null)
                 {
-                    p.AddShieldBonus(cardEffect.dmg, showReaction: false);
+                    p.AddShieldBonus(cardEffect.dmg, permanent: cardEffect.type == EffectType.BaseShieldBonusUp, showReaction: false);
                     motionQueue.Enqueue(PlayCasterAndTargetReaction(caster, cardEffect?.animTrigger, p.ShieldBonusUpReaction(cardEffect.dmg), cardEffect));
                     StartMotionQueue();
                     CardCanvas.instance?.RefreshAllCardViews();
+                }
+                break;
+            }
+            case EffectType.RestoreEnergy:
+            {
+                // 코스트(에너지)는 기물별이 아니라 아군 전체가 공유하는 자원 — 즉시 회복하고(setter가 UI·사용 가능 여부 갱신) 연출만 큐잉.
+                if (CardCanvas.instance != null)
+                    CardCanvas.instance.currentenergy = Mathf.Min(CardCanvas.instance.currentenergy + cardEffect.dmg, CardCanvas.instance.maxenergy);
+                Piece caster = isSelectedButtonActive() ? GetButtonScript(selectedButton).GetPieceScript() : null;
+                if (caster != null && cardEffect.animTrigger != null)
+                {
+                    motionQueue.Enqueue(TriggerAnimCor(caster, cardEffect.animTrigger, cardEffect: cardEffect));
+                    StartMotionQueue();
                 }
                 break;
             }
@@ -689,7 +728,7 @@ public partial class Board
                 Piece recipient = cardEffect.requiredMode == BoardMode.Inspect
                     ? cardEffect.caster ?? currentCardCaster ?? CardCanvas.instance?.ActivePiece
                     : targetPos.x >= 0 && targetPos.x < N && targetPos.y >= 0 && targetPos.y < M ? GetPieceAt(targetPos) : null;
-                IEnumerator reaction = AddCardReaction(recipient, cardEffect);
+                IEnumerator reaction = AddCardReaction(recipient, cardEffect.addCardID, cardEffect.addCardZone);
                 if (reaction == null) break;
                 motionQueue.Enqueue(PlayCasterAndTargetReaction(caster, cardEffect.animTrigger, reaction, cardEffect));
                 StartMotionQueue();
@@ -1026,7 +1065,8 @@ public partial class Board
             StatusEffectType.NextMoveAttackDamage     => new NextMoveAttackDamageEffect(duration, power),
             StatusEffectType.NextMoveAttackMultiplier => new NextMoveAttackMultiplierEffect(duration, power),
             StatusEffectType.NextMoveAttackStatus     => new NextMoveAttackStatusEffect(duration, onMoveAttackHit),
-            StatusEffectType.ExileOnDraw        => new ExileOnDrawEffect(duration),
+            StatusEffectType.ExileOnUse         => new ExileOnUseEffect(duration),
+            StatusEffectType.WoundOnHit         => new WoundOnHitEffect(duration),
             _                                   => null,
         };
     }
@@ -1134,7 +1174,7 @@ public partial class Board
                 var reactions = new List<IEnumerator>();
                 foreach (Vector2Int pos in targets)
                 {
-                    IEnumerator r = AddCardReaction(GetButtonScript(pos).GetPieceScript(), cardEffect);
+                    IEnumerator r = AddCardReaction(GetButtonScript(pos).GetPieceScript(), cardEffect.addCardID, cardEffect.addCardZone);
                     if (r != null) reactions.Add(r);
                 }
                 motionQueue.Enqueue(PlayCasterAndTargetReaction(caster, cardEffect.animTrigger, Parallel(reactions.ToArray()), cardEffect, rangeOrigin));
@@ -1147,9 +1187,9 @@ public partial class Board
     // AddCard: recipient의 전투 덱에 카드를 넣고(로직 즉시 — 원본 덱은 그대로), 연출을 돌려준다. 화면에 표시 중인
     // 기물이면 카드 등장 연출, 아니면 보드 위 그 기물에 "카드 +1" 텍스트(카드는 그 기물로 전환할 때 보인다).
     // 전투 덱이 없는 기물(적, 덱 없는 소환수)이면 null.
-    IEnumerator AddCardReaction(Piece recipient, CardEffect cardEffect)
+    IEnumerator AddCardReaction(Piece recipient, string cardID, CardPositionZone zone)
     {
-        IEnumerator reveal = CardCanvas.instance?.AddCardDuringCombat(recipient, cardEffect.addCardID, cardEffect.addCardZone);
+        IEnumerator reveal = CardCanvas.instance?.AddCardDuringCombat(recipient, cardID, zone);
         if (reveal == null) return null;
         if (recipient == CardCanvas.instance.ActivePiece) return reveal;
         return Parallel(reveal, recipient.StatusTextReaction("카드 +1", false, new Color(0.75f, 0.6f, 1f), textOnly: true));
@@ -1235,12 +1275,25 @@ public partial class Board
         ScheduleNextCardEffect();
     }
 
-    // RequestPieceSelection으로 보드에서 직접 고른 기물들 각각에게 effect를 적용한다.
+    // RequestPieceSelection으로 보드에서 직접 고른 기물들 각각을 시전자로 한 effect 사본을 효과 큐 맨 앞에 넣는다 —
+    // 대상이 이미 정해졌으므로 executeOnCaster로 표시해, 큐가 입력 모드를 보지 않고 각 기물 칸에서 바로 실행한다.
     void ApplyPieceSelectionEffect(CardEffect effect, List<Piece> selected)
     {
+        // 기물 선택 효과 자체는 ExecuteEffect를 거치지 않으므로 카드 사용 확정(에너지 차감·OnCardUsed 유물)을 여기서 한다.
+        // 고를 수 있는 기물이 없어 0명이어도 카드는 사용된 것으로 친다. 유물 기준 칸은 카드 시전자 칸.
+        Vector2Int casterPos = currentCardCaster != null ? FindPiecePos(currentCardCaster) : new Vector2Int(-1, -1);
+        Vector2Int savedSelected = _selectedButton;
+        _selectedButton = casterPos;
+        MarkCardEffectStarted(casterPos);
+        _selectedButton = savedSelected;
+
         effect = PayGrave(effect); // 선택한 기물 수와 무관하게 한 번만 차감(카드 시전자가 지불)
+        // 무덤은 위에서 이미 냈으므로 사본에서는 비용을 지운다(큐는 사본의 시전자 = 선택된 기물에게 무덤을 요구하므로).
+        var perPiece = new List<CardEffect>();
         foreach (var piece in selected)
-            ExecuteCardEffectOnPiece(FindPiecePos(piece), piece, effect with { caster = piece });
+            perPiece.Add(effect with { caster = piece, graveCost = 0, consumeAllGrave = false, pieceSelectCount = 0, executeOnCaster = true });
+        perPiece.AddRange(pendingEffects);
+        pendingEffects = new Queue<CardEffect>(perPiece);
         ScheduleNextCardEffect();
     }
 }

@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: 900000}
   - component: {fileID: 2000000}
   - component: {fileID: 4144108465772255689}
+  - component: {fileID: 2100000}
   m_Layer: 0
   m_Name: Boss-Colossus
   m_TagString: Untagged
@@ -155,11 +156,11 @@ MonoBehaviour:
   movedThisTurn: 0
   animationEventFired: 0
   actionCards:
-  - {fileID: 700000}
-  - {fileID: 800000}
-  - {fileID: 700000}
   - {fileID: 900000}
   - {fileID: 2000000}
+  - {fileID: 2100000}
+  - {fileID: 700000}
+  - {fileID: 800000}
 --- !u!114 &700000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -444,3 +445,42 @@ MonoBehaviour:
   duration: 1
   moveSpeed: 200
   buffColor: {r: 0, g: 1, b: 0.53, a: 1}
+--- !u!114 &2100000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc5c92752ddf4edb8f46a3dff9d44870, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossExileStrikeCard
+  effectRange:
+  - {fileID: 11400000, guid: b0550000000000000000000000000007, type: 2}
+  Name: 
+  Description: 
+  Cost: 0
+  type: 0
+  user: 1
+  shieldOnMoveAttack: 0
+  moveAttackShieldAmount: 0
+  blocksMovementAfterUse: 0
+  requiresCasterNotMoved: 0
+  exileOnUse: 0
+  dragDropTarget: 0
+  cardID: 
+  originalCost: -1
+  costDuration: 0
+  costText: {fileID: 0}
+  nameText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  typeText: {fileID: 0}
+  effectText: {fileID: 0}
+  defaultScale: {x: 0, y: 0, z: 0}
+  hoverLift: 20
+  cardCanvas: {fileID: 0}
+  handNumber: 0
+  damage: 8
+  duration: 1

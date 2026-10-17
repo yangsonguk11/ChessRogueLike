@@ -46,8 +46,9 @@ public static class KeywordGlossary
         new Entry("드로우", "덱에서 카드를 뽑아 손으로 가져옵니다."),
         new Entry("소환", "빈 칸에 새 기물을 불러냅니다."),
         new Entry("사용 불가", "이 카드는 사용할 수 없습니다."),
-        new Entry("소멸 저주", "지속되는 동안 뽑는 카드가 모두 소멸 카드가 됩니다."),
+        new Entry("소멸 저주", "지속되는 동안 사용하는 카드가 모두 소멸합니다."),
         new Entry("결속", "같은 편 기물이 쓰러질 때마다 체력을 모두 회복하고 힘이 오릅니다."),
+        new Entry("상처 입히기", "이 기물에게 공격 피해를 받아 체력이 줄면 버린 카드 더미에 상처가 들어갑니다."),
     };
 
     static readonly Regex RichTextTag = new Regex("<[^>]*>");

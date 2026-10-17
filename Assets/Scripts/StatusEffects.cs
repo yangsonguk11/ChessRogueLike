@@ -174,19 +174,26 @@ public class MovementDisabledEffect : StatusEffect
     public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
 }
 
-// 소멸 저주: 지속되는 동안 이 기물이 뽑는 카드에 소멸(exileOnUse)을 붙인다 — 실제 부여는 CardCanvas.DrawCardsData.
-// 붙은 소멸은 카드 인스턴스에 남으므로 저주가 풀려도 그 전투 동안 유지된다(원본 덱에는 남지 않음).
-public class ExileOnDrawEffect : StatusEffect
+// 소멸 저주: 지속되는 동안 이 기물이 사용하는 카드는 버림 더미 대신 소멸 더미로 간다. 판정은 카드 로직이 시작되는 순간
+// (CardCanvas.DeductEnergyForCard) 저주가 있는지로 하고, 소멸 처리는 CardCanvas.FinishUseCard가 한다.
+// 카드 인스턴스의 exileOnUse는 건드리지 않으므로 저주가 풀리면 카드는 원래대로다. 걸려 있는 동안 카드 면의 "(소멸)"은 Card.ShowsExile.
+public class ExileOnUseEffect : StatusEffect
 {
     public override string DisplayName => "소멸 저주";
     public override bool IsBuff => false;
     public override Color EffectColor => new Color(0.65f, 0.4f, 0.9f); // 소멸 저주 보라
 
-    public ExileOnDrawEffect(int duration)
+    public ExileOnUseEffect(int duration)
     {
         this.duration = duration;
     }
-    public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
+
+    public override void OnApply(Piece piece) => CardCanvas.instance?.RefreshAllCardViews();
+    public override void OnRemove(Piece piece)
+    {
+        piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
+        CardCanvas.instance?.RefreshAllCardViews();
+    }
 }
 
 // 결속: BondPiece가 스스로 거는 영구 버프. 실제 강화(동료 사망 시 완전 회복 + 힘 증가)는 BondPiece.OnTeammateDied가 하고,
@@ -200,6 +207,22 @@ public class BondEffect : StatusEffect
     public BondEffect()
     {
         duration = -1;
+    }
+    public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
+}
+
+// 상처 입히기: Boss-Berserker가 스폰 시 스스로 거는 영구 버프(BossWoundOnHitCard). 실제 처리는 Board.ApplyOnHitPassives —
+// 이 기물의 공격·이동공격 피해로 상대의 체력이 줄면(방어도로 다 막으면 제외) 그 기물의 버린 카드 더미에 cardID 카드를 넣는다.
+public class WoundOnHitEffect : StatusEffect
+{
+    public readonly string cardID = "WoundCard";
+    public override string DisplayName => "상처 입히기";
+    public override bool IsBuff => true;
+    public override Color EffectColor => new Color(0.8f, 0.2f, 0.25f); // 상처 적색
+
+    public WoundOnHitEffect(int duration)
+    {
+        this.duration = duration;
     }
     public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
 }

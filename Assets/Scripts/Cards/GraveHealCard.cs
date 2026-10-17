@@ -16,7 +16,9 @@ public class GraveHealCard : Card
             requiredMode = Board.BoardMode.targeting,
             type = EffectType.Heal,
             dmg = 3,
-            targetlogic = TargetLogic.self,
+            // self가 아니어야 드롭한 칸이 대상이 된다 — targeting + self는 시전자를 확정하는 순간(Board.OnSelectBoard)
+            // 시전자 칸에서 바로 실행돼 고른 아군 대신 자신이 회복됐다. 아군만 고르게 하는 건 dragDropTarget이 맡는다(VulnerableCard와 같은 방식).
+            targetlogic = TargetLogic.NearestEnemy,
             noRangeLimit = true, // 보드 위 아군 누구에게든
             graveCost = 1,
             animTrigger = "Heal",

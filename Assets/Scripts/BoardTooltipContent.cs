@@ -156,8 +156,9 @@ public static class BoardTooltipContent
         VulnerableEffect _       => "취약",
         TauntEffect _            => "도발",
         MovementDisabledEffect _ => "이동 불가",
-        ExileOnDrawEffect _      => "소멸 저주",
+        ExileOnUseEffect _       => "소멸 저주",
         BondEffect _             => "결속",
+        WoundOnHitEffect _       => "상처 입히기",
         _                        => null,
     };
 

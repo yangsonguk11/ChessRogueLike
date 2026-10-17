@@ -110,6 +110,7 @@ public class CardCanvas : MonoBehaviour
     // 버림/소멸 더미로 날아가는 연출까지 기다리지 않음). 그 연출이 남아있는지는 pendingCardFlights로 추적.
     public bool isCardEffecting;
     public int pendingCardFlights;
+    bool exileCurseThisUse; // 지금 처리 중인 카드를 쓰는 순간 시전자가 소멸 저주 상태였는지 — DeductEnergyForCard가 기록, FinishUseCard가 소비
     public bool HasPendingCardFlights => pendingCardFlights > 0;
     bool usingCardMoving;
     bool nowUsingCardHeld; // true면 nowusingCard가 보드 커밋 없이 마우스에 들려있는 상태
@@ -448,7 +449,6 @@ public class CardCanvas : MonoBehaviour
 
     // 모든 드로우의 공통 로직(연출 없음): piece의 덱에서 count장을 손패로 옮기고 뽑은 카드를 돌려준다. 덱이 부족하면
     // 버림더미를 셔플해 보충한다. 화면에 띄운 기물의 경로(DrawTurnStartCards/DrawCard)는 이 위에 연출만 얹는다.
-    // 뽑는 순간의 처리(소멸 저주 등)는 여기 한 곳에서 한다.
     List<RectTransform> DrawCardsData(Piece piece, int count)
     {
         var drawn = new List<RectTransform>();
@@ -460,21 +460,9 @@ public class CardCanvas : MonoBehaviour
             if (pd.Deck.Count == 0) break;
             RectTransform card = pd.Deck.Dequeue();
             pd.Hand.Add(card);
-            ApplyDrawCurse(piece, card);
             drawn.Add(card);
         }
         return drawn;
-    }
-
-    // 소멸 저주(ExileOnDrawEffect)에 걸린 기물이 뽑은 카드에 소멸을 붙인다 — DrawCardsData 전용.
-    // 카드 인스턴스의 exileOnUse라 저주가 풀려도 그 전투 동안 남는다. 이미 소멸이거나 쓸 수 없는 카드는 건너뛴다.
-    void ApplyDrawCurse(Piece owner, RectTransform rt)
-    {
-        if (!owner.activeEffects.Exists(e => e is ExileOnDrawEffect)) return;
-        Card card = rt.GetComponent<Card>();
-        if (card == null || card.exileOnUse || card.IsUnplayable) return;
-        card.exileOnUse = true;
-        card.RefreshView();
     }
 
     // 버림더미를 섞어 덱으로 옮긴다. 카드 위치를 덱 칸으로 스냅한다 — 화면에 없는 기물의 카드는 꺼져 있어 무해하다.
@@ -549,8 +537,11 @@ public class CardCanvas : MonoBehaviour
     // OneUse 코스트 복구도 여기서 함께 처리 — "실제 사용된 코스트"를 정확히 기록해야 하므로. 예전엔
     // FinishUseCard(모든 효과가 끝난 뒤)에서 차감해서, 카드 자신의 효과가 자기 Cost를 바꾸면(예:
     // WarmUpDamageCard의 ReduceCost) 이번 사용분 차감액까지 그 할인이 반영돼버리는 문제가 있었다.
+    // 소멸 저주(ExileOnUseEffect) 판정도 여기서 기록한다 — "카드를 쓰는 순간" 저주가 있었는지가 기준이라,
+    // 카드가 정화로 저주를 지워도 그 카드는 소멸하고, 사용 도중 저주가 걸려도 그 카드는 소멸하지 않는다. FinishUseCard가 소비한다.
     public void DeductEnergyForCard(Card card)
     {
+        exileCurseThisUse = activePiece != null && activePiece.HasExileCurse();
         int costToDeduct = card.Cost;
         if (card.originalCost >= 0 && card.costDuration == CostDuration.OneUse)
         {
@@ -574,7 +565,8 @@ public class CardCanvas : MonoBehaviour
             // 버림/소멸 더미로 날아가는 건 그 연출이 실제로 끝났다는 신호(OnUsedCardAnimationsComplete)를
             // 받을 때까지 미룬다 — 그때까지는 UsedCardPos 자리에 다른 대기 카드들과 함께 정렬돼 머문다.
             isCardEffecting = false;
-            bool exile = card.ShouldExileOnUse();
+            bool exile = card.ShouldExileOnUse() || exileCurseThisUse;
+            exileCurseThisUse = false;
             if (exile) Exilecards.Add(usedCard);
             else Discardcards.Add(usedCard);
             NotifyPileChanged();
@@ -589,6 +581,7 @@ public class CardCanvas : MonoBehaviour
         else
         {
             isCardEffecting = false;
+            exileCurseThisUse = false;
         }
         RefreshAllCardViews();
     }

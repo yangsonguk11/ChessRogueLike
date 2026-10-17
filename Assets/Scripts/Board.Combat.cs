@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public partial class Board
@@ -148,7 +149,7 @@ public partial class Board
             {
                 if (hpLeft[t] <= 0) continue;
                 Piece p = targets[t].piece;
-                List<IEnumerator> extra = StrikeTarget(p, dmg, cardEffect, out int dealt, out hpLeft[t]);
+                List<IEnumerator> extra = StrikeTarget(attacker, p, dmg, cardEffect, out int dealt, out hpLeft[t]);
                 totalDealt += dealt;
                 // 다음 이동공격 버프의 상태이상은 대상마다 첫 적중 때 1회만 — 타마다 같은 상태이상이 중복으로 쌓이지 않게.
                 if (i == 0)
@@ -316,13 +317,27 @@ public partial class Board
         yield break;
     }
 
-    // 처치가 확정된 시점에 호출: OnKill 유물을 발동시키고, cardEffect에 onKillEffect가 설정돼 있으면
-    // 시전자를 대상으로 그 효과도 실행한다(예: 처치 시 ColDamageUp). 기존 4개 호출 지점을 그대로 재사용.
+    // 처치가 확정된 시점에 호출: OnKill 유물을 즉시 발동시키고, cardEffect에 onKillEffect가 설정돼 있으면
+    // 시전자를 대상으로 한 그 효과(예: 처치 시 힘 영구 증가)를 효과 큐 맨 앞에 끼워 넣는다 — 처치한 효과가 끝나고
+    // 다음 효과를 꺼낼 때 카드의 이후 효과보다 먼저 실행된다(소환 시 효과의 ApplySpawnOccupancy와 같은 방식).
+    // 대상이 시전자로 정해져 있으므로 executeOnCaster로 표시해 큐가 입력 모드를 보지 않고 바로 실행하게 한다.
     void TriggerOnKillEffect(Vector2Int casterPos, Piece caster, CardEffect cardEffect)
     {
         TriggerRelicsOnKill(caster);
         if (caster == null || cardEffect?.onKillEffect == null) return;
-        ExecuteCardEffectOnPiece(casterPos, caster, cardEffect.onKillEffect with { caster = caster });
+
+        CardEffect onKill = cardEffect.onKillEffect with { caster = caster, executeOnCaster = true };
+        if (effectApplied)
+        {
+            var queue = new List<CardEffect> { onKill };
+            queue.AddRange(pendingEffects);
+            pendingEffects = new Queue<CardEffect>(queue);
+        }
+        else
+        {
+            // 카드 처리 밖(TurnEffect·유물 등 예약 효과)의 처치 — 끼워 넣을 카드 큐가 없으므로 예약 효과 큐로 보낸다.
+            EnqueueScheduledEffect(casterPos, onKill);
+        }
     }
 
     // attack/moveattack 계열 공통: 대상 1명에게 공격 피해를 적용한다. 취약처럼 "공격으로 받는 피해"에만
@@ -336,13 +351,28 @@ public partial class Board
         return (dealt, hpLeft);
     }
 
+    // 공격자의 적중 패시브(상처 입히기 — WoundOnHitEffect): 공격 피해로 상대의 체력이 실제로 줄었고(방어도로 다 막으면 제외)
+    // 살아 있으면 그 기물의 버린 카드 더미에 카드를 넣는다(즉시). 반응 코루틴을 돌려주며, 발동하지 않으면 null.
+    // 덱이 없는 기물(적·소환수)은 AddCardDuringCombat이 null을 돌려줘 자연히 건너뛴다.
+    IEnumerator ApplyOnHitPassives(Piece attacker, Piece target, int hpBefore, int hpLeft)
+    {
+        if (attacker == null || target == null || attacker.teamID == target.teamID) return null;
+        if (hpLeft <= 0 || hpLeft >= hpBefore) return null;
+        WoundOnHitEffect wound = attacker.activeEffects.OfType<WoundOnHitEffect>().FirstOrDefault();
+        if (wound == null) return null;
+        return AddCardReaction(target, wound.cardID, CardPositionZone.Discard);
+    }
+
     // 공격 1타: 대상에게 공격 피해를 적용하고 카드 효과의 상태이상을 건 뒤(둘 다 즉시), 그 타의 대상 반응(피해 텍스트 +
     // 상태이상 텍스트)을 돌려준다. AttackPiece와 이동공격(ResolveMoveAttackHit)의 타격 루프가 공유한다 — Hit/Die 트리거와
     // 흡혈(healOnHit)은 호출부마다 묶는 방식이 달라 호출부가 처리한다.
-    List<IEnumerator> StrikeTarget(Piece target, int dmg, CardEffect cardEffect, out int dealt, out int hpLeft)
+    List<IEnumerator> StrikeTarget(Piece attacker, Piece target, int dmg, CardEffect cardEffect, out int dealt, out int hpLeft)
     {
+        int hpBefore = target.hp;
         (dealt, hpLeft) = ApplyAttackDamage(target, dmg);
         var extra = new List<IEnumerator> { target.DamageText(dealt) };
+        IEnumerator passive = ApplyOnHitPassives(attacker, target, hpBefore, hpLeft);
+        if (passive != null) extra.Add(passive);
         StatusEffect statusEffect = ApplyStatusEffect(target, cardEffect); // 즉시 적용
         if (statusEffect != null)
             extra.Add(target.StatusTextReaction(statusEffect.DisplayName, statusEffect.IsBuff, statusEffect.EffectColor));
@@ -403,7 +433,7 @@ public partial class Board
         int hpLeft = 1;
         for (int i = 0; i < Mathf.Max(1, hitCount) && hpLeft > 0; i++)
         {
-            List<IEnumerator> extra = StrikeTarget(pScript2, dmg, cardEffect, out int dealt, out hpLeft);
+            List<IEnumerator> extra = StrikeTarget(pScript1, pScript2, dmg, cardEffect, out int dealt, out hpLeft);
             if (cardEffect != null && cardEffect.healOnHit && dealt > 0)
             {
                 int healed = pScript1.GetHeal(dealt);
@@ -501,11 +531,14 @@ public partial class Board
         {
             Piece p = GetButtonScript(pos).GetPieceScript();
             if (p == null) continue;
+            int hpBefore = p.hp;
             var (dealt, hpLeft) = ApplyAttackDamage(p, dmg);
             p.transform.rotation = Quaternion.LookRotation(casterButton.Piecelocation - GetButtonScript(pos).Piecelocation);
             bool died = hpLeft <= 0;
             hitTargets.Add((p, died));
             textCoroutines.Add(p.DamageText(dealt));
+            IEnumerator passive = ApplyOnHitPassives(caster, p, hpBefore, hpLeft);
+            if (passive != null) textCoroutines.Add(passive);
             StatusEffect areaStatusEffect = ApplyStatusEffect(p, cardEffect); // 즉시 적용
             if (areaStatusEffect != null)
                 textCoroutines.Add(p.StatusTextReaction(areaStatusEffect.DisplayName, areaStatusEffect.IsBuff, areaStatusEffect.EffectColor));

@@ -76,6 +76,7 @@ public abstract class Piece : MonoBehaviour
 
     public bool IsStunned() => activeEffects.Exists(e => e is StunEffect);
     public bool HasTaunt() => activeEffects.Exists(e => e is TauntEffect);
+    public bool HasExileCurse() => activeEffects.Exists(e => e is ExileOnUseEffect);
 
     // 이동공격이 실제로 발생했을 때(주 타겟 피해 적용 + 스플래시 처리까지 끝난 시점) 발화. 연쇄 공격
     // 같은 부가 효과를 표현하는 컴포넌트가 Board.Combat.cs 수정 없이 스스로 구독해 반응할 수 있게 한다.

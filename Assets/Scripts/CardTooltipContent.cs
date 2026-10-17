@@ -178,7 +178,7 @@ public static class CardTooltipContent
 
         // 설명 텍스트에 안 나와도 카드 데이터상 분명한 용어는 덧붙인다.
         var extra = new List<string>(card.ExtraKeywords);
-        if (card.exileOnUse) extra.Add("소멸");
+        if (card.ShowsExile) extra.Add("소멸");
         foreach (CardEffect effect in card.effects)
         {
             if (effect == null) continue;
@@ -213,7 +213,8 @@ public static class CardTooltipContent
             StatusEffectType.MovementDisabled => "이동 불가",
             StatusEffectType.Vulnerable       => "취약",
             StatusEffectType.Taunt            => "도발",
-            StatusEffectType.ExileOnDraw      => "소멸 저주",
+            StatusEffectType.ExileOnUse       => "소멸 저주",
+            StatusEffectType.WoundOnHit       => "상처 입히기",
             _ => null,
         };
         if (term != null) terms.Add(term);
