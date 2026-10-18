@@ -29,5 +29,5 @@ public class EnemyMoveAndColDamageUpCard : Card
         });
     }
 
-    public override string EffectDescription => "이동한 후 힘을 2 올립니다.";
+    public override string EffectDescription => $"이동한 후 힘을 {effects[1].dmg} 올립니다.";
 }

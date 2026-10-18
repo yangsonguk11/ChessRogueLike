@@ -29,5 +29,5 @@ public class EnemyAreaExileCurseCard : Card
         });
     }
 
-    public override string EffectDescription => $"주변 범위의 적 모두에게 {effects[0].statusDuration}턴간 소멸 저주를 겁니다.";
+    public override string EffectDescription => $"모든 적에게 {effects[0].statusDuration}턴간 소멸 저주를 겁니다.";
 }

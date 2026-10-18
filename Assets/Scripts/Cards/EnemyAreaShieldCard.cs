@@ -27,5 +27,5 @@ public class EnemyAreaShieldCard : Card
         });
     }
 
-    public override string EffectDescription => $"주변 넓은 범위의 아군 모두(자신 포함)에게 방어도 {EffectiveShield(effects[0])}를 부여합니다.";
+    public override string EffectDescription => $"모든 아군(자신 포함)에게 방어도 {EffectiveShield(effects[0])}를 부여합니다.";
 }

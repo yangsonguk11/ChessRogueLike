@@ -28,5 +28,5 @@ public class AllyLockedStrikeCard : Card
         });
     }
 
-    public override string EffectDescription => $"아군 위치를 표적으로 잠근 뒤, 그 범위에 {EffectiveDmg(effects[0])} 피해를 줍니다.";
+    public override string EffectDescription => $"모든 적에게 {EffectiveDmg(effects[0])} 피해를 줍니다.";
 }

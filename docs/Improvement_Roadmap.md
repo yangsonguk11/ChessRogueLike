@@ -72,7 +72,7 @@
 ### 3단계 — 개발 생산성 기반 (반복 작업 시간 절감)
 
 23. **콘텐츠 검증기** (H11) — 에디터 메뉴 하나로 다음을 검사한다: effectRange가 빈 카드, 클래스명≠프리팹명, Database 미등록, 보상 풀·기본 덱에 있는 없는 이름(CRL-30·31), LevelData 배치 이름 누락, RangeInfo 조회 실패(CRL-36), 공격 클립의 Animation Event 누락(C9), 별칭 표의 옛 이름이 남은 곳. 완료 기준: 위반 목록이 출력된다.
-24. **카드 목록 자동 생성** (H10) — 23번과 같은 코드로 Database.prefab의 카드를 직업 풀별로 묶어 `전사_소환사_카드목록.txt`를 만든다. 수치가 Awake에서 정해지므로 에디터에서 프리팹을 잠깐 Instantiate해 읽고 Destroy한다. 완료 기준: txt를 손으로 고칠 일이 없다.
+24. **카드 목록 자동 생성** (H10) — 23번과 같은 코드로 Database.prefab의 카드를 직업 풀별로 묶어 Confluence "카드 목록" 페이지(전사·소환사)에 붙여 넣을 마크다운 표를 만든다. 수치가 Awake에서 정해지므로 에디터에서 프리팹을 잠깐 Instantiate해 읽고 Destroy한다. 완료 기준: 카드 목록 표를 손으로 고칠 일이 없다.
 25. **디버그 콘솔** (I9) — `UNITY_EDITOR || DEVELOPMENT_BUILD`에서만 쓰는 IMGUI 패널(씬 배치 불필요): 카드 추가(`AddCardDuringCombat`), 에너지·HP 설정, 적 처치, 층 이동, 유물 지급, 배속. 완료 기준: QA 사전조건을 1분 안에 만든다.
 26. **asmdef + 자동 테스트** (I1·I2) — Runtime/Editor/Tests(EditMode·PlayMode) asmdef를 만들고, DOTween은 Utility Panel의 ASMDEF 생성 기능을 쓴다. 피해 계산(콜대미지→취약→방어막)을 순수 함수로 빼서 EditMode에서 테스트하고, PlayMode에서는 기물 배치→효과 실행 직후 상태를 확인한다(QA 4·5·7장부터, 테스트 이름에 TC-ID). CLAUDE.md의 `dotnet build` 경로도 고쳐야 한다. 완료 기준: Test Runner가 모두 통과한다.
 27. **임포트 규칙 자동화** (H4) — 내장 Preset Manager로 폴더별 기본값을 두고, `AssetPostprocessor`가 규칙 위반(4의 배수 아님, 스테레오 효과음, 모델 Read/Write 켜짐)을 경고한다. 완료 기준: 새 에셋이 규칙대로 들어온다.
@@ -231,7 +231,7 @@
 - **H7 데이터 ID 안정화** — 바뀌지 않는 `id` 필드 + 이름 변경 별칭 표. (중·★★)
 - **H8 Addressables** — 콘텐츠가 커지면 직업·층 단위 로드. 📦 보류. (상·★)
 - **H9 카드 데이터 주도화** — ScriptableObject(`[SerializeReference]` 효과 목록) 또는 스프레드시트 임포터. (상·★★)
-- **H10 카드 목록 자동 생성** — Database.prefab에서 `전사_소환사_카드목록.txt` 생성. (하·★★★)
+- **H10 카드 목록 자동 생성** — Database.prefab에서 Confluence "카드 목록" 페이지용 마크다운 표 생성. (하·★★★)
 - **H11 콘텐츠 검증기** — 프리팹·풀·레벨·이름·Animation Event 일괄 검사, CI에서도 실행. (중·★★★)
 - **H12 Git 설정** — `.gitattributes`로 Smart Merge(UnityYAMLMerge)·`eol=lf`·binary 지정, `git gc`. 📦 LFS는 쓰지 않는다. (중·★★★)
 - **H13 작업 폴더 이동** — OneDrive 밖으로(Library/Temp 동기화로 생기는 임포트 지연·파일 잠금·.git 손상 위험 제거). (하·★★★)

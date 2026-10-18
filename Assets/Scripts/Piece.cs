@@ -360,9 +360,11 @@ public abstract class Piece : MonoBehaviour
     {
         ProcessStatusEffects();
     }
+    // 상대 팀 턴이 끝날 때(= 자기 턴 직전) 방어도가 사라진다 — 방어도는 상대 턴 동안만 막아 준다.
+    // 아군·적·소환수 모두 같은 규칙(예전엔 Ally에만 있어 적·소환수의 방어도가 전투 내내 쌓였다).
     public virtual void OnTurnEndOther()
     {
-
+        shield = 0;
     }
     // 같은 팀 기물이 쓰러졌을 때 Board.ClearDeadPieceOccupancy가 사망 판정 즉시 호출한다.
     // livingTeammates: 자신을 뺀, 아직 살아있는(hp > 0) 같은 팀 기물 수. 예) GuardianPiece의 패턴 전환.

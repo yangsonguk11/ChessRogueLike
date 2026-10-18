@@ -22,5 +22,5 @@ public class BossAttack1Card : Card
         effects.Add(cf);
     }
 
-    public override string EffectDescription => $"상하좌우+대각선으로 {EffectiveDmg(effects[0])} 피해를 줍니다.";
+    public override string EffectDescription => $"모든 적에게 {EffectiveDmg(effects[0])} 피해를 줍니다.";
 }

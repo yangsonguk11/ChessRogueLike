@@ -31,5 +31,5 @@ public class BossExileStrikeCard : Card
     }
 
     public override string EffectDescription =>
-        $"주변 적에게 {EffectiveDmg(effects[0])} 피해를 주고 {effects[0].statusDuration}턴간 소멸 저주를 겁니다. 힘이 오른 만큼 강해집니다.";
+        $"모든 적에게 {EffectiveDmg(effects[0])} 피해를 주고 {effects[0].statusDuration}턴간 소멸 저주를 겁니다. 힘이 오른 만큼 강해집니다.";
 }

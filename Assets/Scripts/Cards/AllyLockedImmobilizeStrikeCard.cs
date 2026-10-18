@@ -32,5 +32,5 @@ public class AllyLockedImmobilizeStrikeCard : Card
     }
 
     public override string EffectDescription =>
-        $"아군 위치를 표적으로 잠근 뒤, 그 범위에 {EffectiveDmg(effects[0])} 피해를 주고 {effects[0].statusDuration}턴간 이동 불가를 겁니다.";
+        $"모든 적에게 {EffectiveDmg(effects[0])} 피해를 주고 {effects[0].statusDuration}턴간 이동 불가를 겁니다.";
 }

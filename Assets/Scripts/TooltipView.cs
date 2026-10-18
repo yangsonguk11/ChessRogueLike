@@ -295,7 +295,7 @@ public class TooltipView : MonoBehaviour
         layout.childForceExpandHeight = false;
         bg.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-        w.title = CreateText("Title", w.rt, TitleFontSize, FontStyles.Bold);
+        w.title = CreateText("Title", w.rt, TitleFontSize, FontStyles.Normal);
         w.body = CreateText("Body", w.rt, BodyFontSize, FontStyles.Normal);
         w.body.color = BodyColor;
 

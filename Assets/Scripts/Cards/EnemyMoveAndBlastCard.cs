@@ -36,5 +36,5 @@ public class EnemyMoveAndBlastCard : Card
         });
     }
 
-    public override string EffectDescription => $"이동한 뒤 주변 범위의 적 모두에게 {EffectiveDmg(effects[1])} 피해를 줍니다.";
+    public override string EffectDescription => $"이동한 뒤 모든 적에게 {EffectiveDmg(effects[1])} 피해를 줍니다.";
 }

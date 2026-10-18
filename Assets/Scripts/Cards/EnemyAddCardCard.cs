@@ -36,5 +36,5 @@ public class EnemyAddCardCard : Card
         _ => "버린 카드 더미",
     };
 
-    public override string EffectDescription => $"주변 범위의 적 모두의 {ZoneName}에 {addCardID} 1장을 넣습니다.";
+    public override string EffectDescription => $"모든 적의 {ZoneName}에 {addCardID} 1장을 넣습니다.";
 }

@@ -26,5 +26,5 @@ public class EnemyAreaBlastCard : Card
         });
     }
 
-    public override string EffectDescription => $"주변 범위의 적 모두에게 {EffectiveDmg(effects[0])} 피해를 줍니다.";
+    public override string EffectDescription => $"모든 적에게 {EffectiveDmg(effects[0])} 피해를 줍니다.";
 }

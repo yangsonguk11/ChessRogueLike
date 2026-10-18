@@ -26,5 +26,5 @@ public class BossFrenzyCard : Card
         });
     }
 
-    public override string EffectDescription => $"주변 적에게 {EffectiveDmg(effects[0])} 피해를 줍니다. 힘이 오른 만큼 강해집니다.";
+    public override string EffectDescription => $"모든 적에게 {EffectiveDmg(effects[0])} 피해를 줍니다. 힘이 오른 만큼 강해집니다.";
 }

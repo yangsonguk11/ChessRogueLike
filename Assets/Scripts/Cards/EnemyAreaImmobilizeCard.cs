@@ -29,5 +29,5 @@ public class EnemyAreaImmobilizeCard : Card
         });
     }
 
-    public override string EffectDescription => $"주변 범위의 적 모두를 {effects[0].statusDuration}턴간 이동 불가 상태로 만듭니다.";
+    public override string EffectDescription => $"모든 적을 {effects[0].statusDuration}턴간 이동 불가 상태로 만듭니다.";
 }

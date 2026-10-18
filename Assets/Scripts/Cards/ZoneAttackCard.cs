@@ -33,5 +33,5 @@ public class ZoneAttackCard : Card
         effects.Add(cf);
     }
 
-    public override string EffectDescription => $"범위 내 모든 기물에게 {EffectiveDmg(effects[0])}의 마법 데미지를 줍니다.";
+    public override string EffectDescription => $"범위 내 모든 기물에게 {EffectiveDmg(effects[0])}의 마법 피해를 줍니다.";
 }
