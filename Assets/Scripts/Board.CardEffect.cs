@@ -38,7 +38,7 @@ public partial class Board
         discardedThisCard = 0;
         effectApplied = false;
         currentActiveCard = card;
-        pendingEffects.Clear();
+        RemoveCardEffects(); // 카드는 큐가 빈 상태에서만 쓰인다 — 혹시 남은 카드 효과만 치우고 엔진 항목은 건드리지 않는다
         foreach (var effect in card.UseEffects)
             pendingEffects.Enqueue(effect with { caster = currentCardCaster });
         ProcessNextCardEffect();
@@ -73,14 +73,19 @@ public partial class Board
         finally
         {
             cardEffectDraining = false;
+            insertNextIndex = 0;
         }
     }
 
     void ProcessNextCardEffectStep()
     {
+        insertNextIndex = 0; // 이번 단계에서 실행되는 효과가 유발한 반응은 큐 맨 앞부터 차례로 들어간다(InsertEffectNext)
+
         if (pendingEffects.Count == 0)
         {
-            FinishCardUsage();
+            // 카드를 쓰는 중이었을 때만 카드 종료 처리 — 타이밍 효과(턴 효과·유물·상태이상 틱)만 처리하고 비었을 때는
+            // 선택·모드·손패 상태를 건드리지 않는다.
+            if (currentActiveCard != null) FinishCardUsage();
             return;
         }
 
@@ -94,8 +99,10 @@ public partial class Board
             return;
         }
 
-        // 엔진이 끼워 넣은 효과(처치 시 효과·기물 선택 결과): 대상이 이미 시전자로 정해져 있어 입력 모드를 보지 않고 바로 실행한다.
-        // 직전 대상·선택 칸은 되돌려 카드의 이후 효과(useLastTarget, 후속 효과의 시전자 칸)에 새지 않게 한다.
+        // 카드 밖에서 넣은 효과(EnqueueEffect/InsertEffectNext — 턴 효과·유물·상태이상 틱·처치 시·소환 시·기물 선택 결과):
+        // 대상이 시전자로 정해져 있어 입력 모드를 보지 않고 시전자 칸에서 바로 실행한다. 카드 자신의 효과가 아니므로 카드 사용
+        // 확정(에너지·카드 사용 시 유물)은 하지 않는다. 직전 대상·선택 칸은 되돌려 카드의 이후 효과(useLastTarget, 후속 효과의
+        // 시전자 칸)에 새지 않게 한다.
         if (nextEffect.executeOnCaster)
         {
             pendingEffects.Dequeue();
@@ -103,27 +110,20 @@ public partial class Board
             {
                 var saved = (_selectedButton, lastEffectTargetPos, lastEffectTargetPiece);
                 _selectedButton = FindPiecePos(nextEffect.caster);
-                ExecuteEffect(nextEffect, _selectedButton);
+                ExecuteEffect(nextEffect, _selectedButton, commitCard: false);
                 (_selectedButton, lastEffectTargetPos, lastEffectTargetPiece) = saved;
             }
             ScheduleNextCardEffect();
             return;
         }
 
-        // 카드 주인이 아닌 기물이 시전하는 효과(소환 시 효과): 적 카드 규칙대로 자동 실행한다(ProcessEnemyCardEffect가
-        // 그 기물 위치를 시전자로 잡음). 실행하는 동안 바뀐 선택 상태는 되돌려 카드의 이후 효과로 새지 않게 한다 —
-        // 자동 실행은 이 호출 안에서 끝나고 ScheduleNextCardEffect는 드레인 중이라 다음 패스만 예약한다.
-        if (nextEffect.caster != null && nextEffect.caster != currentCardCaster)
+        // 여기부터는 지금 쓰는 카드(currentActiveCard)의 효과다. 카드 밖에서는 EnqueueEffect/InsertEffectNext만 쓰므로
+        // 카드 없이 이런 항목이 남는 일은 없어야 한다 — 생기면 큐가 멈추지 않게 버린다.
+        if (currentActiveCard == null)
         {
-            if (nextEffect.graveCost > 0 && !nextEffect.caster.HasGrave(nextEffect.graveCost))
-            {
-                pendingEffects.Dequeue(); // 무덤 부족: 이 효과만 스킵
-                ScheduleNextCardEffect();
-                return;
-            }
-            var saved = (_selectedButton, casterPiece);
-            ProcessEnemyCardEffect(nextEffect);
-            (_selectedButton, casterPiece) = saved;
+            Debug.LogWarning("[Board] 쓰는 카드가 없는데 카드 효과가 효과 큐에 남아 있어 건너뜁니다.");
+            pendingEffects.Dequeue();
+            ScheduleNextCardEffect();
             return;
         }
 
@@ -132,7 +132,7 @@ public partial class Board
         // 2번째 이후면 이 효과만 건너뛴다. 로직이 동기라 앞 효과가 만든 무덤 변화가 여기서 바로 반영된다.
         if (nextEffect.graveCost > 0 && (currentCardCaster == null || !currentCardCaster.HasGrave(nextEffect.graveCost)))
         {
-            if (pendingEffects.Count == currentActiveCard.UseEffects.Count) pendingEffects.Clear();
+            if (pendingEffects.Count == currentActiveCard.UseEffects.Count) RemoveCardEffects();
             else pendingEffects.Dequeue();
             ScheduleNextCardEffect();
             return;
@@ -187,7 +187,7 @@ public partial class Board
         }
         else if (nextEffect.caster != null && pendingEffects.Count < currentActiveCard.UseEffects.Count)
         {
-            // 후속 효과(첫 효과가 아님 — 위 무덤 판정과 같은 기준, 앞에 끼워 넣은 소환 시 효과는 이미 소진됨):
+            // 후속 효과(첫 효과가 아님 — 위 무덤 판정과 같은 기준, 앞에 끼워 넣은 반응 효과는 이미 소진됨):
             // 카드를 쓴 기물을 현재 위치에서 다시 선택한 것처럼 처리한다 — self 타겟이면 OnSelectBoard가 바로
             // 실행하고, 아니면 이 효과의 사거리를 띄워 클릭을 기다린다(이동했으면 새 위치 기준).
             // 첫 효과는 드롭(ConfirmCasterOnDrop)이 시전자를 확정하므로 건드리지 않는다.
@@ -510,7 +510,8 @@ public partial class Board
         return e.useLastTarget && !ReferenceEquals(lastEffectTargetPiece, null) && p != lastEffectTargetPiece;
     }
 
-    void ExecuteEffect(CardEffect cardEffect, Vector2Int targetPos = default)
+    // commitCard: 카드 자신의 효과면 true(첫 효과일 때 카드 사용 확정). 카드 밖에서 넣은 효과(executeOnCaster)는 false.
+    void ExecuteEffect(CardEffect cardEffect, Vector2Int targetPos = default, bool commitCard = true)
     {
         // 아래 기록이 lastEffectTargetPiece를 덮기 전에 판정한다.
         bool targetGone = IsTargetGone(cardEffect, targetPos);
@@ -518,7 +519,7 @@ public partial class Board
         lastEffectTargetPiece = targetPos.x >= 0 && targetPos.x < N && targetPos.y >= 0 && targetPos.y < M
             ? GetPieceAt(targetPos) : null;
 
-        MarkCardEffectStarted(targetPos);
+        if (commitCard) MarkCardEffectStarted(targetPos);
 
         // 대상이 죽었거나 없어 실행하지 않는 효과(skipIfTargetGone) — 아래 hitsPerDiscarded 0타 스킵과 같은 방식으로,
         // 카드 사용 처리는 위에서 끝났고 호출부가 ScheduleNextCardEffect로 큐를 이어간다. 무덤은 아래 PayGrave보다
@@ -535,19 +536,21 @@ public partial class Board
         ApplyCardEffectNow(cardEffect, targetPos);
     }
 
-    // 카드 사용 확정 처리 — 효과가 실제로 처리되기 시작할 때 ExecuteEffect와 ApplyPieceSelectionEffect(기물 선택 확정)가 호출한다.
+    // 카드 사용 확정 처리 — 카드 자신의 효과가 실제로 처리되기 시작할 때 ExecuteEffect와 ApplyPieceSelectionEffect(기물 선택 확정)가 호출한다.
     void MarkCardEffectStarted(Vector2Int targetPos)
     {
+        // 쓰는 중인 카드가 없으면(타이밍 효과만 처리 중) 확정할 카드도 없다 — effectApplied/isCardEffecting도 건드리지 않는다.
+        if (currentActiveCard == null) return;
+
         // effectApplied가 false→true로 바뀌는 지금 이 순간이 이 카드의 첫 효과가 실제로 처리되기 시작하는
         // 시점이다(그 전까지는 CardCanvas.CancelCardUsage/RevertNowUsingCardToHeld로 언제든 취소 가능하고,
         // 이 지점부턴 취소가 막힌다 — EffectApplied 프로퍼티 참고). 카드 하나당 딱 한 번만 발동해야 하므로
-        // 아직 false일 때만(=이 카드의 첫 효과일 때만) 호출한다. relicsOnCardUsed를 전부 큐에 모아
-        // 동기적으로 순차 처리하고 나서(TriggerRelicsOnCardUsed 내부), 곧바로 호출부에서 카드 자신의
-        // 첫 효과로 자연스럽게 이어진다 — 유물 효과 전부가 카드 효과보다 반드시 먼저 끝난다.
+        // 아직 false일 때만(=이 카드의 첫 효과일 때만) 호출한다. 카드 사용 시 유물 효과는 효과 큐 맨 앞에 들어가
+        // (TriggerRelicsOnCardUsed → InsertEffectNext) 이 첫 효과 바로 다음, 카드의 두 번째 효과보다 먼저 실행된다.
         // 에너지 차감도 여기서 먼저 끝내둔다 — 카드 자신의 효과(예: ReduceCost)가 이후 Cost를 바꾸더라도
         // 이번 사용분 차감엔 영향이 없도록(예전엔 모든 효과가 끝난 뒤 FinishUseCard에서 차감해서, 카드가
         // 자기 코스트를 스스로 깎으면 이번 판 차감액까지 할인돼버리는 문제가 있었다).
-        if (!effectApplied && currentActiveCard != null && currentActiveCard.user == User.Ally)
+        if (!effectApplied && currentActiveCard.user == User.Ally)
         {
             TriggerRelicsOnCardUsed(selectedButton, targetPos);
             CardCanvas.instance.DeductEnergyForCard(currentActiveCard);
@@ -583,19 +586,17 @@ public partial class Board
         StartMotionQueue();
     }
 
-    // 카드/예약효과(TurnEffect·유물 등) 공용: CardEffect 하나를 targetPos 기준으로 실제로 적용한다. 처치 시 효과·기물 선택
-    // 결과도 효과 큐(executeOnCaster)를 거쳐 여기로 온다 — 게임의 모든 CardEffect가 이 함수 하나로 실행된다.
-    // currentActiveCard/pendingEffects/effectApplied 같은 "지금 실제 카드를 쓰는 중" 상태는 전혀 건드리지
-    // 않으므로, 다른 카드가 한창 처리되는 도중에 끼어들어도(진행 중인 카드의 pendingEffects를 훼손하지 않고)
-    // 안전하게 호출할 수 있다. 캐스터는 selectedButton으로 넘겨받는다(호출부가 미리 세팅).
+    // CardEffect 하나를 targetPos 기준으로 실제로 적용한다. 카드 효과뿐 아니라 턴 효과·유물·상태이상 틱·처치 시·소환 시·
+    // 기물 선택 결과도 전부 효과 큐(pendingEffects)를 거쳐 ExecuteEffect → 여기로 온다 — 게임의 모든 CardEffect가 이 함수
+    // 하나로 실행된다. 캐스터는 selectedButton으로 넘겨받는다(호출부가 미리 세팅).
     void ApplyCardEffectNow(CardEffect cardEffect, Vector2Int targetPos)
     {
-        // Charge는 지속시간을 따로 추적하는 상태이상이 아니라 "다음 카드 효과가 나올 때까지"만 유효한
+        // Charge는 지속시간을 따로 추적하는 상태이상이 아니라 "시전자의 다음 카드 효과가 나올 때까지"만 유효한
         // 예고 연출이라, 매번 여기서 일단 꺼두고 cardEffect.type이 진짜 Charge일 때만(아래 case) 다시 켠다.
-        // 그래야 "같은 기물이 다음으로 어떤 CardEffect든 적용받는 순간" 자동으로 사라진다.
+        // 엔진이 넣은 효과(executeOnCaster — 턴 효과·상태이상 틱 등)는 그 기물의 행동이 아니므로 끄지 않는다.
         // DrawCard/FetchAttackCard처럼 모든 효과가 Inspect 모드인 카드는 캐스터를 선택할 일이 없어
         // selectedButton이 (-1,-1)로 남아있을 수 있으므로, 유효할 때만 조회한다.
-        if (isSelectedButtonActive())
+        if (isSelectedButtonActive() && !cardEffect.executeOnCaster)
             GetButtonScript(selectedButton).GetPieceScript()?.SetAnimBool("Charge", false);
 
         if (cardEffect.targetlogic == TargetLogic.AllEnemiesInRange ||
@@ -613,7 +614,9 @@ public partial class Board
                 Piece moveCaster = GetButtonScript(selectedButton).GetPieceScript();
                 if (moveCaster != null && moveCaster.activeEffects.Exists(e => e is MovementDisabledEffect))
                 {
-                    pendingEffects.Clear();
+                    // 카드의 이동이 막히면 그 카드의 남은 효과를 취소한다. 엔진이 넣은 Move(유물·턴 효과)가 막혀도
+                    // 진행 중인 카드의 효과는 지우지 않는다.
+                    if (!cardEffect.executeOnCaster) RemoveCardEffects();
                     // 막힌 기물 위에 "이동 불가!" 텍스트(이동 불가 상태 색, 파티클·사운드 없음)를 띄우고 흔든다.
                     EnqueueBoardAnimation(moveCaster.StatusTextReaction("이동 불가!", false, new Color(0.6f, 0.6f, 0.6f), textOnly: true));
                     EnqueueBoardAnimation(ImmobileShakeCor(moveCaster));
@@ -1197,7 +1200,7 @@ public partial class Board
 
     public void CancelCardUsage()
     {
-        pendingEffects.Clear();
+        RemoveCardEffects();
         currentActiveCard = null;
         ResetBoardAfterCardUse();
     }
@@ -1237,6 +1240,9 @@ public partial class Board
             StartMotionQueue();
         }
         ResetBoardAfterCardUse();
+        // 위에서 이 카드의 설정을 다 읽은 뒤 비운다 — 남겨 두면 IsResolvingEffects가 계속 true가 되고, 이후 타이밍 효과가
+        // 이 카드를 기준으로 카드 사용을 다시 확정(에너지 차감·카드 사용 시 유물)하게 된다.
+        currentActiveCard = null;
     }
 
     IEnumerator SignalCardAnimationsDone()
@@ -1275,8 +1281,8 @@ public partial class Board
         ScheduleNextCardEffect();
     }
 
-    // RequestPieceSelection으로 보드에서 직접 고른 기물들 각각을 시전자로 한 effect 사본을 효과 큐 맨 앞에 넣는다 —
-    // 대상이 이미 정해졌으므로 executeOnCaster로 표시해, 큐가 입력 모드를 보지 않고 각 기물 칸에서 바로 실행한다.
+    // RequestPieceSelection으로 보드에서 직접 고른 기물들 각각을 시전자로 한 effect 사본을 효과 큐 맨 앞에 넣는다
+    // (InsertEffectNext — executeOnCaster라 큐가 입력 모드를 보지 않고 각 기물 칸에서 바로 실행한다).
     void ApplyPieceSelectionEffect(CardEffect effect, List<Piece> selected)
     {
         // 기물 선택 효과 자체는 ExecuteEffect를 거치지 않으므로 카드 사용 확정(에너지 차감·OnCardUsed 유물)을 여기서 한다.
@@ -1289,11 +1295,9 @@ public partial class Board
 
         effect = PayGrave(effect); // 선택한 기물 수와 무관하게 한 번만 차감(카드 시전자가 지불)
         // 무덤은 위에서 이미 냈으므로 사본에서는 비용을 지운다(큐는 사본의 시전자 = 선택된 기물에게 무덤을 요구하므로).
-        var perPiece = new List<CardEffect>();
+        CardEffect perPiece = effect with { graveCost = 0, consumeAllGrave = false, pieceSelectCount = 0 };
         foreach (var piece in selected)
-            perPiece.Add(effect with { caster = piece, graveCost = 0, consumeAllGrave = false, pieceSelectCount = 0, executeOnCaster = true });
-        perPiece.AddRange(pendingEffects);
-        pendingEffects = new Queue<CardEffect>(perPiece);
+            InsertEffectNext(perPiece, piece);
         ScheduleNextCardEffect();
     }
 }

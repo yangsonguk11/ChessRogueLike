@@ -35,11 +35,6 @@ public class Button : MonoBehaviour, ISelectable
         boardScript = _board.GetComponent<Board>();
     }
 
-    public void OnTurnEnd()
-    {
-        if (piece)
-            piece.GetComponent<Piece>().OnTurnEnd();
-    }
     public void MouseEnter()
     {
         ScaleHover();

@@ -224,14 +224,14 @@ public partial class Board
             if (advance) ApplyMoveOccupancy(GetButtonScript(attackerPos), defenderButton); // 공격자가 빈 자리까지 계속 이동
             motionQueue.Enqueue(defender.DeathCor());
             if (advance) motionQueue.Enqueue(PieceMoveCor(attacker.gameObject, GetButtonScript(attackerPos), defenderButton, 1f));
-            TriggerOnKillEffect(finalAttackerPos, attacker, cardEffect);
+            TriggerOnKillEffect(attacker, cardEffect);
         }
         for (int t = 1; t < targets.Count; t++)
         {
             if (hpLeft[t] > 0) continue;
             ClearDeadPieceOccupancy(targets[t].pos, targets[t].piece);
             motionQueue.Enqueue(targets[t].piece.DeathCor());
-            TriggerOnKillEffect(finalAttackerPos, attacker, cardEffect);
+            TriggerOnKillEffect(attacker, cardEffect);
         }
 
         // 연쇄 이동공격 같은, 이동공격 자체를 구독해 반응하는 부가 효과를 위한 이벤트 발화.
@@ -317,27 +317,14 @@ public partial class Board
         yield break;
     }
 
-    // 처치가 확정된 시점에 호출: OnKill 유물을 즉시 발동시키고, cardEffect에 onKillEffect가 설정돼 있으면
-    // 시전자를 대상으로 한 그 효과(예: 처치 시 힘 영구 증가)를 효과 큐 맨 앞에 끼워 넣는다 — 처치한 효과가 끝나고
-    // 다음 효과를 꺼낼 때 카드의 이후 효과보다 먼저 실행된다(소환 시 효과의 ApplySpawnOccupancy와 같은 방식).
-    // 대상이 시전자로 정해져 있으므로 executeOnCaster로 표시해 큐가 입력 모드를 보지 않고 바로 실행하게 한다.
-    void TriggerOnKillEffect(Vector2Int casterPos, Piece caster, CardEffect cardEffect)
+    // 처치가 확정된 시점에 호출: OnKill 유물과, cardEffect에 onKillEffect가 설정돼 있으면 시전자를 대상으로 한 그 효과
+    // (예: 처치 시 힘 영구 증가)를 반응 효과로 효과 큐 맨 앞에 넣는다(InsertEffectNext) — 처치한 효과가 끝나고 다음 효과를
+    // 꺼낼 때 카드의 이후 효과보다 먼저, 유물 → 처치 시 효과 순서로 실행된다. 카드 밖(턴 효과 등)의 처치도 같은 큐로 처리된다.
+    void TriggerOnKillEffect(Piece caster, CardEffect cardEffect)
     {
         TriggerRelicsOnKill(caster);
         if (caster == null || cardEffect?.onKillEffect == null) return;
-
-        CardEffect onKill = cardEffect.onKillEffect with { caster = caster, executeOnCaster = true };
-        if (effectApplied)
-        {
-            var queue = new List<CardEffect> { onKill };
-            queue.AddRange(pendingEffects);
-            pendingEffects = new Queue<CardEffect>(queue);
-        }
-        else
-        {
-            // 카드 처리 밖(TurnEffect·유물 등 예약 효과)의 처치 — 끼워 넣을 카드 큐가 없으므로 예약 효과 큐로 보낸다.
-            EnqueueScheduledEffect(casterPos, onKill);
-        }
+        InsertEffectNext(cardEffect.onKillEffect, caster);
     }
 
     // attack/moveattack 계열 공통: 대상 1명에게 공격 피해를 적용한다. 취약처럼 "공격으로 받는 피해"에만
@@ -383,22 +370,22 @@ public partial class Board
     // 피해/상태이상/흡혈은 타격마다 따로 적용하고, 연출은 시전자 애니메이션 1회 + 피격 반응 hitCount회(MultiHitReactionCor)로 묶는다.
     void AttackPiece(Vector2Int pos1, Vector2Int pos2, int dmg, CardEffect cardEffect = null, int hitCount = 1)
     {
-        // pos1 == pos2: 자기 자신에게 거는 예약 Damage 효과(예: StatusEffectType.TurnDamageStart/End의
-        // DoT 틱 — CreateStatusEffect가 targetlogic=self로 만들어 EnqueueScheduledEffect를 통해 자기
-        // 자신을 targetPos로 넘김). 캐스터와 피격자가 같은 기물이므로 회전/공격 애니메이션 없이
-        // 피격자의 Hit/Die 반응만 재생한다.
+        // pos1 == pos2: 자기 자신에게 거는 Damage 효과(예: StatusEffectType.TurnDamageStart/End의 DoT 틱 —
+        // CreateStatusEffect가 targetlogic=self로 만든 턴 효과를 효과 큐가 시전자 칸에서 실행). 캐스터와 피격자가 같은
+        // 기물이므로 회전/공격 애니메이션 없이 피격자의 Hit/Die 반응만 재생한다. 공격이 아니므로 비공격 피해로 처리한다
+        // (피격 시 유물·타격음 없음 — 독·화상 틱과 같은 규칙).
         if (pos1 == pos2)
         {
             Piece target = GetButtonScript(pos2).GetPieceScript();
             if (target == null) { StartMotionQueue(); return; }
 
-            int hpLeftDirect = target.GetDamage(dmg);
+            int hpLeftDirect = target.GetDamage(dmg, isAttack: false);
             if (target.teamID == 0) playerDamagedThisTurn = true;
 
             var directReaction = new List<IEnumerator>
             {
                 TriggerAnimCor(target, hpLeftDirect <= 0 ? "Die" : "Hit", 0.3f, false),
-                target.DamageText(dmg)
+                target.DamageText(dmg, isAttack: false)
             };
             StatusEffect directStatusEffect = ApplyStatusEffect(target, cardEffect); // 즉시 적용
             if (directStatusEffect != null)
@@ -454,7 +441,7 @@ public partial class Board
         {
             ClearDeadPieceOccupancy(pos2, pScript2);
             motionQueue.Enqueue(pScript2.DeathCor());
-            TriggerOnKillEffect(pos1, pScript1, cardEffect);
+            TriggerOnKillEffect(pScript1, cardEffect);
         }
 
         StartMotionQueue();
@@ -486,18 +473,19 @@ public partial class Board
     }
 
     // 피격자 반응(Hit/Die + DamageText)만 재생 — 캐스터=피격자라 별도 캐스터 애니메이션은 없음.
+    // 자해(카드)와 독·화상 틱(Board.EnqueueTeamStatusTicks)이 쓴다. 공격이 아니므로 비공격 피해 — 피격 시 유물·타격음 없음.
     void SelfDamagePiece(Vector2Int casterPos, int dmg)
     {
         if (casterPos.x < 0 || casterPos.y < 0) return;
         Piece p = GetButtonScript(casterPos).GetPieceScript();
         if (p == null) return;
-        int hpLeft = p.GetDamage(dmg);
+        int hpLeft = p.GetDamage(dmg, isAttack: false);
         if (p.teamID == 0) playerDamagedThisTurn = true;
 
         var selfDamageReaction = new List<IEnumerator>
         {
             TriggerAnimCor(p, hpLeft <= 0 ? "Die" : "Hit", 0.3f, false),
-            p.DamageText(dmg)
+            p.DamageText(dmg, isAttack: false)
         };
         if (hpLeft <= 0) selfDamageReaction.Add(p.PieceDeathSound());
         motionQueue.Enqueue(Parallel(selfDamageReaction.ToArray()));
@@ -546,7 +534,7 @@ public partial class Board
             {
                 ClearDeadPieceOccupancy(pos, p);
                 deathCoroutines.Add(p.DeathCor());
-                TriggerOnKillEffect(casterPos, caster, cardEffect);
+                TriggerOnKillEffect(caster, cardEffect);
             }
             if (cardEffect != null && cardEffect.healOnHit)
                 totalHeal += dealt;

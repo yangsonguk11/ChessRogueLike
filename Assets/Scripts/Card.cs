@@ -632,11 +632,13 @@ public record CardEffect
     public bool isBuff { get; init; }
 
     // Damage 계열 효과가 대상을 처치했을 때 시전자를 대상으로 실행할 CardEffect (예: 처치 시 ColDamageUp).
-    // 처치 시점에 바로 실행하지 않고 효과 큐 맨 앞에 끼워 넣어(Board.TriggerOnKillEffect) 다음 효과를 꺼낼 때 실행된다.
+    // 처치 시점에 바로 실행하지 않고 반응 효과로 효과 큐 맨 앞에 넣어(Board.TriggerOnKillEffect → InsertEffectNext) 다음 효과를 꺼낼 때 실행된다.
     public CardEffect onKillEffect { get; init; }
 
-    // 대상이 시전자로 이미 정해진 효과 — 효과 큐(Board.ProcessNextCardEffectStep)가 입력 모드(requiredMode)를 보지 않고
-    // 시전자 칸에서 바로 실행한다. 처치 시 효과·기물 선택 결과처럼 엔진이 큐 앞에 끼워 넣는 효과용이며 카드 정의에서는 쓰지 않는다.
+    // 카드 밖에서 효과 큐에 넣은 효과(Board.EnqueueEffect/InsertEffectNext — 턴 효과·유물·상태이상 틱·처치 시·소환 시·기물 선택 결과).
+    // 대상이 시전자로 정해져 있어 큐(Board.ProcessNextCardEffectStep)가 입력 모드(requiredMode)를 보지 않고 시전자 칸에서 바로
+    // 실행하며, 카드 사용 확정(에너지·카드 사용 시 유물)을 하지 않는다. 큐 안에서 이 값이 false인 항목은 지금 쓰는 카드의 효과다.
+    // 엔진이 넣는 값이며 카드 정의에서는 쓰지 않는다.
     public bool executeOnCaster { get; init; }
 
     // SelectAndDiscard / SelectAndChangeCost 타입에서 사용
@@ -645,7 +647,7 @@ public record CardEffect
 
     // 0보다 크면 (requiredMode는 보통 Inspect) UseCard 이후 카드 효과 처리 중에 보드에서 아군 기물을
     // 이 수치만큼 직접 클릭해 고르게 한다(Board.RequestPieceSelection). 고른 기물 각각을 시전자로 한 이 CardEffect
-    // 사본이 효과 큐 맨 앞에 들어가 그 기물 칸에서 실행된다(executeOnCaster).
+    // 사본이 효과 큐 맨 앞에 들어가 그 기물 칸에서 실행된다(InsertEffectNext — executeOnCaster).
     public int pieceSelectCount { get; init; }
     public bool excludeCasterFromPieceSelection { get; init; } // true면 pieceSelectCount 선택 대상에서 카드를 낸 기물 자신을 제외
     public int costChange { get; init; } = 0;                  // 코스트 변화량 (SelectAndChangeCost용)
@@ -700,7 +702,8 @@ public record CardEffect
 
     // 이 효과의 시전자 — Board는 효과마다 이 기물의 현재 위치를 시전자 칸으로 쓴다(이동했으면 새 위치).
     // null이면 selectedButton 기준(기존 방식).
-    // 효과를 실행하도록 등록하는 시점(카드 사용·소환 시 효과·턴 효과·유물·처치 시 효과 등)에 원본은 그대로 두고
+    // 효과를 큐에 넣는 시점(카드 사용은 UseCard, 그 밖은 Board.EnqueueEffect/InsertEffectNext)에 원본은 그대로 두고
     // `with { caster = ... }` 사본으로 기록한다 — TurnEffect가 카드의 중첩 CardEffect 객체를 공유하므로 원본을 바꾸면 안 된다.
+    // 큐는 시전자가 보드에 없으면(앞 효과로 사망) 그 효과를 건너뛴다.
     public Piece caster { get; init; }
 }

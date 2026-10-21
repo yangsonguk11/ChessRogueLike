@@ -9,7 +9,7 @@ public partial class Board
     public bool queuecoroutineworking;
 
     // 이미 처리 중이면 새로 시작하지 않음 — 한 프레임 안에서 여러 기물의 효과를 연달아
-    // motionQueue에 넣어도(예: ProcessTeamTurnEffects) 큐 소비자가 중복 실행되지 않게 함.
+    // motionQueue에 넣어도(예: 턴 효과·상태이상 틱이 연달아 실행될 때) 큐 소비자가 중복 실행되지 않게 함.
     void StartMotionQueue()
     {
         if (!queuecoroutineworking)

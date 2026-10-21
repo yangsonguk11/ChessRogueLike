@@ -15,7 +15,7 @@ public class PoisonEffect : StatusEffect
         this.damagePerTurn = damagePerTurn;
     }
 
-    // 실제 피해 적용은 Piece.ProcessStatusEffects가 같은 종류끼리 damagePerTurn을 누적해서 한 번만 처리한다.
+    // 실제 피해 적용은 Piece.TickStatusEffects가 같은 종류끼리 damagePerTurn을 합산한 값으로 Board가 효과 큐에서 한 번만 처리한다.
     // 여기서는 지속시간만 감소시키면 되므로 base.OnTurnEnd 그대로 사용(override 불필요).
     public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
 }
@@ -34,7 +34,7 @@ public class BurningEffect : StatusEffect
         this.damagePerTurn = damagePerTurn;
     }
 
-    // 실제 피해 적용은 Piece.ProcessStatusEffects가 같은 종류끼리 damagePerTurn을 누적해서 한 번만 처리한다.
+    // 실제 피해 적용은 Piece.TickStatusEffects가 같은 종류끼리 damagePerTurn을 합산한 값으로 Board가 효과 큐에서 한 번만 처리한다.
     public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
 }
 
@@ -51,7 +51,7 @@ public class RegenEffect : StatusEffect
         this.healPerTurn = healPerTurn;
     }
 
-    // 실제 회복 적용은 Piece.ProcessStatusEffects가 같은 종류끼리 healPerTurn을 누적해서 한 번만 처리한다.
+    // 실제 회복 적용은 Piece.TickStatusEffects가 같은 종류끼리 healPerTurn을 합산한 값으로 Board가 효과 큐에서 한 번만 처리한다.
     public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
 }
 

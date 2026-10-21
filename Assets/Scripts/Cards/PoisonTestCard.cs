@@ -1,5 +1,5 @@
 // 검증 전용 카드: StatusEffectType.Poison을 실제로 부여하는 카드가 아직 없어서
-// 독 틱 텍스트 합산(Piece.ProcessStatusEffects)을 플레이테스트하기 위해 추가했다.
+// 독 틱 합산(Piece.TickStatusEffects → Board.EnqueueTeamStatusTicks)을 플레이테스트하기 위해 추가했다.
 // 정식 카드로 유지할지는 플레이테스트 후 결정.
 public class PoisonTestCard : Card
 {

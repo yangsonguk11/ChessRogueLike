@@ -2,64 +2,83 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// 턴 흐름. 각 타이밍은 발동할 효과를 효과 큐(pendingEffects)에 넣고 ResolveEffects로 큐가 빌 때까지 처리한 뒤 다음 타이밍으로
+// 넘어간다 — 앞 타이밍의 결과(사망, 새로 걸린 턴 효과 등)가 다음 타이밍의 효과 수집에 반영된다. 승패가 정해지면(IsCombatDecided)
+// 다음 타이밍으로 넘어가지 않는다. ResolveEffects는 로직만 기다리므로, 연출 대기는 TurnManager의 기존 대기 지점이 맡는다.
 public partial class Board
 {
-    // 이벤트 레벨에서는 TurnManager가 턴을 시작하지 않으므로 이 메서드 자체가 호출되지 않음
-    void TurnStart()
+    // 이벤트 레벨에서는 TurnManager가 턴을 시작하지 않으므로 이 코루틴 자체가 호출되지 않음
+    public IEnumerator PlayerTurnStartCoroutine()
     {
         TriggerRelicsOnTurnStart();
-        ProcessTeamTurnEffects(0, TurnPhase.OwnTurnStart);
+        yield return ResolveEffects();
+        if (IsCombatDecided) yield break;
+
+        EnqueueTeamTurnEffects(0, TurnPhase.OwnTurnStart);
+        yield return ResolveEffects();
+        if (IsCombatDecided) yield break;
+
         playerDamagedThisTurn = false;
         ResetPieceMovedThisTurn();
-        CardCanvas.instance.ProcessTurnStartForAllAllies(GetAllAllyPieces());
+        CardCanvas.instance.ProcessTurnStartForAllAllies(GetAllAllyPieces()); // 드로우(드로우 시 훅 발생) + 에너지 회복
+        yield return ResolveEffects();
+        if (IsCombatDecided) yield break;
+
         LockEnemyTelegraphs();
         ShowAllEnemyRanges();
     }
 
-    public void AllyTurnEnd()
+    public IEnumerator AllyTurnEndCoroutine()
     {
-        if (!boardReady) return;
+        if (!boardReady) yield break;
         ClearAllEnemyRanges();
-        ProcessTeamTurnEffects(0, TurnPhase.OwnTurnEnd);
-        TriggerRelicsOnTurnEnd();
-        TurnEnd(0);
-        FinishCardUsage();
+
+        // 쓰던 카드부터 정리해 둔다 — 남은 카드 효과 뒤에 턴 종료 효과가 붙지 않게. 턴 종료 버튼은 조준 중인 카드(nowusingCard)를
+        // 막지 않으므로, 아직 확정 전이면 사용 처리 대신 손패로 되돌린다(손패는 아래에서 어차피 버려지지만, 소멸·저주 카드가
+        // 쓰지도 않았는데 소멸되지 않게). 보드 쪽 잔여 상태는 Board.CancelCardUsage가 정리한다(카드가 없어도 안전).
+        if (!effectApplied)
+        {
+            CardCanvas.instance.CancelCardUsage();
+            CancelCardUsage();
+        }
+        else
+        {
+            RemoveCardEffects();
+            FinishCardUsage();
+        }
         ClearSelectedButton();
+
+        EnqueueTeamTurnEffects(0, TurnPhase.OwnTurnEnd);
+        yield return ResolveEffects();
+        if (IsCombatDecided) yield break;
+
+        TriggerRelicsOnTurnEnd();
+        yield return ResolveEffects();
+        if (IsCombatDecided) yield break;
+
+        EnqueueTeamStatusTicks(0);
+        yield return ResolveEffects();
+        if (IsCombatDecided) yield break;
+
+        ResetOpposingShields(0);
         CardCanvas.instance.RestoreThisTurnCosts(); // ThisTurnOnly 코스트 복구
         CardCanvas.instance.ResetAllAllyHands(GetAllAllyPieces());
     }
 
-    public void EnemyTurnEnd()
+    IEnumerator EnemyTurnEndCoroutine()
     {
-        if (!boardReady) return;
-        ProcessTeamTurnEffects(1, TurnPhase.OwnTurnEnd);
-        TurnEnd(1);
+        if (!boardReady) yield break;
+
+        EnqueueTeamTurnEffects(1, TurnPhase.OwnTurnEnd);
+        yield return ResolveEffects();
+        if (IsCombatDecided) yield break;
+
+        EnqueueTeamStatusTicks(1);
+        yield return ResolveEffects();
+        if (IsCombatDecided) yield break;
+
+        ResetOpposingShields(1);
         ClearSelectedButton();
-    }
-
-    void TurnEnd(int teamid)
-    {
-        Vector2Int pos = new Vector2Int(0, 0);
-        for (int i = 0; i < N; i++)
-        {
-            pos.x = i;
-            for (int j = 0; j < M; j++)
-            {
-                pos.y = j;
-                Piece pp = GetButtonScript(pos).GetPieceScript();
-                if (pp != null)
-                {
-                    if (pp.teamID == teamid) pp.OnTurnEnd();
-                    else pp.OnTurnEndOther();
-
-                    if (pp.hp <= 0)
-                    {
-                        ClearDeadPieceOccupancy(pos, pp);
-                        StartCoroutine(pp.DeathCor());
-                    }
-                }
-            }
-        }
     }
 
     void PlayEnemyTurn()
@@ -69,6 +88,11 @@ public partial class Board
 
     public IEnumerator PlayEnemyTurnCoroutine()
     {
+        EnqueueTeamTurnEffects(1, TurnPhase.OwnTurnStart);
+        yield return ResolveEffects();
+        if (IsCombatDecided) yield break;
+
+        // 턴 시작 효과로 죽은 적이 목록에 남지 않도록 그 처리 뒤에 복사한다.
         List<Vector2Int> currentEnemies = new List<Vector2Int>(enemyPositions);
 
         foreach (Vector2Int pos in currentEnemies)
@@ -84,7 +108,7 @@ public partial class Board
             if (card != null)
             {
                 UseCard(card);
-                yield return new WaitUntil(() => pendingEffects.Count == 0 && !queuecoroutineworking);
+                yield return new WaitUntil(() => !IsResolvingEffects && !queuecoroutineworking);
                 if (!enemy.IsStunned())
                     enemy.ChangeMove();
                 enemy.ActionText();
@@ -93,7 +117,8 @@ public partial class Board
             ClearSelectedButton();
         }
 
-        TurnManager.instance.EndEnemyTurn();
+        yield return EnemyTurnEndCoroutine();
+        if (IsCombatDecided) yield break;
         TurnManager.instance.StartPlayerTurn();
     }
 
@@ -114,7 +139,7 @@ public partial class Board
             if (card != null)
             {
                 UseCard(card);
-                yield return new WaitUntil(() => pendingEffects.Count == 0 && !queuecoroutineworking);
+                yield return new WaitUntil(() => !IsResolvingEffects && !queuecoroutineworking);
                 if (!autoAlly.IsStunned())
                     autoAlly.ChangeMove();
                 autoAlly.ActionText();

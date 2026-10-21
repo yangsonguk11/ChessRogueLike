@@ -66,13 +66,14 @@ public class TurnManager : MonoBehaviour, ITurnManager
     IEnumerator StartPlayerTurnCoroutine()
     {
         if (board.CombatEnded) yield break; // 전투가 이미 끝났으면 새 턴을 시작하지 않음
+        // 턴 시작 타이밍(유물·턴 효과·드로우)이 끝날 때까지 입력과 턴 종료를 막는다 — 아래에서 Player로 바꾼 뒤에도 그 사이에 틈이 없게.
+        PlayerInputLocked = true;
         // 적 턴 종료 효과(예: BossRageCard의 턴 종료 힘 증가)의 연출이 아직 재생 중이면 끝날 때까지 기다린다.
         // 그 사이에 Player로 바꿔두면, 연출이 끝날 때 RollbackStateProcessing이 연출 시작 시점의 상태(Enemy)로
         // 되돌려버려 플레이어 턴인데 입력·턴 종료가 전부 막힌다.
-        yield return new WaitUntil(() => !board.queuecoroutineworking);
+        yield return new WaitUntil(() => !board.queuecoroutineworking && !board.IsResolvingEffects);
         if (board.CombatEnded) yield break;
         currentState = TurnState.Player;
-        PlayerInputLocked = false;
         AudioManager.instance?.PlayTurnStartPlayer();
         if (isFirstTurn)
         {
@@ -88,20 +89,24 @@ public class TurnManager : MonoBehaviour, ITurnManager
             AnnouncementUI.instance.Show("플레이어 턴", isWarning: false);
             yield return AnnouncementUI.instance.currentRoutine;
         }
-        board.SendMessage("TurnStart");
+        yield return StartCoroutine(board.PlayerTurnStartCoroutine());
+        if (board.IsCombatDecided) yield break; // 턴 시작 효과로 승패가 정해졌으면 입력을 열지 않음
+        PlayerInputLocked = false;
     }
 
     public void EndPlayerTurn()
     {
-        if (currentState != TurnState.Player || board.IsEventLevel || board.CombatEnded) return; // 이벤트 레벨/전투 종료 후에는 턴이 흐르지 않음
+        // 이벤트 레벨/전투 종료 후에는 턴이 흐르지 않음. PlayerInputLocked: 턴 시작 처리 중이거나 이미 턴 종료 처리 중.
+        if (currentState != TurnState.Player || PlayerInputLocked || board.IsEventLevel || board.CombatEnded) return;
         PlayerInputLocked = true; // 다음 StartPlayerTurnCoroutine까지(아군 턴 종료 효과 + 자동 아군 턴) 입력 차단
         StartCoroutine(EndPlayerTurnCoroutine());
     }
 
     IEnumerator EndPlayerTurnCoroutine()
     {
-        board.SendMessage("AllyTurnEnd");
+        yield return StartCoroutine(board.AllyTurnEndCoroutine());
         yield return new WaitUntil(() => !board.queuecoroutineworking);
+        if (board.IsCombatDecided) yield break; // 턴 종료 효과(상태이상 틱 등)로 전투가 끝났으면 진행하지 않음
         yield return StartCoroutine(board.PlayAutoAllyTurnCoroutine());
         if (board.CombatEnded) yield break; // 아군 자동 행동 중 전투가 끝났으면 적 턴으로 넘어가지 않음
         StartEnemyTurn();
@@ -122,11 +127,7 @@ public class TurnManager : MonoBehaviour, ITurnManager
             AnnouncementUI.instance.Show("적 턴", isWarning: false);
             yield return AnnouncementUI.instance.currentRoutine;
         }
-        board.SendMessage("PlayEnemyTurn");
-    }
-    public void EndEnemyTurn()
-    {
-        board.SendMessage("EnemyTurnEnd");
+        board.SendMessage("PlayEnemyTurn"); // 적 턴 시작 효과 → 적 행동 → 적 턴 종료 효과 → StartPlayerTurn (Board.PlayEnemyTurnCoroutine)
     }
     public void TurnStateProcessing()
     {

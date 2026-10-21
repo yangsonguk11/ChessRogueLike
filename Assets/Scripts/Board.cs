@@ -316,7 +316,7 @@ public partial class Board : MonoBehaviour
         if (!IsEventLevel)
         {
             TriggerRelicsOnCombatStart(); // 배치하며 모아둔 스폰 시 효과 뒤에 유물 전투 시작 효과를 넣고
-            ProcessNextCardEffect();      // 전투 시작 효과를 한 번에 처리
+            RunEffects();                 // 전투 시작 효과를 한 번에 처리
         }
     }
 
@@ -363,7 +363,7 @@ public partial class Board : MonoBehaviour
         pieceScript.pieceDataIndex = dataIndex;
         pieceScript.SetPieceData(data);
         // 카드 밖(대화) 합류라 큐에 모인 스폰 시 효과를 바로 처리한다 — NPC 대화는 Inspect 모드에서만 열려 진행 중인 카드가 없다.
-        if (!IsEventLevel) ProcessNextCardEffect();
+        if (!IsEventLevel) RunEffects();
         return true;
     }
 

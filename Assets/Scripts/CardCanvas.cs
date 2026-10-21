@@ -77,7 +77,7 @@ public class CardCanvas : MonoBehaviour
 
     public static bool cardSelectionMode = false;
     List<RectTransform> panelCardPool = new List<RectTransform>();
-    HashSet<RectTransform> selectedInPanel = new HashSet<RectTransform>();
+    List<RectTransform> selectedInPanel = new List<RectTransform>(); // 고른 순서 유지 — 꽉 찼을 때 가장 먼저 고른 카드를 교체(ToggleCardInPanel)
     public bool IsSelectedInPanel(RectTransform card) => selectedInPanel.Contains(card);
     int panelRequiredCount;
     bool panelIsSavedDeck; // true면 panelCardPool이 deckCardIDs로부터 임시 스폰된 것 (확인 시 원래 자리로 되돌리지 않고 savedDeckAction에 따라 처리)
@@ -449,6 +449,7 @@ public class CardCanvas : MonoBehaviour
 
     // 모든 드로우의 공통 로직(연출 없음): piece의 덱에서 count장을 손패로 옮기고 뽑은 카드를 돌려준다. 덱이 부족하면
     // 버림더미를 셔플해 보충한다. 화면에 띄운 기물의 경로(DrawTurnStartCards/DrawCard)는 이 위에 연출만 얹는다.
+    // 한 장 뽑을 때마다 드로우 시 타이밍 훅(Board.OnCardDrawn)을 부른다.
     List<RectTransform> DrawCardsData(Piece piece, int count)
     {
         var drawn = new List<RectTransform>();
@@ -461,6 +462,7 @@ public class CardCanvas : MonoBehaviour
             RectTransform card = pd.Deck.Dequeue();
             pd.Hand.Add(card);
             drawn.Add(card);
+            if (board != null) board.OnCardDrawn(piece, card);
         }
         return drawn;
     }
@@ -1140,6 +1142,17 @@ public class CardCanvas : MonoBehaviour
             panelCard.SetHandPose(new Vector3(-totalWidth / 2f + i * spacing, 0f, 0f), Quaternion.identity, snap: true);
             panelCard.ScaleDefault();
         }
+
+        // Content에 레이아웃 그룹(씬에서는 GridLayoutGroup)이 있으면 다음 레이아웃 갱신 때 위 자리를 덮어쓴다 — 그런데 슬롯은
+        // 위 자리로 기억돼 있어서 호버를 풀면 카드가 격자 칸이 아니라 엉뚱한 자리로 돌아갔다. 지금 바로 배치시키고 실제로
+        // 놓인 칸을 슬롯으로 다시 기억시킨다.
+        LayoutGroup group = cardSelectionContent.GetComponent<LayoutGroup>();
+        if (group != null && group.isActiveAndEnabled)
+        {
+            LayoutRebuilder.ForceRebuildLayoutImmediate(cardSelectionContent);
+            foreach (var rt in panelCardPool)
+                rt.GetComponent<Card>().SetHandPose(rt.localPosition, Quaternion.identity, snap: true);
+        }
     }
 
     /// <summary>패널 내 카드 클릭 시 선택/해제 토글</summary>
@@ -1157,11 +1170,15 @@ public class CardCanvas : MonoBehaviour
             int maxAllowed = panelRequiredCount > 0
                 ? Mathf.Min(panelRequiredCount, panelCardPool.Count)
                 : panelCardPool.Count;
-            if (selectedInPanel.Count < maxAllowed)
+            // 꽉 찼으면 가장 먼저 고른 카드를 풀고 방금 누른 카드를 고른다(고른 순서는 selectedInPanel 순서).
+            if (selectedInPanel.Count >= maxAllowed)
             {
-                selectedInPanel.Add(card);
-                card.GetComponent<Card>()?.ScaleHover();
+                RectTransform oldest = selectedInPanel[0];
+                selectedInPanel.RemoveAt(0);
+                oldest.GetComponent<Card>()?.ScaleDefault();
             }
+            selectedInPanel.Add(card);
+            card.GetComponent<Card>()?.ScaleHover();
         }
         UpdatePanelUI();
     }

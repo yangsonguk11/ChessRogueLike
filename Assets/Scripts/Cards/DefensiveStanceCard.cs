@@ -31,7 +31,7 @@ public class DefensiveStanceCard : Card
             dmg = 0,
             targetlogic = TargetLogic.self,
             statusEffectType = StatusEffectType.MovementDisabled,
-            statusDuration = 2,
+            statusDuration = 1, // 자기 턴 종료 시 줄어드므로 사용한 턴이 끝나면 풀린다
         });
     }
 

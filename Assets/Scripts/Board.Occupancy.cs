@@ -5,15 +5,16 @@ using UnityEngine;
 public partial class Board
 {
     // 새 기물을 보드에 배치한다 — 모든 스폰 경로(전투 시작 배치, 대화 합류, 소환)가 여기를 거친다(이동은 ApplyMoveOccupancy).
-    // 기물의 스폰 시 효과(onSpawnCards)를 시전자 기록 사본으로 효과 큐에 넣는다: 카드 처리 중(effectApplied — 소환 카드)이면
-    // 그 카드의 이후 효과보다 먼저 실행되게 맨 앞에, 아니면(전투 시작 배치·대화 합류) 스폰 순서대로 뒤에 모아뒀다가
-    // 호출부(InitBoard의 전투 시작 처리 / SpawnPiece)가 ProcessNextCardEffect로 처리한다.
+    // 기물의 스폰 시 효과(onSpawnCards)를 그 기물을 시전자로 한 반응 효과로 효과 큐 앞에 넣는다(InsertEffectNext — 기물 칸에서
+    // 실행되므로 자기 대상 효과만 가능): 소환 카드면 그 카드의 이후 효과보다 먼저, 전투 시작 배치·대화 합류면 스폰 순서대로
+    // 모였다가 호출부(InitBoard의 전투 시작 처리 / SpawnPiece)의 RunEffects로 처리된다. 이벤트 레벨에서는 발동하지 않는다.
     void ApplySpawnOccupancy(Vector2Int pos, GameObject piece)
     {
         GetButtonScript(pos).SetPiece(piece);
+        if (IsEventLevel) return;
         Piece p = piece.GetComponent<Piece>();
-        var spawnEffects = p.onSpawnCards.Where(c => c != null).SelectMany(c => c.effects).Select(e => e with { caster = p });
-        pendingEffects = new Queue<CardEffect>(effectApplied ? spawnEffects.Concat(pendingEffects) : pendingEffects.Concat(spawnEffects));
+        foreach (CardEffect effect in p.onSpawnCards.Where(c => c != null).SelectMany(c => c.effects))
+            InsertEffectNext(effect, p);
     }
 
     // 이동 애니메이션(PieceMoveCor)이 재생되기 전에, 점유(논리) 상태부터 즉시 확정한다.

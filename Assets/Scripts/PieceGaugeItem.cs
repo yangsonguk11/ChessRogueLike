@@ -75,10 +75,9 @@ public class PieceGaugeItem : MonoBehaviour, IPointerEnterHandler, IPointerExitH
         statusParts.Clear();
         foreach (StatusEffect e in p.activeEffects)
         {
-            string duration = e.duration >= 0 ? $"{e.duration}턴"
-                : e is NextMoveAttackEffect ? "이동공격까지" : "영구";
+            string label = e.duration >= 0 ? $"{e.DisplayName} {e.duration}턴" : e.DisplayName; // 지속이 음수(영구)면 턴 표기 없음
             string color = e.IsBuff ? BuffColor : "#" + ColorUtility.ToHtmlStringRGB(e.EffectColor);
-            statusParts.Add($"<color={color}>{e.DisplayName} {duration}</color>");
+            statusParts.Add($"<color={color}>{label}</color>");
         }
         // 연쇄 이동공격은 StatusEffect가 아니라 컴포넌트라 상태이상 목록에 없다(ChainMoveAttackBuff 참고).
         if (p.GetComponent<ChainMoveAttackBuff>() != null)

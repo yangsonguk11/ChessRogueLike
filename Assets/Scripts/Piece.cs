@@ -59,7 +59,7 @@ public abstract class Piece : MonoBehaviour
     // 가 매번 다시 채워준다). 스폰 경로 밖에서 만들어진 경우 -1로 남아 저장에 반영되지 않는다.
     [ReadOnlyInInspector] public int pieceDataIndex = -1; // Awake()에서 손대지 않음 — 스폰 시점에 외부(Board)가 채워줌
 
-    [Tooltip("스폰 시 효과 — 이 프리팹에 붙인 Card 컴포넌트를 연결(AutoPiece.actionCards와 같은 방식).\n보드에 스폰되는 순간(전투 시작 배치·대화 합류·소환 카드) 위에서부터 각 카드의 effects 순서대로 이 기물을 시전자로 자동 실행한다.\n소환 카드면 소환 효과 바로 다음(카드의 이후 효과보다 먼저), 전투 시작 배치는 전투 시작 시 배치 순서대로 유물 전투 시작 효과보다 먼저 실행된다. 이벤트 레벨에서는 발동하지 않는다.\n대상은 적 카드 규칙으로 자동 결정되며 카드의 user/Cost는 무시된다. 카드 선택 패널·pieceSelectCount·useLastTarget 효과는 미지원.")]
+    [Tooltip("스폰 시 효과 — 이 프리팹에 붙인 Card 컴포넌트를 연결(AutoPiece.actionCards와 같은 방식).\n보드에 스폰되는 순간(전투 시작 배치·대화 합류·소환 카드) 위에서부터 각 카드의 effects 순서대로 이 기물을 시전자로 자동 실행한다.\n소환 카드면 소환 효과 바로 다음(카드의 이후 효과보다 먼저), 전투 시작 배치는 전투 시작 시 배치 순서대로 유물 전투 시작 효과보다 먼저 실행된다. 이벤트 레벨에서는 발동하지 않는다.\n효과는 이 기물 칸에서 이 기물을 시전자 겸 기준으로 실행되므로 자기 대상 효과만 가능하다(카드의 user/Cost는 무시된다). 카드 선택 패널·pieceSelectCount·useLastTarget 효과는 미지원.")]
     [FormerlySerializedAs("onSummonCards")]
     public List<Card> onSpawnCards = new List<Card>();
 
@@ -132,10 +132,11 @@ public abstract class Piece : MonoBehaviour
         return Mathf.Max(0, damage + bonus);
     }
 
-    void ProcessStatusEffects()
+    // 자기 턴 종료 시 Board.EnqueueTeamStatusTicks가 호출: 상태이상의 지속시간을 줄이고(만료되면 제거) 이번 틱의
+    // 독/화상/재생 수치를 돌려준다. 같은 종류가 여러 개 걸려 있어도 종류별로 합산한다. 피해/회복 적용은 하지 않는다 —
+    // Board가 이 수치로 CardEffect(비공격 자해/자기 회복)를 만들어 효과 큐에서 실행한다.
+    public (int poison, int burning, int regen) TickStatusEffects()
     {
-        // 같은 종류의 상태이상(독/화상/재생)이 여러 개 걸려 있어도 OnTurnEnd에서 곧바로 적용하지 않고
-        // 종류별로 수치를 누적해뒀다가, 순회가 끝난 뒤 한 번에 적용 + 텍스트도 한 번만 띄운다.
         int poisonTotal = 0, burningTotal = 0, regenTotal = 0;
 
         for (int i = activeEffects.Count - 1; i >= 0; i--)
@@ -147,7 +148,7 @@ public abstract class Piece : MonoBehaviour
             else if (effect is BurningEffect burning) burningTotal += burning.damagePerTurn;
             else if (effect is RegenEffect regen) regenTotal += regen.healPerTurn;
 
-            bool stillActive = effect.OnTurnEnd(this); // 지속시간 감소만 수행(피해/회복은 아래에서 합산 적용)
+            bool stillActive = effect.OnTurnEnd(this); // 지속시간 감소만 수행(피해/회복은 Board가 효과 큐로 적용)
             if (!stillActive)
             {
                 activeEffects.RemoveAt(i);
@@ -155,21 +156,7 @@ public abstract class Piece : MonoBehaviour
             }
         }
 
-        if (poisonTotal > 0)
-        {
-            GetDamage(poisonTotal, isAttack: false);
-            if (Board.instance != null) Board.instance.StartCoroutine(DamageText(poisonTotal, isAttack: false));
-        }
-        if (burningTotal > 0)
-        {
-            GetDamage(burningTotal, isAttack: false);
-            if (Board.instance != null) Board.instance.StartCoroutine(DamageText(burningTotal, isAttack: false));
-        }
-        if (regenTotal > 0)
-        {
-            int healed = GetHeal(regenTotal);
-            if (healed > 0 && Board.instance != null) Board.instance.StartCoroutine(HealText(healed));
-        }
+        return (poisonTotal, burningTotal, regenTotal);
     }
     public virtual void Awake()
     {
@@ -358,10 +345,6 @@ public abstract class Piece : MonoBehaviour
     {
         ShowShieldBonusReaction(delta);
         yield return null;
-    }
-    public virtual void OnTurnEnd()
-    {
-        ProcessStatusEffects();
     }
     // 상대 팀 턴이 끝날 때(= 자기 턴 직전) 방어도가 사라진다 — 방어도는 상대 턴 동안만 막아 준다.
     // 아군·적·소환수 모두 같은 규칙(예전엔 Ally에만 있어 적·소환수의 방어도가 전투 내내 쌓였다).
