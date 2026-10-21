@@ -2418,46 +2418,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 0
---- !u!223 &661990365
-Canvas:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 661990360}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_RenderMode: 2
-  m_Camera: {fileID: 0}
-  m_PlaneDistance: 100
-  m_PixelPerfect: 0
-  m_ReceivesEvents: 1
-  m_OverrideSorting: 1
-  m_OverridePixelPerfect: 0
-  m_SortingBucketNormalizedSize: 0
-  m_VertexColorAlwaysGammaSpace: 0
-  m_AdditionalShaderChannelsFlag: 25
-  m_UpdateRectTransformForStandalone: 0
-  m_SortingLayerID: 0
-  m_SortingOrder: 5
-  m_TargetDisplay: 0
---- !u!114 &661990366
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 661990360}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
-  m_IgnoreReversedGraphics: 1
-  m_BlockingObjects: 0
-  m_BlockingMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
 --- !u!224 &661990361
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2547,6 +2507,46 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
+--- !u!223 &661990365
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 661990360}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 1
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_AdditionalShaderChannelsFlag: 25
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 5
+  m_TargetDisplay: 0
+--- !u!114 &661990366
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 661990360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &695950923
 GameObject:
   m_ObjectHideFlags: 0
@@ -2851,6 +2851,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 233324954a1c4daebcda03678fffd7d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardTestHandDealer
+  testCardNames:
+  - EmpowerAllyCard
 --- !u!1 &900001001
 GameObject:
   m_ObjectHideFlags: 0
@@ -3521,6 +3523,7 @@ MonoBehaviour:
   UnSeenEvent: {fileID: 992647663}
   HandZone: {fileID: 229027414}
   CardNowUsingPos: {fileID: 1833840005}
+  UsedCardPos: {fileID: 0}
   DiscardZone: {fileID: 1709148942}
   DeckZone: {fileID: 403344652}
   ExileZone: {fileID: 648545954}
@@ -3528,11 +3531,14 @@ MonoBehaviour:
   radius: 1000
   angleBetween: 10
   heightOffset: -400
+  hoveredCardSortingOrder: 3
   cardSelectionPanel: {fileID: 9001000001}
   cardSelectionContent: {fileID: 9001000021}
   selectionCountText: {fileID: 9001000033}
   selectionPromptText: {fileID: 9001000043}
   confirmSelectionBtn: {fileID: 9001000054}
+  cancelSelectionBtn: {fileID: 0}
+  cardFxLayer: {fileID: 0}
   baseMaxEnergy: 999
   nowusingCard: {fileID: 0}
   isCardEffecting: 0

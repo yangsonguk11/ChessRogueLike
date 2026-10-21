@@ -307,10 +307,13 @@ public abstract class Piece : MonoBehaviour
     }
     public bool HasGrave(int amount) => amount <= 0 || grave >= amount;
     // 실제로 소모한 양을 반환한다 — consumeAll이면 가진 무덤 전부, 아니면 amount(가진 만큼까지).
+    // 무덤 차감은 전부 Board.PayGrave → 여기를 거치므로 "무덤 -N" 텍스트도 여기서 큐에 넣는다(자원 소모라 텍스트만).
     public int ConsumeGrave(int amount, bool consumeAll)
     {
         int used = consumeAll ? grave : Mathf.Clamp(amount, 0, grave);
         grave -= used;
+        if (used > 0)
+            Board.instance?.EnqueueBoardAnimation(StatusTextReaction($"무덤 -{used}", false, new Color(0.7f, 0.7f, 0.7f), textOnly: true));
         return used;
     }
     // colDamage를 변경하고(즉시) 버프/디버프 텍스트+파티클+사운드를 재생한다. permanent가 true면

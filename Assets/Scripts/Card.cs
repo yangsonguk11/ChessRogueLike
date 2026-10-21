@@ -527,6 +527,7 @@ public abstract class Card : MonoBehaviour, ISelectable
             CardCanvas.instance.ToggleCardInPanel(GetComponent<RectTransform>());
             return;
         }
+        if (!IsLeftButton(data)) return; // 손패 카드는 좌클릭으로만 집는다 — 우클릭 취소는 CardCanvas.Update가 처리
         if (CardCanvas.instance.nowusingCard == GetComponent<RectTransform>() || handNumber < 0)
         {
             CardCanvas.instance.CancelCardUsage();
@@ -539,8 +540,13 @@ public abstract class Card : MonoBehaviour, ISelectable
             CardCanvas.instance.CardSelected(handNumber);
     }
 
+    // 우클릭(취소) 해제가 드롭으로 처리돼 카드가 사용되지 않게, 손패 카드의 누르기·떼기·드래그는 좌클릭만 받는다.
+    static bool IsLeftButton(BaseEventData data) =>
+        !(data is PointerEventData p) || p.button == PointerEventData.InputButton.Left;
+
     public void MouseUp(BaseEventData data)
     {
+        if (!IsLeftButton(data)) return;
         bool clearAfterDragUse = selected && CardCanvas.instance.nowusingCard == GetComponent<RectTransform>();
         if (selected) SelectedFalse();
         if (clearAfterDragUse)
@@ -551,7 +557,7 @@ public abstract class Card : MonoBehaviour, ISelectable
 
     public void MouseDrag(BaseEventData data)
     {
-        if (handNumber < 0 || !selected)
+        if (handNumber < 0 || !selected || !IsLeftButton(data))
             return;
         PointerEventData pointerData = (PointerEventData)data;
 

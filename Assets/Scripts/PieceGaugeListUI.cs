@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PieceGaugeListUI : MonoBehaviour
 {
@@ -13,6 +14,18 @@ public class PieceGaugeListUI : MonoBehaviour
     // 그래서 전투 중 소환된 기물은 자기 팀 블록의 맨 아래에 붙는다.
     readonly List<Piece> joinOrder = new List<Piece>();
     readonly Dictionary<Piece, bool> sortedAsAlly = new Dictionary<Piece, bool>();
+
+    void Awake()
+    {
+        // 항목 높이는 항목 안의 VerticalLayoutGroup이 내용(숨긴 줄 제외, 줄바꿈 포함)으로 계산한다.
+        // 목록이 그 선호 높이를 직접 써야 같은 레이아웃 패스에서 배치가 맞는다 — 항목에 ContentSizeFitter를 두면
+        // 목록이 바뀌기 전 높이로 배치한 뒤 항목 크기가 바뀌어, 다른 갱신이 올 때까지 항목이 겹치거나 벌어진다.
+        if (container != null && container.TryGetComponent(out VerticalLayoutGroup layout))
+        {
+            layout.childControlHeight = true;
+            layout.childForceExpandHeight = false;
+        }
+    }
 
     void Update()
     {

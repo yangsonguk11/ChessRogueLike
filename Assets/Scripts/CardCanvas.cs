@@ -512,7 +512,20 @@ public class CardCanvas : MonoBehaviour
     void Update()
     {
         if (Mouse.current.rightButton.wasPressedThisFrame)
-            CancelCardUsage();
+        {
+            if (nowusingCard != null)
+                CancelCardUsage();
+            else
+                ReleaseHeldHandCard();
+        }
+    }
+
+    // 손패에서 집기만 하고 아직 커밋하지 않은 카드(cards 소속 + selected)를 놓아 손패 슬롯으로 돌려보낸다.
+    void ReleaseHeldHandCard()
+    {
+        CardDragArrow.instance?.Hide();
+        Card held = cards.Select(rt => rt.GetComponent<Card>()).FirstOrDefault(c => c != null && c.selected);
+        if (held != null) held.SelectedFalse(); // OnUnSelected → CardUnSelected → AlignCards
     }
 
     public void CancelCardUsage()
@@ -526,9 +539,15 @@ public class CardCanvas : MonoBehaviour
         RectTransform card = nowusingCard;
         nowusingCard = null;
         nowUsingCardHeld = false;
-        int originalIndex = card.GetComponent<Card>().handNumber;
+        Card cardComp = card.GetComponent<Card>();
+        int originalIndex = cardComp.handNumber;
         cards.Insert(Mathf.Clamp(originalIndex, 0, cards.Count), card);
-        AlignCards();
+        // 좌클릭 드래그 중(우클릭 취소)이면 카드가 아직 잡혀 있다. 놓아 주지 않으면 MouseDrag가 손패에서 막 집은 카드로 보고
+        // HandZone 안에서 곧바로 다시 커밋하고, 잡힌 카드는 SettleToHandPose가 건너뛰어 슬롯으로 돌아가지도 않는다.
+        if (cardComp.selected)
+            cardComp.SelectedFalse(); // OnUnSelected → CardUnSelected → AlignCards
+        else
+            AlignCards();
         pendingFirstTarget = new Vector2Int(-1, -1);
         board.CancelCardUsage();
     }
