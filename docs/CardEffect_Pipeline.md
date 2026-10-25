@@ -76,7 +76,7 @@ flowchart TD
 | 유물 | `Relic.Effects` (`List<CardEffect>`) | `DrainRelicQueue` ([Board.Relics.cs:105](../Assets/Scripts/Board.Relics.cs#L105)). 전투 시작 유물은 효과 큐에 넣음([Board.Relics.cs:49](../Assets/Scripts/Board.Relics.cs#L49)) | `ApplyCardEffectNow` |
 | 턴 지속 효과 | `TurnEffect.cardEffect` | `ExecutePieceTurnEffects` → `EnqueueScheduledEffect` ([Board.TurnEffects.cs:27](../Assets/Scripts/Board.TurnEffects.cs#L27)) | `ApplyCardEffectNow` |
 
-`ApplyCardEffectNow`는 "지금 쓰는 카드"의 상태(`currentActiveCard`, `pendingEffects`, `effectApplied`)를 건드리지 않는다. 그래서 카드를 처리하는 도중에 유물이나 턴 효과가 끼어들어도 진행 중인 카드가 깨지지 않는다([Board.ScheduledEffects.cs](../Assets/Scripts/Board.ScheduledEffects.cs)).
+카드 처리 도중 끼어드는 효과의 순서도 정해져 있다. "카드 사용 시" 유물은 카드의 첫 효과보다 먼저 모두 처리되고(`MarkCardEffectStarted`), 처치 시 효과는 효과 큐 맨 앞에 들어가 카드의 다음 효과보다 먼저 실행된다. 턴 지속 효과는 카드 효과 큐와 별도인 예약 효과 큐([Board.ScheduledEffects.cs](../Assets/Scripts/Board.ScheduledEffects.cs))로 처리한다.
 
 > **예외**: 독·화상·재생의 턴 종료 피해·회복은 같은 종류를 합쳐 한 번에 적용하려고 `Piece.ProcessStatusEffects`([Piece.cs:135](../Assets/Scripts/Piece.cs#L135))가 직접 처리한다. 이 상태 효과를 **거는** 일은 `CardEffect`(`ApplyStatus`)를 거친다.
 
@@ -123,7 +123,7 @@ effects.Add(new CardEffect
 **카드 코드 통계** (`Assets/Scripts/Cards/*.cs`):
 
 - 카드 클래스 94개, 총 2,834줄(평균 약 30줄)
-- 94개 모두 `Awake()`(효과 조합)와 `EffectDescription`(설명)만 오버라이드한다. 그 밖의 오버라이드는 희귀도 6개, 소멸 조건 1개(`WarmUpDamageCard`), 사용 불가 표시 1개(`WoundCard`)뿐이다.
+- 94개 모두 `Awake()`(효과 조합)를, 93개가 `EffectDescription`(설명)을 오버라이드한다(`EnemyMoveCard`는 `MoveCard`를 상속해 설명을 물려받는다). 그 밖의 오버라이드는 희귀도 6개, 소멸 조건 1개(`WarmUpDamageCard`), 사용 불가 표시 1개(`WoundCard`)뿐이다.
 - 실행 로직을 직접 가진 카드(`Execute` 오버라이드): **0개**
 
 새 카드를 추가할 때 효과 처리 코드는 건드리지 않는다. 절차는 [CLAUDE.md](../CLAUDE.md)의 "카드 추가 절차"에 있다: 효과를 조합한 스크립트 작성 → Tools > Cards > Card Prefab Generator([CardPrefabGenerator.cs](../Assets/Editor/CardPrefabGenerator.cs))로 프리팹 생성·등록 → `effectRange` 지정 → 직업 보상 풀이나 기본 덱에 추가.
@@ -174,13 +174,14 @@ if (card != null)
 
 | 날짜 | 커밋 | 변화 |
 |---|---|---|
+| 2026-03-07 | `153a847` | 연출 큐 `motionQueue` 도입 |
 | 2026-03-18 | `e61c2ff` | 효과 큐 `pendingEffects` 도입 |
 | 2026-05-10 | `355386a` | `ScheduleNextCardEffect` 도입 — 앞 효과의 연출이 끝날 때까지 기다린 뒤 다음 효과를 처리 |
 | 2026-07-19 | `d40928e` | 처치 시 효과(`onKillEffect`) 추가 |
 | 2026-08-25 | `8b9d799` | `CardEffect`를 불변 `record`로 전환 |
 | 2026-08-25 | `6f0ddd4` | 유물 도입 — 유물·턴 효과가 `ApplyCardEffectNow`를 재사용(`DrainRelicQueue`, `EnqueueScheduledEffect`) |
 | 2026-08-26 | `d99400a` | 기절 카드(`StunnedCard`) 도입 |
-| 2026-09-14 | `fe9ff26` | 로직과 연출 분리 — 상태는 즉시 확정하고 연출은 `motionQueue`로. 연출 중에도 다음 카드 사용 가능(카드 예약) |
+| 2026-09-14 | `fe9ff26` | 다음 효과가 연출을 기다리지 않게 변경 — 칸 점유 같은 게임 상태를 연출보다 먼저 확정(`ApplyMoveOccupancy`). 연출 중에도 다음 카드 사용 가능(카드 예약) |
 | 2026-10-01 | `e29909a` | 효과마다 시전자(`caster`) 기록 — 앞 효과로 이동했으면 다음 효과는 새 위치 기준 |
 | 2026-10-02 | `d8616df` | `CLAUDE.md` 작성 — 이 구조를 AI 작업 규칙으로 정리 |
 | 2026-10-17 | `94152c5` | 처치 시 효과와 기물 선택 효과도 효과 큐로 통합(`executeOnCaster`) |
@@ -200,13 +201,14 @@ if (card != null)
 | 2026-10-06 | 82 | 30 |
 | 2026-10-17 (현재) | 94 | 30 |
 
-2026-10-01 이후 카드 클래스가 28개 늘어나는 동안 `EffectType`은 하나도 늘지 않았다. 이 기간의 새 카드는 모두 기존 효과 데이터를 조합해 만들었다.
+2026-10-01 이후 카드 클래스가 28개 늘어나는 동안 `EffectType`은 하나도 늘지 않았다. 새 동작이 필요할 때는 효과 종류 대신 `CardEffect` 필드를 추가했다(39 → 45개: `countsAsMoveAttack`, `skipIfTargetGone`, `hitsPerDiscarded`, `lockOnAllyPositions`, `onMoveAttackHitEffect`, 엔진 내부용 `executeOnCaster`). 같은 기간 상태 효과는 14종에서 19종으로 늘었다.
 
 ## 9. 현재 수치 (기준 커밋 `4595426`)
 
 | 항목 | 수 | 근거 |
 |---|---|---|
-| 게임에 등장하는 카드 | 89종 | 플레이어 카드 62(`Database.prefab`의 `cardPrefabs`) + 적·자동 아군 행동 카드 26(기물 프리팹에 부착) + 기절 카드 1(런타임에 부착) |
+| 등록된 카드 | 89종 | 플레이어 카드 62(`Database.prefab`의 `cardPrefabs`) + 적·자동 아군 행동 카드 26(기물 프리팹에 부착) + 기절 카드 1(런타임에 부착) |
+| 실제 플레이에 쓰이는 카드 | 84종 | 위에서 보상 풀·기본 덱·카드 추가 효과 어디에도 없는 플레이어 카드 4장(`FetchAttackCard`, `PoisonTestCard`, `ShieldMoveCard`, `SquadTrainingCard`)과, 레벨에 배치되지 않은 적(`Enemy-SweepKnight`)만 쓰는 `AreaAttackCard`를 뺀 수 |
 | 카드 클래스 | 94개 | `Assets/Scripts/Cards/*.cs` (어디에도 쓰이지 않는 5개 포함) |
 | 효과 종류 `EffectType` | 30종 | [Card.cs:595](../Assets/Scripts/Card.cs#L595) |
 | 상태 효과 `StatusEffectType` | 19종 | [Enum.cs](../Assets/Scripts/Enum.cs) |
