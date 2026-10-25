@@ -54,7 +54,7 @@ Assets/
 
 ## 카드 사용 처리 흐름
 
-카드 한 장은 `Card.effects`(`List<CardEffect>`)를 가지며, `Board`는 이를 큐(`Queue<CardEffect> pendingEffects`)에 담아 **등록된 순서대로 하나씩** 처리합니다. 관련 코드: [Board.CardEffect.cs](Assets/Scripts/Board.CardEffect.cs).
+카드 한 장은 `Card.effects`(`List<CardEffect>`)를 가지며, `Board`는 이를 큐(`Queue<CardEffect> pendingEffects`)에 담아 **등록된 순서대로 하나씩** 처리합니다. 관련 코드: [Board.CardEffect.cs](Assets/Scripts/Board.CardEffect.cs). 설계 의도와 코드·커밋 근거는 [docs/CardEffect_Pipeline.md](docs/CardEffect_Pipeline.md)에 정리돼 있습니다.
 
 1. **카드 잡기**: 손패에서 카드를 드래그해 사용 영역에 들이면 `CardCanvas.UseCard(handnum)`이 사용 가능 여부를 검사하고 `Card.PrepareUseEffects`로 이번 사용 효과(`Card.UseEffects`)를 정합니다 — 시전자가 이동 불가면 처음 나오는 이동 효과부터 뒤는 빠지고, 남는 효과가 없으면 거부됩니다. 이어서 `CommitNowUsingCard()`가 `Board.ShowUseEligibilityPreview`로 범위만 미리 보여줍니다(**효과 큐는 아직 비어 있음**). 조준 카드(`Card.NeedsTargeting` — 이번 사용 효과 중 처음 나오는 command/targeting 효과가 있음, 단 Self 카드의 self 효과는 제외)는 NowUsing 자리로 가고 화살표가 뜹니다.
 2. **사용 확정(드롭) → `Board.UseCard`**: 드롭(조준 완료) 순간 `CardCanvas`가 `Board.UseCard(Card card)`를 호출합니다. 이전 상태(`effectApplied` 등)를 초기화하고, `card.UseEffects`를 카드 시전자를 기록한 사본(`CardEffect.caster`)으로 `pendingEffects` 큐에 채운 뒤 `ProcessNextCardEffect()`를 시작합니다. 조준 카드는 이어서 시전자 확정(`ConfirmCasterOnDrop`)과 드롭 칸 클릭(`ButtonClicked`)으로 첫 조준 효과까지 실행됩니다. 효과마다 이 시전자의 현재 위치를 시전자 칸으로 쓰므로, 앞 효과로 이동했으면 다음 효과는 새 위치 기준으로 처리됩니다.
@@ -66,7 +66,7 @@ Assets/
      - `Inspect`(그 외) → 대상 선택 없이 즉시 실행합니다.
      - `command` / `targeting` → 첫 효과는 드롭으로 시전자가 확정되고 대상을 고를 때까지 대기합니다. 두 번째 이후 효과는 카드를 쓴 기물을 현재 위치에서 다시 선택한 것처럼 처리해, `self`면 바로 실행하고 아니면 그 효과의 사거리를 띄워 클릭을 기다립니다.
 4. **효과 실행**: 대상이 정해지면 `ExecuteEffect(cardEffect, targetPos)` → `ApplyCardEffectNow`가 실제로 게임 상태를 변경합니다.
-5. **다음 효과로 진행**: `ScheduleNextCardEffect()`가 곧바로 `ProcessNextCardEffect()`를 다시 호출합니다. 상태 변화는 동기로 확정되고 연출만 `motionQueue`에 쌓이므로, 다음 효과의 로직은 이전 효과의 애니메이션을 기다리지 않습니다(연출은 `motionQueue`가 순서대로 재생).
+5. **다음 효과로 진행**: `ScheduleNextCardEffect()`가 곧바로 `ProcessNextCardEffect()`를 다시 호출합니다. `ApplyCardEffectNow`가 게임 상태를 동기적으로 확정하고 연출만 `motionQueue`에 넣으므로, 다음 효과의 로직은 앞 효과의 애니메이션을 기다리지 않습니다. 연출은 `motionQueue`에서 등록 순서대로 하나씩 끝까지 재생되므로, **화면에는 각 `CardEffect`의 연출이 리스트 순서대로, 앞 연출이 끝난 뒤에 나옵니다**. 연출이 재생되는 동안에도 다음 카드를 사용할 수 있습니다.
 6. **카드 종료**: 카드를 쓰는 중에 `pendingEffects`가 비면 `FinishCardUsage()`가 호출되어 (필요 시) 시전자의 이번 턴 이동을 막고, `CardCanvas.FinishUseCard()`와 `ResetBoardAfterCardUse()`로 보드 상태를 정리한 뒤 `currentActiveCard`를 비웁니다.
 
 ### 효과 큐 하나로 모든 효과를 처리한다
