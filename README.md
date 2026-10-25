@@ -78,7 +78,7 @@ Assets/
 - 카드 밖에서 넣는 효과는 모두 `executeOnCaster`라 입력 모드를 보지 않고 **시전자 칸에서** 바로 실행되며, 카드 사용 확정(에너지 차감·카드 사용 시 유물)을 하지 않습니다. 큐 안의 `!executeOnCaster` 항목은 항상 지금 쓰는 카드의 효과입니다(카드 취소·이동 불가는 이 항목만 지움).
 - 시전자가 앞 효과로 죽어 보드에 없으면 그 효과는 건너뜁니다.
 - **소환 시 효과는 자기 대상만** 가능합니다 — 소환된 기물 칸에서 실행되며 `TargetLogic`으로 대상을 고르지 않습니다.
-- 독·화상 틱은 `SelfDamage`, 재생 틱은 `Heal`(self) 효과로 실행됩니다. 자해(`SelfDamage`)·턴 DoT(`TurnDamageStart/End`)·독·화상은 **비공격 피해**라 피격 시(`OnHit`) 유물과 타격음이 없습니다.
+- 독·화상 틱은 `SelfDamage`, 재생 틱은 `Heal`(self) 효과로 실행됩니다. 자해(`SelfDamage`)·턴 DoT(`TurnDamageStart/End`)·독·화상·가시 반격·이벤트 피해(대화 선택지 `DamageAllAllies`)는 **비공격 피해**(`GetDamage(isAttack: false)`)라 피격 시(`OnHit`) 유물과 타격음이 없습니다(가시 반격은 반격 효과음만 재생).
 - 드로우 시 타이밍은 훅(`Board.OnCardDrawn`)만 있고 아직 발동하는 효과는 없습니다.
 
 ### `CardEffect` 하나의 처리 순서 (`ExecuteEffect` → `ApplyCardEffectNow`)
@@ -118,7 +118,7 @@ Assets/
 | `TurnStart` | 플레이어 턴 시작의 첫 타이밍 — 타이밍 효과 | 각 아군 기물 자신 |
 | `TurnEnd` | 플레이어 턴 종료, 아군 턴 효과 다음 — 타이밍 효과 | 각 아군 기물 자신 |
 | `CardUsed` | 카드의 첫 `CardEffect`가 실제로 실행된 직후 — 반응 효과 | `TargetsCardTarget`에 따라 카드를 낸 기물 또는 그 카드가 겨냥한 칸의 기물(칸이 비면 발동 안 함) |
-| `OnHit` | 아군이 공격 피해를 받은 효과 직후(독·화상·자해 등 비공격 피해 제외) — 반응 효과 | 맞은 대상 기물 |
+| `OnHit` | 아군이 공격 피해를 받은 효과 직후(독·화상·자해·턴 DoT·가시 반격·이벤트 피해 등 비공격 피해 제외) — 반응 효과 | 맞은 대상 기물 |
 | `OnKill` | 아군이 적을 처치한 효과 직후 — 반응 효과 | 처치를 확정한 기물 |
 
 발동 시점마다 해당 타이밍의 모든 유물 `Effects`를 발동 기물을 시전자로 한 사본으로 효과 큐(`pendingEffects`)에 넣습니다 — 타이밍 효과는 큐 뒤(`EnqueueEffect`), 반응 효과는 큐 앞(`InsertEffectNext`). 즉 유물도 카드와 같은 `CardEffect` 파이프라인과 같은 큐를 씁니다(위 "효과 큐 하나로 모든 효과를 처리한다").

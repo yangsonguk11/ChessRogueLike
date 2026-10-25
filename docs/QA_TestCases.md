@@ -875,7 +875,7 @@
 | ID | 기본 TC | 사전조건 | 테스트 절차 | 기대 결과 | 비고 |
 |---|---|---|---|---|---|
 | TC-CARD-067-AI | TC-FX-AI-001 | `L2-Thorn` | 예고 확인 | 머리 위 Positive 아이콘, 보드 예고 없음 |  |
-| TC-CARD-067-STATUS | TC-FX-STATUS-010, TC-FX-MOVE-008 |  | 적 턴 2회 | 첫 적 턴에 두 기사가 각자 영구 `가시 (2)`, 다음 적 턴에 이동. 가시를 가진 기사를 이동공격(판정 포함)하면 공격자가 2 반격 피해 | 반격은 TC-FX-MOVE-016 |
+| TC-CARD-067-STATUS | TC-FX-STATUS-010, TC-FX-MOVE-008 |  | 적 턴 2회 | 첫 적 턴에 두 기사가 각자 영구 `가시 (2)`, 다음 적 턴에 이동. 가시를 가진 기사를 이동공격(판정 포함)하면 공격자가 2 반격 피해(비공격 피해 — 반격 효과음, 피격 시 유물 없음) | 반격은 TC-FX-MOVE-016 |
 
 #### TC-CARD-068 EnemyAddCardCard
 방해 · 쓰는 적: Enemy-WoundKnight(1번째 행동) · 범위 5×5(중심 제외) · 넣는 카드 WoundCard(덱의 무작위 위치) · 설명 "모든 적의 덱에 WoundCard 1장을 넣습니다."
@@ -1079,9 +1079,9 @@
 | TC-RELIC-005 | 유물 클래스명과 아이콘 프리팹명이 불일치하는 경우 | `SpawnIcon` 호출 | 아이콘 표시 실패(에러 로그), 효과 자체는 정상 동작 | ⚠ 클래스명-아이콘명 매칭 무결성 별도 점검 필요 |
 | TC-RELIC-006 | `CardUsed` 타이밍 유물, `TargetsCardTarget=true` | 아군이 적 대상 카드 사용 / 빈 칸으로 이동하는 카드 사용 | 유물 효과가 카드의 첫 효과 직후(두 번째 효과보다 먼저), 캐스터가 아닌 카드의 실제 대상 기물을 시전자로 적용. 대상 칸이 비어 있으면 발동하지 않음 | ⚠ 현재 `CardUsed` 유물 없음. 효과 큐 단일화로 "첫 효과 직전"에서 "직후"로 바뀜 |
 | TC-RELIC-007 | 여러 레벨 연속 진행(2번째 전투 이상) | 새 레벨 진입마다 관찰 | `LoadOwnedRelics()`가 매 레벨마다 재호출되어 `CombatStart` 유물이 매번 재적용됨(1회성 아님) | |
-| TC-RELIC-008 | 유물 On-Hit 타이밍(`TriggerRelicsOnHit`) | 아군이 공격으로 적 타격 | 피해를 준 효과 직후 발동(다중 타격이면 타격 수만큼, 모두 그 효과가 끝난 뒤). DoT/자기피해로는 발동 안 함(TC-RELIC-010 참고) | ⚠ 현재 On-Hit 유물 없음 |
+| TC-RELIC-008 | 유물 On-Hit 타이밍(`TriggerRelicsOnHit`) | 아군이 공격으로 적 타격 | 피해를 준 효과 직후 발동(다중 타격이면 타격 수만큼, 모두 그 효과가 끝난 뒤). DoT·자기피해·가시 반격·이벤트 피해로는 발동 안 함(TC-RELIC-010 참고) | ⚠ 현재 On-Hit 유물 없음 |
 | TC-RELIC-009 | 일반 공격(`isAttack=true`)이 teamID==0 기물에 적중 | 공격 실행 | `Board.TriggerRelicsOnHit`가 호출되어 On-Hit 유물 발동 |  |
-| TC-RELIC-010 | 비공격 피해(`isAttack=false`)로 teamID==0 기물이 피해를 입음 | 독·화상 틱, 턴 시작/종료 DoT(`TurnDamageStart/End`), 자해(`HeavyAttackCard`) 각각 | On-Hit 유물이 발동하지 않음 | 턴 DoT·자해는 효과 큐 단일화 때 비공격 피해로 바뀜 |
+| TC-RELIC-010 | 비공격 피해(`isAttack=false`)로 teamID==0 기물이 피해를 입음 | 독·화상 틱, 턴 시작/종료 DoT(`TurnDamageStart/End`), 자해(`HeavyAttackCard`), 가시 적(`L2-Thorn`)을 이동공격해 받은 반격, 이벤트 대화 선택지 피해(`damageAmount`) 각각 | On-Hit 유물이 발동하지 않음. 가시 반격은 반격 효과음만, 이벤트 피해는 타격음 없이 피해 텍스트만 | 턴 DoT·자해는 효과 큐 단일화 때, 가시 반격·이벤트 피해는 그 후속 수정 때 비공격 피해로 바뀜. 이벤트 피해가 큐에 처리되지 않는 반응 효과를 남기던 문제도 함께 해소 |
 | TC-RELIC-011 | 적(teamID==1) 기물이 공격으로 피해를 입음 | 공격 실행 | On-Hit 유물이 발동하지 않음(코드상 teamID==0 조건) |  |
 
 ---
@@ -1187,6 +1187,7 @@
 | TC-DLG-009 | 아군 전원이 이미 만피 상태 | 휴식 버튼 클릭 | 회복량 0이어도 나가기 버튼은 정상 노출(회복 여부와 무관) | ⚠ "아무 효과 없는 휴식"도 정상 소모 처리됨 |
 | TC-DLG-010 | 이벤트 레벨이 아닌 상태(전투 레벨) | `EventExitButton.OnClickLeave()` 강제 호출 상황 | `GameManager.FinishEventLevel`이 경고 로그와 함께 실행을 거부 | |
 | TC-DLG-011 | `triggerCombat`이 설정된 선택지 | 클릭 | 다이얼로그 닫힘 + `Board.EnterCombat`으로 지정 레벨 즉시 진입(`nextLineIndex` 무시) | |
+| TC-DLG-012 | 아군 체력이 충분한 상태에서 `damageAmount`가 설정된 선택지 | 클릭 | 모든 아군이 그 수치만큼 피해(방어도 먼저 소모), 피해 텍스트·피격 반응은 나오지만 공격 타격음은 없음(비공격 피해). 이후 전투 진입·턴 진행이 정상(효과 큐에 남은 항목 없음) | `Board.DamageAllAllies` → 시전자 없는 `AreaAttackPiece`. TC-RELIC-010 참고 |
 
 ---
 

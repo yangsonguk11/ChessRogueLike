@@ -246,11 +246,11 @@ public partial class Board
         // 반격(가시 등)은 본체 공격과 별개의 시점에 일어나는 반응이라 자체 Parallel로 한 항목만 큐에 넣는다 —
         // TriggerAnim을 즉시(동기) 호출하던 예전 방식은 애니메이션이 큐 순번을 기다리는 사운드보다 먼저
         // 재생돼 타이밍이 어긋났다. TriggerAnimCor로 바꿔 애니메이션과 DamageText(사운드)가 같은 큐 항목
-        // 안에서 함께 시작되게 한다.
+        // 안에서 함께 시작되게 한다. 반격은 공격받은 쪽의 패시브 반응이라 비공격 피해다(피격 시 유물 없음, 반격 효과음은 isCounter).
         int counterDmg = defender.TriggerReceiveMoveAttack(attacker);
         if (counterDmg > 0)
         {
-            int attackerHp = attacker.GetDamage(counterDmg);
+            int attackerHp = attacker.GetDamage(counterDmg, isAttack: false);
             var counterReaction = new List<IEnumerator>
             {
                 TriggerAnimCor(attacker, attackerHp <= 0 ? "Die" : "Hit", 0.3f, false),
@@ -555,6 +555,8 @@ public partial class Board
 
     // 캐스터(시전자) 없이 여러 기물에게 동시에 피해를 준다. 카드가 아니라 DamageAllAllies처럼 특정
     // 기물이 아닌 보드/이벤트 자체에서 발생하는, 애초에 캐스터 개념이 없는 전역 효과 전용.
+    // 공격이 아니므로 비공격 피해로 처리한다(피격 시 유물·타격음 없음) — 이벤트 레벨에는 효과 큐를 돌릴 타이밍이 없어,
+    // 피격 시 유물이 큐에 넣는 반응 효과가 처리되지 못하고 남는 일도 막는다.
     void AreaAttackPiece(List<Vector2Int> targets, int dmg, CardEffect cardEffect = null)
     {
         if (targets.Count == 0) return;
@@ -567,11 +569,11 @@ public partial class Board
         {
             Piece p = GetButtonScript(pos).GetPieceScript();
             if (p == null) continue;
-            int hpLeft = p.GetDamage(dmg);
+            int hpLeft = p.GetDamage(dmg, isAttack: false);
             if (p.teamID == 0) playerDamagedThisTurn = true;
             bool died = hpLeft <= 0;
             hitTargets.Add((p, died));
-            textCoroutines.Add(p.DamageText(dmg));
+            textCoroutines.Add(p.DamageText(dmg, isAttack: false));
             StatusEffect areaStatusEffect = ApplyStatusEffect(p, cardEffect); // 즉시 적용
             if (areaStatusEffect != null)
                 textCoroutines.Add(p.StatusTextReaction(areaStatusEffect.DisplayName, areaStatusEffect.IsBuff, areaStatusEffect.EffectColor));

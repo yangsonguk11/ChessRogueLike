@@ -254,7 +254,7 @@ public abstract class Piece : MonoBehaviour
             : new List<Vector2Int> { Vector2Int.zero };
     }
     public RangeInfoSO MoveAttackRangeInfoSO => pieceInfo.MoveAttackRangeInfoSO;
-    // isAttack: false면 독/화상 같은 상태이상 틱 데미지 — OnHit 유물은 '공격'을 받았을 때만 발동해야 하므로 제외한다.
+    // isAttack: false면 비공격 피해(독·화상 틱, 자해, 턴 DoT, 가시 반격, 이벤트 피해) — OnHit 유물은 '공격'을 받았을 때만 발동해야 하므로 제외한다.
     public int GetDamage(int damage, bool isAttack = true)
     {
         if(shield < damage)
