@@ -20,7 +20,7 @@ public static class BoardTooltipContent
     {
         int diff = value - baseValue;
         if (diff == 0) return value.ToString();
-        string color = diff < 0 ? "#FF4444" : "#4444FF";
+        string color = diff < 0 ? "#FF4444" : "#5A6BE0";
         string sign = diff < 0 ? "-" : "+";
         return $"{value} <color={color}>({sign}{Mathf.Abs(diff)})</color>";
     }
@@ -120,21 +120,48 @@ public static class BoardTooltipContent
                 title = "연쇄 이동공격",
                 body = "이번 전투 동안\n이동공격 시 이동 범위 내 다른 적에게 한 번 더 같은 피해를 줍니다. 다른 적이 없으면 공격한 적에게 줍니다.",
             });
+
+        AddInflictKeywords(p, result);
+    }
+
+    // 버프가 거는 상태(다음 이동공격 적중 시 기절 등)는 그 버프 창 제목에만 나오므로, 그 상태의 용어 설명 창을 따로 붙인다
+    // (손패 카드 정보창이 onMoveAttackHitEffect의 용어를 붙이는 것과 같은 규칙). 이 기물에 이미 걸려 상태 창이 설명하는 용어는 건너뛴다.
+    static void AddInflictKeywords(Piece p, List<TooltipEntry> result)
+    {
+        HashSet<string> shownTerms = StatusTermsOf(p);
+        foreach (StatusEffect e in p.activeEffects)
+        {
+            if (!(e is NextMoveAttackStatusEffect s)) continue;
+            string term = CardTooltipContent.StatusTermOf(s.inflict);
+            if (term == null || !shownTerms.Add(term)) continue;
+            KeywordGlossary.Entry entry = KeywordGlossary.Get(term);
+            if (entry != null)
+                result.Add(new TooltipEntry { kind = TooltipEntry.Kind.Keyword, title = entry.term, body = entry.description });
+        }
     }
 
     // 다음 행동 카드에 나오는 용어의 설명 창(손패 카드 정보창과 같은 규칙). 이 기물에 이미 걸려 있어 상태 창이
-    // 같은 설명을 보여주는 용어(예: 기절한 적의 StunnedCard → "기절")는 건너뛴다.
+    // 같은 설명을 보여주는 용어(예: 기절한 적의 StunnedCard → "기절")와 앞에서 이미 붙인 용어 창은 건너뛴다.
     static void AddActionKeywords(Piece piece, Card nextMove, List<TooltipEntry> result)
     {
-        var shownTerms = new HashSet<string>();
-        foreach (StatusEffect e in piece.activeEffects)
+        HashSet<string> shownTerms = StatusTermsOf(piece);
+        foreach (TooltipEntry shown in result)
+            if (shown.kind == TooltipEntry.Kind.Keyword) shownTerms.Add(shown.title);
+        foreach (TooltipEntry entry in CardTooltipContent.BuildKeywords(nextMove))
+            if (shownTerms.Add(entry.title))
+                result.Add(entry);
+    }
+
+    // 이 기물에 걸린 상태들의 용어 — 상태 창이 이미 설명하므로 용어 창을 따로 띄우지 않는다.
+    static HashSet<string> StatusTermsOf(Piece p)
+    {
+        var terms = new HashSet<string>();
+        foreach (StatusEffect e in p.activeEffects)
         {
             string term = GlossaryTermOf(e);
-            if (term != null) shownTerms.Add(term);
+            if (term != null) terms.Add(term);
         }
-        foreach (TooltipEntry entry in CardTooltipContent.BuildKeywords(nextMove))
-            if (!shownTerms.Contains(entry.title))
-                result.Add(entry);
+        return terms;
     }
 
     static RangeGrid TurnEffectRange(StatusEffect e)

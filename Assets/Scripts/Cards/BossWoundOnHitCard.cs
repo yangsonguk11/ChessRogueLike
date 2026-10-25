@@ -1,5 +1,5 @@
 // 적 전용(Boss-Berserker)의 패시브 — 프리팹 onSpawnCards에 연결해 스폰 시 자신에게 영구 버프 "상처 입히기"(WoundOnHitEffect)를 건다.
-// 이 기물의 공격·이동공격 피해로 상대의 체력이 줄면 그 기물의 버린 카드 더미에 상처(WoundCard)가 들어간다(Board.ApplyOnHitPassives).
+// 이 기물의 공격·이동공격 피해로 상대의 체력이 줄면 그 기물의 버린 카드 더미에 상처(WoundCard)가 2장 들어간다(Board.ApplyOnHitPassives).
 // 버프라서 디스펠(DispelCard)로 지울 수 있다.
 public class BossWoundOnHitCard : Card
 {
@@ -25,5 +25,5 @@ public class BossWoundOnHitCard : Card
         });
     }
 
-    public override string EffectDescription => "자신에게 상처 입히기를 부여합니다. 피해를 준 적의 버린 카드 더미에 상처를 넣습니다.";
+    public override string EffectDescription => "자신에게 상처 입히기를 부여합니다. 피해를 준 적의 버린 카드 더미에 상처를 2장 넣습니다.";
 }

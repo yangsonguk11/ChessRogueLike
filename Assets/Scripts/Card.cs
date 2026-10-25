@@ -81,6 +81,8 @@ public abstract class Card : MonoBehaviour, ISelectable
     // true면 어떤 경우에도 사용할 수 없는 카드(손패 자리만 차지) — CardCanvas.UseCard가 막고, 코스트 숫자도 숨긴다.
     // Rarity와 같은 이유로 프로퍼티다. 버리기·덱으로 되돌리기 같은 다른 효과의 대상은 그대로 된다.
     public virtual bool IsUnplayable => false;
+    // true면 카드 면에 코스트 숫자를 숨긴다. 사용 불가 카드는 항상 숨기고, 그 외에 코스트가 의미 없는 카드(기절한 적의 StunnedCard)도 오버라이드한다.
+    public virtual bool HidesCost => IsUnplayable;
     [Tooltip("거의 모든 카드가 Awake()에서 직접 덮어씀 — 여기 채워도 대부분 무시됨(해당 카드 클래스의 Awake() 확인).")]
     public int Cost;
     [Tooltip("거의 모든 카드가 Awake()에서 직접 덮어씀 — 여기 채워도 대부분 무시됨(해당 카드 클래스의 Awake() 확인).")]
@@ -129,7 +131,7 @@ public abstract class Card : MonoBehaviour, ISelectable
     {
         Card src = faceSource != null ? faceSource : this;
         costText?.SetText(src.Cost.ToString());
-        if (costText != null) costText.gameObject.SetActive(!src.IsUnplayable); // 사용 불가 카드는 코스트 숫자 없음
+        if (costText != null) costText.gameObject.SetActive(!src.HidesCost); // 사용 불가 카드 등은 코스트 숫자 없음
         nameText?.SetText(src.Name);
         descriptionText?.SetText(src.Description);
         typeText?.SetText(src.type.ToDisplayString());
@@ -213,7 +215,7 @@ public abstract class Card : MonoBehaviour, ISelectable
         }
 
         if (dmg == effect.dmg) return dmg.ToString();
-        string color = dmg > effect.dmg ? "#4444FF" : "#FF4444";
+        string color = dmg > effect.dmg ? "#5A6BE0" : "#FF4444";
         return $"<color={color}>{dmg}</color>";
     }
 
@@ -225,7 +227,7 @@ public abstract class Card : MonoBehaviour, ISelectable
             : Mathf.Max(0, effect.dmg + caster.ShieldBonusDelta);
 
         if (amount == effect.dmg) return amount.ToString();
-        string color = amount > effect.dmg ? "#4444FF" : "#FF4444";
+        string color = amount > effect.dmg ? "#5A6BE0" : "#FF4444";
         return $"<color={color}>{amount}</color>";
     }
 

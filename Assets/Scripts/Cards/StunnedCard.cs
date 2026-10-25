@@ -2,6 +2,10 @@
 // Enemy.Awake()가 동적으로(AddComponent) 붙인다. 효과는 EffectType.Stun 하나뿐인 무효과 마커.
 public class StunnedCard : Card
 {
+    // 플레이어가 쓰는 카드가 아니라 코스트가 의미 없다 — WoundCard처럼 카드 면에 코스트 숫자를 숨긴다.
+    // AI가 실제로 실행하는 카드라 IsUnplayable은 쓰지 않는다.
+    public override bool HidesCost => true;
+
     public override void Awake()
     {
         base.Awake();
@@ -21,5 +25,5 @@ public class StunnedCard : Card
         });
     }
 
-    public override string EffectDescription => "기절 상태라 행동할 수 없습니다.";
+    public override string EffectDescription => "기절";
 }

@@ -13,7 +13,7 @@ public class DefenseCard : Card
         {
             requiredMode = Board.BoardMode.targeting,
             type = EffectType.Shield,
-            dmg = 2,
+            dmg = 3,
             targetlogic = TargetLogic.self,
             animTrigger = "Shield",
         };

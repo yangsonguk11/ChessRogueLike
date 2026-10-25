@@ -175,26 +175,26 @@
 ### 6.1 기본 덱
 
 #### TC-CARD-001 AttackCard
-코스트 1 · 공격 · 기본 덱(전사 3장) · 적 기물에 드롭 · 사거리 `AttackRangeInfo` · 설명 "적에게 3 피해를 줍니다."
+코스트 1 · 공격 · 기본 덱(전사 3장) · 적 기물에 드롭 · 사거리 `AttackRangeInfo` · 설명 "적에게 4 피해를 줍니다."
 
 | ID | 기본 TC | 사전조건 | 테스트 절차 | 기대 결과 | 비고 |
 |---|---|---|---|---|---|
 | TC-CARD-001-COST | TC-FX-USE-001, TC-FX-USE-002 | 에너지 3 | 적에게 사용 | 에너지 1 차감, 카드는 버린 카드 더미로 |  |
-| TC-CARD-001-TARGET | TC-FX-DROP-001 | 사거리 안에 적 2기(체력 다름) | 체력이 **높은** 적에게 드롭 / 아군에게 드롭 | 드롭한 적에게 3 피해(체력이 낮은 적으로 바뀌지 않음) / "적 기물에 사용해야 합니다" | `TargetLogic.LowestHP`는 적 AI에서만 쓰임 |
+| TC-CARD-001-TARGET | TC-FX-DROP-001 | 사거리 안에 적 2기(체력 다름) | 체력이 **높은** 적에게 드롭 / 아군에게 드롭 | 드롭한 적에게 4 피해(체력이 낮은 적으로 바뀌지 않음) / "적 기물에 사용해야 합니다" | `TargetLogic.LowestHP`는 적 AI에서만 쓰임 |
 | TC-CARD-001-RANGE | TC-FX-AIM-001 | 사거리 밖에만 적 | 그 적에게 드롭 | "사거리 밖입니다", 변화 없음 |  |
-| TC-CARD-001-DMG | TC-FX-DMG-001, TC-FX-VULN-001 | 시전자 힘 +2(예: TC-CARD-005 사용) / 대상 취약(+1) | 적에게 사용 | 5 피해 / 4 피해 |  |
-| TC-CARD-001-DESC | TC-FX-DESC-001 | 시전자 힘 +2 | 손패의 카드 확인 | "적에게 5 피해를 줍니다.", 5가 색으로 표시 |  |
+| TC-CARD-001-DMG | TC-FX-DMG-001, TC-FX-VULN-001 | 시전자 힘 +2(예: TC-CARD-005 사용) / 대상 취약(+1) | 적에게 사용 | 6 피해 / 5 피해 |  |
+| TC-CARD-001-DESC | TC-FX-DESC-001 | 시전자 힘 +2 | 손패의 카드 확인 | "적에게 6 피해를 줍니다.", 6이 색으로 표시 |  |
 
 #### TC-CARD-002 DefenseCard
-코스트 1 · 스킬 · 기본 덱(전사 3장, 소환사 2장) · 자신 대상 · 설명 "자신에게 방어도 2를 부여합니다."
+코스트 1 · 스킬 · 기본 덱(전사 3장, 소환사 2장) · 자신 대상 · 설명 "자신에게 방어도 3를 부여합니다."
 
 | ID | 기본 TC | 사전조건 | 테스트 절차 | 기대 결과 | 비고 |
 |---|---|---|---|---|---|
 | TC-CARD-002-COST | TC-FX-USE-001 | 에너지 1 이상 | 사용 | 에너지 1 차감 |  |
 | TC-CARD-002-TARGET | TC-FX-DROP-004 |  | 보드의 아무 칸(적 칸 포함)에 드롭 | 카드를 낸 기물에게 적용 |  |
-| TC-CARD-002-SHIELD | TC-FX-DEF-001, TC-FX-DEF-002 | 방어막 보너스 0 / 1 | 사용 | 방어도 +2 / +3 |  |
-| TC-CARD-002-RESET | TC-FX-DEF-006 | 플레이어 턴에 사용(방어도 2) | 턴 종료 → 적 턴 → 적 턴 종료 | 적 턴 동안 방어도 2가 피해를 먼저 막고, 적 턴이 끝나면 남은 방어도가 0 |  |
-| TC-CARD-002-DESC | TC-FX-DESC-001 | 방어막 보너스 1 | 손패 확인 | "자신에게 방어도 3를 부여합니다." |  |
+| TC-CARD-002-SHIELD | TC-FX-DEF-001, TC-FX-DEF-002 | 방어막 보너스 0 / 1 | 사용 | 방어도 +3 / +4 |  |
+| TC-CARD-002-RESET | TC-FX-DEF-006 | 플레이어 턴에 사용(방어도 3) | 턴 종료 → 적 턴 → 적 턴 종료 | 적 턴 동안 방어도 3이 피해를 먼저 막고, 적 턴이 끝나면 남은 방어도가 0 |  |
+| TC-CARD-002-DESC | TC-FX-DESC-001 | 방어막 보너스 1 | 손패 확인 | "자신에게 방어도 4를 부여합니다." |  |
 
 #### TC-CARD-003 MoveCard
 코스트 2 · 이동 · 기본 덱(전사 2장, 소환사 2장) · 아무 칸에 드롭 · 범위는 기물 이동 범위 · 설명 "이동합니다."
@@ -409,7 +409,7 @@
 |---|---|---|---|---|---|
 | TC-CARD-022-COST | TC-FX-USE-001 |  | 사용 | 에너지 2 차감 |  |
 | TC-CARD-022-STATUS | TC-FX-STATUS-009, TC-FX-MOVE-010, TC-FX-NEXT-009 | 스플래시 이동공격 범위를 가진 기물 | 사용 → 적 2기를 맞히는 이동공격 | 주 대상·스플래시 대상 모두 기절(텍스트, 예고가 기절로 바뀜), 다음 적 턴에 둘 다 행동하지 않음 |  |
-| TC-CARD-022-KEEP | TC-FX-NEXT-006 |  | 사용 → 이동공격 없이 턴 종료 | 버프가 다음 턴에도 남음(이동공격할 때까지 유지) |  |
+| TC-CARD-022-KEEP | TC-FX-NEXT-006 |  | 사용 → 이동공격 없이 턴 종료 | 버프가 다음 턴에도 남음(이동공격할 때까지 유지). 기물 게이지 목록·보드 칸 정보창에 "다음 이동공격 적중 시 1턴 기절"로 표시 | "1턴"은 걸어 줄 기절의 지속이라 이름 앞에 둠(`NextMoveAttackStatusEffect.InflictLabel`, 이름은 실제 상태의 `DisplayName`). 버프 자신의 남은 턴이 있으면 뒤에 회색으로 붙음 |
 | TC-CARD-022-DESC | TC-FX-DESC-001 |  | 손패 확인 | 설명 문구 일치 |  |
 
 #### TC-CARD-023 PersistentShieldCard
@@ -459,7 +459,7 @@
 | ID | 기본 TC | 사전조건 | 테스트 절차 | 기대 결과 | 비고 |
 |---|---|---|---|---|---|
 | TC-CARD-027-COST | TC-FX-USE-001 |  | 사용 | 에너지 1 차감 |  |
-| TC-CARD-027-STATUS | TC-FX-DEF-001, TC-FX-DEF-004 |  | 사용 → DefenseCard 사용 | 방어막 보너스 +1, DefenseCard 방어도 3 |  |
+| TC-CARD-027-STATUS | TC-FX-DEF-001, TC-FX-DEF-004 |  | 사용 → DefenseCard 사용 | 방어막 보너스 +1, DefenseCard 방어도 4 |  |
 | TC-CARD-027-PERSIST | TC-FX-DEF-004 |  | 사용 후 전투 승리 → 다음 전투 | 다음 전투에는 유지되지 않음 |  |
 | TC-CARD-027-DESC | TC-FX-DESC-001 |  | 손패 확인 | 설명 문구 일치 |  |
 
@@ -578,7 +578,7 @@
 |---|---|---|---|---|---|
 | TC-CARD-038-COST | TC-FX-USE-001, TC-FX-USE-009 |  | 사용 | 에너지 2 차감, 카드는 소멸 더미로 |  |
 | TC-CARD-038-SUMMON | TC-FX-SUMMON-001 |  | 빈 칸에 사용 | tauntAutoAlly(비숍) 소환, 체력 5·힘 5 |  |
-| TC-CARD-038-SPAWN | TC-FX-TAUNT-001 |  | 소환 직후 | `onSpawnCards` 순서대로 방어도 2(`DefenseCard`) → 영구 도발(`TauntCard`) 적용, 정보창에 `도발` | ⚠ 방어도 2가 카드 설명에 없음(CRL-27) |
+| TC-CARD-038-SPAWN | TC-FX-TAUNT-001 |  | 소환 직후 | `onSpawnCards` 순서대로 방어도 3(`DefenseCard`) → 영구 도발(`TauntCard`) 적용, 정보창에 `도발` | ⚠ 방어도 3이 카드 설명에 없음(CRL-27) |
 | TC-CARD-038-TAUNT | TC-FX-TAUNT-002~013 | tauntAutoAlly(도발) 소환 상태 | 기본 TC의 배치로 적 턴 진행 | 적 AI의 대상 선택이 기본 TC대로 도발 기물 우선 |  |
 | TC-CARD-038-DESC | TC-FX-DESC-003 |  | 손패 확인 | 끝에 "(소멸)" 한 번 |  |
 
@@ -663,7 +663,7 @@
 |---|---|---|---|---|---|
 | TC-CARD-046-COST | TC-FX-USE-001 |  | 사용 | 에너지 2 차감 |  |
 | TC-CARD-046-HIT | TC-FX-DMG-006 | 체력 충분한 적 | 드롭 | 같은 대상에 2 피해 3회(총 6, 이 카드의 취약은 미적용) |  |
-| TC-CARD-046-STATUS | TC-FX-AIM-014, TC-FX-STATUS-001 |  | 사용 → AttackCard(3)로 공격 | 다시 클릭하지 않아도 그 대상에 `취약 (+2)` 2턴(`useLastTarget`). 이후 AttackCard 피해 5 |  |
+| TC-CARD-046-STATUS | TC-FX-AIM-014, TC-FX-STATUS-001 |  | 사용 → AttackCard(4)로 공격 | 다시 클릭하지 않아도 그 대상에 `취약 (+2)` 2턴(`useLastTarget`). 이후 AttackCard 피해 6 |  |
 | TC-CARD-046-OVERKILL | TC-FX-AIM-014 | 체력 4 이하 적 | 사용 | 2타에 처치, 3타 없음, 취약은 건너뜀(텍스트·에러 없음) | `skipIfTargetGone` |
 | TC-CARD-046-DESC | TC-FX-DESC-001 |  | 손패 확인 | 설명 문구 일치 |  |
 
@@ -745,7 +745,7 @@
 |---|---|---|---|---|---|
 | TC-CARD-054-COST | TC-FX-USE-001 |  | 사용 | 에너지 1 차감 |  |
 | TC-CARD-054-RANGE | TC-FX-AIM-002 | 사거리 밖 먼 적 | 사용 | 거리 제한 없이 `취약 (+1)` 디버프 텍스트·파티클 |  |
-| TC-CARD-054-STATUS | TC-FX-VULN-001, TC-FX-VULN-012 |  | 사용 → AttackCard(3)로 공격 | 피해 4, 2턴 뒤 해제 | 취약 세부는 TC-CARD-054-VULN |
+| TC-CARD-054-STATUS | TC-FX-VULN-001, TC-FX-VULN-012 |  | 사용 → AttackCard(4)로 공격 | 피해 5, 2턴 뒤 해제 | 취약 세부는 TC-CARD-054-VULN |
 | TC-CARD-054-VULN | TC-FX-VULN-002~014 | VulnerableCard로 취약(+1)을 건 적 | 기본 TC 절차(이동공격·광역·다중 타격·흡혈·연쇄·독 등) | 취약 보정·만료·디스펠 결과가 기본 TC대로 |  |
 | TC-CARD-054-DESC | TC-FX-DESC-001 |  | 손패 확인 | 설명 문구 일치 |  |
 
@@ -878,12 +878,13 @@
 | TC-CARD-067-STATUS | TC-FX-STATUS-010, TC-FX-MOVE-008 |  | 적 턴 2회 | 첫 적 턴에 두 기사가 각자 영구 `가시 (2)`, 다음 적 턴에 이동. 가시를 가진 기사를 이동공격(판정 포함)하면 공격자가 2 반격 피해 | 반격은 TC-FX-MOVE-016 |
 
 #### TC-CARD-068 EnemyAddCardCard
-방해 · 쓰는 적: Enemy-WoundKnight(1번째 행동) · 범위 5×5(중심 제외) · 넣는 카드 WoundCard(손패) · 설명 "모든 적의 손패에 WoundCard 1장을 넣습니다."
+방해 · 쓰는 적: Enemy-WoundKnight(1번째 행동) · 범위 5×5(중심 제외) · 넣는 카드 WoundCard(덱의 무작위 위치) · 설명 "모든 적의 덱에 WoundCard 1장을 넣습니다."
 
 | ID | 기본 TC | 사전조건 | 테스트 절차 | 기대 결과 | 비고 |
 |---|---|---|---|---|---|
 | TC-CARD-068-AI | TC-FX-AI-001 | `L2-Wound` | 예고 확인 | 머리 위 Negative 아이콘, 보드에 5×5 |  |
-| TC-CARD-068-ADDCARD | TC-FX-PILE-005 | 아군 A(화면에 띄움)·B 모두 범위 안 | 적 턴 | 시전 타격 시점에 A의 손패로 WoundCard가 날아옴(화면 중앙 1초). B 위에는 "카드 +1", B로 전환하면 손패에 1장 |  |
+| TC-CARD-068-ADDCARD | TC-FX-PILE-006 | 아군 A(화면에 띄움)·B 모두 범위 안 | 적 턴 → 덱 보기 | 시전 타격 시점에 WoundCard가 화면 중앙 1초 뒤 A의 덱 더미로 날아감, A의 덱 장수 +1(손패 변화 없음). B 위에는 "카드 +1", B로 전환하면 덱 장수 +1 |  |
+| TC-CARD-068-DECKPOS |  | 아군 A의 덱 5장 이상 | WoundCard가 든 뒤 여러 전투(또는 CardTestScene 재시작)로 반복해 다음 드로우 순서 관찰 | 덱 맨 아래에만 가지 않고 매번 다른 자리(맨 위 포함)에 들어가, 덱을 다 뽑기 전에도 뽑힘 | `CardCanvas.InsertIntoDeckAtRandom`(덱 N장이면 N+1곳 중 하나) |
 | TC-CARD-068-RANGE | TC-FX-AIM-007 | 아군 1명이 범위 밖 | 적 턴 | 범위 밖 아군의 손패·덱·버림 더미 변화 없음 |  |
 
 #### TC-CARD-069 WoundCard
@@ -893,7 +894,7 @@
 |---|---|---|---|---|---|
 | TC-CARD-069-UNPLAYABLE |  | 손패에 있음, 에너지 충분 | 손패 확인 → 보드에 끌어 놓기 | 항상 어둡게(사용 불가) 표시, 코스트 숫자 없음(회색 원은 남음). 놓으면 "사용할 수 없는 카드입니다"로 손패 복귀, 에너지·덱 변화 없음 | `Card.IsUnplayable`, `CardCanvas.UseCard`에서 코스트 검사보다 먼저 거부 |
 | TC-CARD-069-DISCARD | TC-FX-PILE-003 | 손패에 있음 | ① 아군 턴 종료 ② SacrificeShieldCard 등 손패 버리기 선택 | ① 버린 카드 더미로 ② 선택 패널에 나오고 버릴 수 있음 |  |
-| TC-CARD-069-PERSIST | TC-FX-PILE-006 | TC-CARD-068-ADDCARD 직후 | 다음 턴 → 턴 종료 → 전투 승리 → 다음 노드 | 다음 턴 손패는 5장 + WoundCard, 턴 종료 때 버린 카드 더미로. 전투 후 원본 덱(`save.json`의 `deckCardIDs`)에 남지 않음 |  |
+| TC-CARD-069-PERSIST | TC-FX-PILE-006 | TC-CARD-068-ADDCARD 직후 | WoundCard가 뽑힐 때까지 턴 진행 → 턴 종료 → 전투 승리 → 다음 노드 | 뽑히면 드로우 1장을 차지해 손패에 남고(사용 불가), 턴 종료 때 버린 카드 더미로. 전투 후 원본 덱(`save.json`의 `deckCardIDs`)에 남지 않음 |  |
 
 #### TC-CARD-070 EnemyAreaImmobilizeCard
 방해 · 쓰는 적: Enemy-BindKnight(2번째 행동) · 범위 주변 8칸 · 설명 "모든 적을 1턴간 이동 불가 상태로 만듭니다."
@@ -975,12 +976,13 @@
 | TC-CARD-078-DISPEL | TC-FX-STATUS-012 |  | DispelCard로 보스 버프 제거 | 턴 종료 성장 중단, 이미 오른 힘은 유지 |  |
 
 #### TC-CARD-079 BossWoundOnHitCard
-스폰 시 패시브 · 쓰는 적: Boss-Berserker(`onSpawnCards`) · 설명 "자신에게 상처 입히기를 부여합니다. 피해를 준 적의 버린 카드 더미에 상처를 넣습니다."
+스폰 시 패시브 · 쓰는 적: Boss-Berserker(`onSpawnCards`) · 설명 "자신에게 상처 입히기를 부여합니다. 피해를 준 적의 버린 카드 더미에 상처를 2장 넣습니다."
 
 | ID | 기본 TC | 사전조건 | 테스트 절차 | 기대 결과 | 비고 |
 |---|---|---|---|---|---|
 | TC-CARD-079-STATUS | TC-FX-STATUS-010 | `L3-Berserker` | 전투 시작 → 보스 칸 정보창 | 힘 +2 턴 효과(TC-CARD-078)와 함께 상태 목록에 영구 `상처 입히기`와 용어 설명 | 동작은 TC-CARD-079-WOUND |
-| TC-CARD-079-WOUND | TC-FX-WOUND-001~005 | `L3-Berserker` | 기본 TC 절차 | 상처 입히기 발동 조건·대응·전투 후 정리가 기본 TC대로 |  |
+| TC-CARD-079-WOUND | TC-FX-WOUND-001~005 | `L3-Berserker` | 기본 TC 절차 | 상처 입히기 발동 조건·대응·전투 후 정리가 기본 TC대로. 1회 발동마다 WoundCard 2장 |  |
+| TC-CARD-079-COUNT |  | `L3-Berserker`, 아군 A(화면에 띄움)·B, 방어도 0 | 보스 공격에 A와 B가 맞음 → 버린 카드 더미 확인 | A: WoundCard 2장이 한 장씩 차례로 화면 중앙에 보였다가 버린 카드 더미로, 버린 카드 더미 +2. B: 머리 위 "카드 +2" 텍스트 1번, 전환하면 버린 카드 더미 +2 | `WoundOnHitEffect.count = 2` |
 
 #### TC-CARD-080 BossFrenzyCard
 광역 · 쓰는 적: Boss-Berserker(3번째 행동, 5·주변 8칸), Boss-Colossus(4번째 행동, 8·5×5) · 설명 "모든 적에게 N 피해를 줍니다. 힘이 오른 만큼 강해집니다."
@@ -1015,12 +1017,13 @@
 | TC-CARD-083-HEAL | TC-FX-DEF-003 | 보스 체력 ① 100/120 ② 115/120 | 적 턴 | ① 115 ② 120(최대 체력 초과 없음) |  |
 
 #### TC-CARD-084 StunnedCard
-기절 대체 행동 · 모든 적·자동 아군 · 설명 "기절 상태라 행동할 수 없습니다."
+기절 대체 행동 · 모든 적·자동 아군 · 코스트 표시 없음 · 설명 "기절"
 
 | ID | 기본 TC | 사전조건 | 테스트 절차 | 기대 결과 | 비고 |
 |---|---|---|---|---|---|
 | TC-CARD-084-AI | TC-FX-AI-003 | 적이 기절 | 예고 확인 → 적 턴 | 머리 위 기절 아이콘, 적 턴에 아무 효과 없이 턴 소모 |  |
 | TC-CARD-084-RESUME | TC-FX-AI-003 |  | 기절이 풀린 다음 적 턴 | 원래 예고했던 행동이 그대로 이어짐(순환 위치가 넘어가지 않음) | TC-TURN-003 |
+| TC-CARD-084-FACE |  | 적이 기절 | 그 적 칸에 마우스 올려 다음 행동 카드 이미지 확인 | 설명 "기절", 코스트 숫자가 없음(`WoundCard`처럼). 이름·종류는 그대로. "기절" 용어 창은 따로 뜨지 않음(상태 창이 이미 설명) | `Card.HidesCost` — `StunnedCard`는 AI가 실행하는 카드라 `IsUnplayable`이 아니라 코스트 숨김만 켬 |
 
 ## 7. 상태이상/버프 시스템
 
@@ -1163,7 +1166,7 @@
 | TC-RESULT-009 | 일반 전투 레벨 클리어 | 골드 슬롯 금액 확인 | `L1` 10~20G, `L2`·`summonerLevel` 15~25G 범위 안 | 상점(8번째 층) 도착 시 평균 약 230G(시작 골드 100 + 전투 보상 약 130) |
 | TC-RESULT-010 | 전투 중 `TempColDamageUpCard`(힘 +2, 1턴)·`ColDamageUpCard`(이번 전투 힘 +2, 소멸)·`ShieldBonusUpCard`로 활성 기물을 강화한 채 승리 | 카드 보상 선택을 열어 `AttackCard`류·방어도 카드의 설명 수치 확인 | 기물의 버프가 반영되지 않은 카드 기본 수치(검은 글씨)로 표시. 예: `HeavyAttackCard` "적에게 6 피해", `HeavyShieldCard` "자신에게 방어도 8를 부여합니다. (소멸)" | 카드 수치는 활성 기물의 전투 더미(손패·덱·버림·소멸)에 든 카드거나 사용 중인 카드일 때만 그 기물의 힘·방어막 보너스를 반영(`Card.PreviewCaster`) |
 | TC-RESULT-011 | 보상 후보에 `ColDamageAttackCard`(힘만큼 피해)가 나옴 | 설명 확인 | "이동 범위 내 적에게 힘만큼 피해를 줍니다. (이동공격 판정)" — 숫자 대신 "힘만큼" | 상점·덱 보기에서도 같음 |
-| TC-RESULT-012 | 전투 중 손패에 `AttackCard`, 덱·버림 더미에도 `AttackCard`, 활성 기물에 힘 버프(+2) | 손패 카드 설명 확인 → `CardsPanel` 덱/버림 보기 확인 → 다른 아군으로 활성 기물 전환 → 다시 덱/버림 보기와 저장 덱 보기 확인 | 손패와 덱/버림 보기 모두 5(파랑)로 표시. 버프 없는 기물로 바꾸면 그 기물의 손패·덱/버림 보기는 기본 수치. 저장 덱 보기는 언제나 기본 수치 | 전투 더미 보기의 복제 카드는 `Card.ShowFaceOf`로 원본(활성 기물 더미 소속) 카드의 얼굴을 보여줌 |
+| TC-RESULT-012 | 전투 중 손패에 `AttackCard`, 덱·버림 더미에도 `AttackCard`, 활성 기물에 힘 버프(+2) | 손패 카드 설명 확인 → `CardsPanel` 덱/버림 보기 확인 → 다른 아군으로 활성 기물 전환 → 다시 덱/버림 보기와 저장 덱 보기 확인 | 손패와 덱/버림 보기 모두 6(파랑)으로 표시. 버프 없는 기물로 바꾸면 그 기물의 손패·덱/버림 보기는 기본 수치. 저장 덱 보기는 언제나 기본 수치 | 전투 더미 보기의 복제 카드는 `Card.ShowFaceOf`로 원본(활성 기물 더미 소속) 카드의 얼굴을 보여줌 |
 
 ---
 
@@ -1246,7 +1249,7 @@
 | TC-UI-051 | 카드 사용 완료 애니메이션이 여러 장 동시에 대기 중(`pendingCardFlights`) | 연속으로 여러 카드를 빠르게 사용 | 각 카드가 올바른 파일-존(버림/추방)으로, 올바른 순서로 날아가 애니메이션이 꼬이지 않음 | ⚠ FIFO 가정에 의존하므로 다중 카드 동시 처리 스트레스 테스트 필요 |
 | TC-UI-052 | 손패의 카드를 자신의 손패 영역 위로 빠르게 드래그 인/아웃 반복 | 반복 드래그 | 카드가 의도치 않게 중복 사용되지 않음 | ⚠ `Card.MouseDrag`의 HandZone 진입 자동사용 경로 재현 테스트. 진입 판정은 HandZone 사각형(`CardCanvas.IsScreenPointInHandZone`) 기준 |
 | TC-UI-053 | 조준 카드·조준 없는 카드·Self 카드 각각, 에너지 충분 | 좌클릭으로 카드를 든 채 ① HandZone 안(보드 위)에서 우클릭 후 마우스 이동 → 좌클릭 해제 ② HandZone 밖(손패 위)에서 우클릭 ③ HandZone에 들어가기 전 막 집은 상태에서 우클릭 ④ 조준 없는 카드를 보드 위에서 우클릭 누른 채 이동 → 우클릭 해제 | ①~③ 우클릭을 누르는 순간 카드가 손패 슬롯으로 돌아가고, 마우스를 움직여도 다시 들리지 않으며 좌클릭을 떼도 아무것도 사용되지 않음. 에너지·범위 표시·화살표 원래대로 ④ 카드가 사용되지 않음 | `CardCanvas.CancelCardUsage`가 잡힌 카드를 `SelectedFalse`로 놓음. 손패 카드 포인터 이벤트(`Card.MouseDown/Up/Drag`)는 좌클릭만 받음 |
-| TC-UI-054 | 전투 중 아군 A가 `EmpowerMoveAttackCard`로 다음 이동공격 +4(지속 -1), tauntAutoAlly가 도발(영구), 적 B가 취약(+1, 2턴) 보유 | 기물 게이지 목록의 상태 줄 확인 | A "다음 이동공격 +4", tauntAutoAlly "도발", B "취약 (+1) 2턴". 지속이 음수인 효과는 이름만 나오고 "이동공격까지"·"영구"가 붙지 않음 | 규칙은 `PieceGaugeItem.BuildStatusSummary` 하나: 지속 0 이상이면 "N턴", 음수면 이름만. 다음 이동공격 버프도 지속이 양수면 "N턴"이 붙음 |
+| TC-UI-054 | 전투 중 아군 A가 `EmpowerMoveAttackCard`로 다음 이동공격 +4(지속 -1), tauntAutoAlly가 도발(영구), 적 B가 취약(+1, 2턴) 보유 | 기물 게이지 목록의 상태 줄 확인 | A "다음 이동공격 +4"(버프 파랑 `#5A6BE0`), tauntAutoAlly "도발"(파랑), B "취약 (+1)"(분홍) 뒤에 "2턴"(회색 `#AAAAAA`). 남은 턴은 이름과 색이 다름. 지속이 음수인 효과는 이름만 나오고 "이동공격까지"·"영구"가 붙지 않음 | 규칙은 `StatusEffect.StatusLabel` 하나: 지속 0 이상이면 이름 뒤에 회색 "N턴", 음수면 이름만. 다음 이동공격 버프도 지속이 양수면 "N턴"이 붙음 |
 | TC-UI-055 | 손패 3장 이상, `SacrificeShieldCard` 사용으로 카드 선택 패널(손패 대상)이 열린 상태 | 패널 안 카드 하나에 마우스를 올렸다가 뺌 → 다른 카드로 반복 → 하나 클릭해 선택 후 마우스를 뺌 | 마우스를 올리면 그 자리에서 살짝 들리고, 빼면 원래 격자 칸으로 정확히 돌아옴(옆 카드와 줄이 어긋나거나 다른 자리로 가지 않음). 선택한 카드는 확대 유지 | 패널 Content의 `GridLayoutGroup` 배치를 `LayoutRebuilder.ForceRebuildLayoutImmediate`로 바로 적용하고 그 칸을 호버 복귀 자리로 기억(`CardCanvas.LayoutCardsInPanel`). 회귀: 예전엔 코드가 계산한 한 줄 자리로 돌아갔음 |
 | TC-UI-056 | ① `SacrificeShieldCard`로 연 카드 선택 패널(1장 선택), 손패 3장 이상 ② 2장 선택 패널(아래 비고) | ① 카드 A 클릭 → 카드 B 클릭 → 확인 ② A → B 클릭 후 C 클릭 ③ 선택된 카드를 다시 클릭 | ① B를 누르는 순간 A의 확대가 풀리고 B가 확대, "1/1 선택됨" 유지, 확인하면 B만 버려짐 ② C를 누르면 가장 먼저 고른 A만 해제되고 B·C 선택, "2/2 선택됨" ③ 그 카드만 해제(기존 동작) | 꽉 찼을 때 새 카드를 누르면 가장 먼저 고른 카드와 교체(`CardCanvas.ToggleCardInPanel`, 고른 순서는 `selectedInPanel` 리스트 순서). 선택 제한이 없는 패널(selectCount 0)은 교체 없음. ⚠ 2장 이상 고르는 패널이 정상 플레이에 없음 — ②는 `SacrificeShieldCard`의 `selectCount` 또는 다이얼로그 `removeCardCount`를 2로 임시 수정해 확인 후 원복 |
 
@@ -1353,7 +1356,7 @@
 |---|---|---|---|---|
 | TC-TIP-001 | 손패에 `AttackCard` | 카드에 마우스 올림 → 뗌 | 약 0.3초 뒤 카드 오른쪽에 "사거리" 창 1개가 0.2초 동안 페이드 인(격자, 중심 칸 파랑·사거리 칸 주황). 용어 창 없음. 뗄 때 사라짐 | |
 | TC-TIP-002 | 손패에 `ZoneAttackCard` | 마우스 올림 | "사거리"("보드 전체" — `noRangeLimit`) → "효과 범위"(중심 칸 노랑, "지정한 칸을 중심으로 펼쳐집니다.") → "마법 피해" 순 | |
-| TC-TIP-003 | 손패에 `MoveandAttackCard` | 마우스 올림 | "이동 범위"(활성 기물의 이동 범위 격자)와 "사거리" 창이 따로 뜸 | |
+| TC-TIP-003 | 손패에 `MoveandAttackCard` | 마우스 올림 | "이동 범위"(활성 기물의 이동 범위 격자)와 "사거리" 창이 따로 뜸. 용어 창은 "이동", "이동공격"이 맨 앞 | |
 | TC-TIP-004 | 손패에 `MagicVulnerableAttackCard`, `ThornCard`, `ChainMoveAttackCard` | 각각 마우스 올림 | 각각 마법 피해·취약 / 가시·버프·이동공격 / 이동공격·버프·소멸 용어 창. "이동공격 판정"이 있는 설명에서 "이동공격" 창이 중복으로 뜨지 않음 | |
 | TC-TIP-005 | 손패에 `DirectionalAttackCard` | 마우스 올림 후 보드에서 카드를 들어 위쪽 방향을 겨눔 | "효과 범위" 격자(+"4방향 중 고른 방향으로 회전합니다.")가 위쪽을 겨눴을 때 보드 하이라이트 모양과 같은 방향 | 격자 방향은 RangeInfoSO 인스펙터 배치(행 0 = 위) 기준 |
 | TC-TIP-006 | 창이 4개 이상 나오는 카드(예: 범위 2개 + 용어 3개) | 마우스 올림 | 모든 창 폭이 같고, 다음 창이 카드 아랫변을 넘을 때 오른쪽에 새 줄이 생겨 카드 윗변 높이부터 다시 쌓임 | |
@@ -1361,7 +1364,7 @@
 | TC-TIP-008 | 손패 여러 장 | 카드 호버 → 정보창이 덮은 이웃 카드 위로 마우스 이동 | 정보창이 이웃 카드보다 위에 그려지고, 마우스는 정보창을 통과해 이웃 카드 호버가 정상 동작 | |
 | TC-TIP-009 | 손패 카드 호버 중 | 카드를 집어 드래그 → 손패로 되돌림 | 집는 순간 정보창이 사라지고 드래그 중엔 다시 뜨지 않음 | |
 | TC-TIP-010 | 카드 선택 패널(`SelectAndDiscard` 등)이 열린 상태 | 패널 안 카드에 마우스 올림 | 정보창이 패널 위에 뜸. 이동 범위는 활성 기물 기준 격자 | |
-| TC-TIP-011 | 상점 진입 | 진열 카드에 마우스 올림 → 뗌 → 구매 | 카드가 1.3배로 확대되며 이웃 슬롯 위로 그려지고 정보창이 뜸. 슬롯 정렬은 흐트러지지 않음. 이동 범위는 "기물의 이동 범위" 문구. 구매 후 정보창이 남지 않음 | 슬롯에 마스크가 있으면 정보창이 잘리는지 확인 |
+| TC-TIP-011 | 상점 진입 | 진열 카드에 마우스 올림 → 뗌 → 구매 | 카드가 1.3배로 확대되며 이웃 슬롯 위로 그려지고 정보창이 뜸. 슬롯 정렬은 흐트러지지 않음. 이동 카드는 이동 범위 창 없이 "이동"·"이동공격" 용어 창만. 구매 후 정보창이 남지 않음 | 슬롯에 마스크가 있으면 정보창이 잘리는지 확인 |
 | TC-TIP-012 | 전투 승리 후 보상 화면 | 보상 카드에 마우스 올림 → 뗌 → 선택 | TC-TIP-011과 같이 확대 + 정보창, 뗄 때 원래 크기로 복귀 | |
 | TC-TIP-013 | 손패에 `DrawCard`, `DefenseCard` 등 자기 대상 카드 | 마우스 올림 | 범위 창 없음(용어가 있으면 "드로우"·"방어도" 등 용어 창만) | |
 | TC-TIP-014 | 맵 또는 전투에서 덱 보기(`CardsPanel` 저장 덱/덱/버림 보기) 열기 — 카드가 Grid Layout Group 셀(260×260)에 들어감 | 창이 3개 이상 나오는 카드(예: `ZoneAttackCard`)에 마우스 올림 | 손패와 같은 규칙으로 배치: 카드 그림 바로 옆(겹치지 않음)에서 시작해 카드 윗변부터 아래로 쌓이고, 카드 그림 아랫변을 넘을 때만 다음 줄 | 배치 기준은 RectTransform 크기가 아니라 스폰 시점의 카드 원래 크기(500×600). 스크롤 뷰 마스크에 정보창이 잘리는지도 확인 |
@@ -1369,7 +1372,8 @@
 | TC-TIP-016 | 손패에 `WoundCard` | 마우스 올림 | 용어 창 "사용 불가"("이 카드는 어떤 방법으로도 사용할 수 없습니다. 버리거나 소멸시키는 효과의 대상은 됩니다.")가 뜸. 칸 정보창 등 카드 이미지로 보여 줄 때도 코스트 숫자가 없음 | `KeywordGlossary` |
 | TC-TIP-017 | 소멸 저주에 걸린 아군 / `Enemy-CurseKnight`의 다음 행동 카드 | 보드 칸 정보창, 행동 카드에 마우스 올림 | 상태 목록에 "소멸 저주"와 용어 설명("지속되는 동안 사용하는 카드가 모두 소멸합니다."), 행동 카드 호버 시에도 "소멸 저주" 용어 창 | `KeywordGlossary`, `BoardTooltipContent.GlossaryTermOf`, `CardTooltipContent.AddStatusTerm` |
 | TC-TIP-018 | `L2-Bond`의 결속 적 | 보드 칸 정보창 | 상태 목록에 "결속"과 용어 설명이 뜸 | `BondEffect`, `BoardTooltipContent.GlossaryTermOf` |
-| TC-TIP-019 | `L3-Berserker`의 보스 | 보드 칸 정보창 | 상태 목록에 "상처 입히기"(영구)와 용어 설명 "이 기물에게 공격 피해를 받아 체력이 줄면 버린 카드 더미에 상처가 들어갑니다."가 뜸 | `WoundOnHitEffect`, `BoardTooltipContent.GlossaryTermOf` |
+| TC-TIP-019 | `L3-Berserker`의 보스 | 보드 칸 정보창 | 상태 목록에 "상처 입히기"(영구)와 용어 설명 "이 기물에게 공격 피해를 받아 체력이 줄면 버린 카드 더미에 상처가 2장 들어갑니다."가 뜸 | `WoundOnHitEffect`, `BoardTooltipContent.GlossaryTermOf` |
+| TC-TIP-020 | 전투 중, 활성 기물의 덱·버린 카드·소멸 카드에 `MoveCard`·`SafeMoveCard`, 손패에 `MoveCard`·`ChainMoveAttackCard` | ① 덱·버린 카드·소멸 카드 보기 패널에서 `MoveCard`에 마우스 올림 ② 같은 패널에서 `SafeMoveCard` ③ 손패의 `ChainMoveAttackCard` ④ 손패의 `MoveCard` | ① "이동 범위" 창이 뜨지 않음. 용어 창 "이동"("기물의 이동 범위 안의 칸으로 움직입니다."), "이동공격" ② "이동" 창만(이동공격 창 없음) ③ "이동" 창 없음(설명의 "이동 범위"는 용어로 잡지 않음) ④ "이동 범위" 격자 창 + "이동"·"이동공격" 용어 창 | 기물을 모르면(`CardTooltipContent.Build`의 owner가 null — 더미 보기·상점·보상·저장 덱) 이동 범위 창을 띄우지 않음(`AddMoveRange`). "이동"은 Move 효과 데이터로만 붙음(`KeywordGlossary` `MatchInText = false`). 회귀: 예전엔 격자 없이 "기물의 이동 범위" 문구만 든 빈 창이 떴음 |
 
 ---
 
@@ -1384,7 +1388,7 @@
 | TC-TILE-001 | 전투, 빈 칸 | 빈 칸에 마우스를 올리고 1초 기다림 | 정보창이 뜨지 않음(칸 상태가 아직 없어 보여줄 정보가 없음) | 칸 상태(장판 등)는 `BoardTooltipContent.AddTileState`에 추가할 자리만 있음 |
 | TC-TILE-002 | 아군 기물 칸, 무덤 1, 힘 버프(+2) | 마우스 올림 → 뗌 | 0.3초 뒤 칸 오른쪽에 페이드 인: 스탯 창(제목 = 기물 이름, "아군", 체력 hp/maxhp, 방어도, 힘 "N (+2)" 파랑, 방어막 보너스, 무덤 1) → "이동 범위" 격자. 뗄 때 사라짐 | 창 폭·글자 크기가 손패 카드 정보창과 같음 |
 | TC-TILE-003 | 적 칸, 적이 독(3) 2턴·취약(+1) 상태, 다음 행동 `EnemyAttackCard`, 적 힘 +2 | 마우스 올림 | 스탯 창("적", 무덤 없음) → "독 (3)" 창(독 색 제목, "2턴 남음" + 독 설명) → "취약 (+1)" 창 → "다음 행동" 카드 이미지(피해 수치가 적의 힘을 반영해 파랑) → "다음 행동 사거리" 격자 | 다음 행동 카드는 템플릿(`AttackCard` 프리팹)에 원래 카드의 이름·코스트·설명을 표시 |
-| TC-TILE-004 | 적을 `StunCard`로 기절 | 그 칸에 마우스 올림 | "기절" 디버프 창, 다음 행동 카드 이미지가 `StunnedCard`("기절 상태라 행동할 수 없습니다."), 다음 행동 범위 창 없음. "기절" 용어 창은 따로 뜨지 않음(상태 창이 이미 설명) | |
+| TC-TILE-004 | 적을 `StunCard`로 기절 | 그 칸에 마우스 올림 | "기절" 디버프 창, 다음 행동 카드 이미지가 `StunnedCard`("기절", 코스트 숫자 없음), 다음 행동 범위 창 없음. "기절" 용어 창은 따로 뜨지 않음(상태 창이 이미 설명) | |
 | TC-TILE-005 | 아군이 `ChainMoveAttackCard`·`EmpowerMoveAttackCard`·`FlameThrowingCard`를 사용 | 그 칸에 마우스 올림 | "연쇄 이동공격"(이번 전투 동안), "다음 이동공격 +4"("이동공격할 때까지" + 소모 안내), "턴 종료 시 광역 피해 2"("N턴 남음" + 범위 격자, 중심 파랑 = 이 기물) 버프 창이 각각 뜸(초록 제목) | 연쇄 이동공격은 StatusEffect가 아니라 컴포넌트라 `ButtonInfo`에는 안 보임 |
 | TC-TILE-006 | 아군이 `SummonMasteryCard` 사용 | 그 칸에 마우스 올림 | 스탯 창에 "다음 소환: 힘 +2, 체력 +2" | |
 | TC-TILE-007 | 이동공격 범위(`MoveAttackRangeInfoSO`)가 설정된 기물(예: 전사) | 그 칸에 마우스 올림 | "이동공격 범위" 격자만 표시(중심 노랑 = 부딪힌 칸, 설명 문구 없음) | 설정 없는(중앙 1칸) 기물은 이 창 없음 |
@@ -1395,3 +1399,4 @@
 | TC-TILE-012 | 손패 카드를 들고 보드를 빠르게 훑음 / 기물 게이지 목록(`PieceGaugeItem`)에 마우스 올림 | 관찰 | 훑고 지나간 칸은 뜨지 않고 멈춘 칸에서만 0.3초 뒤 뜸 / 게이지 항목 호버 시 그 기물 칸에 정보창 | 손패 카드 정보창(섹션 19) 동작은 변화 없음 |
 | TC-TILE-013 | 아군이 `WardZoneCard`·`PersistentShieldCard` 사용 | 그 칸에 마우스 올림 | "턴 종료 시 광역 피해 3"·"턴 종료 시 광역 회복 2" 창에 각각 `SurroundingRangeInfo` 범위 격자(중심 파랑 = 이 기물)가 함께 표시. 범위가 없는 턴 효과("턴 시작 시 방어막 4" 등)는 격자 없이 이름·남은 턴만 | 범위 격자는 턴 효과의 `effectRange`가 있고 대상이 범위형(`All*InRange`)일 때만. 발동 시 효과를 가진 기물의 위치가 중심 |
 | TC-TILE-014 | 다음 행동이 `BossEmpowerCard`(힘 +3)인 보스(`L3-Colossus`), 다음 행동이 `EnemyAttackCard`인 적, 영구 가시가 걸린 적(White Knight 4, 다음 행동 `EnemyThornCard`) | 각 칸에 마우스 올림 | 보스: "다음 행동" 카드 이미지 바로 뒤에 "힘" 용어 창 / `EnemyAttackCard`("근처 적에게 N 피해"): 용어 창 없음 / White Knight 4: "가시" 상태 창만 있고 다음 행동 카드 뒤에 "가시" 용어 창은 없음 | 손패 카드 정보창과 같은 용어 규칙(`CardTooltipContent.BuildKeywords`). 이미 걸린 상태이상과 같은 용어는 생략 |
+| TC-TILE-015 | 아군 A가 `StunningChargeCard` 사용(다음 이동공격 적중 시 1턴 기절) / A가 이 카드를 2장 사용 / 기절한 적 | A 칸·게이지 항목에 마우스 올림 / 기절한 적 칸에 마우스 올림 | "다음 이동공격 적중 시 1턴 기절" 버프 창 아래에 "기절" 용어 창(행동할 수 없습니다.)이 1개 뜸 / 버프 창은 2개, "기절" 용어 창은 1개 / 기절한 적은 "기절" 디버프 창만 있고 다음 행동(`StunnedCard`)의 "기절" 용어 창은 따로 뜨지 않음 | 버프가 거는 상태의 용어 창은 `BoardTooltipContent.AddInflictKeywords`(용어는 `CardTooltipContent.StatusTermOf`). 회귀: 예전엔 버프 창만 뜨고 "기절" 설명이 없었음 |

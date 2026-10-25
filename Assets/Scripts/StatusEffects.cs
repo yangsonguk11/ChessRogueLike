@@ -212,10 +212,11 @@ public class BondEffect : StatusEffect
 }
 
 // 상처 입히기: Boss-Berserker가 스폰 시 스스로 거는 영구 버프(BossWoundOnHitCard). 실제 처리는 Board.ApplyOnHitPassives —
-// 이 기물의 공격·이동공격 피해로 상대의 체력이 줄면(방어도로 다 막으면 제외) 그 기물의 버린 카드 더미에 cardID 카드를 넣는다.
+// 이 기물의 공격·이동공격 피해로 상대의 체력이 줄면(방어도로 다 막으면 제외) 그 기물의 버린 카드 더미에 cardID 카드를 count장 넣는다.
 public class WoundOnHitEffect : StatusEffect
 {
     public readonly string cardID = "WoundCard";
+    public readonly int count = 2;
     public override string DisplayName => "상처 입히기";
     public override bool IsBuff => true;
     public override Color EffectColor => new Color(0.8f, 0.2f, 0.25f); // 상처 적색
@@ -320,7 +321,7 @@ public class NextMoveAttackMultiplierEffect : NextMoveAttackEffect
 public class NextMoveAttackStatusEffect : NextMoveAttackEffect
 {
     public readonly CardEffect inflict;
-    public override string DisplayName => $"다음 이동공격 적중 시 {StatusLabel(inflict)}";
+    public override string DisplayName => $"다음 이동공격 적중 시 {InflictLabel(inflict)}";
 
     public NextMoveAttackStatusEffect(int duration, CardEffect inflict)
     {
@@ -334,19 +335,13 @@ public class NextMoveAttackStatusEffect : NextMoveAttackEffect
             bonus.onHitEffects.Add(inflict);
     }
 
-    static string StatusLabel(CardEffect e)
+    // 적중 대상에게 걸 상태를 "N턴 이름"으로 — N은 걸리는 상태의 지속(이 버프의 남은 턴은 StatusLabel이 뒤에 붙인다).
+    // 이름은 실제로 걸릴 상태의 DisplayName이라 대상에게 보이는 이름과 같다.
+    static string InflictLabel(CardEffect e)
     {
         if (e == null) return "효과 없음";
-        string name = e.statusEffectType switch
-        {
-            StatusEffectType.Poison     => $"독({e.statusPower})",
-            StatusEffectType.Burning    => $"화상({e.statusPower})",
-            StatusEffectType.Stun       => "기절",
-            StatusEffectType.Weaken     => $"약화({e.statusPower})",
-            StatusEffectType.Vulnerable => $"취약({e.statusPower})",
-            StatusEffectType.MovementDisabled => "이동 불가",
-            _ => e.statusEffectType.ToString(),
-        };
-        return $"{name} {e.statusDuration}턴";
+        string name = Board.CreateStatusEffect(e.statusEffectType, e.statusDuration, e.statusPower)?.DisplayName
+            ?? e.statusEffectType.ToString();
+        return e.statusDuration >= 0 ? $"{e.statusDuration}턴 {name}" : name;
     }
 }

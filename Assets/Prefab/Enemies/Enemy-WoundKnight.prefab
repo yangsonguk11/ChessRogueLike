@@ -214,7 +214,7 @@ MonoBehaviour:
   cardCanvas: {fileID: 0}
   handNumber: 0
   addCardID: WoundCard
-  addCardZone: 5
+  addCardZone: 0
 --- !u!114 &6454231998147946657
 MonoBehaviour:
   m_ObjectHideFlags: 0

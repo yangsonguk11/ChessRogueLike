@@ -21,7 +21,7 @@ MonoBehaviour:
     name: 
   - position: {x: 2, y: 4}
     name: Enemy-CurseKnight
-  - position: {x: 3, y: 4}
+  - position: {x: 2, y: 4}
     name: Enemy-StrikerKnight
   levelType: 0
   eventType: 0

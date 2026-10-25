@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class PieceGaugeItem : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
-    const string BuffColor = "#4444FF"; // 정보창의 증가 색과 같음
+    const string BuffColor = "#5A6BE0"; // 정보창·카드 설명의 증가 색과 같은 파랑
 
     [SerializeField] TextMeshProUGUI piecename;
     [SerializeField] TextMeshProUGUI team;
@@ -75,9 +75,8 @@ public class PieceGaugeItem : MonoBehaviour, IPointerEnterHandler, IPointerExitH
         statusParts.Clear();
         foreach (StatusEffect e in p.activeEffects)
         {
-            string label = e.duration >= 0 ? $"{e.DisplayName} {e.duration}턴" : e.DisplayName; // 지속이 음수(영구)면 턴 표기 없음
             string color = e.IsBuff ? BuffColor : "#" + ColorUtility.ToHtmlStringRGB(e.EffectColor);
-            statusParts.Add($"<color={color}>{label}</color>");
+            statusParts.Add(e.StatusLabel(color));
         }
         // 연쇄 이동공격은 StatusEffect가 아니라 컴포넌트라 상태이상 목록에 없다(ChainMoveAttackBuff 참고).
         if (p.GetComponent<ChainMoveAttackBuff>() != null)

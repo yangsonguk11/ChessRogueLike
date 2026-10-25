@@ -14,7 +14,7 @@ public class AttackCard : Card
         {
             requiredMode = Board.BoardMode.command,
             type = EffectType.Damage,
-            dmg = 3,
+            dmg = 4,
             targetlogic = TargetLogic.LowestHP,
             effectRange = effectRange[0],
             animTrigger = "Attack",

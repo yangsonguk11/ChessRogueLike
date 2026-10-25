@@ -48,7 +48,7 @@ public static class CardTooltipContent
     {
         var result = new List<TooltipEntry>();
         // 기물 이동 범위로 대상을 고르는 효과는 이 카드를 가진 기물을 알 수 있을 때(손패·카드 선택 패널)만 그 기물 기준 격자로
-        // 보여 주고, 상점·보상처럼 모를 땐 문구로 대신한다.
+        // 보여 주고, 덱·버림·소멸 보기·상점·보상처럼 모를 땐 범위 창을 띄우지 않는다(용어 창 "이동"이 설명).
         Piece owner = (CardCanvas.cardSelectionMode || card.IsSelectable()) ? CardCanvas.instance?.ActivePiece : null;
         AddRanges(card, owner, result);
         AddKeywords(card, result);
@@ -87,20 +87,17 @@ public static class CardTooltipContent
         }
 
         // 기물 이동 범위로 대상을 고르는 효과(이동, 범위 없는 대상 지정, targetingUsesMovement).
-        // owner(카드를 가진 기물)를 알면 격자로, 모르면 문구로 보여 준다.
+        // owner(카드를 가진 기물)를 알 때만 그 기물 기준 격자로 보여 준다. 모르면(덱·버림·소멸 보기, 상점, 보상) 격자 없는
+        // 빈 창이 되므로 띄우지 않는다 — 이동 효과는 용어 창 "이동"이 설명한다.
         void AddMoveRange(string title)
         {
-            if (moveRangeAdded) return;
+            if (moveRangeAdded || owner == null) return;
             moveRangeAdded = true;
-            List<Vector2Int> offsets = owner != null ? owner.GetMoveableButton() : null;
-            if (offsets != null)
-                result.Add(new TooltipEntry
-                {
-                    kind = TooltipEntry.Kind.Range, title = title,
-                    grid = RangeGrid.FromOffsets(offsets, RangeGrid.Cell.Caster),
-                });
-            else
-                result.Add(new TooltipEntry { kind = TooltipEntry.Kind.Range, title = title, body = "기물의 이동 범위" });
+            result.Add(new TooltipEntry
+            {
+                kind = TooltipEntry.Kind.Range, title = title,
+                grid = RangeGrid.FromOffsets(owner.GetMoveableButton(), RangeGrid.Cell.Caster),
+            });
         }
 
         foreach (CardEffect effect in card.effects)
@@ -178,10 +175,16 @@ public static class CardTooltipContent
 
         // 설명 텍스트에 안 나와도 카드 데이터상 분명한 용어는 덧붙인다.
         var extra = new List<string>(card.ExtraKeywords);
+        var lead = new List<string>(); // 카드의 주 동작이라 맨 앞에 둘 용어(이동)
         if (card.ShowsExile) extra.Add("소멸");
         foreach (CardEffect effect in card.effects)
         {
             if (effect == null) continue;
+            if (effect.type == EffectType.Move)
+            {
+                lead.Add("이동");
+                if (!effect.noMoveAttack) lead.Add("이동공격"); // 이동공격 불가 이동(SafeMoveCard)에는 붙이지 않는다
+            }
             if (effect.countsAsMoveAttack) extra.Add("이동공격 판정");
             if (effect.graveCost > 0 || effect.consumeAllGrave) extra.Add("무덤");
             AddStatusTerm(effect, extra);
@@ -193,6 +196,17 @@ public static class CardTooltipContent
             KeywordGlossary.Entry entry = KeywordGlossary.Get(term);
             if (entry != null && !found.Contains(entry)) found.Add(entry);
         }
+        // 맨 앞 용어는 텍스트에서 이미 찾았어도 그 자리에서 빼고 앞으로 옮긴다(중복 없음).
+        int leadIndex = 0;
+        foreach (string term in lead)
+        {
+            KeywordGlossary.Entry entry = KeywordGlossary.Get(term);
+            if (entry == null) continue;
+            int existing = found.IndexOf(entry);
+            if (existing >= 0 && existing < leadIndex) continue; // 앞서 다른 이동 효과로 이미 맨 앞에 둠
+            if (existing >= 0) found.RemoveAt(existing);
+            found.Insert(leadIndex++, entry);
+        }
 
         foreach (KeywordGlossary.Entry entry in found)
             result.Add(new TooltipEntry { kind = TooltipEntry.Kind.Keyword, title = entry.term, body = entry.description });
@@ -200,8 +214,15 @@ public static class CardTooltipContent
 
     static void AddStatusTerm(CardEffect effect, List<string> terms)
     {
-        if (effect == null) return;
-        string term = effect.statusEffectType switch
+        string term = StatusTermOf(effect);
+        if (term != null) terms.Add(term);
+    }
+
+    // 효과가 거는 상태이상의 용어(KeywordGlossary 대표 표기). 없으면 null — 보드 칸 정보창도 버프가 거는 상태의 용어 창에 쓴다.
+    public static string StatusTermOf(CardEffect effect)
+    {
+        if (effect == null) return null;
+        return effect.statusEffectType switch
         {
             StatusEffectType.Poison           => "독",
             StatusEffectType.Burning          => "화상",
@@ -217,6 +238,5 @@ public static class CardTooltipContent
             StatusEffectType.WoundOnHit       => "상처 입히기",
             _ => null,
         };
-        if (term != null) terms.Add(term);
     }
 }

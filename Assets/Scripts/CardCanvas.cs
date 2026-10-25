@@ -824,11 +824,20 @@ public class CardCanvas : MonoBehaviour
     }
 
     // 전투 중 target 기물의 전투 덱(pieceDeck)에 새 카드를 넣는다 — 원본 덱(DataManager의 deckCardIDs)은 건드리지
-    // 않으므로 전투가 끝나면 사라진다. targetZone은 Hand/Deck(맨 아래)이고 그 밖은 버림 더미다.
+    // 않으므로 전투가 끝나면 사라진다. targetZone은 Hand/Deck(무작위 위치)이고 그 밖은 버림 더미다.
     // 소속(로직)은 여기서 즉시 확정하고, 연출은 반환하는 코루틴이 맡는다 — 호출부가 재생 시점을 정한다(Board는
     // motionQueue에 넣어 시전 연출에 맞추고, 즉시 보여줄 곳은 StartCoroutine). 그때까지 카드는 꺼 둔다.
     // 연출: 재생 시점에 target이 화면에 표시 중인 기물이면 화면 중앙에서 1초 보여준 뒤 해당 더미/손패 슬롯으로 날린다.
     // 아니면 카드를 꺼 둔 채 더미 자리에 두고, 그 기물로 전환할 때 SetPileActive가 다른 카드와 함께 보여준다.
+    // 덱(Queue — 앞이 다음 드로우)의 무작위 자리에 카드를 끼워 넣는다. 맨 위·맨 아래도 후보다(덱 N장이면 N+1곳).
+    static void InsertIntoDeckAtRandom(PieceDeck pd, RectTransform card)
+    {
+        var cards = pd.Deck.ToList();
+        cards.Insert(UnityEngine.Random.Range(0, cards.Count + 1), card);
+        pd.Deck.Clear(); // 같은 Queue 인스턴스를 유지(참조를 쥔 곳이 있어도 안전)
+        foreach (var c in cards) pd.Deck.Enqueue(c);
+    }
+
     public IEnumerator AddCardDuringCombat(Piece target, string cardname, CardPositionZone targetZone)
     {
         PieceDeck pd = target?.pieceDeck;
@@ -844,7 +853,7 @@ public class CardCanvas : MonoBehaviour
         CardPositionZone zone = targetZone == CardPositionZone.Hand || targetZone == CardPositionZone.Deck
             ? targetZone : CardPositionZone.Discard;
         if (zone == CardPositionZone.Hand) pd.Hand.Add(rt);
-        else if (zone == CardPositionZone.Deck) pd.Deck.Enqueue(rt);
+        else if (zone == CardPositionZone.Deck) InsertIntoDeckAtRandom(pd, rt);
         else pd.Discard.Add(rt);
 
         bool shownNow = target == activePiece;

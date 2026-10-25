@@ -272,6 +272,13 @@ public partial class Board
                 originPos: button1.GetLocation(), casterCell: button1.GetLocation()));
     }
 
+    // 여러 코루틴을 순서대로 하나씩 실행.
+    static IEnumerator RunSequentially(List<IEnumerator> coroutines)
+    {
+        foreach (IEnumerator c in coroutines)
+            yield return c;
+    }
+
     // 여러 코루틴을 동시에 실행하고 전부 끝날 때까지 대기.
     IEnumerator Parallel(params IEnumerator[] coroutines)
     {

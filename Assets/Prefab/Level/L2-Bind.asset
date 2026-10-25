@@ -15,7 +15,7 @@ MonoBehaviour:
   N: 7
   M: 7
   placements:
-  - position: {x: 4, y: 2}
+  - position: {x: 4, y: 3}
     name: 
   - position: {x: 4, y: 4}
     name: 

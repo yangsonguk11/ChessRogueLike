@@ -339,7 +339,7 @@ public partial class Board
     }
 
     // 공격자의 적중 패시브(상처 입히기 — WoundOnHitEffect): 공격 피해로 상대의 체력이 실제로 줄었고(방어도로 다 막으면 제외)
-    // 살아 있으면 그 기물의 버린 카드 더미에 카드를 넣는다(즉시). 반응 코루틴을 돌려주며, 발동하지 않으면 null.
+    // 살아 있으면 그 기물의 버린 카드 더미에 카드를 count장 넣는다(즉시). 반응 코루틴을 돌려주며, 발동하지 않으면 null.
     // 덱이 없는 기물(적·소환수)은 AddCardDuringCombat이 null을 돌려줘 자연히 건너뛴다.
     IEnumerator ApplyOnHitPassives(Piece attacker, Piece target, int hpBefore, int hpLeft)
     {
@@ -347,7 +347,7 @@ public partial class Board
         if (hpLeft <= 0 || hpLeft >= hpBefore) return null;
         WoundOnHitEffect wound = attacker.activeEffects.OfType<WoundOnHitEffect>().FirstOrDefault();
         if (wound == null) return null;
-        return AddCardReaction(target, wound.cardID, CardPositionZone.Discard);
+        return AddCardReaction(target, wound.cardID, CardPositionZone.Discard, wound.count);
     }
 
     // 공격 1타: 대상에게 공격 피해를 적용하고 카드 효과의 상태이상을 건 뒤(둘 다 즉시), 그 타의 대상 반응(피해 텍스트 +

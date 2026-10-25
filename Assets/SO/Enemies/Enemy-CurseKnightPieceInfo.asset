@@ -15,7 +15,7 @@ MonoBehaviour:
   _pieceName: Enemy-CurseKnight
   _teamID: 1
   _isSummon: 0
-  _maxHp: 15
+  _maxHp: 25
   _colDamage: 5
   _shieldBonus: 0
   _rangeInfoSO: {fileID: 11400000, guid: e798bd81c0425624ead1e05779a9c275, type: 2}

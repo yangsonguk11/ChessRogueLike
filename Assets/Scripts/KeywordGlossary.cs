@@ -12,6 +12,8 @@ public static class KeywordGlossary
         public readonly string term;       // 정보창 제목으로 쓰는 대표 표기
         public readonly string[] aliases;  // 설명 텍스트에서 함께 찾을 다른 표기
         public readonly string description;
+        // false면 설명 텍스트에서 자동으로 찾지 않고, 카드 데이터로만 붙인다(예: "이동"은 이동 효과가 없는 문장에도 자주 들어간다).
+        public bool MatchInText { get; init; } = true;
 
         public Entry(string term, string description, params string[] aliases)
         {
@@ -23,6 +25,8 @@ public static class KeywordGlossary
 
     static readonly Entry[] entries =
     {
+        // 이동 효과(EffectType.Move)가 있는 카드에만 붙인다(CardTooltipContent.AddKeywords).
+        new Entry("이동", "기물의 이동 범위 안의 칸으로 움직입니다.") { MatchInText = false },
         new Entry("이동공격", "이동으로 적이 있는 칸에 부딪혀 공격합니다. 피해는 시전자의 힘과 같으며, 처치하면 그 칸으로 전진합니다.", "이동 공격"),
         new Entry("이동공격 판정", "제자리에서 공격하지만 이동공격으로 취급합니다. 다음 이동공격 버프와 가시 반격 등이 똑같이 적용되고, 처치해도 전진하지 않습니다."),
         new Entry("힘", "이동공격의 피해량입니다. 공격 카드의 피해에도 더해집니다."),
@@ -48,13 +52,14 @@ public static class KeywordGlossary
         new Entry("사용 불가", "이 카드는 사용할 수 없습니다."),
         new Entry("소멸 저주", "지속되는 동안 사용하는 카드가 모두 소멸합니다."),
         new Entry("결속", "같은 편 기물이 쓰러질 때마다 체력을 모두 회복하고 힘이 오릅니다."),
-        new Entry("상처 입히기", "이 기물에게 공격 피해를 받아 체력이 줄면 버린 카드 더미에 상처가 들어갑니다."),
+        new Entry("상처 입히기", "이 기물에게 공격 피해를 받아 체력이 줄면 버린 카드 더미에 상처가 2장 들어갑니다."),
     };
 
     static readonly Regex RichTextTag = new Regex("<[^>]*>");
 
     // (표기, 항목) 쌍을 긴 표기부터 — "방어막 보너스"가 "방어막"보다, "이동공격 판정"이 "이동공격"보다 먼저 매칭되게 한다.
     static readonly (string word, Entry entry)[] wordsLongestFirst = entries
+        .Where(e => e.MatchInText)
         .SelectMany(e => new[] { e.term }.Concat(e.aliases).Select(w => (w, e)))
         .OrderByDescending(p => p.Item1.Length)
         .ToArray();

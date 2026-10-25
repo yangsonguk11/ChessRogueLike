@@ -1041,7 +1041,8 @@ public partial class Board
     }
 
     // onMoveAttackHit: NextMoveAttackStatus가 다음 이동공격 적중 대상에게 걸 상태이상(CardEffect.onMoveAttackHitEffect).
-    StatusEffect CreateStatusEffect(StatusEffectType type, int duration, int power,
+    // 보드 상태를 쓰지 않는 순수 생성이라 static — 표시 문구가 걸릴 상태의 이름을 얻을 때도 쓴다(NextMoveAttackStatusEffect.InflictLabel).
+    public static StatusEffect CreateStatusEffect(StatusEffectType type, int duration, int power,
         RangeInfoSO range = null, TargetLogic targetLogic = TargetLogic.AllEnemiesInRange, CardEffect onMoveAttackHit = null)
     {
         return type switch
@@ -1187,15 +1188,21 @@ public partial class Board
         }
     }
 
-    // AddCard: recipient의 전투 덱에 카드를 넣고(로직 즉시 — 원본 덱은 그대로), 연출을 돌려준다. 화면에 표시 중인
-    // 기물이면 카드 등장 연출, 아니면 보드 위 그 기물에 "카드 +1" 텍스트(카드는 그 기물로 전환할 때 보인다).
+    // AddCard: recipient의 전투 덱에 카드를 count장 넣고(로직 즉시 — 원본 덱은 그대로), 연출을 돌려준다. 화면에 표시 중인
+    // 기물이면 카드 등장 연출을 한 장씩 차례로, 아니면 보드 위 그 기물에 "카드 +N" 텍스트(카드는 그 기물로 전환할 때 보인다).
     // 전투 덱이 없는 기물(적, 덱 없는 소환수)이면 null.
-    IEnumerator AddCardReaction(Piece recipient, string cardID, CardPositionZone zone)
+    IEnumerator AddCardReaction(Piece recipient, string cardID, CardPositionZone zone, int count = 1)
     {
-        IEnumerator reveal = CardCanvas.instance?.AddCardDuringCombat(recipient, cardID, zone);
-        if (reveal == null) return null;
-        if (recipient == CardCanvas.instance.ActivePiece) return reveal;
-        return Parallel(reveal, recipient.StatusTextReaction("카드 +1", false, new Color(0.75f, 0.6f, 1f), textOnly: true));
+        var reveals = new List<IEnumerator>();
+        for (int i = 0; i < count; i++)
+        {
+            IEnumerator reveal = CardCanvas.instance?.AddCardDuringCombat(recipient, cardID, zone);
+            if (reveal != null) reveals.Add(reveal);
+        }
+        if (reveals.Count == 0) return null;
+        IEnumerator revealAll = RunSequentially(reveals);
+        if (recipient == CardCanvas.instance.ActivePiece) return revealAll;
+        return Parallel(revealAll, recipient.StatusTextReaction($"카드 +{reveals.Count}", false, new Color(0.75f, 0.6f, 1f), textOnly: true));
     }
 
     public void CancelCardUsage()
