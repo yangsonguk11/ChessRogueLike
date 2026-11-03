@@ -13,7 +13,6 @@ public class EnemyAttackCard : Card
         RangeInfoSO range = effectRange.Count > 0 ? effectRange[0] : null;
         CardEffect cf = new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Damage,
             dmg = 5,
             targetlogic = TargetLogic.NearestEnemy,

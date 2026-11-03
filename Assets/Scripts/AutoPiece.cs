@@ -33,16 +33,19 @@ public class AutoPiece : Piece
         ActionText();
     }
 
+    // 표시용(정보창·예고) 범위 = 다음 행동의 첫 효과 범위. 실제 대상 선택은 처리 중인 효과의 범위를 직접 쓴다(Board.ResolveEnemyTarget).
     public override List<Vector2Int> GetMoveableButton() {
         Card move = GetNextMove();
         if (move == null || move.effects.Count == 0) return base.GetMoveableButton();
-        if (move.effects[0].type == EffectType.Move)
-            return base.GetMoveableButton();
+        CardEffect first = move.effects[0];
         // 아군 위치 고정 공격의 effectRange는 시전자 기준 오프셋이 아니다 — 예고는 ShowAllEnemyRanges가 잠긴 칸으로 따로 그린다.
-        if (move.effects[0].lockOnAllyPositions)
+        if (first.lockOnAllyPositions)
             return new List<Vector2Int>();
-        // effectRange가 없는 카드는 이동 범위로 폴백하지 않고 그냥 아무 칸도 표시하지 않는다.
-        return move.effects[0].effectRange?.GetAbleRange() ?? new List<Vector2Int>();
+        // 범위가 없는 자기 대상·보드 전체 효과는 보여줄 범위가 없다.
+        if (first.effectRange == null && (first.targetlogic == TargetLogic.self || first.noRangeLimit))
+            return new List<Vector2Int>();
+        // 그 외는 효과 범위(effectRange, 비어 있으면 이동 범위 — 이동 효과도 같다).
+        return first.GetRangeOffsets(this);
     }
 
     // 간단한 AI 로직: 다음에 사용할 카드를 반환. 기절 상태면 원래 예고했던 카드 대신 스턴 카드를 반환하고,
@@ -124,19 +127,21 @@ public class AutoPiece : Piece
 
     // 상태이상 종류(독/화상/강화 등)를 따로 표기하지 않고, 이로운 효과인지 해로운 효과인지만
     // Positive/Negative 아이콘으로 통일해서 보여준다. 아이콘 자체는 actIcon에 나중에 추가될 예정.
-    static bool IsPositiveStatus(StatusEffectType type) => type switch
+    // 턴 효과는 종류만으로 알 수 없어 감싼 효과의 isBuff(TurnEffect.IsBuff와 같은 값)로 판정한다.
+    static bool IsPositiveStatus(CardEffect effect) => effect.statusEffectType switch
     {
         StatusEffectType.Regen or
         StatusEffectType.Strengthen or
         StatusEffectType.Thorn or
-        StatusEffectType.Taunt => true,
-        _                      => false,
+        StatusEffectType.Taunt      => true,
+        StatusEffectType.TurnEffect => effect.onTurnEffect?.isBuff ?? false,
+        _                           => false,
     };
 
     string BuildStatusDescription(CardEffect effect)
     {
         if (effect.statusEffectType == StatusEffectType.None) return "";
         if (effect.statusEffectType == StatusEffectType.Stun) return "<sprite name=\"Stun\">";
-        return $"<sprite name=\"{(IsPositiveStatus(effect.statusEffectType) ? "Positive" : "Negative")}\">";
+        return $"<sprite name=\"{(IsPositiveStatus(effect) ? "Positive" : "Negative")}\">";
     }
 }

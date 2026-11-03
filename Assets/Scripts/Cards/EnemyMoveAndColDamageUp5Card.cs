@@ -8,11 +8,9 @@ public class EnemyMoveAndColDamageUp5Card : Card
         Name = "EnemyMoveAndColDamageUp5Card";
         Cost = 0;
         type = CardType.Move;
-        user = User.Enemy;
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Move,
             dmg = 0,
             targetlogic = TargetLogic.NearestEnemy,
@@ -22,7 +20,6 @@ public class EnemyMoveAndColDamageUp5Card : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.ColDamageUp,
             dmg = 5,
             targetlogic = TargetLogic.self,

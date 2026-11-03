@@ -11,14 +11,13 @@ public class WardZoneCard : Card
         dragDropTarget = DragDropTarget.Self;
         effects.Add(new CardEffect // 1번째: self 즉시실행
         {
-            requiredMode = Board.BoardMode.targeting,
-            type = EffectType.ApplyTurnEffect,
+            type = EffectType.ApplyStatus,
+            statusEffectType = StatusEffectType.TurnEffect,
             targetlogic = TargetLogic.self,
             animTrigger = "Buff",
-            turnDuration = 3,
-            onTurnEndEffect = new CardEffect
+            statusDuration = 3,
+            onTurnEffect = new CardEffect
             {
-                requiredMode = Board.BoardMode.Inspect,
                 type = EffectType.Damage,
                 dmg = 3,
                 targetlogic = TargetLogic.AllEnemiesInRange,
@@ -30,13 +29,12 @@ public class WardZoneCard : Card
         });
         effects.Add(new CardEffect // 2번째: 후속 self 효과라 재클릭 없이 같은 시전자에게 자동 적용
         {
-            requiredMode = Board.BoardMode.targeting,
-            type = EffectType.ApplyTurnEffect,
+            type = EffectType.ApplyStatus,
+            statusEffectType = StatusEffectType.TurnEffect,
             targetlogic = TargetLogic.self,
-            turnDuration = 3,
-            onTurnEndEffect = new CardEffect
+            statusDuration = 3,
+            onTurnEffect = new CardEffect
             {
-                requiredMode = Board.BoardMode.Inspect,
                 type = EffectType.Heal,
                 dmg = 2,
                 targetlogic = TargetLogic.AllAlliesInRange,
@@ -48,5 +46,5 @@ public class WardZoneCard : Card
     }
 
     public override string EffectDescription =>
-        $"{effects[0].turnDuration}턴 동안 턴 종료 시 주변 적에게 {effects[0].onTurnEndEffect.dmg} 마법 피해, 주변 아군을 {effects[1].onTurnEndEffect.dmg} 회복합니다.";
+        $"{effects[0].statusDuration}턴 동안 턴 종료 시 주변 적에게 {effects[0].onTurnEffect.dmg} 마법 피해, 주변 아군을 {effects[1].onTurnEffect.dmg} 회복합니다.";
 }

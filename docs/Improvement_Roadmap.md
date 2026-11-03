@@ -136,6 +136,7 @@
 ### A. 타격감·연출 조율 (Game Feel)
 
 - **A1 임팩트 이벤트를 한 곳으로 모으기 (Feedback 레이어)** — 지금은 Piece/Board 곳곳에서 AudioManager·PieceCanvas를 직접 부른다. 시전자 Animation Event 순간(`PlayCasterAndTargetReaction`의 targetReaction 시작)을 `Impact(공격자, 대상, 피해, 처치, 방어막흡수)` 이벤트로 발행하고, 카메라·사운드·VFX·히트스탑이 구독한다. 피해 등급별 값은 `FeedbackProfile` SO에 둔다(More Mountains FEEL의 MMF_Player 개념을 가볍게 직접 구현). (중·★★★)
+  - 진행(2026-11-02): 첫 단계로 타격 시점을 `ActionImpact`([ActionImpact.cs](../Assets/Scripts/ActionImpact.cs))로 모았다. 공격 경로(`AttackPiece`·`AreaAttackPiece`·`ResolveMoveAttackHit`)의 반응을 대상별(`HitReaction`)·시전자(`common`)로 나눴고, 카드 효과의 `vfx`(`AttackVfxCue` — 대상 위치·레이저·원형·번개)가 대상별 피격 순간을 정한다. 남은 일: `Impact` 이벤트 발행과 카메라·사운드·히트스탑 구독(A2), `FeedbackProfile`, 실제 이펙트 아트.
 - **A2 CameraFX 연결** — 흔들림 세기는 피해/최대HP 비율, 처치·다중타 마지막 타에 히트스탑 40–80ms, 아군 피격에 붉은 플래시. 흔들림 방식은 trauma²×Perlin 노이즈(위치+회전)로 바꾸는 것을 검토한다. 📦 Cinemachine Impulse 대신 직접 구현. (하·★★★)
 - **A3 히트스탑 범위** — 80ms 이하는 지금처럼 전역 timeScale로 충분하다. 더 긴 슬로모는 공격자·대상의 Animator.speed만 멈춰 UI 반응을 유지한다. (하·★)
 - **A4 마지막 적 처치 연출** — 0.3배속 0.5초 + 카메라 살짝 줌인(`GameManager.RemoveEnemy`에서 남은 적이 0이 되는 순간). (하·★★)

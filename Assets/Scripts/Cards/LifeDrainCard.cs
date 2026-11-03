@@ -12,13 +12,13 @@ public class LifeDrainCard : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Damage,
             dmg = 2,
             targetlogic = TargetLogic.AllEnemiesInRange,
             effectRange = effectRange[0],
             healOnHit = true,
             animTrigger = "AreaAttack",
+            vfx = "Ring_Test", // 임시 테스트 이펙트(아트 교체 전)
         });
     }
 

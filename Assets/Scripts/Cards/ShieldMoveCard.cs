@@ -15,7 +15,6 @@ public class ShieldMoveCard : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.Shield,
             dmg = 3,
             targetlogic = TargetLogic.self,
@@ -24,7 +23,6 @@ public class ShieldMoveCard : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Move,
             dmg = 0,
             targetlogic = TargetLogic.NearestEnemy,

@@ -10,7 +10,6 @@ public class CurseCard : Card
         dragDropTarget = DragDropTarget.Enemy;
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.ApplyStatus,
             dmg = 0,
             targetlogic = TargetLogic.LowestHP, // 적 AI가 쓸 경우의 대상 선택 기준(플레이어는 드롭으로 지정)

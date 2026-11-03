@@ -13,7 +13,6 @@ public class GraveHealCard : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.Heal,
             dmg = 3,
             // self가 아니어야 드롭한 칸이 대상이 된다 — targeting + self는 시전자를 확정하는 순간(Board.OnSelectBoard)

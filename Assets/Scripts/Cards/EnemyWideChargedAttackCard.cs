@@ -11,12 +11,10 @@ public class EnemyWideChargedAttackCard : Card
         Name = "EnemyWideChargedAttackCard";
         Cost = 0;
         type = CardType.Attack;
-        user = User.Enemy;
 
         RangeInfoSO range = effectRange.Count > 0 ? effectRange[0] : null;
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Damage,
             dmg = 10,
             targetlogic = TargetLogic.AllEnemiesInRange,

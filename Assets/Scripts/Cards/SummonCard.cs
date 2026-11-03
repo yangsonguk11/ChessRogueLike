@@ -13,11 +13,10 @@ public class SummonCard : Card
         dragDropTarget = DragDropTarget.AnyTile; // Self로 두면 NeedsTargeting()이 false가 되어 화살표/드롭 실행이 막힘 — MoveCard와 동일하게 AnyTile
         CardEffect cf = new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Summon,
             effectRange = effectRange[0],
             summonPieceInfo = pieceToSummon,
-            animTrigger = "Attack",
+            animTrigger = "Summon", // Summon State가 없는 기물은 Board.PlayTriggerAnimCor가 Attack으로 대체
         };
         effects.Add(cf);
 

@@ -13,7 +13,6 @@ public class HeavyShieldCard : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.Shield,
             dmg = 8,
             targetlogic = TargetLogic.self,

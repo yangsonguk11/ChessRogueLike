@@ -13,7 +13,6 @@ public class GraveAttackCard : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Damage,
             dmg = 5,
             targetlogic = TargetLogic.LowestHP,
@@ -22,7 +21,6 @@ public class GraveAttackCard : Card
         });
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Damage,
             dmg = 5,
             targetlogic = TargetLogic.LowestHP,

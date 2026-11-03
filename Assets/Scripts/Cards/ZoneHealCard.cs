@@ -18,7 +18,6 @@ public class ZoneHealCard : Card
 
         CardEffect cf = new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.Heal,
             dmg = 5,
             targetlogic = TargetLogic.AllPiecesInRange,

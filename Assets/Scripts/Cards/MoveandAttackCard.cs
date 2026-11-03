@@ -12,7 +12,6 @@ public class MoveAndAttackCard : Card
         dragDropTarget = DragDropTarget.AnyTile;
         CardEffect cf = new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Move,
             dmg = 0,
             targetlogic = TargetLogic.NearestEnemy,
@@ -23,7 +22,6 @@ public class MoveAndAttackCard : Card
 
         cf = new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Damage,
             dmg = 3,
             targetlogic = TargetLogic.LowestHP,

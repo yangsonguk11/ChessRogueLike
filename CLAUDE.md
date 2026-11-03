@@ -64,7 +64,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 다른 컴포넌트의 연출을 보드 연출 순서에 맞추려면 `Board`의 공개 래퍼로 `motionQueue`에 넣는다.
 
 ### Board는 책임별 partial class
-`Board.cs` + `Board.*.cs`가 하나의 클래스(`Board.instance`)다. 보드 좌표는 `Vector2Int`, 크기는 `N × M`. `BoardMode`(`Inspect`/`command`/`targeting`/`cardSelecting`)가 입력 해석을 결정한다.
+`Board.cs` + `Board.*.cs`가 하나의 클래스(`Board.instance`)다. 보드 좌표는 `Vector2Int`, 크기는 `N × M`. 보드 클릭은 기물 선택 진행 중(`PieceSelectionActive`) → 카드를 쓰는 중이 아님(`currentActiveCard == null`: NPC·상점·기물 조회) → 카드 선택 패널 대기(`CardCanvas.cardSelectionMode`, 무시) → 대상 칸 지정 순으로 해석한다([Board.InputHandler.cs](Assets/Scripts/Board.InputHandler.cs)).
+- 모든 `CardEffect`는 같은 대상 지정 흐름을 탄다(입력 모드 구분 없음). 대상 칸이 필요 없는 효과(드로우·코스트 감소 등)도 `targetlogic = TargetLogic.self`로 쓰고, 그런 효과가 카드의 첫 효과면 카드를 `DragDropTarget.Self`로 둔다 — 드롭 시 시전자가 확정되며 바로 실행되고, 두 번째 이후 self 효과는 시전자 재선택으로 이어서 실행된다. `targetlogic`을 비우면 기본값 `NearestEnemy`라 클릭을 기다리게 되니 주의.
 
 ### 기물과 데이터
 - `Piece` → `AutoPiece`(적 + 자동행동 아군; `actionCards`를 순환하며 다음 행동을 예고, 기절 시 `StunnedCard`로 대체). `teamID == 0`이 아군, `1`이 적.
@@ -89,7 +90,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 3. 프리팹의 `effectRange` 리스트(`RangeInfoSO`)를 채운다 — 대부분의 카드가 `Awake()`에서 `effectRange[0]`을 읽으므로 비어 있으면 예외가 난다.
 4. 획득 경로에 추가: 직업 보상 풀(`Assets/SO/Jobs/*.asset`) 또는 `PieceInfo`의 기본 덱. 프리팹/등록이 없는 카드 스크립트는 게임에서 도달 불가능하다.
 
-적 전용 카드는 `user = User.Enemy`로 두며, 대상 선택은 `TargetLogic`으로 자동 계산된다.
+적 전용 카드는 따로 표시할 필요가 없다 — `AutoPiece`(적·자동 아군)가 쓰는 카드는 `Board.UseCard(card, caster)`의 시전자로 구분돼 대상이 `TargetLogic`으로 자동 계산된다.
 
 ## Unity 에셋을 텍스트로 편집할 때
 

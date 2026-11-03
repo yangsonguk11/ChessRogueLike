@@ -14,7 +14,7 @@ public partial class Board
         yield return ResolveEffects();
         if (IsCombatDecided) yield break;
 
-        EnqueueTeamTurnEffects(0, TurnPhase.OwnTurnStart);
+        EnqueueTeamStatusEffects(0, TurnPhase.OwnTurnStart);
         yield return ResolveEffects();
         if (IsCombatDecided) yield break;
 
@@ -48,15 +48,11 @@ public partial class Board
         }
         ClearSelectedButton();
 
-        EnqueueTeamTurnEffects(0, TurnPhase.OwnTurnEnd);
+        EnqueueTeamStatusEffects(0, TurnPhase.OwnTurnEnd);
         yield return ResolveEffects();
         if (IsCombatDecided) yield break;
 
         TriggerRelicsOnTurnEnd();
-        yield return ResolveEffects();
-        if (IsCombatDecided) yield break;
-
-        EnqueueTeamStatusTicks(0);
         yield return ResolveEffects();
         if (IsCombatDecided) yield break;
 
@@ -69,11 +65,7 @@ public partial class Board
     {
         if (!boardReady) yield break;
 
-        EnqueueTeamTurnEffects(1, TurnPhase.OwnTurnEnd);
-        yield return ResolveEffects();
-        if (IsCombatDecided) yield break;
-
-        EnqueueTeamStatusTicks(1);
+        EnqueueTeamStatusEffects(1, TurnPhase.OwnTurnEnd);
         yield return ResolveEffects();
         if (IsCombatDecided) yield break;
 
@@ -88,7 +80,7 @@ public partial class Board
 
     public IEnumerator PlayEnemyTurnCoroutine()
     {
-        EnqueueTeamTurnEffects(1, TurnPhase.OwnTurnStart);
+        EnqueueTeamStatusEffects(1, TurnPhase.OwnTurnStart);
         yield return ResolveEffects();
         if (IsCombatDecided) yield break;
 
@@ -107,7 +99,7 @@ public partial class Board
 
             if (card != null)
             {
-                UseCard(card);
+                UseCard(card, enemy);
                 yield return new WaitUntil(() => !IsResolvingEffects && !queuecoroutineworking);
                 if (!enemy.IsStunned())
                     enemy.ChangeMove();
@@ -138,7 +130,7 @@ public partial class Board
 
             if (card != null)
             {
-                UseCard(card);
+                UseCard(card, autoAlly);
                 yield return new WaitUntil(() => !IsResolvingEffects && !queuecoroutineworking);
                 if (!autoAlly.IsStunned())
                     autoAlly.ChangeMove();

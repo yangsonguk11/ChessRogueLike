@@ -9,7 +9,6 @@ public class DispelCard : Card
         dragDropTarget = DragDropTarget.Enemy;
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.Cleanse,
             dmg = 0,
             targetlogic = TargetLogic.NearestEnemy,

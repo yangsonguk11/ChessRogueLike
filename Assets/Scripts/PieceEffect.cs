@@ -120,17 +120,7 @@ public class PieceEffect : MonoBehaviour
     // 코루틴으로 따로 돌기 때문에, 짧은 시간에 여러 번 트리거되어도 각 파티클이 자기 수명을 끝까지 채우고 사라진다.
     IEnumerator PlayBurstCoroutine(GameObject prefab, Vector3 position, Quaternion rotation, Color? tint = null)
     {
-        GameObject instance = Instantiate(prefab, position, rotation, transform);
-        ParticleSystem ps = instance.GetComponent<ParticleSystem>();
-        if (tint.HasValue && ps != null)
-        {
-            ParticleSystem.MainModule main = ps.main;
-            main.startColor = tint.Value;
-        }
-        float lifetime = ps != null ? ps.main.duration + ps.main.startLifetime.constantMax : 2f;
-
-        yield return new WaitForSeconds(lifetime);
-
-        if (instance != null) Destroy(instance);
+        GameObject instance = VfxHelper.Spawn(prefab, position, rotation, transform, tint);
+        yield return VfxHelper.DestroyAfterLifetime(instance);
     }
 }

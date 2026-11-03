@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2fecb887b6ebe4e7efbd030c5cacaa7, type: 3}
+  m_Name: Burst_Test
+  m_EditorClassIdentifier: Assembly-CSharp::TargetBurstCue
+  prefab: {fileID: 5100941364825399842, guid: 8b318a7b3f13e7948a60613b8b96153b, type: 3}
+  duration: 0.3
+  socketId: 
+  useTint: 1
+  tint: {r: 1, g: 0.6, b: 0.2, a: 1}
+  spawnOffset: {x: 0, y: 0, z: 0}
+  spawnEuler: {x: 0, y: 0, z: 0}
+  targets: 1
+  hitOnSpawn: 1
+  hitDelay: 0

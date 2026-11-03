@@ -10,7 +10,6 @@ public class GraveDefenseCard : Card
         dragDropTarget = DragDropTarget.Self;
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.Shield,
             dmg = 0,
             targetlogic = TargetLogic.self,

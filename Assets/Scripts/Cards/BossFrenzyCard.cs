@@ -12,11 +12,9 @@ public class BossFrenzyCard : Card
         Name = "BossFrenzyCard";
         Cost = 0;
         type = CardType.Attack;
-        user = User.Enemy;
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Damage,
             dmg = damage,
             targetlogic = TargetLogic.AllEnemiesInRange,

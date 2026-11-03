@@ -13,7 +13,6 @@ public class WeakenDrawCard : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.ApplyStatus,
             dmg = 0,
             targetlogic = TargetLogic.LowestHP, // 적 AI가 쓸 경우의 대상 선택 기준(플레이어는 드롭으로 지정)
@@ -23,8 +22,8 @@ public class WeakenDrawCard : Card
             statusPower = 2,
             animTrigger = "ApplyStatus",
         });
-        effects.Add(new CardEffect { requiredMode = Board.BoardMode.Inspect, type = EffectType.Draw, dmg = 1, targetlogic = TargetLogic.self });
-        effects.Add(new CardEffect { requiredMode = Board.BoardMode.Inspect, type = EffectType.Draw, dmg = 1, targetlogic = TargetLogic.self });
+        effects.Add(new CardEffect { type = EffectType.Draw, dmg = 1, targetlogic = TargetLogic.self });
+        effects.Add(new CardEffect { type = EffectType.Draw, dmg = 1, targetlogic = TargetLogic.self });
     }
 
     public override CardRarity Rarity => CardRarity.Rare;

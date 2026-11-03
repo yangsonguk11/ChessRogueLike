@@ -11,26 +11,27 @@ public partial class Board
         Button button2script = GetButtonScript(pos2);
 
         Piece movingPiece = button1script.GetPieceScript();
-        if (movingPiece != null && movingPiece.teamID == 0)
-            movingPiece.movedThisTurn = true;
-
-        if (button1script.GetPiece() != null)
+        if (movingPiece != null)
         {
+            bool moved = false;
             GameObject piece2 = button2script.GetPiece();
             if (piece2)
             {
-                Piece p1 = button1script.GetPiece().GetComponent<Piece>();
                 Piece p2 = piece2.GetComponent<Piece>();
-                // 아군 충돌이거나 이동공격 도착 칸이 없으면(MoveAttack false) 이동 실패 — 시전자는 원래 칸에 남는다
-                if (p1.teamID != p2.teamID && !(cardEffect?.noMoveAttack ?? false))
-                    MoveAttack(p1, p2, button1script, button2script, cardEffect);
+                // 아군 충돌이거나 이동공격 도착 칸이 없으면(도달 불가 — MoveAttack false) 이 이동 효과는 스킵 —
+                // 시전자는 원래 칸에 남고 movedThisTurn도 켜지지 않는다. 카드의 남은 효과는 그대로 진행된다.
+                if (movingPiece.teamID != p2.teamID && !(cardEffect?.noMoveAttack ?? false))
+                    moved = MoveAttack(movingPiece, p2, button1script, button2script, cardEffect);
             }
             else
             {
                 GameObject movingObj = ApplyMoveOccupancy(button1script, button2script);
                 motionQueue.Enqueue(MovePieceWithAnim(movingObj, button1script, button2script, 1f, cardEffect?.animTrigger, cardEffect));
                 StartMotionQueue();
+                moved = true;
             }
+            if (moved && movingPiece.teamID == 0)
+                movingPiece.movedThisTurn = true;
         }
 
         ClearSelectedButton();
@@ -38,7 +39,7 @@ public partial class Board
         button2script.SelectedFalse();
     }
 
-    // 이동공격 도착 칸을 찾지 못하면(후보 전부 막힘) false를 반환해 호출부가 일반 이동 실패와 동일하게 처리하게 함.
+    // 이동공격 도착 칸을 찾지 못하면(도달 불가) false를 반환해 호출부가 이 이동 효과를 스킵하게 함.
     bool MoveAttack(Piece pScript1, Piece pScript2, Button bScript1, Button bScript2, CardEffect cardEffect = null)
     {
         Vector2Int adjacentPos = GetAdjacentLocation(bScript1.GetLocation(), bScript2.GetLocation());
@@ -105,13 +106,13 @@ public partial class Board
         // 공격 범위 표시용 — TriggerAnimCor가 기준 칸(anchor)·방향(attackDir) 스냅샷으로 회전해서 보여준다.
         CardEffect attackRangeEffect = new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Damage,
             dmg = dmg,
             targetlogic = TargetLogic.AllEnemiesInRange,
             effectRange = attacker.MoveAttackRangeInfoSO,
             areaTargetMode = AreaTargetMode.Directional8,
             animTrigger = attackTrigger,
+            vfx = cardEffect?.vfx, // 이동공격의 이펙트는 이동 카드 효과에 적힌 것
         };
 
         // 맞을 대상: [0]이 주 대상, 나머지는 moveAttackRange 내 다른 적(스플래시). 로직이 동기라 타격 사이에 위치가
@@ -167,36 +168,39 @@ public partial class Board
         }
 
         // 대상 반응: 1타면 대상별 Hit/Die + 그 타의 extra, 다중 타격이면 대상마다 MultiHitReactionCor.
-        // 모두 공격자 애니메이션의 실제 타격 프레임(Animation Event)에 맞춰 PlayCasterAndTargetReaction이 동시에 시작한다.
-        var targetCoroutines = new List<IEnumerator>();
+        // 공격자 애니메이션의 실제 타격 프레임(Animation Event)에 맞춰 시작한다 — 이펙트가 없으면 동시에, 있으면 이펙트가 정한 순간에 대상별로.
+        ActionImpact impact = CreateImpact(attacker, attackRangeEffect, anchor, attackDir);
+        impact.primaryCell = impactPos;
         for (int t = 0; t < targets.Count; t++)
         {
             Piece p = targets[t].piece;
             bool died = hpLeft[t] <= 0;
+            var reactions = new List<IEnumerator>();
             if (hitCount <= 1)
             {
-                targetCoroutines.Add(TriggerAnimCor(p, died ? "Die" : "Hit", 0.3f, false));
-                targetCoroutines.AddRange(hitExtras[t][0]);
-                if (died) targetCoroutines.Add(p.PieceDeathSound());
+                reactions.Add(TriggerAnimCor(p, died ? "Die" : "Hit", 0.3f, false));
+                reactions.AddRange(hitExtras[t][0]);
+                if (died) reactions.Add(p.PieceDeathSound());
             }
             else
             {
-                targetCoroutines.Add(MultiHitReactionCor(p, hitExtras[t], hitCount, died));
+                reactions.Add(MultiHitReactionCor(p, hitExtras[t], hitCount, died));
             }
+            impact.AddHit(p, targets[t].pos, reactions);
         }
 
-        // 시전자 자신에게 걸리는 보너스(실드/회복)도 같은 타격 프레임에 맞춰 같이 재생되도록 합류시킨다.
+        // 시전자 자신에게 걸리는 보너스(실드/회복)도 같은 타격 프레임(첫 피격)에 맞춰 같이 재생되도록 합류시킨다.
         if (currentActiveCard != null && currentActiveCard.shieldOnMoveAttack && currentActiveCard.moveAttackShieldAmount > 0)
         {
             int shieldAfter = attacker.GetShield(currentActiveCard.moveAttackShieldAmount);
-            targetCoroutines.Add(attacker.ShieldText(currentActiveCard.moveAttackShieldAmount));
-            targetCoroutines.Add(attacker.ShieldVisualOn(shieldAfter));
+            impact.common.Add(attacker.ShieldText(currentActiveCard.moveAttackShieldAmount));
+            impact.common.Add(attacker.ShieldVisualOn(shieldAfter));
         }
         // 대상마다 취약 등으로 실제 피해가 다를 수 있으므로 대상별·타별 dealt를 합산한 만큼 한 번에 회복한다.
         if (cardEffect != null && cardEffect.healOnHit && totalDealt > 0)
         {
             int healed = attacker.GetHeal(totalDealt);
-            targetCoroutines.Add(attacker.HealText(healed));
+            impact.common.Add(attacker.HealText(healed));
         }
         Button defenderButton = GetButtonScript(impactPos);
         // 소모된 다음 이동공격 버프는 공격자가 다가가기 직전(이동이 없으면 공격 직전)에 버프마다 텍스트를 따로 큐에 넣어
@@ -211,7 +215,7 @@ public partial class Board
         // 이동 스텝(PieceMoveCor)이 이동 방향으로 회전을 덮어써버리므로, 공격 애니메이션이 재생되기
         // 직전(이동 완료 후)에 공격자/피격자를 다시 서로 마주보게 회전시킨다.
         motionQueue.Enqueue(RotateForMoveAttack(attacker, defender, attackerPos, defenderButton));
-        motionQueue.Enqueue(PlayCasterAndTargetReaction(attacker, attackTrigger, Parallel(targetCoroutines.ToArray()), attackRangeEffect,
+        motionQueue.Enqueue(PlayCasterAndTargetReaction(attacker, attackTrigger, impact, attackRangeEffect,
             originPos: anchor, directionOverride: attackDir));
 
         // 실제 도착 위치: 실제 이동공격으로 주 대상을 처치했으면 그 칸까지 계속 전진, 아니면(생존·판정 공격) 지금 칸.
@@ -271,12 +275,12 @@ public partial class Board
     }
 
     // ChainMoveAttackBuff처럼 Piece.OnMoveAttackPerformed를 구독하는 컴포넌트의 공용 진입점.
-    // attacker 기준 이동범위(GetMoveableButton) 내에서 excludePos(이동공격의 피격자 칸)를 제외한 적 중
+    // attacker 기준 이동범위(GetMovementRange) 내에서 excludePos(이동공격의 피격자 칸)를 제외한 적 중
     // 체력이 가장 낮은 적(도발 우선)을 같은 피해로 공격한다. 그런 적이 없으면 피격자가 살아 있을 때 그 피격자를 한 번 더 공격한다.
     public void TryChainMoveAttack(Piece attacker, Vector2Int attackerFinalPos, Vector2Int excludePos, int dmg)
     {
         // animTrigger를 반드시 채워서 넘긴다 — cardEffect가 null(또는 animTrigger 없음)이면 공격자가
-        // 아무 트리거도 재생하지 않아 WaitAnimationEventThenRun이 OnAnimationEvent를 영영 못 받고
+        // 아무 트리거도 재생하지 않아 RunImpactCor가 OnAnimationEvent를 영영 못 받고
         // AnimationEventFallbackTimeout(1.2초)만큼 그냥 멈췄다가 데미지 텍스트/피격 반응이 뜬다.
         // type은 Damage로 둔다 — 기본값(Move)이면 도발 판정(CanEffectReach)이 이동 착지 칸까지 따진다.
         CardEffect chainEffect = new CardEffect { type = EffectType.Damage, animTrigger = "Attack" };
@@ -284,7 +288,7 @@ public partial class Board
         // 다른 적이 여럿이면 LowestHP 카드와 같은 기준(도발 우선 → 체력 최저)으로 고른다.
         int targetTeam = attacker.teamID == 0 ? 1 : 0;
         var candidates = new List<Vector2Int>();
-        foreach (Vector2Int offset in attacker.GetMoveableButton())
+        foreach (Vector2Int offset in attacker.GetMovementRange())
         {
             Vector2Int pos = attackerFinalPos + offset;
             if (pos == excludePos) continue;
@@ -370,8 +374,8 @@ public partial class Board
     // 피해/상태이상/흡혈은 타격마다 따로 적용하고, 연출은 시전자 애니메이션 1회 + 피격 반응 hitCount회(MultiHitReactionCor)로 묶는다.
     void AttackPiece(Vector2Int pos1, Vector2Int pos2, int dmg, CardEffect cardEffect = null, int hitCount = 1)
     {
-        // pos1 == pos2: 자기 자신에게 거는 Damage 효과(예: StatusEffectType.TurnDamageStart/End의 DoT 틱 —
-        // CreateStatusEffect가 targetlogic=self로 만든 턴 효과를 효과 큐가 시전자 칸에서 실행). 캐스터와 피격자가 같은
+        // pos1 == pos2: 자기 자신에게 거는 Damage 효과(예: onTurnEffect가 targetlogic=self Damage인 턴 효과를
+        // 효과 큐가 시전자 칸에서 실행). 캐스터와 피격자가 같은
         // 기물이므로 회전/공격 애니메이션 없이 피격자의 Hit/Die 반응만 재생한다. 공격이 아니므로 비공격 피해로 처리한다
         // (피격 시 유물·타격음 없음 — 독·화상 틱과 같은 규칙).
         if (pos1 == pos2)
@@ -409,14 +413,24 @@ public partial class Board
         {
             // 피격자가 없는 헛스윙: 시전자 공격 애니메이션만 재생하고 실제 효과는 적용하지 않음 (카드는 정상 소모됨)
             // 회전은 TriggerAnimCor에 넘기는 attackTargetPos를 통해 PlayAttackPunchFallback이 처리한다.
-            motionQueue.Enqueue(TriggerAnimCor(pScript1, cardEffect?.animTrigger, cardEffect: cardEffect, attackTargetPos: pos2));
+            // 카드에 이펙트가 있으면 빈 대상 칸에 이펙트만 낸다(피격 없음).
+            ActionImpact whiff = CreateImpact(pScript1, cardEffect);
+            if (whiff.cue != null)
+            {
+                whiff.primaryCell = pos2;
+                motionQueue.Enqueue(PlayCasterAndTargetReaction(pScript1, cardEffect?.animTrigger, whiff, cardEffect, attackTargetPos: pos2));
+            }
+            else
+                motionQueue.Enqueue(TriggerAnimCor(pScript1, cardEffect?.animTrigger, cardEffect: cardEffect, attackTargetPos: pos2));
             StartMotionQueue();
             return;
         }
 
         // 타격마다 피해/상태이상/흡혈을 적용하고 그 타의 반응(extra)을 모은다. 대상이 죽으면 남은 타격은 없다 —
         // 예전엔 타격마다 AttackPiece를 따로 불러 죽은 뒤 호출이 헛스윙 분기로 빠졌는데, 그 역할을 hpLeft > 0 조건이 대신한다.
+        // 흡혈 회복 텍스트: 1타면 시전자 반응(casterExtra — 피격 순간에 함께), 다중 타격이면 그 타의 반응에 넣어 타마다 표시한다.
         var hitExtras = new List<List<IEnumerator>>();
+        var casterExtra = new List<IEnumerator>();
         int hpLeft = 1;
         for (int i = 0; i < Mathf.Max(1, hitCount) && hpLeft > 0; i++)
         {
@@ -424,7 +438,7 @@ public partial class Board
             if (cardEffect != null && cardEffect.healOnHit && dealt > 0)
             {
                 int healed = pScript1.GetHeal(dealt);
-                extra.Add(pScript1.HealText(healed));
+                (hitCount <= 1 ? casterExtra : extra).Add(pScript1.HealText(healed));
             }
             hitExtras.Add(extra);
         }
@@ -433,10 +447,14 @@ public partial class Board
         pScript1.transform.rotation = Quaternion.LookRotation(GetButtonScript(pos2).Piecelocation - GetButtonScript(pos1).Piecelocation);
 
         if (hitCount <= 1)
-            motionQueue.Enqueue(PieceAttackCor(pScript1, pScript2, cardEffect?.animTrigger, hpLeft <= 0 ? "Die" : "Hit", cardEffect, hitExtras[0]));
+            motionQueue.Enqueue(PieceAttackCor(pScript1, pScript2, pos2, cardEffect?.animTrigger, hpLeft <= 0 ? "Die" : "Hit", cardEffect, hitExtras[0], casterExtra));
         else
-            motionQueue.Enqueue(PlayCasterAndTargetReaction(pScript1, cardEffect?.animTrigger,
-                MultiHitReactionCor(pScript2, hitExtras, hitCount, hpLeft <= 0), cardEffect));
+        {
+            ActionImpact impact = CreateImpact(pScript1, cardEffect);
+            impact.primaryCell = pos2;
+            impact.AddHit(pScript2, pos2, new[] { MultiHitReactionCor(pScript2, hitExtras, hitCount, hpLeft <= 0) });
+            motionQueue.Enqueue(PlayCasterAndTargetReaction(pScript1, cardEffect?.animTrigger, impact, cardEffect));
+        }
         if (hpLeft <= 0)
         {
             ClearDeadPieceOccupancy(pos2, pScript2);
@@ -473,7 +491,7 @@ public partial class Board
     }
 
     // 피격자 반응(Hit/Die + DamageText)만 재생 — 캐스터=피격자라 별도 캐스터 애니메이션은 없음.
-    // 자해(카드)와 독·화상 틱(Board.EnqueueTeamStatusTicks)이 쓴다. 공격이 아니므로 비공격 피해 — 피격 시 유물·타격음 없음.
+    // 자해(카드)와 독·화상 틱(Board.EnqueueTeamStatusEffects)이 쓴다. 공격이 아니므로 비공격 피해 — 피격 시 유물·타격음 없음.
     void SelfDamagePiece(Vector2Int casterPos, int dmg)
     {
         if (casterPos.x < 0 || casterPos.y < 0) return;
@@ -511,8 +529,9 @@ public partial class Board
             casterButton.GetPiece().transform.rotation = Quaternion.LookRotation(GetButtonScript(targets[0]).Piecelocation - casterButton.Piecelocation);
 
         int totalHeal = 0;
-        var hitTargets = new List<(Piece piece, bool died)>();
-        var textCoroutines = new List<IEnumerator>();
+        // 대상별 반응(데미지·상태이상 텍스트)은 대상마다 따로 모은다 — 이펙트가 대상별로 피격 순간을 정할 수 있게.
+        var hitTargets = new List<(Piece piece, Vector2Int cell, bool died, List<IEnumerator> extra)>();
+        var casterExtra = new List<IEnumerator>();
         var deathCoroutines = new List<IEnumerator>();
 
         foreach (Vector2Int pos in targets)
@@ -523,13 +542,13 @@ public partial class Board
             var (dealt, hpLeft) = ApplyAttackDamage(p, dmg);
             p.transform.rotation = Quaternion.LookRotation(casterButton.Piecelocation - GetButtonScript(pos).Piecelocation);
             bool died = hpLeft <= 0;
-            hitTargets.Add((p, died));
-            textCoroutines.Add(p.DamageText(dealt));
+            var extra = new List<IEnumerator> { p.DamageText(dealt) };
             IEnumerator passive = ApplyOnHitPassives(caster, p, hpBefore, hpLeft);
-            if (passive != null) textCoroutines.Add(passive);
+            if (passive != null) extra.Add(passive);
             StatusEffect areaStatusEffect = ApplyStatusEffect(p, cardEffect); // 즉시 적용
             if (areaStatusEffect != null)
-                textCoroutines.Add(p.StatusTextReaction(areaStatusEffect.DisplayName, areaStatusEffect.IsBuff, areaStatusEffect.EffectColor));
+                extra.Add(p.StatusTextReaction(areaStatusEffect.DisplayName, areaStatusEffect.IsBuff, areaStatusEffect.EffectColor));
+            hitTargets.Add((p, pos, died, extra));
             if (died)
             {
                 ClearDeadPieceOccupancy(pos, p);
@@ -543,10 +562,10 @@ public partial class Board
         if (totalHeal > 0 && caster != null)
         {
             int healed = caster.GetHeal(totalHeal);
-            textCoroutines.Add(caster.HealText(healed));
+            casterExtra.Add(caster.HealText(healed));
         }
 
-        motionQueue.Enqueue(PieceAreaAttackCor(caster, hitTargets, cardEffect?.animTrigger, cardEffect, textCoroutines, rangeOrigin));
+        motionQueue.Enqueue(PieceAreaAttackCor(caster, hitTargets, cardEffect?.animTrigger, cardEffect, casterExtra, rangeOrigin));
         foreach (var d in deathCoroutines)
             motionQueue.Enqueue(d);
 
@@ -561,8 +580,7 @@ public partial class Board
     {
         if (targets.Count == 0) return;
 
-        var hitTargets = new List<(Piece piece, bool died)>();
-        var textCoroutines = new List<IEnumerator>();
+        var hitTargets = new List<(Piece piece, Vector2Int cell, bool died, List<IEnumerator> extra)>();
         var deathCoroutines = new List<IEnumerator>();
 
         foreach (Vector2Int pos in targets)
@@ -572,11 +590,11 @@ public partial class Board
             int hpLeft = p.GetDamage(dmg, isAttack: false);
             if (p.teamID == 0) playerDamagedThisTurn = true;
             bool died = hpLeft <= 0;
-            hitTargets.Add((p, died));
-            textCoroutines.Add(p.DamageText(dmg, isAttack: false));
+            var extra = new List<IEnumerator> { p.DamageText(dmg, isAttack: false) };
             StatusEffect areaStatusEffect = ApplyStatusEffect(p, cardEffect); // 즉시 적용
             if (areaStatusEffect != null)
-                textCoroutines.Add(p.StatusTextReaction(areaStatusEffect.DisplayName, areaStatusEffect.IsBuff, areaStatusEffect.EffectColor));
+                extra.Add(p.StatusTextReaction(areaStatusEffect.DisplayName, areaStatusEffect.IsBuff, areaStatusEffect.EffectColor));
+            hitTargets.Add((p, pos, died, extra));
             if (died)
             {
                 ClearDeadPieceOccupancy(pos, p);
@@ -584,7 +602,7 @@ public partial class Board
             }
         }
 
-        motionQueue.Enqueue(PieceAreaAttackCor(null, hitTargets, cardEffect?.animTrigger, cardEffect, textCoroutines));
+        motionQueue.Enqueue(PieceAreaAttackCor(null, hitTargets, cardEffect?.animTrigger, cardEffect));
         foreach (var d in deathCoroutines)
             motionQueue.Enqueue(d);
 

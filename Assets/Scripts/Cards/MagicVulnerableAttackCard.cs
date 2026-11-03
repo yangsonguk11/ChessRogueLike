@@ -11,7 +11,6 @@ public class MagicVulnerableAttackCard : Card
         dragDropTarget = DragDropTarget.Enemy;
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.Damage,
             dmg = 2,
             hitCount = 3,
@@ -22,7 +21,6 @@ public class MagicVulnerableAttackCard : Card
         });
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.ApplyStatus,
             dmg = 0,
             targetlogic = TargetLogic.LowestHP,

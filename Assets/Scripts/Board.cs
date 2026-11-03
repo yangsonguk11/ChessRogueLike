@@ -51,16 +51,6 @@ public partial class Board : MonoBehaviour
         }
     }
 
-    public enum BoardMode
-    {
-        Inspect,
-        command,
-        targeting,
-        cardSelecting   // 카드 선택 패널 대기 중
-    }
-
-    public BoardMode boardmode;
-
     private void Awake()
     {
         instance = this;
@@ -362,7 +352,7 @@ public partial class Board : MonoBehaviour
         Piece pieceScript = piece.GetComponent<Piece>();
         pieceScript.pieceDataIndex = dataIndex;
         pieceScript.SetPieceData(data);
-        // 카드 밖(대화) 합류라 큐에 모인 스폰 시 효과를 바로 처리한다 — NPC 대화는 Inspect 모드에서만 열려 진행 중인 카드가 없다.
+        // 카드 밖(대화) 합류라 큐에 모인 스폰 시 효과를 바로 처리한다 — NPC 대화는 카드를 쓰는 중이 아닐 때만 열려 진행 중인 카드가 없다.
         if (!IsEventLevel) RunEffects();
         return true;
     }

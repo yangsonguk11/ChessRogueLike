@@ -13,11 +13,9 @@ public class EnemyAreaImmobilizeCard : Card
         Name = "EnemyAreaImmobilizeCard";
         Cost = 0;
         type = CardType.Skill;
-        user = User.Enemy;
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.ApplyStatus,
             dmg = 0,
             targetlogic = TargetLogic.AllEnemiesInRange,

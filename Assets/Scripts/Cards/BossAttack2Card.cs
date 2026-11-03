@@ -12,7 +12,6 @@ public class BossAttack2Card : Card
         type = CardType.Attack;
         CardEffect cf = new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Damage,
             dmg = 5,
             targetlogic = TargetLogic.AllEnemiesInRange,

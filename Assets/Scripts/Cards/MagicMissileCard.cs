@@ -12,7 +12,6 @@ public class MagicMissileCard : Card
         exileOnUse = true;
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.Damage,
             dmg = 6,
             targetlogic = TargetLogic.NearestEnemy,

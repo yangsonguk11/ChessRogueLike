@@ -12,14 +12,12 @@ public class LethalChargeCard : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Move,
             dmg = 0,
             targetlogic = TargetLogic.NearestEnemy,
             animTrigger = "Move",
             onKillEffect = new CardEffect
             {
-                requiredMode = Board.BoardMode.Inspect,
                 type = EffectType.RestoreEnergy,
                 dmg = 2,
                 targetlogic = TargetLogic.self,

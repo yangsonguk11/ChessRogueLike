@@ -11,7 +11,6 @@ public class AreaAttackCard : Card
         dragDropTarget = DragDropTarget.AnyTile; // 범위 공격: 특정 기물이 아니라 발동 기준점(칸)을 지정
         CardEffect cf = new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Damage,
             dmg = 2,
             targetlogic = TargetLogic.AllEnemiesInRange,

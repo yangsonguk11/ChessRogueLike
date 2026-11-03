@@ -14,11 +14,9 @@ public class EnemyAddCardCard : Card
         Name = "EnemyAddCardCard";
         Cost = 0;
         type = CardType.Skill;
-        user = User.Enemy;
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.AddCard,
             addCardID = addCardID,
             addCardZone = addCardZone,

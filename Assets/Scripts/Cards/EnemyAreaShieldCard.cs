@@ -13,11 +13,9 @@ public class EnemyAreaShieldCard : Card
         Name = "EnemyAreaShieldCard";
         Cost = 0;
         type = CardType.Skill;
-        user = User.Enemy;
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Shield,
             dmg = shieldAmount,
             targetlogic = TargetLogic.AllAlliesInRange,

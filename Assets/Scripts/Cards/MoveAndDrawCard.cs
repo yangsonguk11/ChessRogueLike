@@ -12,7 +12,6 @@ public class MoveAndDrawCard : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Move,
             dmg = 0,
             targetlogic = TargetLogic.NearestEnemy,
@@ -22,7 +21,6 @@ public class MoveAndDrawCard : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.Draw,
             dmg = 1,
             targetlogic = TargetLogic.self,

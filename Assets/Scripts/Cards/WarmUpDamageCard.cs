@@ -12,17 +12,16 @@ public class WarmUpDamageCard : Card
 
         effects.Add(new CardEffect // 1번째: self 타겟 — OnSelectBoard가 즉시 실행
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.ColDamageUp,
             dmg = 3,
             targetlogic = TargetLogic.self,
             animTrigger = "Buff",
         });
-        effects.Add(new CardEffect // 2번째: 위치 불필요 — Inspect라 자동 연쇄
+        effects.Add(new CardEffect // 2번째: self 타겟 — 후속 효과라 시전자 재선택(OnSelectBoard)으로 자동 연쇄
         {
-            requiredMode = Board.BoardMode.Inspect,
             type = EffectType.ReduceCost,
             dmg = 1,
+            targetlogic = TargetLogic.self,
         });
     }
 

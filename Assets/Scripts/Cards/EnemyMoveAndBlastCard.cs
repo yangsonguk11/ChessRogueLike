@@ -13,11 +13,9 @@ public class EnemyMoveAndBlastCard : Card
         Name = "EnemyMoveAndBlastCard";
         Cost = 0;
         type = CardType.Attack;
-        user = User.Enemy;
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Move,
             dmg = 0,
             targetlogic = TargetLogic.NearestEnemy,
@@ -26,7 +24,6 @@ public class EnemyMoveAndBlastCard : Card
         });
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Damage,
             dmg = damage,
             targetlogic = TargetLogic.AllEnemiesInRange,

@@ -13,7 +13,6 @@ public class AreaHealCard : Card
 
         CardEffect cf = new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Heal,
             dmg = 5,
             targetlogic = TargetLogic.AllAlliesInRange,

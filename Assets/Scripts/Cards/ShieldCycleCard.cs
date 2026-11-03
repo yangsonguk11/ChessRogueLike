@@ -12,7 +12,6 @@ public class ShieldCycleCard : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.Shield,
             dmg = 3,
             targetlogic = TargetLogic.self,
@@ -22,7 +21,6 @@ public class ShieldCycleCard : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.Inspect,
             type = EffectType.HandToDeckTop,
             dmg = 1,
             targetlogic = TargetLogic.self,

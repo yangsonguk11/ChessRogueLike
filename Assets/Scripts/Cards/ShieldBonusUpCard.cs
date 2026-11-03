@@ -12,7 +12,6 @@ public class ShieldBonusUpCard : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.ShieldBonusUp,
             dmg = 1,
             targetlogic = TargetLogic.self,

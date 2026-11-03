@@ -15,7 +15,6 @@ public class BossAttack3Card : Card
 
         CardEffect damage = new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Damage,
             dmg = 5,
             targetlogic = TargetLogic.AllEnemiesInRange,
@@ -23,10 +22,9 @@ public class BossAttack3Card : Card
             areaTargetMode = AreaTargetMode.Fixed,
             animTrigger = "AreaAttack",
         };
-        // BoardMode.command + TargetLogic.self → ResolveEnemyTarget returns selectedButton (boss pos)
+        // TargetLogic.self → ResolveEnemyTarget returns selectedButton (boss pos)
         CardEffect shield = new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Shield,
             dmg = shieldAmount,
             targetlogic = TargetLogic.self,

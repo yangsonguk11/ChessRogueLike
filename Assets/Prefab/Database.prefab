@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 5845322441005520208}
   - component: {fileID: 6601234567890123456}
   - component: {fileID: 4417305829163548271}
+  - component: {fileID: 7391046628195530417}
   m_Layer: 0
   m_Name: Database
   m_TagString: Untagged
@@ -130,8 +131,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PieceDatabase
   PiecePrefabs:
-  - {fileID: 782353561853643713, guid: a880e1da517670843aadc5015f2e2d9a, type: 3}
   - {fileID: 107724, guid: 1bae5e056ac375b46a1158f8b09b1f7f, type: 3}
+  - {fileID: 107724, guid: a352b264d90975a24ea4fb31d2e3be93, type: 3}
   - {fileID: 2961803386712819093, guid: 5987a34a765db874dba26aa478b09d26, type: 3}
   - {fileID: 100000, guid: b0550000000000000000000000000008, type: 3}
   - {fileID: 138226, guid: dc15f517405996445b9c4c84c99842fc, type: 3}
@@ -141,7 +142,6 @@ MonoBehaviour:
   - {fileID: 103078, guid: 06c93dae46e74fa45b6ba2a08b84fdb6, type: 3}
   - {fileID: 107724, guid: b57705c0d641acc4a965848aa55a559c, type: 3}
   - {fileID: 782353561853643713, guid: 1e2f9fa52bd911b43b209afee9d2901a, type: 3}
-  - {fileID: 782353561853643713, guid: 6a6c48e1d114a5c4984a048439daaf0a, type: 3}
   - {fileID: 107724, guid: 288ffe79da9047618ff26d038d0c483e, type: 3}
   - {fileID: 107724, guid: 61001da72b3f411b8f9a345d75ce07b4, type: 3}
   - {fileID: 100000, guid: b0551000000000000000000000000031, type: 3}
@@ -185,7 +185,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelDatabase
   floorPools:
   - levels:
-    - {fileID: 11400000, guid: 19387901c67acba43a1c093a9bdcb7e8, type: 2}
+    - {fileID: 11400000, guid: d564be8c8e84a494d8475bc69cc69160, type: 2}
   - levels:
     - {fileID: 11400000, guid: d564be8c8e84a494d8475bc69cc69160, type: 2}
     - {fileID: 11400000, guid: 68c64e4cbabc4dafb2dd1d424b06c12f, type: 2}
@@ -247,3 +247,20 @@ MonoBehaviour:
   iconPrefabs:
   - {fileID: 1978758920600075269, guid: b622b54d4f2790b4ca7a95c57d15db08, type: 3}
   - {fileID: 1978758920600075269, guid: b037770ab04f4b75921757b034009557, type: 3}
+--- !u!114 &7391046628195530417
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1924541253940516919}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 367f495781b088ae41fbac3db0d9c9b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VfxDatabase
+  cues:
+  - {fileID: 11400000, guid: 6ef19cfe70c85af959864fbebbf5c129, type: 2}
+  - {fileID: 11400000, guid: 40cc5b80d1de3d18067dc934c38820ce, type: 2}
+  - {fileID: 11400000, guid: c87052140d07a521cc64b037f5e7cbcb, type: 2}
+  - {fileID: 11400000, guid: f1c449c4bff068e0d973d199465e812f, type: 2}

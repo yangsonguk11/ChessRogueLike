@@ -11,7 +11,6 @@ public class AreaShieldCard : Card
         dragDropTarget = DragDropTarget.AnyTile; // 범위 방어: 특정 기물이 아니라 발동 기준점(칸)을 지정
         CardEffect cf = new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Shield,
             dmg = 3,
             targetlogic = TargetLogic.AllAlliesInRange,

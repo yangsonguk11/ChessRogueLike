@@ -102,7 +102,7 @@ MonoBehaviour:
     currentFloor: 0
     currentNodeX: 0
     visitedNodeX: 
-  basicPieceinfo: {fileID: 11400000, guid: 9b16472a2e113a741a3e068e3f9f8357, type: 2}
+  basicPieceinfo: {fileID: 11400000, guid: 042a7cc1d50ce5f4aacf437f5a1249ba, type: 2}
   summonerPieceinfo: {fileID: 11400000, guid: 81e61663c3eb4dbc97f312cba795d569, type: 2}
   startingGold: 100
 --- !u!114 &5920589633985616568

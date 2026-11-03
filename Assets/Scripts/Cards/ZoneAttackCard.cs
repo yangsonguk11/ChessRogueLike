@@ -18,7 +18,6 @@ public class ZoneAttackCard : Card
 
         CardEffect cf = new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.Damage,
             dmg = 5,
             targetlogic = TargetLogic.AllPiecesInRange,
@@ -27,6 +26,7 @@ public class ZoneAttackCard : Card
             targetingRange = targetRange,
             targetingUsesMovement = useMovement,
             animTrigger = "AreaAttack",
+            vfx = "Lightning_Test", // 임시 테스트 이펙트(아트 교체 전)
             noRangeLimit = true,
             ignoreCasterColDamageBonus = true,
         };

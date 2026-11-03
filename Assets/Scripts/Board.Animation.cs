@@ -16,6 +16,12 @@ public partial class Board
             StartCoroutine(ProcessQueue());
     }
 
+    // 보드 칸의 월드 좌표(기물이 서는 자리) — 공격 이펙트(VfxHelper.CellPosition)가 쓴다.
+    public Vector3 CellWorldPosition(Vector2Int cell)
+    {
+        return GetButtonScript(cell).Piecelocation;
+    }
+
     // CardCanvas 등 다른 컴포넌트가 자신의 코루틴을 motionQueue에 직접 넣고 싶을 때 쓰는 얇은 래퍼
     // (motionQueue/StartMotionQueue는 private). 예: DrawCard의 배치 드로우 연출이 같은 카드효과가
     // 먼저 큐에 넣은 보드 애니메이션 뒤로 순서를 맞추기 위해 사용.
@@ -105,9 +111,13 @@ public partial class Board
 
     const float AnimationEventFallbackTimeout = 1.2f; // 이벤트가 아직 안 심어진 클립을 위한 안전장치
 
+    const float CueTimeoutMargin = 1f; // 이펙트가 예상 시간(AttackVfxCue.EstimateDuration)보다 이만큼 더 걸리면 멈춘 것으로 보고 행동을 끝낸다
+
     // 시전자(caster) 애니메이션을 재생하면서, 시전자 클립에 심어둔 Animation Event(OnAnimationEvent)가
     // 호출되는 순간 targetReaction(대상이 하는 행동 — Hit/Die/Heal/Shield 애니메이션 + 텍스트/파티클 등)을
     // 시작한다. 공격/힐/실드/버프 등 시전자-대상 애니메이션을 갖는 모든 Piece*Cor가 이 함수 하나를 공유한다.
+    // 이 시그니처는 대상 구분 없는 반응 하나를 ActionImpact.common으로 감싼다 — 대상별 피격 타이밍이 필요한 공격은
+    // ActionImpact를 직접 받는 아래 오버로드를 쓴다.
     // originPos/directionOverride는 TriggerAnimCor의 범위 표시 기준 — 시전자 칸이 아닌 곳을 기준으로 보여줄 때만 넘긴다
     // (이동공격의 도착 칸, MouseCentered 범위의 중심 칸 등). 안 넘기면 호출 시점의 시전자 위치·currentHoverDirection.
     // iterator가 아닌 일반 메서드인 이유: 본문이 바로 실행돼야 TriggerAnimCor가 범위 칸을 "효과 처리(enqueue) 시점"에
@@ -115,47 +125,112 @@ public partial class Board
     IEnumerator PlayCasterAndTargetReaction(Piece caster, string casterTrigger, IEnumerator targetReaction, CardEffect cardEffect = null,
         Vector2Int? originPos = null, Vector2Int? directionOverride = null)
     {
-        return Parallel(
-            TriggerAnimCor(caster, casterTrigger, cardEffect: cardEffect, originPos: originPos, directionOverride: directionOverride),
-            WaitAnimationEventThenRun(caster, targetReaction));
+        ActionImpact impact = CreateImpact(caster, cardEffect, originPos, directionOverride);
+        impact.common.Add(targetReaction);
+        return PlayCasterAndTargetReaction(caster, casterTrigger, impact, cardEffect, originPos, directionOverride);
     }
 
-    // caster.OnAnimationEvent()가 호출될 때까지 기다렸다가 targetReaction을 실행하고 완료까지 대기.
+    // 시전자 애니메이션 + 행동 연출 컨텍스트(대상별 반응·이펙트) 재생. attackTargetPos는 헛스윙처럼 회전 없이 호출되는
+    // 공격의 펀치 폴백 방향(TriggerAnimCor 참고).
+    IEnumerator PlayCasterAndTargetReaction(Piece caster, string casterTrigger, ActionImpact impact, CardEffect cardEffect = null,
+        Vector2Int? originPos = null, Vector2Int? directionOverride = null, Vector2Int? attackTargetPos = null)
+    {
+        return Parallel(
+            TriggerAnimCor(caster, casterTrigger, cardEffect: cardEffect, attackTargetPos: attackTargetPos, originPos: originPos,
+                directionOverride: directionOverride, holdDisplayFor: impact),
+            RunImpactCor(impact));
+    }
+
+    // 행동 연출 컨텍스트를 만든다(효과 처리 시점). 카드 효과에 이펙트(CardEffect.vfx)가 있으면 Cue와 이펙트가 쓸 범위 칸을 채운다 —
+    // 범위 칸은 범위 표시와 같은 값(ResolveAnimRangeCells)이라 같은 이유로 지금 계산해 둔다.
+    // 시전자가 없는 전역 효과는 기다릴 타격 시점이 없으므로 이펙트도 없다.
+    ActionImpact CreateImpact(Piece caster, CardEffect cardEffect, Vector2Int? originPos = null, Vector2Int? directionOverride = null)
+    {
+        IVfxDatabase vfxDb = VfxDatabase.instance;
+        var impact = new ActionImpact(this) { caster = caster };
+        if (caster != null && vfxDb != null && !string.IsNullOrEmpty(cardEffect?.vfx))
+            impact.cue = vfxDb.GetCue(cardEffect.vfx);
+        if (impact.cue != null)
+            impact.areaCells.AddRange(ResolveAnimRangeCells(caster, cardEffect, originPos, directionOverride));
+        return impact;
+    }
+
+    // 시전자의 타격 시점(caster.OnAnimationEvent)까지 기다렸다가 반응을 시작하고 완료까지 대기.
     // 이벤트가 아직 안 심어진 클립이면 AnimationEventFallbackTimeout만큼만 기다리다 강제로 넘어간다
     // (기존과 비슷하게 "곧바로 시작"하는 타이밍으로 자연히 폴백됨 — 클립별로 점진적으로 이벤트를 추가해도 안전).
-    IEnumerator WaitAnimationEventThenRun(Piece caster, IEnumerator targetReaction)
+    // 타격 시점에 이펙트가 없으면 모든 반응을 한꺼번에 시작하고, 있으면 이펙트를 시작해 대상별 피격을 이펙트에 맡긴다
+    // (번개가 떨어진 칸만 피격 등). 이펙트가 끝나면(또는 멈춰서 시간 제한에 걸리면) 남은 반응을 전부 시작한다.
+    IEnumerator RunImpactCor(ActionImpact impact)
     {
         // 캐스터 없이 즉시발동하는 효과(AreaAttackPiece 등)는 기다릴 애니메이션 자체가 없으므로 바로 실행.
-        if (caster == null)
+        Piece caster = impact.caster;
+        if (caster != null)
         {
-            yield return targetReaction;
-            yield break;
+            caster.animationEventFired = false;
+            float t = 0f;
+            while (!caster.animationEventFired && t < AnimationEventFallbackTimeout)
+            {
+                t += Time.deltaTime;
+                yield return null;
+            }
         }
 
-        caster.animationEventFired = false;
-        float t = 0f;
-        while (!caster.animationEventFired && t < AnimationEventFallbackTimeout)
+        AttackVfxCue cue = impact.cue;
+        // 이펙트가 피격을 발사하지 않거나(장식용) 피격 대상이 없는 행동(힐·버프 등)은 지금 반응을 시작하고 이펙트는 함께 재생만 한다.
+        if (cue == null || !cue.FiresHits || impact.hits.Count == 0)
+            impact.TriggerAll();
+        if (cue != null)
         {
-            t += Time.deltaTime;
-            yield return null;
+            StartCoroutine(PlayCueCor(cue, impact));
+            float limit = cue.EstimateDuration(impact) + CueTimeoutMargin;
+            float t = 0f;
+            while (impact.activeCues > 0 && t < limit)
+            {
+                t += Time.deltaTime;
+                yield return null;
+            }
         }
-        yield return targetReaction;
+
+        impact.TriggerAll();
+        yield return impact.WaitStartedReactions();
+        impact.finished = true;
+    }
+
+    IEnumerator PlayCueCor(AttackVfxCue cue, ActionImpact impact)
+    {
+        impact.activeCues++;
+        try
+        {
+            yield return cue.Play(impact);
+        }
+        finally
+        {
+            impact.activeCues--;
+        }
     }
 
     // 공격자/피격자의 TriggerAnim을 extra(데미지 텍스트 등)와 함께 재생하고 전부 끝나야 종료(motionQueue가 다음으로 넘어감).
+    // targetExtra는 피격자 반응(데미지·상태이상 텍스트), casterExtra는 시전자 자신 반응(흡혈 회복) — 이펙트가 피격 순간을
+    // 대상별로 정할 때 시전자 반응이 대상에 묶이지 않게 나눠 받는다.
     // 아래 Piece*Cor들은 PlayCasterAndTargetReaction과 같은 이유로 iterator가 아닌 일반 메서드다(범위 칸을 enqueue 시점에 계산).
-    IEnumerator PieceAttackCor(Piece attacker, Piece defender, string attackTrigger, string hitOrDieTrigger, CardEffect cardEffect = null, List<IEnumerator> extra = null)
+    IEnumerator PieceAttackCor(Piece attacker, Piece defender, Vector2Int defenderCell, string attackTrigger, string hitOrDieTrigger,
+        CardEffect cardEffect, List<IEnumerator> targetExtra, List<IEnumerator> casterExtra)
     {
         var targetCoroutines = new List<IEnumerator> { TriggerAnimCor(defender, hitOrDieTrigger, 0.3f, false) };
-        // "Die" 트리거와 같은 시점(캐스터 OnAnimationEvent)에 사망 사운드도 함께 재생 — DeathCor는
+        // "Die" 트리거와 같은 시점(피격 순간)에 사망 사운드도 함께 재생 — DeathCor는
         // 그 뒤 오브젝트 파괴(1초 대기 후 Destroy)만 담당하도록 역할이 나뉘어 있다.
         if (hitOrDieTrigger == "Die") targetCoroutines.Add(defender.PieceDeathSound());
-        if (extra != null) targetCoroutines.AddRange(extra);
-        return PlayCasterAndTargetReaction(attacker, attackTrigger, Parallel(targetCoroutines.ToArray()), cardEffect);
+        if (targetExtra != null) targetCoroutines.AddRange(targetExtra);
+
+        ActionImpact impact = CreateImpact(attacker, cardEffect);
+        impact.primaryCell = defenderCell;
+        impact.AddHit(defender, defenderCell, targetCoroutines);
+        if (casterExtra != null) impact.common.AddRange(casterExtra);
+        return PlayCasterAndTargetReaction(attacker, attackTrigger, impact, cardEffect);
     }
 
-    // 다중 타격(AttackPiece의 hitCount > 1) 피격 반응 — PlayCasterAndTargetReaction의 targetReaction으로 넘겨 시전자
-    // 애니메이션 1회의 타격 시점에 시작한다. 1타 피격 반응과 같은 총 시간(window) 안에 hitCount개의 칸을 균등 간격으로 두고,
+    // 다중 타격(AttackPiece의 hitCount > 1) 피격 반응 — 그 대상의 HitReaction 하나로 넘겨 시전자
+    // 애니메이션 1회의 타격 시점(이펙트가 있으면 이펙트가 그 대상을 피격시키는 순간)에 시작한다. 1타 피격 반응과 같은 총 시간(window) 안에 hitCount개의 칸을 균등 간격으로 두고,
     // 칸마다 그 타의 반응(PieceAttackCor와 같은 구성: Hit/Die + extra)을 발사만 하고 기다리지 않는다 — 다음 타의 Hit 트리거가
     // 앞선 Hit를 끊고 처음부터 다시 재생하므로(PieceAnimator의 Any State→Hit가 자기 자신으로 즉시 전환) Hit 초반부만 반복된다.
     // hitExtras는 실제로 들어간 타격만 담고 있어 처치 이후 칸은 비어 있고, died면 마지막으로 들어간 타가 Die다.
@@ -222,18 +297,23 @@ public partial class Board
         return PlayCasterAndTargetReaction(healer, cardEffect?.animTrigger, Parallel(targetCoroutines.ToArray()), cardEffect);
     }
 
-    // 시전자 + 여러 대상의 TriggerAnim을 extra와 함께 한꺼번에 재생 (AreaAttack/AreaHeal/AreaShield 공용 패턴).
+    // 시전자 + 여러 대상의 TriggerAnim을 대상별 extra(데미지·상태이상 텍스트)와 함께 재생. 이펙트가 없으면 타격 시점에 한꺼번에,
+    // 있으면 이펙트가 정한 순간에 대상별로 시작한다. casterExtra는 시전자 자신 반응(흡혈 회복) — 첫 피격 때 함께 시작.
     // rangeOrigin: 범위 표시 기준 칸 — MouseCentered처럼 시전자 칸이 아닌 곳이 범위 중심일 때 넘긴다(Board.ExecuteAreaEffect).
-    IEnumerator PieceAreaAttackCor(Piece caster, List<(Piece piece, bool died)> targets, string attackTrigger, CardEffect cardEffect = null, List<IEnumerator> extra = null, Vector2Int? rangeOrigin = null)
+    IEnumerator PieceAreaAttackCor(Piece caster, List<(Piece piece, Vector2Int cell, bool died, List<IEnumerator> extra)> targets, string attackTrigger,
+        CardEffect cardEffect = null, List<IEnumerator> casterExtra = null, Vector2Int? rangeOrigin = null)
     {
-        var targetCoroutines = new List<IEnumerator>();
-        foreach (var (piece, died) in targets)
+        ActionImpact impact = CreateImpact(caster, cardEffect, rangeOrigin);
+        impact.primaryCell = rangeOrigin ?? (targets.Count > 0 ? targets[0].cell : (Vector2Int?)null);
+        foreach (var (piece, cell, died, extra) in targets)
         {
-            targetCoroutines.Add(TriggerAnimCor(piece, died ? "Die" : "Hit", 0.3f, false));
-            if (died) targetCoroutines.Add(piece.PieceDeathSound());
+            var reactions = new List<IEnumerator> { TriggerAnimCor(piece, died ? "Die" : "Hit", 0.3f, false) };
+            if (died) reactions.Add(piece.PieceDeathSound());
+            if (extra != null) reactions.AddRange(extra);
+            impact.AddHit(piece, cell, reactions);
         }
-        if (extra != null) targetCoroutines.AddRange(extra);
-        return PlayCasterAndTargetReaction(caster, attackTrigger, Parallel(targetCoroutines.ToArray()), cardEffect, originPos: rangeOrigin);
+        if (casterExtra != null) impact.common.AddRange(casterExtra);
+        return PlayCasterAndTargetReaction(caster, attackTrigger, impact, cardEffect, originPos: rangeOrigin);
     }
 
     // targets는 이제 트리거 재생에 쓰이지 않지만(힐도 대상이 애니메이터 트리거를 갖지 않음),
@@ -266,10 +346,24 @@ public partial class Board
         if (button1 == button2 || piece == null) return Parallel();
         float actualDuration = ResolveMoveDuration(button1, button2, moveDuration);
         // 점유는 이미 도착 칸으로 옮겨져 있으므로, 시전자 초록 칸도 범위 기준과 같은 출발 칸으로 넘긴다.
-        return Parallel(
+        IEnumerator move = Parallel(
             PieceMoveCor(piece, button1, button2, moveDuration, bumpOnArrival),
             TriggerAnimCor(piece.GetComponent<Piece>(), animTrigger, actualDuration, cardEffect: cardEffect,
                 originPos: button1.GetLocation(), casterCell: button1.GetLocation()));
+        return RunSequentially(new List<IEnumerator> { move, EndMoveAnimCor(piece, animTrigger) });
+    }
+
+    // 이동 거리에 따라 이동 시간(1~1.6초)이 클립 길이와 달라, Move 상태는 반복 재생하다가 도착하는 순간 여기서 Idle로 돌린다.
+    // 컨트롤러의 Move → Idle 종료 시간 전환은 이 호출이 빠졌을 때를 위한 안전장치일 뿐이다.
+    IEnumerator EndMoveAnimCor(GameObject piece, string animTrigger)
+    {
+        if (piece == null || animTrigger != "Move") yield break; // 이동 중 다른 트리거(공격 등)를 쓰는 카드의 동작은 끊지 않는다
+        Animator animator = piece.GetComponent<Animator>();
+        if (animator == null || !animator.enabled || animator.runtimeAnimatorController == null) yield break;
+        bool inMove = animator.GetCurrentAnimatorStateInfo(0).IsName("Move")
+            || (animator.IsInTransition(0) && animator.GetNextAnimatorStateInfo(0).IsName("Move"));
+        if (inMove && animator.HasState(0, Animator.StringToHash("Idle")))
+            animator.CrossFadeInFixedTime("Idle", 0.1f);
     }
 
     // 여러 코루틴을 순서대로 하나씩 실행.
@@ -308,7 +402,8 @@ public partial class Board
     // casterCell은 초록 칸을 시전자의 현재(논리) 칸이 아닌 곳에 둘 때(이동 — 출발 칸) 넘긴다.
     // triggerName이 없거나 Animator/클립이 없으면 normalizedTime을 폴링하지 않고 fallbackDuration만큼만 대기
     // (animTrigger 없는 효과에도 그대로 호출해서 범위 표시용으로 쓸 수 있음).
-    IEnumerator TriggerAnimCor(Piece piece, string triggerName, float fallbackDuration = 0.3f, bool showRange = true, CardEffect cardEffect = null, Vector2Int? attackTargetPos = null, Vector2Int? originPos = null, Vector2Int? directionOverride = null, Vector2Int? casterCell = null)
+    // holdDisplayFor: 그 행동의 이펙트가 클립보다 길게 이어지면(번개 등) 이펙트가 끝날 때까지 범위 표시를 유지한다.
+    IEnumerator TriggerAnimCor(Piece piece, string triggerName, float fallbackDuration = 0.3f, bool showRange = true, CardEffect cardEffect = null, Vector2Int? attackTargetPos = null, Vector2Int? originPos = null, Vector2Int? directionOverride = null, Vector2Int? casterCell = null, ActionImpact holdDisplayFor = null)
     {
         ActionRangeDisplay display = showRange && piece != null
             ? new ActionRangeDisplay
@@ -318,15 +413,15 @@ public partial class Board
                 cells = ResolveAnimRangeCells(piece, cardEffect, originPos, directionOverride),
             }
             : null;
-        return PlayTriggerAnimCor(piece, triggerName, fallbackDuration, display, attackTargetPos);
+        return PlayTriggerAnimCor(piece, triggerName, fallbackDuration, display, attackTargetPos, holdDisplayFor);
     }
 
     // 행동 애니메이션 동안 보여줄 범위 칸(보드 안 절대 좌표).
     // - 아군 위치 고정 공격: 시전자 기준 오프셋이 아니라 잠가둔 절대 좌표.
     // - targetlogic이 self(Shield/Heal/Buff처럼 자기 자신 대상이라 범위 개념이 없는 효과): 표시하지 않음.
-    // - 그 외: 기준 칸(originPos, 없으면 시전자 현재 칸) + cardEffect.effectRange
-    //   (Directional4/8이면 directionOverride, 없으면 currentHoverDirection으로 회전). effectRange가 없으면
-    //   기물 기본 범위(GetMoveableButton)로 폴백하되, noRangeLimit 카드(보드 전체가 대상)는 폴백하지 않는다.
+    // - 그 외: 기준 칸(originPos, 없으면 시전자 현재 칸) + 효과 범위(CardEffect.GetRangeOffsets — effectRange, 비어 있으면
+    //   이동 범위. Directional4/8이면 directionOverride, 없으면 currentHoverDirection으로 회전). 단 effectRange 없는
+    //   noRangeLimit 카드(보드 전체가 대상)는 표시하지 않는다. 효과가 없으면 기물의 표시용 범위(GetMoveableButton).
     List<Vector2Int> ResolveAnimRangeCells(Piece piece, CardEffect cardEffect, Vector2Int? originPos, Vector2Int? directionOverride)
     {
         var cells = new List<Vector2Int>();
@@ -341,16 +436,17 @@ public partial class Board
         Vector2Int piecePos = originPos ?? FindPiecePos(piece);
         if (piecePos.x < 0) return cells;
 
-        List<Vector2Int> offsets = cardEffect?.effectRange?.GetAbleRange();
-        if (offsets != null && (cardEffect.areaTargetMode == AreaTargetMode.Directional4 || cardEffect.areaTargetMode == AreaTargetMode.Directional8))
+        if (cardEffect == null) return CellsInBoard(piecePos, piece.GetMoveableButton());
+        if (cardEffect.effectRange == null && cardEffect.noRangeLimit) return cells;
+
+        List<Vector2Int> offsets = cardEffect.GetRangeOffsets(piece);
+        if (cardEffect.areaTargetMode == AreaTargetMode.Directional4 || cardEffect.areaTargetMode == AreaTargetMode.Directional8)
             offsets = RotateOffsets(offsets, directionOverride ?? currentHoverDirection);
 
-        if (offsets == null && (cardEffect?.noRangeLimit ?? false)) return cells;
-
-        return CellsInBoard(piecePos, offsets ?? piece.GetMoveableButton());
+        return CellsInBoard(piecePos, offsets);
     }
 
-    IEnumerator PlayTriggerAnimCor(Piece piece, string triggerName, float fallbackDuration, ActionRangeDisplay display, Vector2Int? attackTargetPos)
+    IEnumerator PlayTriggerAnimCor(Piece piece, string triggerName, float fallbackDuration, ActionRangeDisplay display, Vector2Int? attackTargetPos, ActionImpact holdDisplayFor = null)
     {
         if (piece == null) yield break; // 큐에서 대기하는 동안 죽어서 파괴된 경우
 
@@ -363,6 +459,9 @@ public partial class Board
         float waitTime = fallbackDuration;
         Animator animator = piece.GetComponent<Animator>();
         bool hasWorkingAnimator = animator != null && animator.enabled && animator.runtimeAnimatorController != null;
+        // 소환 전용 동작(Summon State)이 없는 기물은 기존처럼 공격 동작(없으면 DOPunch)으로 소환한다.
+        if (triggerName == "Summon" && !(hasWorkingAnimator && animator.HasState(0, Animator.StringToHash("Summon"))))
+            triggerName = "Attack";
         // State 이름과 트리거 이름이 항상 같다는 이 프로젝트의 관례(아래 IsName(triggerName) 비교와 동일 전제)를
         // 이용해, SetTrigger를 부르기 전에 HasState로 즉시·동기적으로 실제 애니메이션 존재 여부를 확인한다.
         // length > 0.01f로 사후 추측하는 것보다 정확하고(짧은 클립이 폴링에 안 걸리는 경우 없음), Attack 폴백
@@ -406,6 +505,10 @@ public partial class Board
         else
             yield return new WaitForSeconds(waitTime);
 
+        if (holdDisplayFor != null)
+            while (holdDisplayFor.activeCues > 0 && !holdDisplayFor.finished)
+                yield return null;
+
         // 그 사이 다른 행동 표시로 바뀌었으면 건드리지 않는다.
         if (display != null && currentActionDisplay == display)
         {
@@ -420,7 +523,7 @@ public partial class Board
     // Animator가 없거나(대부분의 기물) 있어도 Attack/AreaAttack에 연결된 State가 없을 때 재생하는
     // DOPunch 기반 기본 공격 연출. DOPunchPosition(단일 진동 곡선) 대신 DOMove 2단으로 나눠서, 뻗는
     // 지점에 도달한 순간 정확히 OnAnimationEvent()를 걸 수 있게 한다 — bumpOnArrival과 동일한 이유
-    // (PieceMoveCor 참고). 이 호출이 WaitAnimationEventThenRun의 animationEventFired를 대신 켜주므로,
+    // (PieceMoveCor 참고). 이 호출이 RunImpactCor의 animationEventFired를 대신 켜주므로,
     // Animator 없는 기물도 AnimationEventFallbackTimeout(1.2초)을 다 기다리지 않고 피격 반응이 바로 이어진다.
     // targetPos: 실제 타겟이 있는 공격은 호출부가 이미 회전을 시켜놨지만(Board.Combat.cs), 헛스윙처럼
     // 회전 없이 호출되는 경로를 위한 안전장치 — 넘어오면 뻗기 전에 그 방향으로 먼저 회전시킨다.

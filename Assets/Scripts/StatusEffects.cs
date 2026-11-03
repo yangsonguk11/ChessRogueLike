@@ -15,9 +15,10 @@ public class PoisonEffect : StatusEffect
         this.damagePerTurn = damagePerTurn;
     }
 
-    // 실제 피해 적용은 Piece.TickStatusEffects가 같은 종류끼리 damagePerTurn을 합산한 값으로 Board가 효과 큐에서 한 번만 처리한다.
-    // 여기서는 지속시간만 감소시키면 되므로 base.OnTurnEnd 그대로 사용(override 불필요).
-    public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
+    // 비공격 자해(SelfDamage: 피격 시 유물·타격음 없음, 사망 처리 포함). 같은 종류끼리 합산해 한 번만 실행된다.
+    public override CardEffect TurnEffectAt(TurnPhase phase) =>
+        phase == TurnPhase.OwnTurnEnd ? new CardEffect { type = EffectType.SelfDamage, dmg = damagePerTurn, targetlogic = TargetLogic.self } : null;
+    public override bool SumsTurnEffect => true;
 }
 
 // 화상: 독보다 높은 피해의 DoT
@@ -34,8 +35,10 @@ public class BurningEffect : StatusEffect
         this.damagePerTurn = damagePerTurn;
     }
 
-    // 실제 피해 적용은 Piece.TickStatusEffects가 같은 종류끼리 damagePerTurn을 합산한 값으로 Board가 효과 큐에서 한 번만 처리한다.
-    public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
+    // 독과 같은 비공격 자해. 같은 종류끼리 합산해 한 번만 실행된다.
+    public override CardEffect TurnEffectAt(TurnPhase phase) =>
+        phase == TurnPhase.OwnTurnEnd ? new CardEffect { type = EffectType.SelfDamage, dmg = damagePerTurn, targetlogic = TargetLogic.self } : null;
+    public override bool SumsTurnEffect => true;
 }
 
 // 재생: 매 자기 턴 종료 시 회복
@@ -51,8 +54,10 @@ public class RegenEffect : StatusEffect
         this.healPerTurn = healPerTurn;
     }
 
-    // 실제 회복 적용은 Piece.TickStatusEffects가 같은 종류끼리 healPerTurn을 합산한 값으로 Board가 효과 큐에서 한 번만 처리한다.
-    public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
+    // 자기 회복(Heal). 같은 종류끼리 합산해 한 번만 실행된다.
+    public override CardEffect TurnEffectAt(TurnPhase phase) =>
+        phase == TurnPhase.OwnTurnEnd ? new CardEffect { type = EffectType.Heal, dmg = healPerTurn, targetlogic = TargetLogic.self } : null;
+    public override bool SumsTurnEffect => true;
 }
 
 // 기절: 행동 불가. 아군은 카드 사용 자체가 막히고, 적은 다음 행동이 StunnedCard로 바뀐다(Enemy.GetNextMove).
@@ -80,7 +85,7 @@ public class StunEffect : StatusEffect
     }
     public override void OnRemove(Piece piece)
     {
-        piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
+        base.OnRemove(piece);
         piece.SetAnimBool("Stun", false);
         piece.ActionText(); // 이 시점엔 이미 activeEffects에서 제거된 뒤라 IsStunned()가 정확히 false를 반환한다.
     }
@@ -103,7 +108,7 @@ public class StrengthenEffect : StatusEffect
     public override void OnRemove(Piece piece)
     {
         piece.colDamage -= bonusDamage;
-        piece.ShowStatusText(DisplayName + " 해제", false, EffectColor);
+        base.OnRemove(piece);
     }
 }
 
@@ -124,7 +129,6 @@ public class ThornEffect : StatusEffect
     {
         return returnDamage;
     }
-    public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
 }
 
 // 취약: attack/moveattack으로 받는 피해 +N. 독/화상/반격/자해 등 다른 경로의 피해는 증가하지 않는다
@@ -143,7 +147,6 @@ public class VulnerableEffect : StatusEffect
     }
 
     public override int IncomingAttackDamageBonus => bonusDamage;
-    public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
 }
 
 // 도발: 상대 진영이 공격/이동 대상을 고를 때, 사거리 안에 도발 기물이 있으면 그 기물을 우선한다
@@ -157,7 +160,6 @@ public class TauntEffect : StatusEffect
     {
         this.duration = duration;
     }
-    public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
 }
 
 // 이동 불가: 현재 게임플레이 미적용, 상태 표시만
@@ -171,7 +173,6 @@ public class MovementDisabledEffect : StatusEffect
     {
         this.duration = duration;
     }
-    public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
 }
 
 // 소멸 저주: 지속되는 동안 이 기물이 사용하는 카드는 버림 더미 대신 소멸 더미로 간다. 판정은 카드 로직이 시작되는 순간
@@ -191,7 +192,7 @@ public class ExileOnUseEffect : StatusEffect
     public override void OnApply(Piece piece) => CardCanvas.instance?.RefreshAllCardViews();
     public override void OnRemove(Piece piece)
     {
-        piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
+        base.OnRemove(piece);
         CardCanvas.instance?.RefreshAllCardViews();
     }
 }
@@ -208,7 +209,6 @@ public class BondEffect : StatusEffect
     {
         duration = -1;
     }
-    public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
 }
 
 // 상처 입히기: Boss-Berserker가 스폰 시 스스로 거는 영구 버프(BossWoundOnHitCard). 실제 처리는 Board.ApplyOnHitPassives —
@@ -225,7 +225,6 @@ public class WoundOnHitEffect : StatusEffect
     {
         this.duration = duration;
     }
-    public override void OnRemove(Piece piece) => piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
 }
 
 // 약화: colDamage 감소, 해제 시 원복
@@ -251,7 +250,7 @@ public class WeakenEffect : StatusEffect
     public override void OnRemove(Piece piece)
     {
         piece.colDamage += actualReduction;
-        piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
+        base.OnRemove(piece);
     }
 }
 
@@ -282,7 +281,7 @@ public abstract class NextMoveAttackEffect : StatusEffect
     // 턴 만료·디스펠로 사라질 때만 호출된다 — 이동공격으로 소모될 때는 Piece가 OnRemove 없이 빼고 "소모" 텍스트를 따로 띄운다.
     public override void OnRemove(Piece piece)
     {
-        piece.ShowStatusText(DisplayName + " 해제", !IsBuff, EffectColor);
+        base.OnRemove(piece);
         CardCanvas.instance?.RefreshAllCardViews();
     }
 }
@@ -340,7 +339,7 @@ public class NextMoveAttackStatusEffect : NextMoveAttackEffect
     static string InflictLabel(CardEffect e)
     {
         if (e == null) return "효과 없음";
-        string name = Board.CreateStatusEffect(e.statusEffectType, e.statusDuration, e.statusPower)?.DisplayName
+        string name = Board.CreateStatusEffect(e)?.DisplayName
             ?? e.statusEffectType.ToString();
         return e.statusDuration >= 0 ? $"{e.statusDuration}턴 {name}" : name;
     }

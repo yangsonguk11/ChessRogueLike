@@ -18,7 +18,6 @@ public class ZoneShieldCard : Card
 
         CardEffect cf = new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.Shield,
             dmg = 3,
             targetlogic = TargetLogic.AllPiecesInRange,

@@ -11,12 +11,11 @@ public class TauntCard : Card
         dragDropTarget = DragDropTarget.Self;
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.ApplyStatus,
             dmg = 0,
             targetlogic = TargetLogic.self,
             statusEffectType = StatusEffectType.Taunt,
-            statusDuration = -1, // 음수 = 영구 지속 (StatusEffect.OnTurnEnd 참고)
+            statusDuration = -1, // 음수 = 영구 지속 (StatusEffect.TickDuration 참고)
             animTrigger = "ApplyStatus",
         });
     }

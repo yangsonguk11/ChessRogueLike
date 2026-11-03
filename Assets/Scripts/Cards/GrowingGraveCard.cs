@@ -10,14 +10,13 @@ public class GrowingGraveCard : Card
         dragDropTarget = DragDropTarget.Self;
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
-            type = EffectType.ApplyTurnEffect,
+            type = EffectType.ApplyStatus,
+            statusEffectType = StatusEffectType.TurnEffect,
             targetlogic = TargetLogic.self,
             turnPhase = TurnPhase.OwnTurnStart,
-            turnDuration = -1, // 음수 = 영구 지속 (StatusEffect.OnTurnEnd 참고)
-            onTurnEndEffect = new CardEffect
+            statusDuration = -1, // 음수 = 영구 지속 (StatusEffect.TickDuration 참고)
+            onTurnEffect = new CardEffect
             {
-                requiredMode = Board.BoardMode.Inspect,
                 type = EffectType.AddGrave,
                 dmg = 1,
                 targetlogic = TargetLogic.self,
@@ -28,5 +27,5 @@ public class GrowingGraveCard : Card
     }
 
     public override CardRarity Rarity => CardRarity.Rare;
-    public override string EffectDescription => $"매 턴 시작 시 무덤을 {effects[0].onTurnEndEffect.dmg} 얻습니다.";
+    public override string EffectDescription => $"매 턴 시작 시 무덤을 {effects[0].onTurnEffect.dmg} 얻습니다.";
 }

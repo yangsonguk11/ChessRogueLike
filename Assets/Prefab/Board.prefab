@@ -58,7 +58,6 @@ MonoBehaviour:
   M: 7
   leveldata: {fileID: 11400000, guid: 19387901c67acba43a1c093a9bdcb7e8, type: 2}
   grid: {fileID: 0}
-  boardmode: 0
 --- !u!156049354 &6237715602432664278
 Grid:
   m_ObjectHideFlags: 0

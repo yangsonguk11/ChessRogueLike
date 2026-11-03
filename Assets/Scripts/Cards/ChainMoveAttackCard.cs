@@ -13,7 +13,6 @@ public class ChainMoveAttackCard : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.GrantChainMoveAttack,
             targetlogic = TargetLogic.self,
             animTrigger = "Buff",

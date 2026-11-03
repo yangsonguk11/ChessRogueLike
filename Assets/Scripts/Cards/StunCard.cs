@@ -9,7 +9,6 @@ public class StunCard : Card
         dragDropTarget = DragDropTarget.AnyPiece;
         CardEffect cf = new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.ApplyStatus,
             dmg = 0,
             targetlogic = TargetLogic.LowestHP,

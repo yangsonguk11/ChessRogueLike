@@ -86,7 +86,7 @@ public static class CardTooltipContent
             result.Add(new TooltipEntry { kind = TooltipEntry.Kind.Range, title = title, body = body });
         }
 
-        // 기물 이동 범위로 대상을 고르는 효과(이동, 범위 없는 대상 지정, targetingUsesMovement).
+        // 기물 이동 범위로 대상을 고르는 효과(effectRange가 비어 있는 이동·대상 지정, targetingUsesMovement).
         // owner(카드를 가진 기물)를 알 때만 그 기물 기준 격자로 보여 준다. 모르면(덱·버림·소멸 보기, 상점, 보상) 격자 없는
         // 빈 창이 되므로 띄우지 않는다 — 이동 효과는 용어 창 "이동"이 설명한다.
         void AddMoveRange(string title)
@@ -96,7 +96,7 @@ public static class CardTooltipContent
             result.Add(new TooltipEntry
             {
                 kind = TooltipEntry.Kind.Range, title = title,
-                grid = RangeGrid.FromOffsets(owner.GetMoveableButton(), RangeGrid.Cell.Caster),
+                grid = RangeGrid.FromOffsets(owner.GetMovementRange(), RangeGrid.Cell.Caster),
             });
         }
 
@@ -105,16 +105,15 @@ public static class CardTooltipContent
             if (effect == null || effect.useLastTarget || effect.pieceSelectCount > 0) continue;
 
             // 턴 효과는 감싼 효과의 범위(시전자 주변)를 보여 준다.
-            if (effect.type == EffectType.ApplyTurnEffect)
+            if (effect.statusEffectType == StatusEffectType.TurnEffect)
             {
-                CardEffect inner = effect.onTurnEndEffect;
+                CardEffect inner = effect.onTurnEffect;
                 if (inner != null && inner.effectRange != null && IsAreaLogic(inner.targetlogic))
                     AddGrid("효과 범위 (턴 효과)", inner.effectRange, RangeGrid.Cell.Caster);
                 continue;
             }
 
             if (effect.targetlogic == TargetLogic.self && effect.type != EffectType.Move) continue;
-            if (effect.requiredMode == Board.BoardMode.Inspect) continue;
 
             if (effect.areaTargetMode == AreaTargetMode.MouseCentered)
             {
@@ -139,7 +138,8 @@ public static class CardTooltipContent
                 continue;
             }
 
-            if (effect.type == EffectType.Move || effect.effectRange == null)
+            // effectRange가 비어 있으면 기물의 이동 범위가 효과 범위다(CardEffect.GetRangeOffsets).
+            if (effect.effectRange == null)
             {
                 AddMoveRange(effect.type == EffectType.Move ? "이동 범위" : "사거리");
                 continue;
@@ -151,6 +151,8 @@ public static class CardTooltipContent
                 AddGrid("효과 범위", effect.effectRange, RangeGrid.Cell.Caster);
             else if (effect.type == EffectType.Summon)
                 AddGrid("소환 범위", effect.effectRange, RangeGrid.Cell.Caster);
+            else if (effect.type == EffectType.Move)
+                AddGrid("이동 범위", effect.effectRange, RangeGrid.Cell.Caster);
             else
                 AddGrid("사거리", effect.effectRange, RangeGrid.Cell.Caster);
         }
@@ -189,7 +191,7 @@ public static class CardTooltipContent
             if (effect.graveCost > 0 || effect.consumeAllGrave) extra.Add("무덤");
             AddStatusTerm(effect, extra);
             AddStatusTerm(effect.onMoveAttackHitEffect, extra);
-            AddStatusTerm(effect.onTurnEndEffect, extra);
+            AddStatusTerm(effect.onTurnEffect, extra);
         }
         foreach (string term in extra)
         {

@@ -8,15 +8,13 @@ public class EnemyChargeCard : Card
         Name = "EnemyChargeCard";
         Cost = 0;
         type = CardType.Skill;
-        user = User.Enemy;
         dragDropTarget = DragDropTarget.Self;
 
-        // effectRange를 비워두면 Enemy.GetMoveableButton()이 이동 범위로 폴백해서, 이동하지 않는 카드인데도
-        // 예고에 이동 범위가 뜬다 — 인스펙터에 빈 RangeInfoSO(EmptyRangeInfo)를 넣어서 그 폴백을 막는다.
+        // 인스펙터에 빈 RangeInfoSO(EmptyRangeInfo)를 넣어 예고에 범위가 뜨지 않게 한다(자기 대상 효과는 effectRange를
+        // 비워 둬도 AutoPiece.GetMoveableButton이 범위를 표시하지 않는다).
         RangeInfoSO range = effectRange.Count > 0 ? effectRange[0] : null;
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Charge,
             dmg = 0,
             targetlogic = TargetLogic.self,

@@ -5,7 +5,7 @@ ChessRogueLike의 카드 전투는 "카드를 쓰면 무엇이, 어떤 순서로
 - 기준 커밋: `4595426` (2026-10-21)
 - 코드 링크의 줄 번호는 기준 커밋 기준이다.
 
-> **기준 커밋 이후 바뀐 점**: `cc4e035`(2026-10-25)에서 효과 실행 경로가 효과 큐 `pendingEffects` 하나로 통합됐다. 4장 표의 유물(`DrainRelicQueue`)·턴 지속 효과(`EnqueueScheduledEffect`·예약 효과 큐) 경로와 4장 끝의 상태이상 틱 예외(`Piece.ProcessStatusEffects`), 10장의 `EnqueueScheduledEffect` 규칙은 그 이전 구조다. 지금은 타이밍 효과(턴 시작/종료·전투 시작 유물, 턴 지속 효과, 독·화상·재생 틱)는 `EnqueueEffect`로 큐 뒤에, 반응 효과(처치 시·피격 시·소환 시·카드 사용 시 유물 등)는 `InsertEffectNext`로 큐 앞에 넣어 같은 큐로 처리한다. 카드 사용 시 유물은 카드 첫 효과 "직전"이 아니라 "직후"에 실행된다. 현재 구조는 [README.md](../README.md)의 "효과 큐 하나로 모든 효과를 처리한다"와 [Board.ScheduledEffects.cs](../Assets/Scripts/Board.ScheduledEffects.cs)를 본다.
+> **기준 커밋 이후 바뀐 점**: `cc4e035`(2026-10-25)에서 효과 실행 경로가 효과 큐 `pendingEffects` 하나로 통합됐다. 4장 표의 유물(`DrainRelicQueue`)·턴 지속 효과(`EnqueueScheduledEffect`·예약 효과 큐) 경로와 4장 끝의 상태이상 틱 예외(`Piece.ProcessStatusEffects`), 10장의 `EnqueueScheduledEffect` 규칙은 그 이전 구조다. 지금은 타이밍 효과(턴 시작/종료·전투 시작 유물, 턴 지속 효과, 독·화상·재생 틱)는 `EnqueueEffect`로 큐 뒤에, 반응 효과(처치 시·피격 시·소환 시·카드 사용 시 유물 등)는 `InsertEffectNext`로 큐 앞에 넣어 같은 큐로 처리한다. 카드 사용 시 유물은 카드 첫 효과 "직전"이 아니라 "직후"에 실행된다. 현재 구조는 [README.md](../README.md)의 "효과 큐 하나로 모든 효과를 처리한다"와 [Board.ScheduledEffects.cs](../Assets/Scripts/Board.ScheduledEffects.cs)를 본다. 이후 턴 효과(`TurnEffect`)와 상태이상도 통합돼, 둘 다 `ApplyStatus`로 걸고(`EffectType.ApplyTurnEffect` 삭제) 턴 타이밍 처리는 `Board.EnqueueTeamStatusEffects` 하나가 한다 — README의 "상태(상태이상·버프·턴 효과)는 한 가지 방식으로 처리한다"를 본다.
 
 ## 1. 요약
 
@@ -33,7 +33,7 @@ flowchart TD
     C --> D{"ProcessNextCardEffectStep<br/>다음 효과 확인"}
     D -- "큐가 비었음" --> Z["FinishCardUsage<br/>카드 정리"]
     D -- "적·자동 아군 카드" --> E["ProcessEnemyCardEffect<br/>TargetLogic으로 대상 자동 계산"]
-    D -- "플레이어 카드" --> F["requiredMode에 따라<br/>즉시 실행 / 보드 클릭 대기 / 카드 선택 패널"]
+    D -- "플레이어 카드" --> F["효과 내용에 따라<br/>카드 선택 패널 / 기물 선택 / 시전자 확정·보드 클릭 대기"]
     E --> G["ExecuteEffect"]
     F --> G
     G --> H["ApplyCardEffectNow<br/>EffectType별로 게임 상태를 즉시 확정"]
@@ -43,7 +43,7 @@ flowchart TD
 ```
 
 1. **사용 확정** — `Board.UseCard` [Board.CardEffect.cs:28-45](../Assets/Scripts/Board.CardEffect.cs#L28-L45): 이전 카드 상태를 초기화하고, `card.UseEffects`를 `effect with { caster = currentCardCaster }` 사본으로 효과 큐에 채운다.
-2. **큐 진행** — `ProcessNextCardEffectStep` [Board.CardEffect.cs:79-198](../Assets/Scripts/Board.CardEffect.cs#L79-L198): 다음 효과를 보고 진행 방식을 고른다. 시전자가 죽었으면 건너뛰고, 엔진이 끼워 넣은 효과(`executeOnCaster`)는 바로 실행하고, 무덤 비용이 부족하면 건너뛴다. 적 카드는 자동으로 대상을 정하고, 아군 카드는 `requiredMode`에 맞는 입력을 기다린다.
+2. **큐 진행** — `ProcessNextCardEffectStep` [Board.CardEffect.cs:79-198](../Assets/Scripts/Board.CardEffect.cs#L79-L198): 다음 효과를 보고 진행 방식을 고른다. 시전자가 죽었으면 건너뛰고, 엔진이 끼워 넣은 효과(`executeOnCaster`)는 바로 실행하고, 무덤 비용이 부족하면 건너뛴다. 적 카드는 자동으로 대상을 정하고, 아군 카드는 카드 선택 효과(`IsCardSelection`)면 카드 선택 패널, `pieceSelectCount`가 있으면 기물 선택, 그 외에는 시전자 확정(self 효과는 즉시 실행)·대상 클릭을 기다린다.
 3. **실행** — `ExecuteEffect` [Board.CardEffect.cs:513-536](../Assets/Scripts/Board.CardEffect.cs#L513-L536): 카드의 첫 효과일 때만 사용을 확정한다(`MarkCardEffectStarted` [539-558](../Assets/Scripts/Board.CardEffect.cs#L539-L558) — "카드 사용 시" 유물 발동, 에너지 차감, 이후 취소 불가). 이어서 대상이 사라졌는지 확인하고, 무덤을 지불한 뒤 `ApplyCardEffectNow`를 부른다.
 4. **적용** — `ApplyCardEffectNow` [Board.CardEffect.cs:591-833](../Assets/Scripts/Board.CardEffect.cs#L591-L833): 범위형 대상 규칙이면 `ExecuteAreaEffect`로, 아니면 `EffectType` switch로 분기한다. 게임 상태는 여기서 바로 바뀌고, 연출만 `motionQueue`에 들어간다.
 5. **종료** — `FinishCardUsage` [Board.CardEffect.cs:1224-1240](../Assets/Scripts/Board.CardEffect.cs#L1224-L1240).
@@ -96,7 +96,6 @@ flowchart TD
 ```csharp
 effects.Add(new CardEffect
 {
-    requiredMode = Board.BoardMode.targeting,
     type = EffectType.Damage,
     dmg = 2,
     hitCount = 3,
@@ -107,7 +106,6 @@ effects.Add(new CardEffect
 });
 effects.Add(new CardEffect
 {
-    requiredMode = Board.BoardMode.targeting,
     type = EffectType.ApplyStatus,
     targetlogic = TargetLogic.LowestHP,
     effectRange = effectRange[0],

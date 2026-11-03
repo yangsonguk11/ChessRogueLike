@@ -13,7 +13,6 @@ public class ColDamageUpCard : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.ColDamageUp,
             dmg = 2,
             targetlogic = TargetLogic.self,

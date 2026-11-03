@@ -246,6 +246,12 @@ public class CardCanvas : MonoBehaviour
             AnnouncementUI.instance?.Show("기절 상태입니다");
             return false;
         }
+        string casterReason = CasterRestrictionReason(card, activePiece);
+        if (casterReason != null)
+        {
+            AnnouncementUI.instance?.Show(casterReason);
+            return false;
+        }
         if ((isCardEffecting && nowusingCard == null) || !TurnManager.instance.IsPlayerActionable)
             return false;
         if (!card.CanUse())
@@ -307,7 +313,7 @@ public class CardCanvas : MonoBehaviour
     // self 효과가 앞에 있는 카드(ShieldMoveCard)는 self 효과가 실행된 뒤 다음 조준 효과가 클릭을 기다리고 있다가 이 칸으로 실행된다.
     void ConfirmAim(Card card, Vector2Int pos)
     {
-        board.UseCard(card);
+        board.UseCard(card, activePiece);
         board.ConfirmCasterOnDrop();
         if (nowusingCard != null)
             board.ButtonClicked(pos);
@@ -506,7 +512,7 @@ public class CardCanvas : MonoBehaviour
             Card card = rt.GetComponent<Card>();
             if (card == null) continue;
             bool canUse = playerTurn && !boardProcessing && !stunned && !card.IsUnplayable && card.Cost <= currentenergy && card.CanUse()
-                && card.HasGraveForFirstEffect(activePiece);
+                && card.HasGraveForFirstEffect(activePiece) && CasterRestrictionReason(card, activePiece) == null;
             rt.GetComponent<CanvasGroup>().interactable = canUse;
         }
     }
@@ -1338,20 +1344,14 @@ public class CardCanvas : MonoBehaviour
         // 이후 상호작용은 드롭 위치가 아니라 보드 클릭(HandlePieceSelectionClick)으로 진행된다.
         if (card.UseEffects[0].pieceSelectCount > 0)
         {
-            board.UseCard(card);
+            board.UseCard(card, activePiece);
             return;
         }
 
-        // 캐스터는 항상 카드를 낸 기물(activePiece)로 고정이므로, 어떤 카드든 실제로 뭔가 실행되기 전에
-        // 제일 먼저 캐스터 상태 제약을 검사한다. self 타겟 카드는 캐스터가 확정되는 순간 바로 실행되기
-        // 때문에, 이 체크가 그 뒤에 있으면 이미 늦는다 — 그래서 맨 앞으로 옮겨뒀다.
-        if (!CheckCasterStatusRestrictions(card))
-        {
-            CancelCardUsage();
-            return;
-        }
+        // 시전자 상태 제약(CasterRestrictionReason)은 카드를 집을 때(UseCard) 이미 검사했다 — 카드를 든 동안에는
+        // 다른 카드를 쓸 수 없어 시전자 상태가 바뀌지 않는다.
 
-        // 보드 밖에 놓으면(카드 종류 상관없이) 취소 — self/targeting/command 카드가 모두 공유하는 판정.
+        // 보드 밖에 놓으면(카드 종류 상관없이) 취소 — self/targeting 카드가 모두 공유하는 판정.
         Vector2Int boardPos = FindBoardPosAtScreen(screenPos);
         if (boardPos.x < 0)
         {
@@ -1361,16 +1361,9 @@ public class CardCanvas : MonoBehaviour
 
         if (!card.NeedsTargeting())
         {
-            if (card.dragDropTarget == DragDropTarget.Self)
-            {
-                // 드롭 = 사용 확정: 효과를 큐에 넣고 캐스터(카드 주인)를 확정하면 즉시 실행된다.
-                board.UseCard(card);
-                board.ConfirmCasterOnDrop();
-            }
-            else if (board.boardmode == Board.BoardMode.Inspect)
-            {
-                board.UseCard(card);
-            }
+            // 조준 없는 카드(Self 카드) — 드롭 = 사용 확정: 효과를 큐에 넣고 캐스터(카드 주인)를 확정하면 즉시 실행된다.
+            board.UseCard(card, activePiece);
+            board.ConfirmCasterOnDrop();
             return;
         }
 
@@ -1395,6 +1388,13 @@ public class CardCanvas : MonoBehaviour
             return;
         }
 
+        if (board.IsUnreachableDropPos(card, boardPos))
+        {
+            AnnouncementUI.instance?.Show("도달할 수 없습니다");
+            CancelCardUsage();
+            return;
+        }
+
         AudioManager.instance?.PlayCardTargetConfirm();
         CardDragArrow.instance?.Hide();
         // 카드가 아직 NowUsing 자리로 날아가는 중이면 도착한 뒤에 사용을 확정한다(CommitNowUsingCard의 도착 콜백).
@@ -1404,18 +1404,13 @@ public class CardCanvas : MonoBehaviour
             pendingFirstTarget = boardPos;
     }
 
-    // 캐스터는 항상 카드를 낸 기물(activePiece)이므로 드롭 위치와 무관하게 곧바로 검사할 수 있다.
-    bool CheckCasterStatusRestrictions(Card card)
+    // 시전자 상태 때문에 이 카드를 쓸 수 없으면 그 이유, 쓸 수 있으면 null. 카드를 집을 때(UseCard)와
+    // 손패 표시(UpdateCardInteractability)가 같이 쓴다 — 시전자는 항상 카드를 낸 기물(activePiece)이라 드롭 전에 판정할 수 있다.
+    static string CasterRestrictionReason(Card card, Piece caster)
     {
-        Piece caster = activePiece;
-        if (caster == null) return true;
-
-        if (card.requiresCasterNotMoved && caster.movedThisTurn)
-        {
-            AnnouncementUI.instance?.Show("이동 전에만 사용할 수 있습니다");
-            return false;
-        }
-        return true;
+        if (caster == null) return null;
+        if (card.requiresCasterNotMoved && caster.movedThisTurn) return "이동 전에만 사용할 수 있습니다";
+        return null;
     }
 
     Vector2Int FindBoardPosAtScreen(Vector2 screenPos)

@@ -12,12 +12,12 @@ public class MagicAttackCard : Card
         dragDropTarget = DragDropTarget.AnyPiece;
         CardEffect cf = new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.Damage,
             dmg = 10,
             targetlogic = TargetLogic.NearestEnemy,
             effectRange = effectRange[0],
             animTrigger = "Attack",
+            vfx = "Beam_Test", // 임시 테스트 이펙트(아트 교체 전)
             ignoreCasterColDamageBonus = true,
         };
         effects.Add(cf);

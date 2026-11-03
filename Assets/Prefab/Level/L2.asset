@@ -20,9 +20,9 @@ MonoBehaviour:
   - position: {x: 5, y: 3}
     name: 
   - position: {x: 2, y: 3}
-    name: Enemy-StrikerKnight
+    name: Enemy-Broom
   - position: {x: 1, y: 3}
-    name: Enemy-GrowingRook
+    name: Enemy-MobMagician
   levelType: 0
   eventType: 0
   eventObjectPosition: {x: 0, y: 0}

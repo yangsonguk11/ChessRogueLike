@@ -134,8 +134,9 @@ public partial class Board
         ClearUseEligibilityPreview();
         casterPiece = GetButtonScript(selectedButton).GetPieceScript();
         CardCanvas.instance?.RefreshAllCardViews();
-        // 자기 자신 대상 효과: 시전자 클릭 즉시 실행 (두 번째 클릭 불필요)
-        if (boardmode == BoardMode.targeting && pendingEffects.Count > 0 &&
+        // 자기 자신 대상 효과: 시전자 클릭 즉시 실행 (두 번째 클릭 불필요). 손패 카드만 — AI 행동 전 시전자 선택
+        // (TurnControl의 selectedButton 대입)은 ProcessEnemyCardEffect가 따로 처리한다.
+        if (IsHandCard && pendingEffects.Count > 0 &&
             pendingEffects.Peek().targetlogic == TargetLogic.self)
         {
             ExecuteEffect(pendingEffects.Dequeue(), selectedButton);
@@ -168,15 +169,16 @@ public partial class Board
             return;
         }
 
+        Piece caster = GetPieceAt(casterPos);
+
         if (currentEffect != null &&
-            currentEffect.type != EffectType.Move &&
             currentEffect.effectRange != null &&
             currentEffect.areaTargetMode != AreaTargetMode.Fixed)
         {
             if (currentEffect.targetingUsesMovement)
             {
                 // 캐릭터 이동 범위 내에서만 AoE 중심 선택 가능 (시각적 표시 O)
-                ShowMovableButtons(casterPos, GetButtonScript(casterPos).GetPiece(), null);
+                if (caster != null) AddMovableButtons(casterPos, caster.GetMovementRange());
             }
             else if (currentEffect.targetingRange != null)
             {
@@ -192,10 +194,9 @@ public partial class Board
             return;
         }
 
-        List<Vector2Int> effectRange = null;
-        if (currentEffect != null && currentEffect.type != EffectType.Move && currentEffect.effectRange != null)
-            effectRange = currentEffect.effectRange.GetAbleRange();
-        ShowMovableButtons(casterPos, GetButtonScript(casterPos).GetPiece(), effectRange);
+        // 효과의 범위(effectRange, 비어 있으면 이동 범위 — 이동 효과도 같다). 효과 없이 기물만 고른 경우는 표시용 범위.
+        if (caster != null)
+            AddMovableButtons(casterPos, currentEffect != null ? currentEffect.GetRangeOffsets(caster) : caster.GetMoveableButton());
 
         if (currentEffect != null && currentEffect.type == EffectType.Move && currentEffect.noMoveAttack)
             FilterEnemyOccupiedFromMovable(casterPos);
@@ -244,14 +245,6 @@ public partial class Board
                 selectedButtonMovable.Add(new Vector2Int(x, y));
         movableButtonsSilent = true;
         RefreshRangeDisplay();
-    }
-
-    void ShowMovableButtons(Vector2Int casterPos, GameObject p, List<Vector2Int> effectableButton = default)
-    {
-        if (p == null) return;
-
-        List<Vector2Int> list = effectableButton ?? p.GetComponent<Piece>().GetMoveableButton();
-        AddMovableButtons(casterPos, list);
     }
 
     void HideMovableButtons()
@@ -329,21 +322,19 @@ public partial class Board
         return nearest;
     }
 
-    // 이동공격 도착 위치 결정: location1(공격자) → location2(피격자) 방향 기준.
-    // - 상하좌우로 이미 붙어있으면 이동하지 않고 그 자리에서 공격 (location1 반환).
-    // - 그 외에는 피격자를 둘러싼 8칸 중 공격 방향에 맞는 3칸(직선/대각선 칸 + 옆 2칸)을 우선순위대로 시도해서
-    //   비어있는 첫 칸으로 이동. 대각선으로 딱 붙어있는 경우 첫 후보(직선 칸)가 공격자의 현재 위치와 같아져
-    //   자동으로 건너뛰어지므로 상하좌우 옆 칸 중 하나로만 이동하게 됨.
-    // - 후보가 모두 막혀있거나(다른 기물 점유) 보드 밖이면 (-1,-1)을 반환해 이동공격 자체가 불가능함을 알림
-    //   (호출부는 이를 일반 이동 실패와 동일하게 처리해야 함).
+    // 이동공격 도착 위치 결정: location1(공격자) → location2(피격자).
+    // - 후보: 피격자를 둘러싼 8칸 중 공격 방향에 맞는 기본 3칸(직선/대각선 칸 + 옆 2칸 — 공격자 이동 범위와 무관)과,
+    //   나머지 5칸 중 공격자 이동 범위(GetMovementRange) 안에 있는 칸.
+    // - 보드 안이고 비어 있는 칸(공격자 자기 칸은 비어 있는 것으로 침) 중 공격자와 가장 가까운 칸으로 간다.
+    //   거리가 같으면 기본 3칸 → 나머지 칸 순서. 공격자가 피격자에 붙어 있으면(상하좌우·대각) 자기 칸이 거리 0이라
+    //   이동하지 않고 그 자리에서 공격한다(location1 반환).
+    // - 쓸 수 있는 칸이 없으면 (-1,-1) = 도달 불가. 플레이어 카드는 놓을 때 막히고(IsUnreachableDropPos),
+    //   효과 처리 중이면 그 이동 효과만 스킵된다(MovePiece).
     Vector2Int GetAdjacentLocation(Vector2Int location1, Vector2Int location2)
     {
         Vector2Int delta = location2 - location1;
         int adx = Math.Abs(delta.x);
         int ady = Math.Abs(delta.y);
-
-        if ((adx == 1 && ady == 0) || (adx == 0 && ady == 1))
-            return location1;
 
         Vector2Int dir;
         if (adx == ady)
@@ -376,14 +367,33 @@ public partial class Board
             side2 = lineSquare - perp;
         }
 
-        foreach (Vector2Int candidate in new[] { lineSquare, side1, side2 })
+        var candidates = new List<Vector2Int> { lineSquare, side1, side2 };
+        Piece attacker = GetPieceAt(location1);
+        if (attacker != null)
         {
-            if (candidate == location1) continue; // 공격자가 이미 그 칸에 있으면 이동 후보로 치지 않음
-            if (candidate.x < 0 || candidate.x >= N || candidate.y < 0 || candidate.y >= M) continue;
-            if (GetPieceAt(candidate) == null) return candidate;
+            List<Vector2Int> moveRange = attacker.GetMovementRange();
+            foreach (Vector2Int offset in EightDirectionOffsets)
+            {
+                Vector2Int cell = location2 + offset;
+                if (!candidates.Contains(cell) && moveRange.Contains(cell - location1))
+                    candidates.Add(cell);
+            }
         }
 
-        return new Vector2Int(-1, -1); // 후보 칸이 모두 막혀있음: 이동공격 불가
+        Vector2Int best = new Vector2Int(-1, -1); // 쓸 수 있는 칸이 없으면 그대로 (-1,-1): 이동공격 불가
+        int bestDist = int.MaxValue;
+        foreach (Vector2Int candidate in candidates)
+        {
+            if (candidate.x < 0 || candidate.x >= N || candidate.y < 0 || candidate.y >= M) continue;
+            if (candidate != location1 && GetPieceAt(candidate) != null) continue;
+            int dist = (candidate - location1).sqrMagnitude;
+            if (dist < bestDist)
+            {
+                bestDist = dist;
+                best = candidate;
+            }
+        }
+        return best;
     }
 
     // teamID==1(적)이든 teamID==0 AutoPiece(자동행동 아군)든, 이동한 기물이 어느 위치 추적 리스트에

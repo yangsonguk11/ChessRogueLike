@@ -11,7 +11,6 @@ public class EnemyMoveAndColDamageUpCard : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Move,
             dmg = 0,
             targetlogic = TargetLogic.NearestEnemy,
@@ -21,7 +20,6 @@ public class EnemyMoveAndColDamageUpCard : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.ColDamageUp,
             dmg = 3,
             targetlogic = TargetLogic.self,

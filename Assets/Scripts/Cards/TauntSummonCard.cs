@@ -15,11 +15,10 @@ public class TauntSummonCard : Card
         exileOnUse = true;
         CardEffect cf = new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Summon,
             effectRange = effectRange[0],
             summonPieceInfo = pieceToSummon,
-            animTrigger = "Attack",
+            animTrigger = "Summon", // Summon State가 없는 기물은 Board.PlayTriggerAnimCor가 Attack으로 대체
         };
         effects.Add(cf);
     }

@@ -9,11 +9,11 @@ public class LoadMagicMissileCard : Card
         Name = "LoadMagicMissileCard";
         Cost = 0;
         type = CardType.Skill;
+        dragDropTarget = DragDropTarget.Self;
         for (int i = 0; i < 2; i++)
         {
             effects.Add(new CardEffect
             {
-                requiredMode = Board.BoardMode.Inspect,
                 type = EffectType.AddCard,
                 dmg = 0,
                 targetlogic = TargetLogic.self,

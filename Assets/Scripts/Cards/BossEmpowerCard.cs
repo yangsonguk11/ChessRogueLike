@@ -10,13 +10,11 @@ public class BossEmpowerCard : Card
         Name = "BossEmpowerCard";
         Cost = 0;
         type = CardType.Skill;
-        user = User.Enemy;
         dragDropTarget = DragDropTarget.Self;
 
-        // BoardMode.command + TargetLogic.self → ResolveEnemyTarget이 selectedButton(보스 자신)을 반환
+        // TargetLogic.self → ResolveEnemyTarget이 selectedButton(보스 자신)을 반환
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.ColDamageUp,
             dmg = amount,
             targetlogic = TargetLogic.self,

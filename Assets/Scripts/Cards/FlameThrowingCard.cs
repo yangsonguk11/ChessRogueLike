@@ -11,14 +11,13 @@ public class FlameThrowingCard : Card
         dragDropTarget = DragDropTarget.Self;
         CardEffect cf = new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
-            type = EffectType.ApplyTurnEffect,
+            type = EffectType.ApplyStatus,
+            statusEffectType = StatusEffectType.TurnEffect,
             dmg = 0,
             targetlogic = TargetLogic.self,
             animTrigger = "Buff",
-            onTurnEndEffect = new CardEffect
+            onTurnEffect = new CardEffect
             {
-                requiredMode = Board.BoardMode.Inspect,
                 type = EffectType.Damage,
                 dmg = 2,
                 targetlogic = TargetLogic.AllEnemiesInRange,
@@ -26,12 +25,12 @@ public class FlameThrowingCard : Card
                 animTrigger = "AreaAttack",
                 isBuff = true,
             },
-            turnDuration = 3,
+            statusDuration = 3,
         };
 
         effects.Add(cf);
     }
 
     public override string EffectDescription =>
-        $"턴 종료 시 주변에 {effects[0].onTurnEndEffect.dmg} 피해를 줍니다. ({effects[0].turnDuration}턴 지속)";
+        $"턴 종료 시 주변에 {effects[0].onTurnEffect.dmg} 피해를 줍니다. ({effects[0].statusDuration}턴 지속)";
 }

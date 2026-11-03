@@ -12,12 +12,12 @@ public class AttackCard : Card
         dragDropTarget = DragDropTarget.Enemy;
         CardEffect cf = new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Damage,
             dmg = 4,
             targetlogic = TargetLogic.LowestHP,
             effectRange = effectRange[0],
             animTrigger = "Attack",
+            vfx = "Burst_Test", // 대상 위치 이펙트 — 임시 테스트 이펙트(아트 교체 전)
         };
         effects.Add(cf);
     }

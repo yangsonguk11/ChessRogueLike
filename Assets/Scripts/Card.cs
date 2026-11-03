@@ -41,19 +41,31 @@ public static class CardTypeExtensions
     };
 }
 
-public enum User
-{
-    Ally,
-    Enemy
-}
-
+// 효과의 대상을 정하는 규칙. 두 갈래로 쓰인다.
+// - 단일 대상(NearestEnemy·LowestHP·self): AutoPiece(적·자동 아군)가 쓸 때 대상 칸을 자동으로 고르는 기준이다
+//   (Board.ResolveEnemyTarget). 손패 카드는 드롭·클릭한 칸이 대상이라 NearestEnemy·LowestHP는 무시되고,
+//   self만 "시전자가 정해지는 즉시 시전자 칸에서 실행"(Board.OnSelectBoard)으로 쓰인다.
+// - 범위(All*InRange): 누가 쓰든 ApplyCardEffectNow가 ExecuteAreaEffect로 보내, effectRange 안의 기물 중 해당 진영
+//   전원에게 적용한다. 진영은 시전자(CardEffect.caster) 기준이고, 범위 중심은 areaTargetMode가 정한다
+//   (Fixed·Directional은 시전자 칸, MouseCentered는 고른 칸).
+// AI 대상 선택에서 areaTargetMode가 Directional4/8이면 이 값보다 방향 계산이 먼저다. AI가 대상을 못 찾으면(-1) 그 효과는 건너뛴다.
 public enum TargetLogic
 {
+    // 효과 범위(CardEffect.GetRangeOffsets — effectRange, 비어 있으면 시전자 이동 범위) 안 상대 진영 기물 중 가장 가까운 기물.
+    // 도발 기물이 닿으면 그중에서 고르고, 이동공격 도착 칸이 없는(도달 불가) 기물은 이동 효과의 후보에서 뺀다. 후보가 없으면
+    // 가장 가까운 상대 쪽으로 다가가는 효과 범위 안 빈 칸, 그것도 없으면 시전자 칸 — 대상을 못 찾는 일이 없다(ResolveNearestEnemyTarget).
     NearestEnemy,
+    // 효과 범위(GetRangeOffsets) 안 상대 진영 기물 중 체력(hp)이 가장 낮은 기물(같으면 범위 오프셋 순서상 앞). 도발 기물이 닿으면
+    // 그중에서 고른다. 대상이 없으면 (-1,-1)이라 효과를 건너뛴다(ResolveLowestHPTarget).
     LowestHP,
+    // 시전자 자신. AI는 시전자 칸, 손패 카드는 targeting 모드에서 시전자가 정해지는 즉시 실행된다. 행동 연출 중 범위를
+    // 표시하지 않고(ResolveAnimRangeCells), dragDropTarget이 Self인 카드에서는 조준 효과로 치지 않는다(Card.AimEffectIndex).
     self,
+    // effectRange 안의 상대 진영(시전자와 다른 teamID) 기물 전원.
     AllEnemiesInRange,
+    // effectRange 안의 시전자와 같은 진영 기물 전원(범위에 중심 칸이 들어 있으면 시전자 자신도 포함).
     AllAlliesInRange,
+    // effectRange 안의 기물 전원(진영 무관).
     AllPiecesInRange
 }
 
@@ -88,8 +100,6 @@ public abstract class Card : MonoBehaviour, ISelectable
     [Tooltip("거의 모든 카드가 Awake()에서 직접 덮어씀 — 여기 채워도 대부분 무시됨(해당 카드 클래스의 Awake() 확인).")]
     public CardType type;
     public List<CardEffect> effects = new List<CardEffect>();
-    [Tooltip("필수 입력 — 코드가 거의 안 건드림(예외: Enemy 전용으로만 쓰는 일부 카드는 Awake()에서 User.Enemy로 직접 고정). 적이 자동으로 쓰게 하려면 여기서 Enemy로 바꿔야 함.")]
-    public User user;
     public bool shieldOnMoveAttack;
     public int moveAttackShieldAmount;
     public bool blocksMovementAfterUse;    // 사용 후 이번 턴 이동 불가
@@ -257,11 +267,10 @@ public abstract class Card : MonoBehaviour, ISelectable
         useEffects = moveIndex >= 0 ? effects.GetRange(0, moveIndex) : null;
     }
 
-    // 플레이어가 보드에서 대상을 골라야 하는 첫 효과의 인덱스(없으면 -1): 이번 사용 효과 중 처음 나오는 command/targeting 효과.
-    // 단, Self 카드의 self 효과는 드롭만으로 시전자에게 실행되므로 조준으로 치지 않는다.
+    // 플레이어가 보드에서 대상을 골라야 하는 첫 효과의 인덱스(없으면 -1): 이번 사용 효과 중 처음 나오는 효과.
+    // 단, Self 카드의 self 효과는 드롭만으로 시전자에게 실행되므로 조준으로 치지 않는다 — 조준 없는 카드는 Self 카드뿐이다.
     public int AimEffectIndex => UseEffects.FindIndex(e =>
-        (e.requiredMode == Board.BoardMode.command || e.requiredMode == Board.BoardMode.targeting)
-        && !(dragDropTarget == DragDropTarget.Self && e.targetlogic == TargetLogic.self));
+        !(dragDropTarget == DragDropTarget.Self && e.targetlogic == TargetLogic.self));
 
     // 조준 카드인지 — 잡으면 NowUsing 자리로 가고 화살표가 뜨며, 드롭한 칸이 첫 조준 효과의 대상이 된다.
     public bool NeedsTargeting() => AimEffectIndex >= 0;
@@ -594,12 +603,12 @@ public enum CardZone { Hand, Deck, Discard, Any, SavedDeck }
 /// <summary>코스트 변경 효과의 지속 시간</summary>
 public enum CostDuration { Permanent, ThisTurnOnly, OneUse }
 
-public enum EffectType { Move, Damage, Shield, Heal, SelfDamage, Draw, ApplyStatus, ApplyTurnEffect, ColDamageUp, BaseColDamageUp, ShieldBonusUp, BaseShieldBonusUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop, SelectAndDiscard, SelectAndChangeCost, SelectAndReturnToDeck, AddCard, RestoreEnergy, Cleanse, Charge, Stun, Summon, ReduceCost, GrantChainMoveAttack, GrantSummonColDamage, GrantSummonMaxHp, AddGrave }
+public enum EffectType { Move, Damage, Shield, Heal, SelfDamage, Draw, ApplyStatus, ColDamageUp, BaseColDamageUp, ShieldBonusUp, BaseShieldBonusUp, DiscardHand, ShuffleHandToDeck, ExileHand, HandToDeckTop, SelectAndDiscard, SelectAndChangeCost, SelectAndReturnToDeck, AddCard, RestoreEnergy, Cleanse, Charge, Stun, Summon, ReduceCost, GrantChainMoveAttack, GrantSummonColDamage, GrantSummonMaxHp, AddGrave }
 public record CardEffect
 {
-    public Board.BoardMode requiredMode { get; init; }
     public EffectType type { get; init; }
     public int dmg { get; init; }
+    // 효과가 닿는 칸(시전자 기준 오프셋). 비어 있으면 시전자의 이동 범위다 — 범위는 항상 GetRangeOffsets로 읽는다.
     public RangeInfoSO effectRange { get; init; }
     public TargetLogic targetlogic { get; init; }
     public AreaTargetMode areaTargetMode { get; init; } = AreaTargetMode.Fixed;
@@ -621,16 +630,18 @@ public record CardEffect
     public bool noMoveAttack { get; init; }               // true면 이동 시 충돌 공격 불가
     public bool healOnHit { get; init; }                  // true면 적중 시 입힌 피해만큼 시전자 회복 (일반 공격/이동공격 모두 적용). 입힌 피해 = 대상별 실제 적용 피해(취약 등 보정 포함, Board.ApplyAttackDamage의 dealt)
     public string animTrigger { get; init; }              // 효과 시전 시 재생할 Animator 트리거 (null이면 기본 코루틴 애니메이션 사용)
+    // 시전자 타격 시점(OnAnimationEvent)에 재생할 공격 이펙트 — VfxDatabase에 등록된 AttackVfxCue 에셋 이름. 비우면 이펙트 없이
+    // 모든 대상이 그 시점에 한꺼번에 피격한다. 이펙트가 있으면 피격 순간은 Cue가 정한다(번개가 떨어진 칸만 피격 등 — ActionImpact 참고).
+    public string vfx { get; init; }
 
-    // ApplyTurnEffect 타입에서 사용: 지정한 타이밍에 실행할 CardEffect와 지속 턴 수
-    public CardEffect onTurnEndEffect { get; init; }
-    public int turnDuration { get; init; }
+    // statusEffectType이 TurnEffect일 때 사용: 걸린 기물의 자기 턴 turnPhase마다 그 기물을 시전자로 실행할 CardEffect.
+    // 지속 턴 수는 statusDuration(음수 = 영구)이고, 지속시간도 같은 turnPhase에 줄어든다(TurnEffect.TickPhase).
+    public CardEffect onTurnEffect { get; init; }
     public TurnPhase turnPhase { get; init; } = TurnPhase.OwnTurnEnd;
 
-    // 이 CardEffect가 TurnEffect.cardEffect로 감싸질 때(= onTurnEndEffect로 쓰이거나, CreateStatusEffect의
-    // TurnDamageStart/End·TurnAoEDamageStart/End가 즉석으로 만드는 내부 CardEffect일 때) 그 상태가
-    // 버프인지 디버프인지를 미리 명시한다 — type만으로는 판단할 수 없음(예: Damage는 자기 자신 대상이면
-    // 디버프지만 적 대상이면 버프). TurnEffect.IsBuff가 이 값을 그대로 읽는다. 그 외의 곳에서는 안 쓰임.
+    // 이 CardEffect가 TurnEffect.cardEffect로 감싸질 때(= onTurnEffect로 쓰일 때) 그 턴 효과가 버프인지 디버프인지를
+    // 미리 명시한다 — type만으로는 판단할 수 없음(예: Damage는 자기 자신 대상이면 디버프지만 적 대상이면 버프).
+    // TurnEffect.IsBuff(정화·무효화 분류, 표시 색)와 적 행동 예고 아이콘이 이 값을 읽는다. 그 외의 곳에서는 안 쓰임.
     public bool isBuff { get; init; }
 
     // Damage 계열 효과가 대상을 처치했을 때 시전자를 대상으로 실행할 CardEffect (예: 처치 시 ColDamageUp).
@@ -638,7 +649,7 @@ public record CardEffect
     public CardEffect onKillEffect { get; init; }
 
     // 카드 밖에서 효과 큐에 넣은 효과(Board.EnqueueEffect/InsertEffectNext — 턴 효과·유물·상태이상 틱·처치 시·소환 시·기물 선택 결과).
-    // 대상이 시전자로 정해져 있어 큐(Board.ProcessNextCardEffectStep)가 입력 모드(requiredMode)를 보지 않고 시전자 칸에서 바로
+    // 대상이 시전자로 정해져 있어 큐(Board.ProcessNextCardEffectStep)가 입력을 기다리지 않고 시전자 칸에서 바로
     // 실행하며, 카드 사용 확정(에너지·카드 사용 시 유물)을 하지 않는다. 큐 안에서 이 값이 false인 항목은 지금 쓰는 카드의 효과다.
     // 엔진이 넣는 값이며 카드 정의에서는 쓰지 않는다.
     public bool executeOnCaster { get; init; }
@@ -647,7 +658,11 @@ public record CardEffect
     public CardZone cardZone { get; init; } = CardZone.Hand;   // 선택 대상 존
     public int selectCount { get; init; } = 1;                 // 선택할 카드 수 (0 = 제한 없음)
 
-    // 0보다 크면 (requiredMode는 보통 Inspect) UseCard 이후 카드 효과 처리 중에 보드에서 아군 기물을
+    // 카드 선택 패널을 띄워 플레이어가 고른 카드에 적용하는 효과인지(Board.ProcessNextCardEffectStep → ShowCardSelectionPanel).
+    public bool IsCardSelection =>
+        type is EffectType.SelectAndDiscard or EffectType.SelectAndChangeCost or EffectType.SelectAndReturnToDeck;
+
+    // 0보다 크면 UseCard 이후 카드 효과 처리 중에 보드에서 아군 기물을
     // 이 수치만큼 직접 클릭해 고르게 한다(Board.RequestPieceSelection). 고른 기물 각각을 시전자로 한 이 CardEffect
     // 사본이 효과 큐 맨 앞에 들어가 그 기물 칸에서 실행된다(InsertEffectNext — executeOnCaster).
     public int pieceSelectCount { get; init; }
@@ -708,4 +723,11 @@ public record CardEffect
     // `with { caster = ... }` 사본으로 기록한다 — TurnEffect가 카드의 중첩 CardEffect 객체를 공유하므로 원본을 바꾸면 안 된다.
     // 큐는 시전자가 보드에 없으면(앞 효과로 사망) 그 효과를 건너뛴다.
     public Piece caster { get; init; }
+
+    // 효과가 닿는 칸 오프셋: effectRange, 비어 있으면 caster의 이동 범위(caster가 없으면 빈 목록).
+    // 이동 효과도 특례 없이 이 규칙을 따른다 — 이동 카드는 effectRange를 비워 두어 기물마다 다른 이동 범위를 쓴다.
+    public List<Vector2Int> GetRangeOffsets(Piece rangeCaster) =>
+        effectRange != null ? effectRange.GetAbleRange()
+        : rangeCaster != null ? rangeCaster.GetMovementRange()
+        : new List<Vector2Int>();
 }

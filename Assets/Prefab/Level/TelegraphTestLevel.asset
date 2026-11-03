@@ -22,9 +22,9 @@ MonoBehaviour:
   - position: {x: 1, y: 3}
     name: Enemy-ChargeKnight
   - position: {x: 2, y: 2}
-    name: Enemy-StrikerKnight
+    name: Enemy-Broom
   - position: {x: 2, y: 4}
-    name: Enemy-StrikerKnight
+    name: Enemy-Broom
   - position: {x: 5, y: 3}
     name: summoner
   levelType: 0

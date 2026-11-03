@@ -8,10 +8,10 @@ public class FetchAttackCard : Card
         Name = "FetchAttackCard";
         Cost = 0;
         type = CardType.Skill;
+        dragDropTarget = DragDropTarget.Self;
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.Inspect,
             type = EffectType.AddCard,
             dmg = 0,
             targetlogic = TargetLogic.self,

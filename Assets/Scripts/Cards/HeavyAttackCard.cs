@@ -12,15 +12,15 @@ public class HeavyAttackCard : Card
         // 효과 1: 선택한 적에게 강한 피해 (서서 공격 애니메이션)
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Damage,
             dmg = 6,
             targetlogic = TargetLogic.LowestHP,
             effectRange = effectRange[0],
             animTrigger = "Attack",
+            vfx = "Burst_Test", // 임시 테스트 이펙트(아트 교체 전)
         });
         // 효과 2: 시전자가 자기 피해를 입음 (별도 로직)
-        effects.Add(new CardEffect { requiredMode = Board.BoardMode.Inspect, type = EffectType.SelfDamage, dmg = 2, targetlogic = TargetLogic.self, effectRange = null });
+        effects.Add(new CardEffect { type = EffectType.SelfDamage, dmg = 2, targetlogic = TargetLogic.self, effectRange = null });
     }
 
     public override string EffectDescription => $"적에게 {EffectiveDmg(effects[0])} 피해를 주고, 자신도 {effects[1].dmg} 피해를 받습니다.";

@@ -16,7 +16,6 @@ public class FinalAttackCard : Card
         // 버리기가 무시되므로 단일 대상으로 둔다.
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.DiscardHand,
             dmg = 0, // 0 = 손패 전부
             targetlogic = TargetLogic.LowestHP,
@@ -24,7 +23,6 @@ public class FinalAttackCard : Card
         });
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Damage,
             dmg = 4,
             hitsPerDiscarded = 1, // 버린 카드 1장당 1회 타격

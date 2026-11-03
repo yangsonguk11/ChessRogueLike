@@ -5,7 +5,7 @@ using UnityEngine;
 public partial class Board
 {
     // filters를 전부(AND) 만족하는 기물을 count개 클릭해 모을 때까지만 담당하는 범용 선택 상태.
-    // BoardMode.targeting을 그대로 빌려 쓰므로 카드 사용/드래그 등 다른 입력과 충돌하지 않는다.
+    // 진행 중에는 ButtonClicked가 다른 클릭 처리보다 먼저 이쪽으로 보내므로(PieceSelectionActive) 카드 사용/드래그 등 다른 입력과 충돌하지 않는다.
     // 결과가 모이면 콜백에 그대로 넘기고, 그걸로 무엇을 할지는 호출부(Dialogue, CardEffect 등)가 알아서 처리한다.
     int pieceSelectCount;
     PieceSelectFilter[] pieceSelectFilters;
@@ -64,7 +64,6 @@ public partial class Board
         pieceSelectFilters = filters;
         pieceSelectedPositions.Clear();
         pieceSelectCallback = onConfirm;
-        boardmode = BoardMode.targeting;
 
         pieceSelectHighlights = HighlightMatchingPieces(filters);
         RefreshRangeDisplay();
@@ -124,7 +123,6 @@ public partial class Board
 
         pieceSelectedPositions.Clear();
         pieceSelectFilters = null;
-        boardmode = BoardMode.Inspect;
         pieceSelectHighlights.Clear();
         RefreshRangeDisplay();
 

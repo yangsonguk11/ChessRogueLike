@@ -12,12 +12,10 @@ public class StunnedCard : Card
         Name = "StunnedCard";
         Cost = 0;
         type = CardType.Skill;
-        user = User.Enemy;
         dragDropTarget = DragDropTarget.Self;
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Stun,
             dmg = 0,
             targetlogic = TargetLogic.self,

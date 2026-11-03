@@ -9,7 +9,6 @@ public class ThornCard : Card
         dragDropTarget = DragDropTarget.Self;
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.ApplyStatus,
             dmg = 0,
             targetlogic = TargetLogic.self,

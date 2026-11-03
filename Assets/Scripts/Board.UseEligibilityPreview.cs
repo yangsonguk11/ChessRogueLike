@@ -30,8 +30,8 @@ public partial class Board
         CardEffect first = effects[Mathf.Max(0, aimIndex)];
         if (first.pieceSelectCount > 0) return;
 
-        // BoardMode.command는 ButtonClicked에서 항상 캐스터 선택을 먼저 요구하므로 first.noRangeLimit와 무관하게 캐스터형으로 취급.
-        bool needsCaster = first.requiredMode == BoardMode.command || !first.noRangeLimit;
+        // 사거리 제한이 있으면 시전자 기준 사거리를, 보드 전체가 대상(noRangeLimit)이면 드롭 대상(dragDropTarget) 기물을 보여준다.
+        bool needsCaster = !first.noRangeLimit;
 
         if (needsCaster)
         {
@@ -67,6 +67,16 @@ public partial class Board
     // 드래그로 카드를 놓은 칸이 실제로 유효한지 검사. pendingUseHasRangeLimit가 false면(사거리 제한이 없거나
     // 애초에 계산하지 않은 카드) 어디든 유효 — 그 외엔 픽업 시점에 계산해둔 selectedButtonMovable 안인지 확인한다.
     public bool IsValidDropPos(Vector2Int pos) => !pendingUseHasRangeLimit || selectedButtonMovable.Contains(pos);
+
+    // 드래그로 카드를 놓은 칸이 이동공격 도달 불가 적인지 — 사거리 검사(IsValidDropPos)와 같은 시점에 검사해서,
+    // 도착 칸이 없는 적에게는 카드 사용 자체를 막는다(에너지·카드 사용 시 유물 발동 전).
+    public bool IsUnreachableDropPos(Card card, Vector2Int pos)
+    {
+        int aimIndex = card.AimEffectIndex;
+        Button ownerButton = GetButtonForPiece(CardCanvas.instance?.ActivePiece);
+        return aimIndex >= 0 && ownerButton != null
+            && IsMoveAttackUnreachable(card.UseEffects[aimIndex], ownerButton.GetLocation(), pos);
+    }
 
     void ClearUseEligibilityPreview()
     {

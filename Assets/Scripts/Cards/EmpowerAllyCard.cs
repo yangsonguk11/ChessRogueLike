@@ -8,10 +8,10 @@ public class EmpowerAllyCard : Card
         Name = "EmpowerAllyCard";
         Cost = 2;
         type = CardType.Skill;
+        dragDropTarget = DragDropTarget.Self; // 드롭 위치와 무관 — 놓은 뒤 보드에서 기물을 고른다
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.Inspect,
             type = EffectType.BaseColDamageUp,
             dmg = 2,
             targetlogic = TargetLogic.self,

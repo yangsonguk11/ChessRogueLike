@@ -12,7 +12,6 @@ public class DoubleAttackCard : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Damage,
             dmg = 4,
             hitCount = 2,

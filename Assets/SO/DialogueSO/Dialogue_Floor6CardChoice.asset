@@ -28,7 +28,7 @@ MonoBehaviour:
       healAmount: 0
       damageAmount: 0
       cardPool: []
-      addPieceInfo: {fileID: 11400000, guid: 0fe1ba390242158408e91efab38dc8e7, type: 2}
+      addPieceInfo: {fileID: 0}
       removeCardCount: 0
       permanentStatSelectCount: 0
       permanentColDamageBonus: 0

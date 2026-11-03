@@ -12,15 +12,13 @@ public class SummonMasteryCard : Card
 
         effects.Add(new CardEffect // 1번째: self 타겟 — OnSelectBoard가 즉시 실행
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.GrantSummonColDamage,
             dmg = 2,
             targetlogic = TargetLogic.self,
             animTrigger = "Buff",
         });
-        effects.Add(new CardEffect // 2번째: 위치 불필요 — Inspect라 자동 연쇄. 자체 버프 연출을 재생한다
+        effects.Add(new CardEffect // 2번째: self 타겟 — 후속 효과라 시전자 재선택(OnSelectBoard)으로 자동 연쇄. 자체 버프 연출을 재생한다
         {
-            requiredMode = Board.BoardMode.Inspect,
             type = EffectType.GrantSummonMaxHp,
             dmg = 2,
             targetlogic = TargetLogic.self,

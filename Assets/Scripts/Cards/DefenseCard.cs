@@ -11,7 +11,6 @@ public class DefenseCard : Card
         dragDropTarget = DragDropTarget.Self;
         CardEffect cf = new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.Shield,
             dmg = 3,
             targetlogic = TargetLogic.self,

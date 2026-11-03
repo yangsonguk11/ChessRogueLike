@@ -12,7 +12,6 @@ public class HealCard : Card
         dragDropTarget = DragDropTarget.Self;
         CardEffect cf = new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.Heal,
             dmg = 2,
             targetlogic = TargetLogic.self,

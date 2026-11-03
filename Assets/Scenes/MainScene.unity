@@ -1956,6 +1956,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 381135497}
+  - component: {fileID: 381135498}
   m_Layer: 0
   m_Name: Camera
   m_TagString: Untagged
@@ -1979,6 +1980,25 @@ Transform:
   - {fileID: 330585546}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
+--- !u!114 &381135498
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 381135496}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f410feaa0988c24984921989b9db7e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraZoom
+  zoomStep: 1
+  minDistanceOffset: -4
+  maxDistanceOffset: 3
+  maxTiltDown: 12
+  smoothTime: 0.12
+  edgeSize: 0.1
+  panSpeed: 8
 --- !u!1 &401622693
 GameObject:
   m_ObjectHideFlags: 0

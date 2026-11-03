@@ -12,7 +12,6 @@ public class ColDamageAttackCard : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Damage,
             dmg = 0,
             targetlogic = TargetLogic.NearestEnemy,

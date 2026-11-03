@@ -1,5 +1,6 @@
-public enum TurnPhase { OwnTurnStart, OwnTurnEnd }
-
+// 카드가 정의한 턴 효과(StatusEffectType.TurnEffect) — 걸린 기물의 자기 턴 phase마다 cardEffect를 그 기물을 시전자로 실행하고,
+// 지속시간도 같은 phase에 줄어든다. 처리는 다른 상태와 같은 Board.EnqueueTeamStatusEffects가 한다.
+// cardEffect가 올린 스탯(힘·무덤 등)은 누적형이라 만료돼도 되돌리지 않는다.
 public class TurnEffect : StatusEffect
 {
     public readonly TurnPhase phase;
@@ -28,9 +29,12 @@ public class TurnEffect : StatusEffect
             return $"{timing} {effectDesc}";
         }
     }
-    // cardEffect(=onTurnEndEffect 등)가 직접 명시한 값을 그대로 사용한다 — type만으로는
+    // cardEffect(=CardEffect.onTurnEffect)가 직접 명시한 값을 그대로 사용한다 — type만으로는
     // 버프/디버프를 구분할 수 없다(예: Damage는 자기 자신 대상이면 디버프, 적 대상이면 버프).
     public override bool IsBuff => cardEffect.isBuff;
+
+    public override TurnPhase TickPhase => phase;
+    public override CardEffect TurnEffectAt(TurnPhase p) => p == phase ? cardEffect : null;
 
     public TurnEffect(TurnPhase phase, CardEffect cardEffect, int duration)
     {

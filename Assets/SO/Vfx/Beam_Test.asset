@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10a71fbe72578dd024a49b5c3b79e175, type: 3}
+  m_Name: Beam_Test
+  m_EditorClassIdentifier: Assembly-CSharp::BeamCue
+  prefab: {fileID: 0}
+  duration: 0.45
+  socketId: 
+  useTint: 0
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  spawnOffset: {x: 0, y: 0, z: 0}
+  spawnEuler: {x: 0, y: 0, z: 0}
+  hitDelay: 0.12
+  width: 0.08
+  color: {r: 0.4, g: 0.9, b: 1, a: 1}
+  material: {fileID: 0}
+  hitPrefab: {fileID: 5100941364825399842, guid: 8b318a7b3f13e7948a60613b8b96153b, type: 3}

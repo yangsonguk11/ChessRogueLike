@@ -13,7 +13,6 @@ public class EmpowerMoveAttackCard : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.ApplyStatus,
             dmg = 0,
             targetlogic = TargetLogic.self,

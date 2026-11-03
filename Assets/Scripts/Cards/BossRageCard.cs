@@ -10,19 +10,17 @@ public class BossRageCard : Card
         Name = "BossRageCard";
         Cost = 0;
         type = CardType.Skill;
-        user = User.Enemy;
         dragDropTarget = DragDropTarget.Self;
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
-            type = EffectType.ApplyTurnEffect,
+            type = EffectType.ApplyStatus,
+            statusEffectType = StatusEffectType.TurnEffect,
             targetlogic = TargetLogic.self,
             turnPhase = TurnPhase.OwnTurnEnd,
-            turnDuration = -1, // 음수 = 영구 지속 (StatusEffect.OnTurnEnd 참고)
-            onTurnEndEffect = new CardEffect
+            statusDuration = -1, // 음수 = 영구 지속 (StatusEffect.TickDuration 참고)
+            onTurnEffect = new CardEffect
             {
-                requiredMode = Board.BoardMode.Inspect,
                 type = EffectType.ColDamageUp,
                 dmg = amount,
                 targetlogic = TargetLogic.self,

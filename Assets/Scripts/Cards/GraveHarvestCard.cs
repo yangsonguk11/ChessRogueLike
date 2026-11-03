@@ -13,7 +13,6 @@ public class GraveHarvestCard : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Damage,
             dmg = 6,
             targetlogic = TargetLogic.LowestHP,
@@ -21,7 +20,6 @@ public class GraveHarvestCard : Card
             animTrigger = "Attack",
             onKillEffect = new CardEffect
             {
-                requiredMode = Board.BoardMode.Inspect,
                 type = EffectType.AddGrave,
                 dmg = 1,
                 targetlogic = TargetLogic.self,

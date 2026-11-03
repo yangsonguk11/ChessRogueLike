@@ -59,7 +59,7 @@ public abstract class Piece : MonoBehaviour
     // 가 매번 다시 채워준다). 스폰 경로 밖에서 만들어진 경우 -1로 남아 저장에 반영되지 않는다.
     [ReadOnlyInInspector] public int pieceDataIndex = -1; // Awake()에서 손대지 않음 — 스폰 시점에 외부(Board)가 채워줌
 
-    [Tooltip("스폰 시 효과 — 이 프리팹에 붙인 Card 컴포넌트를 연결(AutoPiece.actionCards와 같은 방식).\n보드에 스폰되는 순간(전투 시작 배치·대화 합류·소환 카드) 위에서부터 각 카드의 effects 순서대로 이 기물을 시전자로 자동 실행한다.\n소환 카드면 소환 효과 바로 다음(카드의 이후 효과보다 먼저), 전투 시작 배치는 전투 시작 시 배치 순서대로 유물 전투 시작 효과보다 먼저 실행된다. 이벤트 레벨에서는 발동하지 않는다.\n효과는 이 기물 칸에서 이 기물을 시전자 겸 기준으로 실행되므로 자기 대상 효과만 가능하다(카드의 user/Cost는 무시된다). 카드 선택 패널·pieceSelectCount·useLastTarget 효과는 미지원.")]
+    [Tooltip("스폰 시 효과 — 이 프리팹에 붙인 Card 컴포넌트를 연결(AutoPiece.actionCards와 같은 방식).\n보드에 스폰되는 순간(전투 시작 배치·대화 합류·소환 카드) 위에서부터 각 카드의 effects 순서대로 이 기물을 시전자로 자동 실행한다.\n소환 카드면 소환 효과 바로 다음(카드의 이후 효과보다 먼저), 전투 시작 배치는 전투 시작 시 배치 순서대로 유물 전투 시작 효과보다 먼저 실행된다. 이벤트 레벨에서는 발동하지 않는다.\n효과는 이 기물 칸에서 이 기물을 시전자 겸 기준으로 실행되므로 자기 대상 효과만 가능하다(카드의 Cost는 무시된다). 카드 선택 패널·pieceSelectCount·useLastTarget 효과는 미지원.")]
     [FormerlySerializedAs("onSummonCards")]
     public List<Card> onSpawnCards = new List<Card>();
 
@@ -132,31 +132,12 @@ public abstract class Piece : MonoBehaviour
         return Mathf.Max(0, damage + bonus);
     }
 
-    // 자기 턴 종료 시 Board.EnqueueTeamStatusTicks가 호출: 상태이상의 지속시간을 줄이고(만료되면 제거) 이번 틱의
-    // 독/화상/재생 수치를 돌려준다. 같은 종류가 여러 개 걸려 있어도 종류별로 합산한다. 피해/회복 적용은 하지 않는다 —
-    // Board가 이 수치로 CardEffect(비공격 자해/자기 회복)를 만들어 효과 큐에서 실행한다.
-    public (int poison, int burning, int regen) TickStatusEffects()
+    // 만료·정화로 상태를 뗀다. 목록에서 먼저 빼고 OnRemove를 부른다 — OnRemove(예: 기절 해제 후 행동 예고 갱신)가
+    // 이미 빠진 상태를 기준으로 판정하도록. 이동공격으로 소모되는 버프는 OnRemove 없이 빠진다(ConsumeNextMoveAttackBonus).
+    public void RemoveStatusEffect(StatusEffect effect)
     {
-        int poisonTotal = 0, burningTotal = 0, regenTotal = 0;
-
-        for (int i = activeEffects.Count - 1; i >= 0; i--)
-        {
-            StatusEffect effect = activeEffects[i];
-            if (effect is TurnEffect) continue; // Board가 처리
-
-            if (effect is PoisonEffect poison) poisonTotal += poison.damagePerTurn;
-            else if (effect is BurningEffect burning) burningTotal += burning.damagePerTurn;
-            else if (effect is RegenEffect regen) regenTotal += regen.healPerTurn;
-
-            bool stillActive = effect.OnTurnEnd(this); // 지속시간 감소만 수행(피해/회복은 Board가 효과 큐로 적용)
-            if (!stillActive)
-            {
-                activeEffects.RemoveAt(i);
-                effect.OnRemove(this);
-            }
-        }
-
-        return (poisonTotal, burningTotal, regenTotal);
+        if (activeEffects.Remove(effect))
+            effect.OnRemove(this);
     }
     public virtual void Awake()
     {
@@ -245,7 +226,10 @@ public abstract class Piece : MonoBehaviour
             deckCardIDs = SavedDeckCardIDs()
         };
     }
-    public virtual List<Vector2Int> GetMoveableButton() { return pieceInfo.RangeInfoSO.GetAbleRange(); }
+    // 기물의 이동 범위(PieceInfo). 효과 범위가 비어 있을 때의 기본값이자 이동공격 착지·연쇄 대상 탐색 기준이다.
+    public List<Vector2Int> GetMovementRange() => pieceInfo.RangeInfoSO.GetAbleRange();
+    // 화면 표시용 범위(정보창·예고). 일반 기물은 이동 범위, AutoPiece는 다음 행동의 범위, 모닥불·상점·NPC는 없음.
+    public virtual List<Vector2Int> GetMoveableButton() => GetMovementRange();
     // 설정 안 돼 있으면 중앙 1칸(부딫힌 대상만 공격)으로 폴백 — 기존 단일 타겟 이동공격 동작을 그대로 유지.
     public virtual List<Vector2Int> GetMoveAttackRange()
     {
@@ -449,7 +433,7 @@ public abstract class Piece : MonoBehaviour
     public bool animationEventFired;
     // Animation Event가 호출할 콜백. 공격/힐/실드/버프 등 어떤 애니메이션 클립이든, 시전자가
     // "지금 대상에게 효과가 전달되는" 순간에 이 함수를 호출하는 이벤트를 심어두면 된다
-    // (Board.Animation.cs의 PlayCasterAndTargetReaction/WaitAnimationEventThenRun 참고).
+    // (Board.Animation.cs의 PlayCasterAndTargetReaction/RunImpactCor 참고).
     public void OnAnimationEvent() => animationEventFired = true;
 
     // textOnly: true면 텍스트만 띄우고 버프/디버프 파티클·사운드는 재생하지 않는다(예: 다음 이동공격 버프 소모 표시).

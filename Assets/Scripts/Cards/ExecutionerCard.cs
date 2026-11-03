@@ -12,7 +12,6 @@ public class ExecutionerCard : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.command,
             type = EffectType.Damage,
             dmg = 3,
             targetlogic = TargetLogic.LowestHP,
@@ -20,7 +19,6 @@ public class ExecutionerCard : Card
             animTrigger = "Attack",
             onKillEffect = new CardEffect
             {
-                requiredMode = Board.BoardMode.Inspect,
                 type = EffectType.BaseColDamageUp,
                 dmg = 1,
                 targetlogic = TargetLogic.self,

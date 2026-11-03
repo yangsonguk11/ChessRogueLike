@@ -13,7 +13,6 @@ public class RecoverShieldCard : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.targeting,
             type = EffectType.Shield,
             dmg = 4,
             targetlogic = TargetLogic.self,
@@ -22,7 +21,6 @@ public class RecoverShieldCard : Card
 
         effects.Add(new CardEffect
         {
-            requiredMode = Board.BoardMode.cardSelecting,
             type = EffectType.SelectAndReturnToDeck,
             dmg = 0,
             targetlogic = TargetLogic.self,
