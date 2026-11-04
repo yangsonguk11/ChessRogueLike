@@ -609,10 +609,8 @@ public partial class Board
         StartMotionQueue();
     }
 
-    void AreaShieldPiece(List<Vector2Int> targets, int dmg, CardEffect cardEffect = null, Vector2Int? rangeOrigin = null)
+    void AreaShieldPiece(Piece caster, List<Vector2Int> targets, int dmg, CardEffect cardEffect = null, Vector2Int? rangeOrigin = null)
     {
-        Button casterBtn = GetButtonScript(selectedButton);
-        Piece caster = casterBtn.GetPieceScript();
         var shieldedPieces = new List<Piece>();
         var textCoroutines = new List<IEnumerator>();
 
@@ -634,10 +632,8 @@ public partial class Board
         StartMotionQueue();
     }
 
-    void AreaHealPiece(List<Vector2Int> targets, int dmg, CardEffect cardEffect = null, Vector2Int? rangeOrigin = null)
+    void AreaHealPiece(Piece caster, List<Vector2Int> targets, int dmg, CardEffect cardEffect = null, Vector2Int? rangeOrigin = null)
     {
-        Button casterBtn = GetButtonScript(selectedButton);
-        Piece caster = casterBtn.GetPieceScript();
         var healedPieces = new List<Piece>();
         var textCoroutines = new List<IEnumerator>();
 

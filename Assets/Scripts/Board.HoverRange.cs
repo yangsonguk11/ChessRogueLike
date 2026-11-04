@@ -25,27 +25,20 @@ public partial class Board
             {
                 hoverRangeButtons.Clear();
 
-                List<Vector2Int> offsets = effect.effectRange?.GetAbleRange();
-                if (offsets != null)
+                // 범위 칸 계산은 실제 실행(ExecuteAreaEffect)과 같은 GetAreaEffectCells — 여기서는 미리보기의 시전자 칸
+                // (선택 칸, 없으면 카드 주인)과 마우스 방향만 정한다.
+                Vector2Int casterPos = pos;
+                Vector2Int dir = currentHoverDirection;
+                if (effect.areaTargetMode != AreaTargetMode.MouseCentered)
                 {
-                    Vector2Int center;
-                    if (effect.areaTargetMode == AreaTargetMode.MouseCentered)
-                    {
-                        center = pos;
-                    }
-                    else
-                    {
-                        Button ownerButton = GetButtonForPiece(CardCanvas.instance?.ActivePiece);
-                        Vector2Int casterPos = isSelectedButtonActive() ? selectedButton
-                            : (ownerButton != null ? ownerButton.GetLocation() : pos);
-                        center = casterPos;
-                        Vector2Int dir = GetSnappedDirection(casterPos, pos, effect.areaTargetMode == AreaTargetMode.Directional8);
-                        currentHoverDirection = dir;
-                        offsets = RotateOffsets(offsets, dir);
-                    }
-
-                    hoverRangeButtons.AddRange(CellsInBoard(center, offsets));
+                    Button ownerButton = GetButtonForPiece(CardCanvas.instance?.ActivePiece);
+                    casterPos = isSelectedButtonActive() ? selectedButton
+                        : (ownerButton != null ? ownerButton.GetLocation() : pos);
+                    dir = GetSnappedDirection(casterPos, pos, effect.areaTargetMode == AreaTargetMode.Directional8);
+                    currentHoverDirection = dir;
                 }
+
+                hoverRangeButtons.AddRange(GetAreaEffectCells(effect, casterPos, pos, dir, out _));
                 RefreshRangeDisplay();
             }
             return;
@@ -103,7 +96,7 @@ public partial class Board
     }
 
     // 기준 방향(-1,0 = 인스펙터 위쪽 행)에서 dir 방향으로 오프셋 목록을 회전
-    public List<Vector2Int> RotateOffsets(List<Vector2Int> offsets, Vector2Int dir)
+    public static List<Vector2Int> RotateOffsets(List<Vector2Int> offsets, Vector2Int dir)
     {
         // RangeInfoSO에서 행(row)이 Vector2.x에 매핑되므로 인스펙터 위쪽 = (-1,0)
         // 해당 기준 방향을 dir로 회전시키는 각도 = atan2(dir.y, -dir.x)
@@ -122,7 +115,7 @@ public partial class Board
     }
 
     // from → to 방향을 4방향 또는 8방향으로 스냅
-    Vector2Int GetSnappedDirection(Vector2Int from, Vector2Int to, bool eightDir)
+    public static Vector2Int GetSnappedDirection(Vector2Int from, Vector2Int to, bool eightDir)
     {
         Vector2Int delta = to - from;
         if (delta == Vector2Int.zero) return Vector2Int.up;

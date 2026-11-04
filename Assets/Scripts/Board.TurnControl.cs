@@ -94,16 +94,14 @@ public partial class Board
 
             selectedButton = pos;
             // 기절 상태면 GetNextMove()가 원래 예고했던 카드 대신 스턴 카드를 반환한다.
-            // ChangeMove()는 기절이 아닐 때만 호출해서, 기절이 풀리면 원래 예고했던 행동이 그대로 이어지게 한다.
+            // 행동 뒤 FinishMove가 다음 행동을 정한다 — 기절한 턴은 순환을 넘기지 않아 기절이 풀리면 원래 순서가 이어진다.
             Card card = enemy.GetNextMove();
 
             if (card != null)
             {
                 UseCard(card, enemy);
                 yield return new WaitUntil(() => !IsResolvingEffects && !queuecoroutineworking);
-                if (!enemy.IsStunned())
-                    enemy.ChangeMove();
-                enemy.ActionText();
+                enemy.FinishMove(acted: !enemy.IsStunned());
             }
 
             ClearSelectedButton();
@@ -132,9 +130,7 @@ public partial class Board
             {
                 UseCard(card, autoAlly);
                 yield return new WaitUntil(() => !IsResolvingEffects && !queuecoroutineworking);
-                if (!autoAlly.IsStunned())
-                    autoAlly.ChangeMove();
-                autoAlly.ActionText();
+                autoAlly.FinishMove(acted: !autoAlly.IsStunned());
             }
 
             ClearSelectedButton();

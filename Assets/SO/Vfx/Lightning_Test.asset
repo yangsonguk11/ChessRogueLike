@@ -12,12 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02c4429bead1f2ac129d30f43d42a6c8, type: 3}
   m_Name: Lightning_Test
   m_EditorClassIdentifier: Assembly-CSharp::LightningScatterCue
-  prefab: {fileID: 5100941364825399842, guid: 8b318a7b3f13e7948a60613b8b96153b, type: 3}
+  prefab: {fileID: 5627696518775099638, guid: 390cc74915d4a054bbd897e1885047a4, type: 3}
   duration: 0.4
   socketId: 
   useTint: 1
   tint: {r: 0.6, g: 0.8, b: 1, a: 1}
-  spawnOffset: {x: 0, y: 1.5, z: 0}
-  spawnEuler: {x: 180, y: 0, z: 0}
+  spawnOffset: {x: 0, y: 0, z: 0}
+  spawnEuler: {x: 0, y: 0, z: 0}
   interval: 0.12
   hitDelay: 0

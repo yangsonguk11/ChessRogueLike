@@ -11,7 +11,7 @@ public class BossRegenerateCard : Card
         type = CardType.Skill;
         dragDropTarget = DragDropTarget.Self;
 
-        // TargetLogic.self → ResolveEnemyTarget이 selectedButton(보스 자신)을 반환
+        // TargetLogic.self → ResolveTargetPos가 시전자 칸(보스 자신)을 반환
         effects.Add(new CardEffect
         {
             type = EffectType.Heal,

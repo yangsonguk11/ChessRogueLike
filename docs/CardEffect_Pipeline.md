@@ -170,6 +170,8 @@ if (card != null)
 
 **결과** (커밋 `d99400a` 기준): 효과 큐 처리 코드(`ProcessNextCardEffect`)는 한 줄도 고치지 않았고, `ApplyCardEffectNow`에는 `case EffectType.Stun:` 분기 하나만 추가했다. 턴 루프에서는 예외 분기가 오히려 사라졌다. 기절한 적도 행동 예고 아이콘, 연출 순서, 다음 적으로 넘어가는 대기 조건까지 일반 행동과 같은 경로를 탄다. 자동 아군(`PlayAutoAllyTurnCoroutine`)도 같은 코드로 기절을 처리한다.
 
+**이후 변경(조건부 행동)**: `ChangeMove()`는 `AutoPiece.FinishMove(acted)`로 바뀌었다. 행동 직후 `acted = !IsStunned()`로 불러 순환 위치를 넘길지 정하고, 이어서 `PlanNextMove()`가 다음 행동을 정한다. `PlanNextMove()`는 `conditionalActions`(조건 → 카드)를 위에서부터 평가해 처음 맞는 줄의 카드를, 없으면 순환 카드를 고른다. 대상 판정은 상태를 바꾸지 않는 `Board.HasTargetIfUsedNow`(내부에서 `ResolveTargetPos`·`GetAreaEffectCells`)로 한다. 기절 처리의 원칙(기절한 턴은 순환을 넘기지 않음)은 그대로다.
+
 ## 8. 구조가 바뀌어 온 과정 (git 이력)
 
 | 날짜 | 커밋 | 변화 |

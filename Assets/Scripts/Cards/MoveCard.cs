@@ -16,6 +16,7 @@ public class MoveCard : Card
             dmg = 0,
             targetlogic = TargetLogic.NearestEnemy,
             animTrigger = "Move",
+            vfx = "Burst_Test", // 대상 위치 이펙트 — 임시 테스트 이펙트(아트 교체 전)
         };
         effects.Add(cf);
     }

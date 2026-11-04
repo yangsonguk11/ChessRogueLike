@@ -21,8 +21,9 @@ public class BossAttack3Card : Card
             effectRange = range,
             areaTargetMode = AreaTargetMode.Fixed,
             animTrigger = "AreaAttack",
+            vfx = "Ring_Test" // 대상 위치 이펙트 — 임시 테스트 이펙트(아트 교체 전)
         };
-        // TargetLogic.self → ResolveEnemyTarget returns selectedButton (boss pos)
+        // TargetLogic.self → ResolveTargetPos가 시전자 칸(보스 자신)을 반환
         CardEffect shield = new CardEffect
         {
             type = EffectType.Shield,

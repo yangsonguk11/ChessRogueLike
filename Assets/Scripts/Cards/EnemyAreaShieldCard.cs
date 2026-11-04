@@ -22,6 +22,7 @@ public class EnemyAreaShieldCard : Card
             effectRange = effectRange.Count > 0 ? effectRange[0] : null,
             areaTargetMode = AreaTargetMode.Fixed,
             animTrigger = "Shield",
+            vfx = "Ring_Test", // 대상 위치 이펙트 — 임시 테스트 이펙트(아트 교체 전)
         });
     }
 

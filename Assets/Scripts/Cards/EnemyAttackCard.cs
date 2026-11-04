@@ -3,7 +3,7 @@
 public class EnemyAttackCard : Card
 {
     
-
+    [SerializeField] int dmg = 5;
     public override void Awake()
     {
         base.Awake();
@@ -14,10 +14,11 @@ public class EnemyAttackCard : Card
         CardEffect cf = new CardEffect
         {
             type = EffectType.Damage,
-            dmg = 5,
+            dmg = dmg,
             targetlogic = TargetLogic.NearestEnemy,
             effectRange = range,
             animTrigger = "Attack",
+            vfx = "Burst_Test", // 대상 위치 이펙트 — 임시 테스트 이펙트(아트 교체 전)
         };
         effects.Add(cf);
     }

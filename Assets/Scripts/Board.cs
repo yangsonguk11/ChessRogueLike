@@ -307,7 +307,17 @@ public partial class Board : MonoBehaviour
         {
             TriggerRelicsOnCombatStart(); // 배치하며 모아둔 스폰 시 효과 뒤에 유물 전투 시작 효과를 넣고
             RunEffects();                 // 전투 시작 효과를 한 번에 처리
+            PlanAllAutoPieces();          // 배치가 모두 끝난 보드로 적·자동 아군의 첫 행동을 정한다(조건부 행동 판정)
         }
+    }
+
+    // 보드 위 모든 AutoPiece(적·자동 아군)의 다음 행동을 지금 보드 기준으로 다시 정한다.
+    void PlanAllAutoPieces()
+    {
+        for (int x = 0; x < N; x++)
+            for (int y = 0; y < M; y++)
+                if (GetPieceAt(new Vector2Int(x, y)) is AutoPiece auto)
+                    auto.PlanNextMove();
     }
 
     // 보드 위 teamID==0(아군) 기물 전체를 수집한다. 기물별 손패/덱 처리(턴 시작/종료, 카드 뷰 갱신 등)에 쓰인다.
@@ -354,6 +364,7 @@ public partial class Board : MonoBehaviour
         pieceScript.SetPieceData(data);
         // 카드 밖(대화) 합류라 큐에 모인 스폰 시 효과를 바로 처리한다 — NPC 대화는 카드를 쓰는 중이 아닐 때만 열려 진행 중인 카드가 없다.
         if (!IsEventLevel) RunEffects();
+        if (!IsEventLevel && pieceScript is AutoPiece auto) auto.PlanNextMove(); // 합류한 자동 기물의 첫 행동
         return true;
     }
 

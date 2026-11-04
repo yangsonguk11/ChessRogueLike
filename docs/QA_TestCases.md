@@ -106,6 +106,7 @@
 | TC-BOARD-013 | 기물 기본 정보 PieceInfo 통일 — 적·소환수의 프리팹 `hp`/`colDamage` 값을 PieceInfo와 다르게 바꿔 둠 | `L3-Bastion`·`L3-Colossus`·`L2` 진입, `GreaterSummonCard` 사용 | 프리팹 값은 무시되고 PieceInfo 값으로 시작: Boss-Bastion 50, Boss-Colossus 120, Enemy-MobMagician 힘 4, GreaterAutoAlly 15/8. 아군은 세이브 값(현재 체력·영구 강화) 유지 | `Piece.Awake`가 PieceInfo에서 채움 |
 | TC-BOARD-014 | 기물 이름 = `PieceInfo.PieceName` | 적·아군 칸 정보창, 기물 게이지 목록, 보상 화면 라벨 확인 | 모두 PieceInfo 이름(예: `Enemy-Broom`, `Warrior`)으로 표시. 이전에 비어 있거나 잘못된 표시 이름(summoned의 "Thorn Knight")이 없어짐 | |
 | TC-BOARD-015 | `PieceDatabase.GetPiece`가 PieceInfo 이름으로 조회 | ① 레벨 진입 ② 소환 카드 ③ 전투 후 다음 노드에서 아군 재배치 | 모두 정상 스폰. `Database.prefab`을 열었을 때 이름 중복·누락 경고 없음 | 대화 합류로 기물을 추가하는 경로(`DialogueSO.addPieceInfo`)는 현재 쓰는 대화가 없다(옛 sin·sin2 테스트 기물 삭제) |
+| TC-BOARD-016 | 새 게임 1층(`floorPools[0]` = `L2-BalloonEnemy` 하나) | 1층 노드 진입 → 소환사만 처치 | 아군 (4,3)·(4,4), Enemy-Balloon (1,1)·(1,3)·(1,5), Enemy-MobBalloon (0,3) 배치. 전투 시작 즉시 승리하지 않음. 소환사를 처치하면 Balloon이 남아 있어도 승리 | Balloon은 소환수라 승패 판정(`Board.IsCombatDecided`)에서 빠짐 |
 
 ---
 
@@ -144,7 +145,7 @@
 | [6.1 기본 덱](#61-기본-덱) | 보상 풀에 없고 기본 덱으로만 얻는 카드 3장 | TC-CARD-001 ~ 003 |
 | [6.2 전사](#62-전사) | 전사 보상 풀 30장(Confluence 카드 목록 순서) + 획득 경로 없는 전사 카드 2장 | TC-CARD-004 ~ 035 |
 | [6.3 소환사](#63-소환사) | 소환사 보상 풀 24장(Confluence 카드 목록 순서) + 획득 경로 없는 소환사 카드 2장 | TC-CARD-036 ~ 061 |
-| [6.4 적](#64-적) | Confluence 적 목록에 나오는 적 행동 카드 + 적이 넣는 WoundCard | TC-CARD-062 ~ 084 |
+| [6.4 적](#64-적) | Confluence 적 목록에 나오는 적 행동 카드 + 적이 넣는 WoundCard | TC-CARD-062 ~ 088 |
 
 ### 기본 TC 참조
 
@@ -847,7 +848,8 @@
 |---|---|---|---|---|---|
 | TC-CARD-063-AI | TC-FX-AI-001 | 다음 행동이 이 카드인 적 | 예고 확인 | 머리 위 "5 + 피해 아이콘", 보드에 카드 범위(고리 또는 굵은 십자) |  |
 | TC-CARD-063-TARGET | TC-FX-AI-002, TC-FX-TAUNT-002 | 범위 안에 아군 2명 | 적 턴 | 범위 안 가장 가까운 아군 1명(도발 우선)에게 5 피해 |  |
-| TC-CARD-063-MISS | TC-FX-AI-002 | 범위 안에 아군 없음 | 적 턴 | 피해 없이 행동 종료, 다음 행동으로 순환 |  |
+| TC-CARD-063-MISS | TC-FX-AI-002 | 조건부 행동이 없는 적(BondStriker·MobMagician), 범위 안에 아군 없음 | 적 턴 | 피해 없이 행동 종료, 다음 행동으로 순환 | Broom은 공격 대신 이동(TC-CARD-063-COND) |
+| TC-CARD-063-COND |  | `Enemy-Broom` 공격 차례, 고리 범위 안에 아군 없음 | 예고 확인 → 적 턴 | 예고가 이동으로 바뀌고 다가감, 다음 예고는 다시 공격 | 조건부 행동 — TC-TURN-028~032 |
 | TC-CARD-063-DMG |  | 그 적의 힘이 전투 중 +N(MobMagician·결속 강화) | 예고·적 턴 | 예고·실제 피해가 5 + N |  |
 
 #### TC-CARD-064 EnemyMoveAndColDamageUpCard
@@ -1039,6 +1041,35 @@
 |---|---|---|---|---|---|
 | TC-CARD-085-AI | TC-FX-AI-001 | 다음 행동이 이 카드인 Mob | 예고 확인 | 머리 위 "7 + 피해 아이콘", 보드에 고리 범위 |  |
 | TC-CARD-085-TARGET | TC-FX-AI-002, TC-FX-TAUNT-002 | 범위 안에 아군 2명 | 적 턴 | 범위 안 가장 가까운 아군 1명(도발 우선)에게 7 피해 |  |
+#### TC-CARD-086 EnemySelfDestructCard
+자폭 · 쓰는 적: Enemy-Balloon(2번째 행동, 적 소환수 — Enemy-MobBalloon이 소환, `L2-BalloonEnemy`에 3기 배치) · 범위 십자 1(상하좌우 4칸) · 피해 10 · 설명 "모든 적에게 10 피해를 주고, 자신은 999 피해를 받습니다."
+
+| ID | 기본 TC | 사전조건 | 테스트 절차 | 기대 결과 | 비고 |
+|---|---|---|---|---|---|
+| TC-CARD-086-AI | TC-FX-AI-001 | 다음 행동이 이 카드인 Balloon(상하좌우에 아군) | 예고 확인 | 머리 위 "10 + 피해 아이콘 999 + 피해 아이콘", 보드에 십자 범위 | 999는 자해 수치 |
+| TC-CARD-086-DMG | TC-FX-AIM-007, TC-FX-DMG-009 | 상하좌우에 아군 1~2명, 대각선에 아군 1명 | 적 턴 | 상하좌우 아군만 10 피해(방어도 먼저 차감, 대각선은 피해 없음), 이어서 Balloon이 999 자해로 사망 | 자해는 비공격 피해 |
+| TC-CARD-086-COND |  | Balloon 자폭 차례, 상하좌우에 아군 없음 | 예고 확인 → 적 턴 | 예고가 자폭 대신 이동, 적 턴에 다가가고 죽지 않음. 다음 예고는 다시 자폭 차례로 판정(인접하면 자폭) | 조건부 행동 `NoTargetInRange` → 이동, 순환 유지(TC-TURN-028과 같은 규칙) |
+| TC-CARD-086-DEATH |  | 같은 팀 적이 함께 있는 레벨 | Balloon 자폭 | 자폭 사망도 일반 사망과 같이 처리(점유 해제, 동료 사망 반응 — 수호자 격노·결속 강화 발동) |  |
+#### TC-CARD-087 EnemyDoubleSummonCard
+소환 · 쓰는 적: Enemy-MobBalloon(1번째 행동, 2번째 차례에 공격 대상이 없을 때도) · 범위 주변 8칸 · 소환 Enemy-Balloon 2개(소환 효과 2개) · 설명 "Enemy-Balloon을(를) 2개 소환합니다."
+
+| ID | 기본 TC | 사전조건 | 테스트 절차 | 기대 결과 | 비고 |
+|---|---|---|---|---|---|
+| TC-CARD-087-AI | TC-FX-AI-001 | `L2-BalloonEnemy` 첫 플레이어 턴 | 소환사 예고 확인 | 머리 위 Unknown 아이콘 2개(소환), 보드에 주변 8칸 |  |
+| TC-CARD-087-SUMMON | TC-FX-SUMMON-001 | 소환사 주변 8칸이 비어 있고 아군은 멀리 | 적 턴 | 주변 8칸 중 가장 가까운 아군과 가장 가까운 빈 칸 2곳에 차례로 Balloon 2기 소환(두 번째는 첫 칸을 뺀 다음으로 가까운 칸). 소환된 Balloon은 다음 적 턴부터 이동·자폭 | 원래 소환 위치 로직(`NearestEnemy` 대상 → `SummonPieceAt`) |
+| TC-CARD-087-ADJ |  | 소환사 바로 옆 칸에 아군 | 적 턴 | 그 아군 칸이 대상이 되어 Balloon이 그 아군 주변 빈 칸(BFS 첫 고리)에 나옴 — 소환사 주변 8칸을 벗어날 수 있음 | 원래 로직 그대로 |
+| TC-CARD-087-FULL | TC-FX-SUMMON-002 | 소환사 주변 빈 칸이 1칸 | 적 턴 | 1기만 소환, 두 번째 소환은 빈 칸이 없어 건너뜀(에러 없음) |  |
+
+#### TC-CARD-088 EnemyWeakenAttackCard
+공격 + 약화 · 쓰는 적: Enemy-MobBalloon(2번째 행동) · 범위 굵은 십자 · 피해 4 · 약화 1(영구) · 설명 "적에게 4 피해를 주고 약화(1)를 부여합니다."
+
+| ID | 기본 TC | 사전조건 | 테스트 절차 | 기대 결과 | 비고 |
+|---|---|---|---|---|---|
+| TC-CARD-088-AI | TC-FX-AI-001 | 다음 행동이 이 카드인 소환사 | 예고 확인 | 머리 위 "4 + 피해 아이콘 + Negative", 보드에 굵은 십자 |  |
+| TC-CARD-088-HIT | TC-FX-AI-002, TC-FX-STATUS-001, TC-FX-STATUS-010 | 굵은 십자 안에 아군 2명 | 적 턴 | 가장 가까운 아군(도발 우선)에게 4 피해 + `약화 (-1)`(정보창 "영구"), 힘 1 감소 |  |
+| TC-CARD-088-STACK | TC-FX-STATUS-008 | 같은 아군이 두 번 맞음 / 힘 0인 아군 | 적 턴 반복 | 약화가 두 개로 따로 쌓여 힘 -2. 힘이 0이면 더 내려가지 않음 | 같은 종류 상태이상은 합치지 않음 |
+| TC-CARD-088-CLEANSE | TC-FX-STATUS-011 | 약화가 걸린 아군 | `CleanseCard` 사용 | 약화가 모두 제거되고 깎인 힘이 돌아옴 |  |
+| TC-CARD-088-COND |  | 공격 차례, 굵은 십자 안에 아군 없음 | 예고 확인 → 적 턴 | 예고가 소환(EnemyDoubleSummonCard)으로 바뀌고 Balloon 2기를 또 소환. 순환 위치가 유지돼 다음 예고는 다시 공격 차례로 판정 | 조건부 행동 `NoTargetInRange` → 소환, `advanceCycle = false` |
 
 ## 7. 상태이상/버프 시스템
 
@@ -1054,8 +1085,8 @@
 |---|---|---|---|---|
 | TC-TURN-001 | 아군 턴 종료 직후 ~ 다음 아군 턴의 턴 시작 처리(유물·턴 효과·드로우)가 끝나기 전 구간 | 이 구간에 카드/보드 클릭, 턴 종료 버튼 클릭 시도 | `PlayerInputLocked`로 입력·턴 종료 차단, `IsPlayerActionable`이 false. 턴 시작 처리가 끝난 뒤에 열림 | |
 | TC-TURN-002 | 자동 아군(소환수) 존재 | 아군 턴 종료 후 관찰 | `PlayAutoAllyTurnCoroutine`이 적 턴 시작 전에 실행되어 자동 행동 수행 | |
-| TC-TURN-003 | 적 AI가 스턴 상태로 자기 턴 도달 | 적 턴 진행 | `GetNextMove()`가 `Movenum`을 증가시키지 않고 `StunnedCard` 반환(스턴 해제 후 원래 예고된 행동 그대로 재개) | |
-| TC-TURN-004 | 적의 `actionCards` 인덱스가 마지막 항목(`Count-1`)일 때 `ChangeMove()` 호출 | 다음 행동 결정 | `Movenum`이 0으로 정확히 래핑 | |
+| TC-TURN-003 | 적 AI가 스턴 상태로 자기 턴 도달 | 적 턴 진행 | `GetNextMove()`가 `StunnedCard` 반환, 행동 뒤 `FinishMove(acted: false)`가 순환 위치(`Movenum`)를 넘기지 않음(스턴 해제 후 원래 순서 재개). 조건부 행동이 있는 적은 그 시점 보드로 다음 행동을 다시 정함 | |
+| TC-TURN-004 | 적의 `actionCards` 인덱스가 마지막 항목(`Count-1`)일 때 행동 후 `FinishMove()` 호출 | 다음 행동 결정 | `Movenum`이 0으로 정확히 래핑 | |
 | TC-TURN-005 | 적 턴 진행 중 스냅샷 순회 도중 다른 적이 사망(예: 반격/연쇄피해) | 적 턴 코루틴 진행 | 죽은 적의 스냅샷 항목은 null 체크로 스킵되어 예외 없이 계속 진행 | |
 | TC-TURN-006 | `Board.CombatEnded=true`가 된 시점 | 턴 코루틴이 진행 중이었다면 | 이후 턴 전환 코루틴이 즉시 종료(추가 배너/행동 발생 안 함) | |
 | TC-TURN-007 | 첫 전투 시작(`isFirstTurn`) | 전투 진입 | "전투 시작" 배너 후 "플레이어 턴" 배너가 순차 표시(1회성) | |
@@ -1078,6 +1109,13 @@
 | TC-TURN-024 | 마지막 남은 적이 독(체력 이하 피해) 상태 | 적 턴 종료(독 틱으로 사망) | 다음 타이밍·플레이어 턴으로 넘어가지 않고 승리 처리. 아군 턴 종료 독 틱으로 마지막 아군이 죽어도 적 턴이 시작되지 않고 패배 처리 | `Board.IsCombatDecided` |
 | TC-TURN-025 | 소멸 카드(`MagicMissileCard`·`ChainMoveAttackCard` 등 `exileOnUse`)를 집어 조준 중(드롭 전) | 턴 종료 버튼 클릭 | 카드가 소멸되지 않고 손패로 돌아갔다가 버림 더미로 감. 에너지 차감 없음 | 예전에는 사용한 카드로 처리돼 소멸됐음 |
 | TC-TURN-026 | 한 턴에 카드 3장 이상 사용(공격·스킬 섞어서) | 턴 종료 → 적 턴 → 다음 플레이어 턴 | 턴 종료 처리 중 에너지가 추가로 차감되지 않고, 턴 순환이 멈추지 않음 | 회귀: 사용한 카드 상태(`currentActiveCard`)가 카드 종료 때 비워지는지 |
+| TC-TURN-027 | `conditionalActions`가 빈 적(ThornKnight·MobMagician 등) | 여러 턴 관측 | 예고·행동이 `actionCards` 순서대로 순환(조건부 행동 도입 전과 같음) | 기본 동작 회귀 |
+| TC-TURN-028 | `Enemy-Broom`(순환: 이동 → `EnemyAttackCard`, 조건부 행동: 공격이 맞을 대상이 없으면 이동·순환 유지), `L1` | 공격 차례가 된 시점에 아군을 고리 범위 밖에 둠 → 적 턴 | 적이 행동한 직후 정해진 다음 예고가 공격 대신 이동 아이콘·이동 범위. 적 턴에 가장 가까운 아군 쪽으로 다가감. 그다음 예고는 다시 공격(범위 밖이면 또 이동) | `ConditionalAction` `NoTargetInRange`, `checkCard = EnemyAttackCard`, `advanceCycle = false` |
+| TC-TURN-029 | TC-TURN-028과 같되 공격 차례에 아군이 고리 범위 안 | 적 턴 | 예고 "5 + 피해 아이콘" 그대로, 범위 안 아군 공격 | |
+| TC-TURN-030 | TC-TURN-028에서 이동 예고가 뜬 상태 | 플레이어 턴에 아군을 Broom 고리 범위 안으로 옮김 → 턴 종료 | 예고는 바뀌지 않고 적은 예고대로 이동(이동 범위 안이면 그 아군에게 이동공격) | 결정은 적이 행동한 직후 한 번만 — 플레이어 턴 중 변화는 반영하지 않음 |
+| TC-TURN-031 | Broom 이동 차례(순환 0번)에 아군이 범위 밖 | 적 턴 2회 | 이동 → 다음 예고 공격(범위 안이면) — 이동이 두 번 연속 나오지 않음 | 조건부 행동 카드가 그 차례 순환 카드와 같으면 순환을 쓴 것으로 침 |
+| TC-TURN-032 | 공격 차례인 Broom에 `StunCard` | 기절 턴 → 기절이 풀린 뒤 | 기절 턴은 순환이 넘어가지 않고, 풀린 뒤 예고는 그 시점 보드 기준(범위 밖이면 이동, 안이면 공격) | |
+| TC-TURN-033 | 전투 시작 직후 / 소환·대화 합류로 나타난 자동 기물 | 첫 예고 확인 | 순환 0번 카드부터 시작하되, 조건부 행동은 배치가 모두 끝난 보드 기준으로 판정해 첫 예고가 정해짐 | `Board.PlanAllAutoPieces`, 소환 `SummonPieceAt`, 합류 `SpawnPiece` |
 
 ---
 

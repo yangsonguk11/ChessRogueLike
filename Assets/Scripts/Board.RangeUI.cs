@@ -27,7 +27,7 @@ public partial class Board
     //     큐가 도는 동안은 내용이 없어도 켜진 것으로 본다 — 연출 사이(사망 등)에는 아무 범위도 보이지 않는다.
     //  3. 기물 선택(카드 사용 전): 정보창에 뜬 기물의 범위 / 초록 = 그 기물
     //  4. 평상시: 적 예고 범위
-    // 적·자동 아군 턴에는 AI가 selectedButton을 거쳐 selectedButtonMovable을 채우므로, 플레이어가 행동할 수 없을 때의
+    // 적·자동 아군 턴에는 AI 행동 처리(ProcessEnemyCardEffect)가 selectedButtonMovable을 채우므로, 플레이어가 행동할 수 없을 때의
     // 사거리는 1순위(조준)가 아니라 2순위(AI 선택)로 본다.
     void RefreshRangeDisplay()
     {
@@ -139,7 +139,8 @@ public partial class Board
         if (IsHandCard && pendingEffects.Count > 0 &&
             pendingEffects.Peek().targetlogic == TargetLogic.self)
         {
-            ExecuteEffect(pendingEffects.Dequeue(), selectedButton);
+            CardEffect selfEffect = pendingEffects.Dequeue();
+            ExecuteEffect(selfEffect, CasterPosOf(selfEffect)); // self 대상 = 효과의 시전자(카드 주인) 칸
             ScheduleNextCardEffect();
             return;
         }

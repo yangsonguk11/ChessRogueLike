@@ -24,6 +24,7 @@ public class EnemyAreaImmobilizeCard : Card
             statusEffectType = StatusEffectType.MovementDisabled,
             statusDuration = duration,
             animTrigger = "ApplyStatus",
+            vfx = "Ring_Test", // 대상 위치 이펙트 — 임시 테스트 이펙트(아트 교체 전)
         });
     }
 

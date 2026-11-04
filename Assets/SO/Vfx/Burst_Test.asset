@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b2fecb887b6ebe4e7efbd030c5cacaa7, type: 3}
   m_Name: Burst_Test
   m_EditorClassIdentifier: Assembly-CSharp::TargetBurstCue
-  prefab: {fileID: 5100941364825399842, guid: 8b318a7b3f13e7948a60613b8b96153b, type: 3}
+  prefab: {fileID: 6982263153641847612, guid: 36a3ddd9e9258474aa29a08939eeda45, type: 3}
   duration: 0.3
   socketId: 
   useTint: 1

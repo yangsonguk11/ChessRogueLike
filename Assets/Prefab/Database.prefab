@@ -131,6 +131,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PieceDatabase
   PiecePrefabs:
+  - {fileID: 103078, guid: 2f5ba6046f9e48e881998227b5a796c9, type: 3}
+  - {fileID: 107724, guid: 55aa76d43364401db6037ef1b37c8697, type: 3}
   - {fileID: 107724, guid: 1bae5e056ac375b46a1158f8b09b1f7f, type: 3}
   - {fileID: 107724, guid: a352b264d90975a24ea4fb31d2e3be93, type: 3}
   - {fileID: 2961803386712819093, guid: 5987a34a765db874dba26aa478b09d26, type: 3}
@@ -155,6 +157,7 @@ MonoBehaviour:
   - {fileID: 107724, guid: e39db4e84a684447941b87bb70950af1, type: 3}
   - {fileID: 107724, guid: a4a1153e02cc40cb87b7bf9882ba7c15, type: 3}
   - {fileID: 107724, guid: 41fb9d5a21364903b4bcd5a8a5b9fcbd, type: 3}
+  - {fileID: 107724, guid: d122f8aa78ec60642a52a3592df7c924, type: 3}
 --- !u!114 &3181729770140103546
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -185,7 +188,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelDatabase
   floorPools:
   - levels:
-    - {fileID: 11400000, guid: d564be8c8e84a494d8475bc69cc69160, type: 2}
+    - {fileID: 11400000, guid: 02684e62629554644a9f1e179df4704b, type: 2}
   - levels:
     - {fileID: 11400000, guid: d564be8c8e84a494d8475bc69cc69160, type: 2}
     - {fileID: 11400000, guid: 68c64e4cbabc4dafb2dd1d424b06c12f, type: 2}

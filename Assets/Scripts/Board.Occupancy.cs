@@ -75,7 +75,7 @@ public partial class Board
             p.OnTeammateDied(living.Count - 1);
     }
 
-    List<Piece> GetLivingTeammates(Piece dead)
+    public List<Piece> GetLivingTeammates(Piece dead)
     {
         var result = new List<Piece>();
         for (int x = 0; x < N; x++)

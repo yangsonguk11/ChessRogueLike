@@ -37,6 +37,12 @@ MonoBehaviour:
   actionCards:
   - {fileID: 54401725194517764}
   - {fileID: 5766115866947927382}
+  conditionalActions:
+  - condition: 1
+    param: 0
+    checkCard: {fileID: 5766115866947927382}
+    card: {fileID: 54401725194517764}
+    advanceCycle: 0
 --- !u!114 &54401725194517764
 MonoBehaviour:
   m_ObjectHideFlags: 0

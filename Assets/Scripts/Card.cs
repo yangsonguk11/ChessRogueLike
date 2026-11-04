@@ -43,7 +43,7 @@ public static class CardTypeExtensions
 
 // 효과의 대상을 정하는 규칙. 두 갈래로 쓰인다.
 // - 단일 대상(NearestEnemy·LowestHP·self): AutoPiece(적·자동 아군)가 쓸 때 대상 칸을 자동으로 고르는 기준이다
-//   (Board.ResolveEnemyTarget). 손패 카드는 드롭·클릭한 칸이 대상이라 NearestEnemy·LowestHP는 무시되고,
+//   (Board.ResolveTargetPos). 손패 카드는 드롭·클릭한 칸이 대상이라 NearestEnemy·LowestHP는 무시되고,
 //   self만 "시전자가 정해지는 즉시 시전자 칸에서 실행"(Board.OnSelectBoard)으로 쓰인다.
 // - 범위(All*InRange): 누가 쓰든 ApplyCardEffectNow가 ExecuteAreaEffect로 보내, effectRange 안의 기물 중 해당 진영
 //   전원에게 적용한다. 진영은 시전자(CardEffect.caster) 기준이고, 범위 중심은 areaTargetMode가 정한다
@@ -718,7 +718,7 @@ public record CardEffect
     public bool lockOnAllyPositions { get; init; }
 
     // 이 효과의 시전자 — Board는 효과마다 이 기물의 현재 위치를 시전자 칸으로 쓴다(이동했으면 새 위치).
-    // null이면 selectedButton 기준(기존 방식).
+    // 효과 실행에 필수다 — 선택 상태(selectedButton)로 대신하지 않으며, 비어 있으면 그 효과는 실행되지 않는다.
     // 효과를 큐에 넣는 시점(카드 사용은 UseCard, 그 밖은 Board.EnqueueEffect/InsertEffectNext)에 원본은 그대로 두고
     // `with { caster = ... }` 사본으로 기록한다 — TurnEffect가 카드의 중첩 CardEffect 객체를 공유하므로 원본을 바꾸면 안 된다.
     // 큐는 시전자가 보드에 없으면(앞 효과로 사망) 그 효과를 건너뛴다.
