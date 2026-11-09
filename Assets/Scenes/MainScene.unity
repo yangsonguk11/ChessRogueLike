@@ -1999,6 +1999,7 @@ MonoBehaviour:
   smoothTime: 0.12
   edgeSize: 0.1
   panSpeed: 8
+  rotateSmoothTime: 0.25
 --- !u!1 &401622693
 GameObject:
   m_ObjectHideFlags: 0
@@ -11369,7 +11370,7 @@ PrefabInstance:
     - target: {fileID: 188146230140724658, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
       propertyPath: ButtonInfoPanel
       value: 
-      objectReference: {fileID: 1856970875}
+      objectReference: {fileID: 0}
     - target: {fileID: 188146230140724658, guid: a9f6a8176affee04faf474457cd756f9, type: 3}
       propertyPath: RestObjectPrefab
       value: 

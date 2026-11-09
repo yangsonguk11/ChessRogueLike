@@ -188,7 +188,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelDatabase
   floorPools:
   - levels:
+    - {fileID: 11400000, guid: eb723aa4558240c0a3df7bae501041f4, type: 2}
+    - {fileID: 11400000, guid: 822da054bacce2e41802b390520177a1, type: 2}
+    - {fileID: 11400000, guid: 954b17a8efe94641897804f63d1f8fa4, type: 2}
     - {fileID: 11400000, guid: 02684e62629554644a9f1e179df4704b, type: 2}
+    - {fileID: 11400000, guid: a17cb2ac14064e9580c5653dbe7b1da1, type: 2}
   - levels:
     - {fileID: 11400000, guid: d564be8c8e84a494d8475bc69cc69160, type: 2}
     - {fileID: 11400000, guid: 68c64e4cbabc4dafb2dd1d424b06c12f, type: 2}

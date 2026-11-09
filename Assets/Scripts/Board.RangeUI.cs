@@ -269,6 +269,7 @@ public partial class Board
     // 범위: AutoPiece(적·자동 아군)는 다음 행동 범위(잠긴 칸 포함), 그 외 기물은 이동 범위. 모닥불·상점(teamID 2)은 표시 없음.
     void ShowButtonInfo(Vector2Int button)
     {
+        return;
         ButtonInfo buttonInfo = BoardUICanvas.GetComponent<ButtonInfo>();
         buttonInfo.SetActive(true);
         buttonInfo.UpdateButtonInfo(GetButtonScript(button));
