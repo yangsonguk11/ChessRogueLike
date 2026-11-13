@@ -35,7 +35,7 @@ ModelImporter:
       takeName: Idle
       internalID: 1076773655068439284
       firstFrame: 0
-      lastFrame: 60
+      lastFrame: 150
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -64,7 +64,7 @@ ModelImporter:
       takeName: Attack
       internalID: 423414787625598241
       firstFrame: 0
-      lastFrame: 37
+      lastFrame: 93
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -84,7 +84,7 @@ ModelImporter:
       bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
       curves: []
       events:
-      - time: 0.43
+      - time: 0.44
         functionName: OnAnimationEvent
         data: 
         objectReferenceParameter: {instanceID: 0}
@@ -100,7 +100,7 @@ ModelImporter:
       takeName: Hit
       internalID: 346336627214716087
       firstFrame: 0
-      lastFrame: 23
+      lastFrame: 58
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -129,7 +129,7 @@ ModelImporter:
       takeName: Death
       internalID: 3279305975762315851
       firstFrame: 0
-      lastFrame: 69
+      lastFrame: 173
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -158,7 +158,7 @@ ModelImporter:
       takeName: Move
       internalID: 1624036627258255638
       firstFrame: 0
-      lastFrame: 24
+      lastFrame: 60
       wrapMode: 0
       orientationOffsetY: 0
       level: 0

@@ -11,15 +11,13 @@ public class FinalAttackCard : Card
         type = CardType.Attack;
         dragDropTarget = DragDropTarget.Enemy;
 
-        // 버리기를 먼저 해야 버린 수가 정해지지만, 대상은 카드를 든 시점에 골라야 하므로(사거리 표시·취소 가능)
-        // 버리기 효과가 대상 클릭을 받는다. targetlogic이 범위형(All*InRange)이면 ExecuteAreaEffect로 빠져
-        // 버리기가 무시되므로 단일 대상으로 둔다.
+        // 버리기를 먼저 해야 버린 수가 정해진다. 버리기는 시전자 자신이 대상(self)이라 조준에서 빠지고, 피해 효과가
+        // 첫 조준 효과(Card.AimEffectIndex)가 된다 — 적에게 놓는 순간 손패를 버린 뒤 그 적을 친다.
         effects.Add(new CardEffect
         {
             type = EffectType.DiscardHand,
             dmg = 0, // 0 = 손패 전부
-            targetlogic = TargetLogic.LowestHP,
-            effectRange = effectRange[0],
+            targetlogic = TargetLogic.self,
         });
         effects.Add(new CardEffect
         {
@@ -28,7 +26,6 @@ public class FinalAttackCard : Card
             hitsPerDiscarded = 1, // 버린 카드 1장당 1회 타격
             targetlogic = TargetLogic.LowestHP,
             effectRange = effectRange[0],
-            useLastTarget = true, // 버리기에서 고른 대상을 그대로 친다 — 다시 클릭하지 않음
             animTrigger = "Attack",
         });
     }

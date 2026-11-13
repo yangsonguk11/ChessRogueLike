@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **이 저장소의 Claude Code 세션에서는 모든 답변을 반드시 한국어로 작성한다.** 코드 식별자·명령어·파일 경로는 원문 그대로 두되, 설명·요약·질문·커밋 메시지 본문은 한국어로 쓴다.
 
-## Jira·Confluence 반영 (필수)
+## Jira·Confluence 반영
+
+따로 언급하지 않으면 Jira에 반영하지 않는다. 
 
 게임 코드·에셋, 또는 QA 문서를 변경하는 작업을 마치면, 응답을 끝내기 전에 **사용자에게 묻지 않고 바로** Jira와 Confluence에 반영한다(사용자가 코멘트·상태 전환·이슈 생성 모두 자동 진행을 승인함).
 
@@ -55,7 +57,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 [Card.cs](Assets/Scripts/Card.cs)의 `CardEffect`(불변 `record`)가 게임의 모든 "효과" 단위다. 플레이어 카드뿐 아니라 **적/자동 아군 AI 행동(`AutoPiece.actionCards`도 `Card` 컴포넌트), 유물(`Relic.Effects`), 턴 효과(`TurnEffect`), 처치 시 효과(`onKillEffect`), 소환 시 효과(`Piece.onSpawnCards`)** 모두 `Board.ApplyCardEffectNow`([Board.CardEffect.cs](Assets/Scripts/Board.CardEffect.cs))를 거친다. 새 동작은 보통 기존 `CardEffect` 필드 조합으로 만들고, 불가능할 때만 `EffectType`을 추가해 `ApplyCardEffectNow`에 분기를 넣는다.
 
 - `CardEffect`는 절대 변경하지 않는다. 시전자 기록 등은 `effect with { caster = piece }` 사본으로 만든다 — `TurnEffect`가 카드의 중첩 `CardEffect` 객체를 공유하기 때문.
-- 모든 효과는 효과 큐 `pendingEffects` 하나로 실행된다. 카드 밖에서 넣는 효과는 [Board.ScheduledEffects.cs](Assets/Scripts/Board.ScheduledEffects.cs)의 API를 쓴다: 정해진 타이밍(턴 시작/종료·전투 시작)의 효과는 `EnqueueEffect`(큐 뒤) 후 `ResolveEffects`로 큐가 빌 때까지 처리하고 다음 타이밍으로, 효과 처리 도중 유발된 반응(처치 시·피격 시·소환 시·카드 사용 시·드로우 시)은 `InsertEffectNext`(큐 앞 — 유발한 효과 직후 실행). 이렇게 넣은 효과는 `executeOnCaster`라 시전자 칸에서 바로 실행되고 카드 사용 확정(에너지·카드 사용 시 유물)을 하지 않는다. 큐 안의 `!executeOnCaster` 항목은 지금 쓰는 카드의 효과다. 큐를 직접 `Clear()`하지 말고 카드 효과만 지우는 `RemoveCardEffects()`를 쓴다.
+- 모든 효과는 효과 큐 `pendingEffects` 하나로 실행된다. 카드 밖에서 넣는 효과는 [Board.ScheduledEffects.cs](Assets/Scripts/Board.ScheduledEffects.cs)의 API를 쓴다: 정해진 타이밍(턴 시작/종료·전투 시작)의 효과는 `EnqueueEffect`(큐 뒤) 후 `ResolveEffects`로 큐가 빌 때까지 처리하고 다음 타이밍으로, 효과 처리 도중 유발된 반응(처치 시·피격 시·소환 시·카드 사용 시·드로우 시·버림 시)은 `InsertEffectNext`(큐 앞 — 유발한 효과 직후 실행). 이렇게 넣은 효과는 `executeOnCaster`라 시전자 칸에서 바로 실행되고 카드 사용 확정(에너지·카드 사용 시 유물)을 하지 않는다. 큐 안의 `!executeOnCaster` 항목은 지금 쓰는 카드의 효과다. 큐를 직접 `Clear()`하지 말고 카드 효과만 지우는 `RemoveCardEffects()`를 쓴다.
 
 ### 로직과 연출의 분리
 게임 상태(점유, HP, 손패 리스트 소속 등)는 **즉시 동기적으로** 확정되고, 애니메이션 코루틴은 `Board.motionQueue`([Board.Animation.cs](Assets/Scripts/Board.Animation.cs))에 쌓여 나중에 순서대로 재생된다. 예: `ApplyMoveOccupancy`가 이동 애니메이션 전에 칸 점유를 옮겨둔다([Board.Occupancy.cs](Assets/Scripts/Board.Occupancy.cs)).

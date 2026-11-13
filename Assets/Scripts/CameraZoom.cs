@@ -33,6 +33,9 @@ public class CameraZoom : MonoBehaviour
     Vector3 tiltAxis;
     Vector3 panRight;   // 화면 오른쪽에 해당하는 보드 평면 방향
     Vector3 panForward; // 화면 위쪽에 해당하는 보드 평면 방향
+    // 자식 카메라의 리그 기준 로컬 자세 — 내려보는 각도(피치)는 리그가 아니라 여기에 들어 있다. ComputePose가 카메라 월드 자세를 만들 때 쓴다.
+    Vector3 viewLocalPosition;
+    Quaternion viewLocalRotation = Quaternion.identity;
 
     float targetOffset;
     float currentOffset;
@@ -55,6 +58,11 @@ public class CameraZoom : MonoBehaviour
     {
         Camera cam = GetComponentInChildren<Camera>();
         Transform view = cam != null ? cam.transform : transform;
+        if (view != transform)
+        {
+            viewLocalPosition = view.localPosition;
+            viewLocalRotation = view.localRotation;
+        }
 
         // 화면 중심 광선이 보드 평면(y=0)과 만나는 점. 거의 수평이면 정면 일정 거리를 쓴다.
         Vector3 origin = view.position;
@@ -77,7 +85,8 @@ public class CameraZoom : MonoBehaviour
         Vector2 mousePos = mouse != null ? mouse.position.ReadValue() : Vector2.zero;
         float scroll = mouse != null ? mouse.scroll.ReadValue().y : 0f;
         // 휠 한 칸 값이 Input System 버전·OS에 따라 ±120 또는 ±1이라 부호만 쓴다. 휠 위 = 확대.
-        if (scroll != 0f && !IsPointerOverScreenUI(mousePos))
+        // 연출 포커스 중에는 휠 줌을 무시한다 — 포커스 카메라는 사용자 줌을 반영하지 않아, 눌러 두면 복귀 때 줌이 갑자기 바뀐다.
+        if (scroll != 0f && !CameraDirector.IsFocusing && !IsPointerOverScreenUI(mousePos))
             targetOffset = Mathf.Clamp(targetOffset - Mathf.Sign(scroll) * zoomStep, minDistanceOffset, maxDistanceOffset);
 
         Keyboard kb = Keyboard.current;
@@ -214,23 +223,59 @@ public class CameraZoom : MonoBehaviour
 
     void ApplyPose()
     {
-        float t = ZoomInRatio(currentOffset);
+        CalcPose(currentPan, currentOffset, currentYaw, out Vector3 position, out Quaternion rotation);
+        transform.position = position;
+        transform.rotation = rotation;
+    }
+
+    // 이동량(pan)·거리 오프셋·회전(yaw)으로 리그의 월드 자세를 계산한다. ApplyPose(사용자 조작)와 ComputePose(연출 포커스)가 공유한다.
+    void CalcPose(Vector3 pan, float distanceOffset, float yawDegrees, out Vector3 worldPosition, out Quaternion worldRotation)
+    {
+        float t = ZoomInRatio(distanceOffset);
         // 카메라 right 축 기준 음의 회전 = 시선이 위로 들리고 위치는 pivot 아래쪽으로 내려간다.
         Quaternion q = Quaternion.AngleAxis(-t * maxTiltDown, tiltAxis);
-        Vector3 pivot = basePivot + currentPan;
-        Vector3 position = pivot + q * baseDirection * (baseDistance + currentOffset);
+        Vector3 pivot = basePivot + pan;
+        Vector3 position = pivot + q * baseDirection * (baseDistance + distanceOffset);
         Quaternion rotation = q * baseRotation;
 
         // 보드 중심을 지나는 수직축 기준으로 자세 전체를 돌린다.
-        Vector3 axisPoint = new Vector3(basePivot.x, 0f, basePivot.z);
+        Quaternion yaw = Quaternion.AngleAxis(yawDegrees, Vector3.up);
+        Vector3 axisPoint = RotationAxisPoint();
+        worldPosition = axisPoint + yaw * (position - axisPoint);
+        worldRotation = yaw * rotation;
+    }
+
+    Vector3 RotationAxisPoint()
+    {
         if (TryGetBoardRect(out Vector2 boardMin, out Vector2 boardMax))
         {
             Vector2 c = (boardMin + boardMax) * 0.5f;
-            axisPoint = new Vector3(c.x, 0f, c.y);
+            return new Vector3(c.x, 0f, c.y);
         }
-        Quaternion yaw = Quaternion.AngleAxis(currentYaw, Vector3.up);
-        transform.position = axisPoint + yaw * (position - axisPoint);
-        transform.rotation = yaw * rotation;
+        return new Vector3(basePivot.x, 0f, basePivot.z);
+    }
+
+    // 연출용 최소·최대 거리 오프셋(기본 거리 기준). CameraDirector가 프레이밍 거리를 이 범위로 제한한다.
+    public float MinDistanceOffset => minDistanceOffset;
+    public float MaxDistanceOffset => maxDistanceOffset;
+    // 사용자가 휠로 맞춰 둔 확대 목표(음수일수록 더 확대). 보간 중 값(currentOffset)이 아니라 사용자의 의도를 돌려준다.
+    // 연출 포커스가 "사용자가 이미 더 확대했으면 그 확대를 유지"할 때 기준으로 쓴다.
+    public float UserDistanceOffset => targetOffset;
+
+    // focusWorldPoint(보드 평면 위 점)를 화면 중앙에 두는 **카메라(자식)의 월드 자세**를 계산한다 — 카메라를 실제로 옮기지는 않는다.
+    // 리그 자세에 자식 카메라의 로컬 자세(내려보는 각도)를 합성해 반환하므로, 리그 자세가 아니라 실제 화면 시점과 같은 각도가 된다.
+    // 현재 yaw(Q/E로 보간 중인 값)를 반영하므로 회전 중에도 같은 점을 계속 비춘다. 사용자 팬·줌 상태와 보드 범위 제한은 무시한다.
+    // 이동량은 회전 전 좌표계 값이라, 회전 후 포커스 점이 되도록 보드 중심축 기준 역회전한 점을 기준점으로 쓴다.
+    public void ComputePose(Vector3 focusWorldPoint, float distanceOffset, out Vector3 cameraPosition, out Quaternion cameraRotation)
+    {
+        distanceOffset = Mathf.Clamp(distanceOffset, minDistanceOffset, maxDistanceOffset);
+        Vector3 axisPoint = RotationAxisPoint();
+        Vector3 unrotated = axisPoint + Quaternion.AngleAxis(-currentYaw, Vector3.up) * (focusWorldPoint - axisPoint);
+        Vector3 pan = unrotated - basePivot;
+        pan.y = 0f;
+        CalcPose(pan, distanceOffset, currentYaw, out Vector3 rigPosition, out Quaternion rigRotation);
+        cameraPosition = rigPosition + rigRotation * viewLocalPosition;
+        cameraRotation = rigRotation * viewLocalRotation;
     }
 
     // 화면 공간 UI(맵, 덱 목록, 카드 선택·상점 패널 등) 위면 휠·엣지 스크롤을 UI에 양보한다.

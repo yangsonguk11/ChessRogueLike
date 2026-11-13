@@ -104,11 +104,13 @@ public class TurnManager : MonoBehaviour, ITurnManager
 
     IEnumerator EndPlayerTurnCoroutine()
     {
+        // 아군 턴 종료 선언 → 아군 소환수 행동 → 턴 종료 시 효과 → 적 방어도 사라짐 → 적 턴 시작
+        board.PrepareAllyTurnEnd();
+        yield return StartCoroutine(board.PlayAutoAllyTurnCoroutine());
+        if (board.IsCombatDecided) yield break; // 소환수 행동으로 전투가 끝났으면 진행하지 않음
         yield return StartCoroutine(board.AllyTurnEndCoroutine());
         yield return new WaitUntil(() => !board.queuecoroutineworking);
-        if (board.IsCombatDecided) yield break; // 턴 종료 효과(상태이상 틱 등)로 전투가 끝났으면 진행하지 않음
-        yield return StartCoroutine(board.PlayAutoAllyTurnCoroutine());
-        if (board.CombatEnded) yield break; // 아군 자동 행동 중 전투가 끝났으면 적 턴으로 넘어가지 않음
+        if (board.IsCombatDecided) yield break; // 턴 종료 효과(상태이상 틱 등)로 전투가 끝났으면 적 턴으로 넘어가지 않음
         StartEnemyTurn();
     }
 
@@ -131,6 +133,9 @@ public class TurnManager : MonoBehaviour, ITurnManager
     }
     public void TurnStateProcessing()
     {
+        // 이미 Processing이면 되돌아갈 상태(prevState)를 덮지 않는다 — 덮으면 prevState가 Processing이 되어
+        // RollbackStateProcessing 뒤에도 Processing에 머물고, 플레이어 입력(IsPlayerActionable)이 영구히 막힌다.
+        if (currentState == TurnState.Processing) return;
         prevState = currentState;
         currentState = TurnState.Processing;
     }

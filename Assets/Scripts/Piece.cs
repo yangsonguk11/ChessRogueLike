@@ -66,6 +66,13 @@ public abstract class Piece : MonoBehaviour
     public List<StatusEffect> activeEffects = new List<StatusEffect>();
     public bool movedThisTurn;
 
+    // 바라보는 방향 — 4방향 단위 벡터 중 하나, 방향이 없으면 (0,0)(기본값). 보드 좌표(x=행, y=열)이고 바뀌는 규칙은 Board.TurnToward 한곳에 있다
+    // (행동할 때·공격받을 때). 범위 효과의 회전(CardEffect.GetRangeOffsets)과 적 행동 예고가 이 값만 읽는 논리 상태이며, 모델 회전
+    // (transform.rotation)은 값이 바뀔 때 한 번 맞출 뿐이라 이후 연출이 돌려도 이 값은 그대로다. 전투 런타임 전용이라 세이브하지 않는다.
+    [System.NonSerialized] public Vector2Int facing;
+    // true면 TurnToward가 방향을 바꾸지 않는다. AutoPiece.PlanNextMove가 다음 행동 카드의 Card.LocksFacing로 정한다(상태이상 아님).
+    [System.NonSerialized] public bool facingLocked;
+
     PieceEffect pieceEffect;
 
     public void AddStatusEffect(StatusEffect effect)
@@ -75,17 +82,9 @@ public abstract class Piece : MonoBehaviour
     }
 
     public bool IsStunned() => activeEffects.Exists(e => e is StunEffect);
+    public bool IsMovementDisabled() => activeEffects.Exists(e => e is MovementDisabledEffect);
     public bool HasTaunt() => activeEffects.Exists(e => e is TauntEffect);
     public bool HasExileCurse() => activeEffects.Exists(e => e is ExileOnUseEffect);
-
-    // 이동공격이 실제로 발생했을 때(주 타겟 피해 적용 + 스플래시 처리까지 끝난 시점) 발화. 연쇄 공격
-    // 같은 부가 효과를 표현하는 컴포넌트가 Board.Combat.cs 수정 없이 스스로 구독해 반응할 수 있게 한다.
-    // hitMultipleTargets: 이번 이동공격이 주 타겟 외에 실제로 스플래시 대상을 하나라도 맞혔는지
-    // (MoveAttackRangeInfoSO가 설정돼 있는지 여부인 isAreaAttack과는 다름 — 방향성 단일 칸 범위처럼
-    // 회전 후 주 타겟 칸과 겹쳐서 스플래시가 0건인 "사실상 단일 타격"도 있을 수 있다).
-    public event Action<Vector2Int, Vector2Int, int, bool> OnMoveAttackPerformed; // (attackerFinalPos, impactPos, dmg, hitMultipleTargets)
-    public void RaiseMoveAttackPerformed(Vector2Int attackerFinalPos, Vector2Int impactPos, int dmg, bool hitMultipleTargets)
-        => OnMoveAttackPerformed?.Invoke(attackerFinalPos, impactPos, dmg, hitMultipleTargets);
 
     // 걸려 있는 "다음 이동공격" 버프(NextMoveAttackEffect)의 합계 — 소모하지 않는다(카드 설명 미리보기용).
     public MoveAttackBonus PeekNextMoveAttackBonus()
@@ -122,10 +121,9 @@ public abstract class Piece : MonoBehaviour
     }
 
     // attack/moveattack 피해에만 적용되는 보정(취약 등) — Board.ApplyAttackDamage에서만 호출한다.
-    // 0 피해 공격은 "피해를 받은" 게 아니므로 보정하지 않는다. 같은 효과가 여러 개면 합산.
+    // 최종 피해 = 기본 피해 + 대상의 취약 수치(기본 피해가 0이어도 더한다). 같은 효과가 여러 개면 합산.
     public int ModifyIncomingAttackDamage(int damage)
     {
-        if (damage <= 0) return damage;
         int bonus = 0;
         foreach (var effect in activeEffects)
             bonus += effect.IncomingAttackDamageBonus;
@@ -274,7 +272,7 @@ public abstract class Piece : MonoBehaviour
     {
         if (amount <= 0) return;
         grave += amount;
-        Board.instance?.EnqueueBoardAnimation(StatusTextReaction($"무덤 +{amount}", true, new Color(1f, 0.27f, 0.27f)));
+        Board.instance?.EnqueueTextAnimation(this, StatusTextReaction($"무덤 +{amount}", true, new Color(1f, 0.27f, 0.27f)));
     }
     public bool HasGrave(int amount) => amount <= 0 || grave >= amount;
     // 실제로 소모한 양을 반환한다 — consumeAll이면 가진 무덤 전부, 아니면 amount(가진 만큼까지).
@@ -284,7 +282,7 @@ public abstract class Piece : MonoBehaviour
         int used = consumeAll ? grave : Mathf.Clamp(amount, 0, grave);
         grave -= used;
         if (used > 0)
-            Board.instance?.EnqueueBoardAnimation(StatusTextReaction($"무덤 -{used}", false, new Color(0.7f, 0.7f, 0.7f), textOnly: true));
+            Board.instance?.EnqueueTextAnimation(this, StatusTextReaction($"무덤 -{used}", false, new Color(0.7f, 0.7f, 0.7f), textOnly: true));
         return used;
     }
     // colDamage를 변경하고(즉시) 버프/디버프 텍스트+파티클+사운드를 재생한다. permanent가 true면

@@ -17,13 +17,13 @@ public partial class Board
     // 지금 겨누는 효과: 효과 처리 중이면 큐 맨 앞, 카드를 들고만 있으면 미리보기 중인 조준 효과.
     CardEffect CurrentAimEffect() => pendingEffects.Count > 0 ? pendingEffects.Peek() : previewAimEffect;
 
-    // 카드를 집었을 때(CardCanvas.CommitNowUsingCard)와 사용 확정 때(UseCard) 호출. 범위는 이번 사용 효과 중
+    // 카드를 집었을 때(CardCanvas.CommitNowUsingCard)와 사용 확정 때(UseCard) 호출. 범위는 카드의 효과 중
     // 처음 나오는 조준 효과(Card.AimEffectIndex, 없으면 첫 효과) 기준이다.
     public void ShowUseEligibilityPreview(Card card)
     {
         ClearSelectedButton();
         pendingUseHasRangeLimit = false;
-        List<CardEffect> effects = card.UseEffects;
+        List<CardEffect> effects = card.effects;
         if (effects.Count == 0) return;
         int aimIndex = card.AimEffectIndex;
         previewAimEffect = aimIndex >= 0 ? effects[aimIndex] : null;
@@ -75,7 +75,24 @@ public partial class Board
         int aimIndex = card.AimEffectIndex;
         Button ownerButton = GetButtonForPiece(CardCanvas.instance?.ActivePiece);
         return aimIndex >= 0 && ownerButton != null
-            && IsMoveAttackUnreachable(card.UseEffects[aimIndex], ownerButton.GetLocation(), pos);
+            && IsMoveAttackUnreachable(card.effects[aimIndex], ownerButton.GetLocation(), pos);
+    }
+
+    // 드래그로 카드를 놓은 칸이 도발 때문에 대상이 될 수 없는지 — 사거리 안에 닿는 상대 도발 기물이 있는데 다른 칸에 놓았으면 true.
+    // 사거리는 카드를 집을 때 계산해 둔 selectedButtonMovable, 사거리 제한이 없는 카드는 보드 전체다.
+    public bool IsTauntBlockedDropPos(Card card, Vector2Int pos)
+    {
+        int aimIndex = card.AimEffectIndex;
+        if (aimIndex < 0) return false;
+        List<Vector2Int> rangeCells = selectedButtonMovable;
+        if (!pendingUseHasRangeLimit)
+        {
+            rangeCells = new List<Vector2Int>();
+            for (int x = 0; x < N; x++)
+                for (int y = 0; y < M; y++)
+                    rangeCells.Add(new Vector2Int(x, y));
+        }
+        return IsTauntBlocked(card.effects[aimIndex], CardCanvas.instance?.ActivePiece, pos, rangeCells);
     }
 
     void ClearUseEligibilityPreview()

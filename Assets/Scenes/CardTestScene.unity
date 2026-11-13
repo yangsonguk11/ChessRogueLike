@@ -2853,6 +2853,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardTestHandDealer
   testCardNames:
   - EmpowerAllyCard
+  - EmpowerAllyCard
+  - SacrificeShieldCard
+  - DiscardPowerCard
 --- !u!1 &900001001
 GameObject:
   m_ObjectHideFlags: 0

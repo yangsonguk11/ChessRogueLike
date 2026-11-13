@@ -27,8 +27,7 @@ public class EnemyVulnerableAttackCard : Card
             statusEffectType = StatusEffectType.Vulnerable,
             statusDuration = -1,
             statusPower = 1,
-            useLastTarget = true,    // 타격한 대상에게 그대로 — 다시 클릭하지 않음
-            skipIfTargetGone = true, // 타격으로 대상이 죽었으면 취약은 건너뜀
+            useLastTarget = true,    // 타격한 대상에게 그대로 — 다시 클릭하지 않음(타격으로 대상이 죽었으면 취약은 무시된다)
             animTrigger = "ApplyStatus",
         });
     }

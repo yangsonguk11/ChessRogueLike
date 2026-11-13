@@ -7,7 +7,7 @@ using UnityEngine;
 // 소환 시 효과 등 게임의 모든 CardEffect가 이 큐 하나로 실행된다.
 // - 타이밍 효과(턴 시작/종료, 전투 시작): EnqueueEffect로 큐 뒤에 넣고 ResolveEffects로 큐가 빌 때까지 처리한 뒤
 //   다음 타이밍으로 넘어간다(Board.TurnControl.cs).
-// - 반응 효과(처치 시·피격 시·소환 시·카드 사용 시·드로우 시): 효과 처리 도중에 InsertEffectNext로 큐 앞에 넣는다 —
+// - 반응 효과(처치 시·피격 시·소환 시·카드 사용 시·드로우 시·버림 시): 효과 처리 도중에 InsertEffectNext로 큐 앞에 넣는다 —
 //   유발한 효과 직후, 다음 효과보다 먼저 실행된다.
 // 카드 밖에서 넣는 효과는 모두 executeOnCaster(시전자 칸에서 바로 실행)이므로, 큐 안의 !executeOnCaster 항목은
 // 항상 "지금 쓰는 카드(currentActiveCard)의 효과"다.
@@ -42,6 +42,17 @@ public partial class Board
         pendingEffects = new Queue<CardEffect>(pendingEffects.Where(e => e.executeOnCaster));
     }
 
+    // 전투 시작 배치가 끝난 뒤 1회: 유물의 전투 시작 효과를, 배치하며 모인 스폰 시 효과보다 앞에 넣는다
+    // (타이밍 효과는 유물 → 기물이 가진 효과 순). 카드를 쓰기 전이라 큐에는 스폰 시 효과만 있다.
+    void EnqueueCombatStartRelicsFirst()
+    {
+        var spawnEffects = new List<CardEffect>(pendingEffects);
+        pendingEffects.Clear();
+        TriggerRelicsOnCombatStart();
+        foreach (CardEffect effect in spawnEffects)
+            pendingEffects.Enqueue(effect);
+    }
+
     // 큐에 쌓인 효과를 처리한다. 이미 처리 중이면 드레인 가드가 이어서 처리한다.
     public void RunEffects() => ProcessNextCardEffect();
 
@@ -73,5 +84,16 @@ public partial class Board
     // ResolveEffects가 처리한다).
     public void OnCardDrawn(Piece piece, RectTransform card)
     {
+    }
+
+    // 버림 시 타이밍 훅 — 카드가 카드 효과(DiscardHand·SelectAndDiscard)로 버려질 때마다 CardCanvas.DiscardCard가 부른다.
+    // 버려진 카드의 버려졌을 때 효과(Card.onDiscardEffects)를 카드 주인(owner)을 시전자로 큐 앞에 넣는다 — 버린 효과 직후,
+    // 그 카드의 다음 효과보다 먼저 실행되고, 여러 장이 버려지면 버려진 순서를 지킨다.
+    public void OnCardDiscarded(Piece owner, RectTransform card)
+    {
+        Card discarded = card != null ? card.GetComponent<Card>() : null;
+        if (owner == null || discarded == null) return;
+        foreach (CardEffect effect in discarded.onDiscardEffects)
+            InsertEffectNext(effect, owner);
     }
 }

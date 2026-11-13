@@ -100,6 +100,7 @@ public static class BoardTooltipContent
             {
                 TurnEffect _          => null, // 이름("턴 종료 시 광역 피해 3" 등)이 곧 설명
                 NextMoveAttackEffect _ => "다음 이동공격 때 소모됩니다.",
+                ChainMoveAttackEffect _ => "이동공격 후 이동 범위 내 가장 가까운 다른 적에게 한 번 더 같은 피해를 줍니다. 다른 적이 없으면 공격한 적에게 줍니다.",
                 _                      => KeywordGlossary.Get(GlossaryTermOf(e))?.description,
             };
             result.Add(new TooltipEntry
@@ -111,15 +112,6 @@ public static class BoardTooltipContent
                 grid = TurnEffectRange(e),
             });
         }
-
-        // 연쇄 이동공격은 StatusEffect가 아니라 컴포넌트라 상태이상 목록에 없다(ChainMoveAttackBuff 참고).
-        if (p.GetComponent<ChainMoveAttackBuff>() != null)
-            result.Add(new TooltipEntry
-            {
-                kind = TooltipEntry.Kind.Buff,
-                title = "연쇄 이동공격",
-                body = "이번 전투 동안\n이동공격 시 이동 범위 내 다른 적에게 한 번 더 같은 피해를 줍니다. 다른 적이 없으면 공격한 적에게 줍니다.",
-            });
 
         AddInflictKeywords(p, result);
     }

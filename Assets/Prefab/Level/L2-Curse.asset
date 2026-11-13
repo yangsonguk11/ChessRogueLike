@@ -23,6 +23,8 @@ MonoBehaviour:
     name: Enemy-CurseKnight
   - position: {x: 2, y: 4}
     name: Enemy-Broom
+  - position: {x: 2, y: 2}
+    name: Enemy-Mob
   levelType: 0
   eventType: 0
   eventObjectPosition: {x: 0, y: 0}

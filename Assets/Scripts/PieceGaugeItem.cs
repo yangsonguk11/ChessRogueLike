@@ -78,9 +78,6 @@ public class PieceGaugeItem : MonoBehaviour, IPointerEnterHandler, IPointerExitH
             string color = e.IsBuff ? BuffColor : "#" + ColorUtility.ToHtmlStringRGB(e.EffectColor);
             statusParts.Add(e.StatusLabel(color));
         }
-        // 연쇄 이동공격은 StatusEffect가 아니라 컴포넌트라 상태이상 목록에 없다(ChainMoveAttackBuff 참고).
-        if (p.GetComponent<ChainMoveAttackBuff>() != null)
-            statusParts.Add($"<color={BuffColor}>연쇄 이동공격</color>");
         return string.Join(" · ", statusParts);
     }
 

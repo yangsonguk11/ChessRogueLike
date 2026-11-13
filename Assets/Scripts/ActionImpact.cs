@@ -22,9 +22,13 @@ public class ActionImpact
     public List<Vector2Int> areaCells = new List<Vector2Int>(); // 범위 표시와 같은 칸(Board.ResolveAnimRangeCells)
     public List<HitReaction> hits = new List<HitReaction>();
     public List<IEnumerator> common = new List<IEnumerator>(); // 시전자 자신 반응(흡혈 회복·이동공격 실드)·대상 구분 없는 반응
+    public List<Piece> focusTargets = new List<Piece>();     // 피격 반응은 없지만 연출 카메라가 함께 비출 대상(힐·실드를 받는 기물)
     public AttackVfxCue cue;
     public int activeCues;                                   // 재생 중인 이펙트 수 — 0이 될 때까지 Board가 행동을 끝내지 않는다
     public bool finished;                                    // Board.RunImpactCor가 끝남(이펙트가 멈춰 시간 제한으로 끝난 경우 포함)
+    // 시전자 애니메이션의 진행 상황 — Board.PlayTriggerAnimCor가 채우고 Board.RunImpactCor가 타격 시점을 기다릴 때 읽는다.
+    public bool casterAnimStarting;                          // 트리거는 걸었지만 그 상태로 아직 들어가지 않음 — 이 동안은 타격 시점 대기 시간을 세지 않는다
+    public float casterEventTimeout;                         // 0보다 크면 그 애니메이션이 시작된 뒤 타격 시점(Animation Event)을 기다릴 최대 시간(초)
 
     readonly MonoBehaviour runner;
     readonly List<Coroutine> running = new List<Coroutine>();

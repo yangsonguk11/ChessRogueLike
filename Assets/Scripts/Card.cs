@@ -47,8 +47,7 @@ public static class CardTypeExtensions
 //   self만 "시전자가 정해지는 즉시 시전자 칸에서 실행"(Board.OnSelectBoard)으로 쓰인다.
 // - 범위(All*InRange): 누가 쓰든 ApplyCardEffectNow가 ExecuteAreaEffect로 보내, effectRange 안의 기물 중 해당 진영
 //   전원에게 적용한다. 진영은 시전자(CardEffect.caster) 기준이고, 범위 중심은 areaTargetMode가 정한다
-//   (Fixed·Directional은 시전자 칸, MouseCentered는 고른 칸).
-// AI 대상 선택에서 areaTargetMode가 Directional4/8이면 이 값보다 방향 계산이 먼저다. AI가 대상을 못 찾으면(-1) 그 효과는 건너뛴다.
+//   (Fixed는 시전자 칸, MouseCentered는 고른 칸). 범위는 facingMode가 TowardTarget이면 시전자가 바라보는 방향(Piece.facing)으로 회전한다.
 public enum TargetLogic
 {
     // 효과 범위(CardEffect.GetRangeOffsets — effectRange, 비어 있으면 시전자 이동 범위) 안 상대 진영 기물 중 가장 가까운 기물.
@@ -72,9 +71,16 @@ public enum TargetLogic
 public enum AreaTargetMode
 {
     Fixed,          // 기존 방식 — 클릭한 칸 기준 고정 범위
-    MouseCentered,  // 마우스를 올린 칸을 중심으로 범위 미리보기
-    Directional4,   // 시전자 기준 4방향으로 패턴 회전
-    Directional8    // 시전자 기준 8방향으로 패턴 회전
+    MouseCentered   // 마우스를 올린 칸을 중심으로 범위 미리보기
+}
+
+// 효과의 "방향성" — 시전자가 어느 쪽을 바라보게 하는지. 바라보는 방향은 Piece.facing(4방향)에 저장되고, 바뀌는 규칙은
+// Board.FacingToward·TurnToward 한곳에 있다.
+public enum FacingMode
+{
+    None,           // 방향성 없음 — 시전자의 방향을 바꾸지 않고 범위도 회전하지 않는다
+    TowardTarget    // 목표의 방향 — 시전자가 목표를 바라본다. 범위 효과(All*InRange)면 범위도 바라보는 방향으로 회전한다
+                    // (AutoPiece는 효과를 실행할 때가 아니라 다음 행동으로 바뀔 때 — AutoPiece.PlanNextMove)
 }
 public abstract class Card : MonoBehaviour, ISelectable
 {
@@ -92,14 +98,24 @@ public abstract class Card : MonoBehaviour, ISelectable
     public virtual CardRarity Rarity => CardRarity.Common;
     // true면 어떤 경우에도 사용할 수 없는 카드(손패 자리만 차지) — CardCanvas.UseCard가 막고, 코스트 숫자도 숨긴다.
     // Rarity와 같은 이유로 프로퍼티다. 버리기·덱으로 되돌리기 같은 다른 효과의 대상은 그대로 된다.
+    // 막는 것은 "사용"뿐이라 버려졌을 때 효과(onDiscardEffects)는 그대로 발동한다.
     public virtual bool IsUnplayable => false;
     // true면 카드 면에 코스트 숫자를 숨긴다. 사용 불가 카드는 항상 숨기고, 그 외에 코스트가 의미 없는 카드(기절한 적의 StunnedCard)도 오버라이드한다.
     public virtual bool HidesCost => IsUnplayable;
+    // true면 AutoPiece가 이 카드를 다음 행동으로 정한 순간부터 행동을 마칠 때까지 바라보는 방향을 고정한다(Piece.facingLocked) —
+    // 피격(공격받을 때)으로 방향이 바뀌지 않아 예고한 방향이 유지된다. AutoPiece.PlanNextMove가 다음 행동의 이 값으로 바로 덮어쓴다.
+    // Rarity와 같은 이유로 프로퍼티다. 상태이상이 아니라 카드가 정하는 값이다.
+    public virtual bool LocksFacing => false;
     [Tooltip("거의 모든 카드가 Awake()에서 직접 덮어씀 — 여기 채워도 대부분 무시됨(해당 카드 클래스의 Awake() 확인).")]
     public int Cost;
     [Tooltip("거의 모든 카드가 Awake()에서 직접 덮어씀 — 여기 채워도 대부분 무시됨(해당 카드 클래스의 Awake() 확인).")]
     public CardType type;
     public List<CardEffect> effects = new List<CardEffect>();
+    // 버려졌을 때 효과: 이 카드가 카드 효과(DiscardHand·SelectAndDiscard)로 버려지면 카드 주인 기물을 시전자로 실행된다
+    // (CardCanvas.DiscardCard → Board.OnCardDiscarded → InsertEffectNext). 턴 종료 손패 정리나 사용 후 버림 더미행에는 발동하지 않는다.
+    // 입력 없이 주인 칸에서 바로 실행되므로 onKillEffect처럼 targetlogic은 self나 범위형(All*InRange)만 쓴다.
+    // effects와 같이 Awake()에서 채운다. 사용 불가 카드(IsUnplayable)도 가질 수 있다.
+    public List<CardEffect> onDiscardEffects = new List<CardEffect>();
     public bool shieldOnMoveAttack;
     public int moveAttackShieldAmount;
     public bool blocksMovementAfterUse;    // 사용 후 이번 턴 이동 불가
@@ -242,7 +258,7 @@ public abstract class Card : MonoBehaviour, ISelectable
     }
 
     public virtual bool CanUse() => true;
-    public virtual string GetCannotUseReason() => "사용할 수 없습니다";
+    public virtual string GetCannotUseReason() => "사용할 수 없습니다.";
     public virtual void Execute() { }
 
     // 이 카드가 이번 사용 후 소멸(Exile)할지 판단한다. 기본은 정적 플래그 exileOnUse 그대로 반환.
@@ -254,23 +270,18 @@ public abstract class Card : MonoBehaviour, ISelectable
     public bool HasGraveForFirstEffect(Piece caster) =>
         effects.Count == 0 || effects[0].graveCost <= 0 || (caster != null && caster.HasGrave(effects[0].graveCost));
 
-    // 이번 사용에 쓸 효과 — 카드를 잡을 때(CardCanvas.UseCard) PrepareUseEffects가 시전자 상태로 정한다.
-    // 잡은 적 없는 카드(적·자동 아군 행동 카드)는 effects 그대로. 카드 설명·툴팁은 계속 effects(원본)를 쓴다.
-    [NonSerialized] List<CardEffect> useEffects;
-    public List<CardEffect> UseEffects => useEffects ?? effects;
-
-    // 시전자가 이동 불가면 처음 나오는 이동 효과부터 끝까지 뺀다(그 앞 효과만 쓴다).
-    public void PrepareUseEffects(Piece caster)
+    // 플레이어가 보드에서 대상을 골라야 하는 첫 효과의 인덱스(없으면 -1): 처음 나오는 self가 아닌 효과.
+    // 그 앞의 self 효과는 사용 확정 때 시전자에게 먼저 실행되고(Board.ConfirmCasterOnDrop), 드롭한 칸이 이 효과의 대상이 된다.
+    // self 효과뿐이면 Self 카드는 조준이 없고(-1), 그 외 카드는 드롭 대상 검사(dragDropTarget)를 받도록 첫 효과를 조준으로 친다.
+    public int AimEffectIndex
     {
-        bool immobile = caster != null && caster.activeEffects.Exists(e => e is MovementDisabledEffect);
-        int moveIndex = immobile ? effects.FindIndex(e => e.type == EffectType.Move) : -1;
-        useEffects = moveIndex >= 0 ? effects.GetRange(0, moveIndex) : null;
+        get
+        {
+            int index = effects.FindIndex(e => e.targetlogic != TargetLogic.self);
+            if (index >= 0 || dragDropTarget == DragDropTarget.Self) return index;
+            return effects.Count > 0 ? 0 : -1;
+        }
     }
-
-    // 플레이어가 보드에서 대상을 골라야 하는 첫 효과의 인덱스(없으면 -1): 이번 사용 효과 중 처음 나오는 효과.
-    // 단, Self 카드의 self 효과는 드롭만으로 시전자에게 실행되므로 조준으로 치지 않는다 — 조준 없는 카드는 Self 카드뿐이다.
-    public int AimEffectIndex => UseEffects.FindIndex(e =>
-        !(dragDropTarget == DragDropTarget.Self && e.targetlogic == TargetLogic.self));
 
     // 조준 카드인지 — 잡으면 NowUsing 자리로 가고 화살표가 뜨며, 드롭한 칸이 첫 조준 효과의 대상이 된다.
     public bool NeedsTargeting() => AimEffectIndex >= 0;
@@ -539,8 +550,15 @@ public abstract class Card : MonoBehaviour, ISelectable
             return;
         }
         if (!IsLeftButton(data)) return; // 손패 카드는 좌클릭으로만 집는다 — 우클릭 취소는 CardCanvas.Update가 처리
-        if (CardCanvas.instance.nowusingCard == GetComponent<RectTransform>() || handNumber < 0)
+        if (CardCanvas.instance.nowusingCard == GetComponent<RectTransform>())
         {
+            CardCanvas.instance.TryCancelCardUsage();
+            return;
+        }
+        if (handNumber < 0)
+        {
+            // 로직상 손패에 있는데 handNumber가 매겨지지 않은 카드는 집을 수 없다 — 진단 로그를 남긴다.
+            if (IsSelectable()) CardCanvas.instance.ReportSilentBlock("MouseDown", this);
             CardCanvas.instance.CancelCardUsage();
             return;
         }
@@ -612,6 +630,7 @@ public record CardEffect
     public RangeInfoSO effectRange { get; init; }
     public TargetLogic targetlogic { get; init; }
     public AreaTargetMode areaTargetMode { get; init; } = AreaTargetMode.Fixed;
+    public FacingMode facingMode { get; init; } = FacingMode.None; // 방향성 — TowardTarget이면 시전자가 목표를 바라보고, 범위 효과의 범위도 그 방향으로 회전한다
     public RangeInfoSO targetingRange { get; init; }      // AoE 중심 배치 가능 범위 (null = 전체 보드)
     public bool targetingUsesMovement { get; init; }      // true면 캐릭터 이동 범위로 AoE 중심 제한
 
@@ -650,7 +669,7 @@ public record CardEffect
 
     // 카드 밖에서 효과 큐에 넣은 효과(Board.EnqueueEffect/InsertEffectNext — 턴 효과·유물·상태이상 틱·처치 시·소환 시·기물 선택 결과).
     // 대상이 시전자로 정해져 있어 큐(Board.ProcessNextCardEffectStep)가 입력을 기다리지 않고 시전자 칸에서 바로
-    // 실행하며, 카드 사용 확정(에너지·카드 사용 시 유물)을 하지 않는다. 큐 안에서 이 값이 false인 항목은 지금 쓰는 카드의 효과다.
+    // 실행한다. 큐 안에서 이 값이 false인 항목은 지금 쓰는 카드의 효과다.
     // 엔진이 넣는 값이며 카드 정의에서는 쓰지 않는다.
     public bool executeOnCaster { get; init; }
 
@@ -705,12 +724,8 @@ public record CardEffect
     public int dmgPerGrave { get; init; }
 
     // true면 타겟을 다시 고르지 않고 직전 효과의 targetPos에 바로 적용한다(같은 대상 추가 타격 등).
+    // 기물이 대상인 효과면 직전 효과의 대상과 같은 기물이 아직 그 칸에 살아 있어야 실행된다(Board.IsTargetMissing).
     public bool useLastTarget { get; init; }
-
-    // true면 실행 시점에 대상 칸에 살아 있는 기물이 없으면(앞 효과로 죽음, 빈 칸 지정 등) 이 효과를 실행하지 않는다 —
-    // 무덤 비용도 차감되지 않는다. useLastTarget과 함께 쓰면 직전 효과의 대상과 같은 기물이어야 한다(칸에 다른 기물이
-    // 들어와 있어도 스킵). 단일 대상 효과용 — 범위형(All*InRange)에는 적용하지 않는다.
-    public bool skipIfTargetGone { get; init; }
 
     // 적 AI 전용 "아군 위치 고정 공격": effectRange를 시전자가 아니라 각 아군 위치를 중심으로 펼친다.
     // 칸은 플레이어 턴 시작 시점에 잠기고(Board.LockEnemyTelegraphs → AutoPiece.lockedTargetCells) 실행 시엔
@@ -724,10 +739,30 @@ public record CardEffect
     // 큐는 시전자가 보드에 없으면(앞 효과로 사망) 그 효과를 건너뛴다.
     public Piece caster { get; init; }
 
+    // 범위 효과(All*InRange)인지 — 방향성이 범위를 회전시키는 대상이다.
+    public bool IsAreaLogic =>
+        targetlogic is TargetLogic.AllEnemiesInRange or TargetLogic.AllAlliesInRange or TargetLogic.AllPiecesInRange;
+
+    // 방향성(TowardTarget) 범위 효과 — effectRange를 시전자가 바라보는 방향(Piece.facing)으로 회전해 쓰고,
+    // 플레이어가 쓸 때는 방향을 정하는 조준 칸을 보드 어디든 고를 수 있다(DragDropTarget.AnyTile).
+    public bool RotatesRangeWithFacing => facingMode == FacingMode.TowardTarget && IsAreaLogic;
+
     // 효과가 닿는 칸 오프셋: effectRange, 비어 있으면 caster의 이동 범위(caster가 없으면 빈 목록).
     // 이동 효과도 특례 없이 이 규칙을 따른다 — 이동 카드는 effectRange를 비워 두어 기물마다 다른 이동 범위를 쓴다.
-    public List<Vector2Int> GetRangeOffsets(Piece rangeCaster) =>
-        effectRange != null ? effectRange.GetAbleRange()
-        : rangeCaster != null ? rangeCaster.GetMovementRange()
-        : new List<Vector2Int>();
+    // RotatesRangeWithFacing이면 effectRange는 caster.facing 방향으로 회전한다(바라보는 방향이 없으면 회전하지 않은 원본).
+    // facingOverride: 바라보는 방향을 바꾸지 않고 다른 방향으로 미리 보여줄 때(마우스 호버 미리보기·이동공격 스플래시 연출)만 넘긴다.
+    public List<Vector2Int> GetRangeOffsets(Piece rangeCaster, Vector2Int? facingOverride = null)
+    {
+        if (effectRange == null)
+            return rangeCaster != null ? rangeCaster.GetMovementRange() : new List<Vector2Int>();
+
+        List<Vector2Int> offsets = effectRange.GetAbleRange();
+        if (RotatesRangeWithFacing)
+        {
+            Vector2Int dir = facingOverride ?? (rangeCaster != null ? rangeCaster.facing : Vector2Int.zero);
+            if (dir != Vector2Int.zero)
+                offsets = Board.RotateOffsets(offsets, dir);
+        }
+        return offsets;
+    }
 }

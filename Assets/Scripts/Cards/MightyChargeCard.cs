@@ -18,10 +18,10 @@ public class MightyChargeCard : Card
             targetlogic = TargetLogic.self,
             statusEffectType = StatusEffectType.NextMoveAttackMultiplier,
             statusDuration = 1, // 이번 턴 동안
-            statusPower = 2,
+            statusPower = 1, // 배수가 1 늘어난다 — 피해 ×2
             animTrigger = "Buff",
         });
     }
 
-    public override string EffectDescription => $"이번 턴 동안 다음 이동공격의 피해가 {effects[0].statusPower}배가 됩니다.";
+    public override string EffectDescription => $"이번 턴 동안 다음 이동공격의 피해가 {1 + effects[0].statusPower}배가 됩니다.";
 }

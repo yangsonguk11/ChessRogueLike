@@ -102,6 +102,12 @@ public partial class Board
         else if (!selectedButtonMovable.Contains(pos))
         {
             // 유효하지 않은 범위 클릭 — 기물 선택 유지
+            AnnouncementUI.instance?.Show("사거리 밖입니다.");
+        }
+        else if (IsTauntBlocked(pendingEffects.Peek(), pendingEffects.Peek().caster, pos, selectedButtonMovable))
+        {
+            // 사거리 안에 도발 기물이 있으면 공격/이동 효과는 그 기물만 대상으로 고를 수 있다 — 기물 선택 유지
+            AnnouncementUI.instance?.Show("도발을 가진 기물이 있습니다.");
         }
         else
         {

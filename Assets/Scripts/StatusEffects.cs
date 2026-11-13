@@ -201,11 +201,27 @@ public class ExileOnUseEffect : StatusEffect
 // 이 효과는 정보창 표시와 디스펠 대상 역할만 한다 — 지워지면 강화가 멈춘다. 카드로 거는 일이 없어 StatusEffectType은 없다.
 public class BondEffect : StatusEffect
 {
-    public override string DisplayName => "결속";
+    public readonly int colDamageGain; // 동료가 쓰러질 때마다 오르는 힘(표시용 — 실제 수치는 BondPiece.colDamageGain)
+    public override string DisplayName => $"결속 ({colDamageGain})";
     public override bool IsBuff => true;
     public override Color EffectColor => new Color(1f, 0.55f, 0.2f); // 결속 주황
 
-    public BondEffect()
+    public BondEffect(int colDamageGain)
+    {
+        this.colDamageGain = colDamageGain;
+        duration = -1;
+    }
+}
+
+// 연쇄 이동공격: 이동공격(이동공격 판정 포함)을 실행한 뒤, 이동 범위 안의 다른 상대 기물 중 가장 가까운 기물(없으면 첫 대상)에게
+// 같은 피해로 이동공격 판정 공격을 한 번 더 한다(Board.TryChainMoveAttack). 연쇄로 나간 공격은 다시 연쇄하지 않는다.
+// EffectType.GrantChainMoveAttack이 건다 — 영구(전투 한정)이고 무효화로 지울 수 있다. 여러 개면 각각 한 번씩 연쇄한다.
+public class ChainMoveAttackEffect : StatusEffect
+{
+    public override string DisplayName => "연쇄 이동공격";
+    public override bool IsBuff => true;
+
+    public ChainMoveAttackEffect()
     {
         duration = -1;
     }
@@ -259,7 +275,7 @@ public class WeakenEffect : StatusEffect
 public class MoveAttackBonus
 {
     public int flatDamage;      // 가산 피해 합
-    public int extraMultiplier; // 배율 가산분 합(×2 버프 하나당 +1 — ×2 두 개면 ×3)
+    public int extraMultiplier; // 배율 가산분 합(다음 이동공격 배율 버프의 수치 합 — 피해는 ×(1 + 합))
     public readonly List<CardEffect> onHitEffects = new List<CardEffect>(); // 적중 대상에게 걸 상태이상(statusEffectType 등)
     public readonly List<string> consumedNames = new List<string>();      // 소모 텍스트용 버프 이름(버프마다 텍스트 1개)
 
@@ -301,19 +317,19 @@ public class NextMoveAttackDamageEffect : NextMoveAttackEffect
     public override void AddTo(MoveAttackBonus bonus) => bonus.flatDamage += bonusDamage;
 }
 
-// 다음 이동공격 피해 ×M — 여러 개면 배율 가산분(M - 1)끼리 더한다.
+// 다음 이동공격 피해를 배로 — 수치 N만큼 배수가 늘어난다(×(1 + N)). 여러 개면 N끼리 더한다(N=1 두 개면 ×3).
 public class NextMoveAttackMultiplierEffect : NextMoveAttackEffect
 {
-    public readonly int multiplier;
-    public override string DisplayName => $"다음 이동공격 ×{multiplier}";
+    public readonly int extraMultiplier;
+    public override string DisplayName => $"다음 이동공격 ×{1 + extraMultiplier}";
 
-    public NextMoveAttackMultiplierEffect(int duration, int multiplier)
+    public NextMoveAttackMultiplierEffect(int duration, int extraMultiplier)
     {
         this.duration = duration;
-        this.multiplier = multiplier;
+        this.extraMultiplier = extraMultiplier;
     }
 
-    public override void AddTo(MoveAttackBonus bonus) => bonus.extraMultiplier += Mathf.Max(0, multiplier - 1);
+    public override void AddTo(MoveAttackBonus bonus) => bonus.extraMultiplier += Mathf.Max(0, extraMultiplier);
 }
 
 // 다음 이동공격에 맞은 대상(주 대상 + 스플래시)마다 inflict의 상태이상을 1회 건다.

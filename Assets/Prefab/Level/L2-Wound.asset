@@ -23,6 +23,10 @@ MonoBehaviour:
     name: Enemy-WoundKnight
   - position: {x: 2, y: 4}
     name: Enemy-WoundKnight
+  - position: {x: 1, y: 2}
+    name: Enemy-LittleBroom
+  - position: {x: 1, y: 4}
+    name: Enemy-LittleBroom
   levelType: 0
   eventType: 0
   eventObjectPosition: {x: 0, y: 0}

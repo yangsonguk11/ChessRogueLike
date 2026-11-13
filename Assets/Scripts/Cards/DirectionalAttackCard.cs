@@ -2,7 +2,7 @@
 
 // 4방향 광역 공격 카드
 // RangeInfoSO의 패턴은 위쪽 방향 기준으로 Inspector에서 작성
-// 시전자에서 마우스 방향으로 패턴이 회전되어 발동
+// 시전자가 지정한 칸 쪽을 바라보게(Piece.facing) 된 뒤, 그 방향으로 패턴이 회전되어 발동
 public class DirectionalAttackCard : Card
 {
     public override void Awake()
@@ -18,7 +18,7 @@ public class DirectionalAttackCard : Card
             dmg = 5,
             targetlogic = TargetLogic.AllEnemiesInRange,
             effectRange = effectRange[0],
-            areaTargetMode = AreaTargetMode.Directional4,
+            facingMode = FacingMode.TowardTarget, // 지정한 칸 쪽을 바라보고, 범위가 그 방향으로 회전한다
             animTrigger = "AreaAttack",
         };
         effects.Add(cf);

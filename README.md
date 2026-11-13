@@ -58,17 +58,18 @@ Assets/
 
 카드 한 장은 `Card.effects`(`List<CardEffect>`)를 가지며, `Board`는 이를 큐(`Queue<CardEffect> pendingEffects`)에 담아 **등록된 순서대로 하나씩** 처리합니다. 관련 코드: [Board.CardEffect.cs](Assets/Scripts/Board.CardEffect.cs). 설계 의도와 코드·커밋 근거는 [docs/CardEffect_Pipeline.md](docs/CardEffect_Pipeline.md)에 정리돼 있습니다.
 
-1. **카드 잡기**: 손패에서 카드를 드래그해 사용 영역에 들이면 `CardCanvas.UseCard(handnum)`이 사용 가능 여부를 검사하고 `Card.PrepareUseEffects`로 이번 사용 효과(`Card.UseEffects`)를 정합니다 — 시전자가 이동 불가면 처음 나오는 이동 효과부터 뒤는 빠지고, 남는 효과가 없으면 거부됩니다. 이어서 `CommitNowUsingCard()`가 `Board.ShowUseEligibilityPreview`로 범위만 미리 보여줍니다(**효과 큐는 아직 비어 있음**). 조준 카드(`Card.NeedsTargeting` — 이번 사용 효과 중 처음 나오는 targeting 효과가 있음, 단 Self 카드의 self 효과는 제외)는 NowUsing 자리로 가고 화살표가 뜹니다.
-2. **사용 확정(드롭) → `Board.UseCard`**: 드롭(조준 완료) 순간 `CardCanvas`가 `Board.UseCard(Card card, Piece caster)`를 카드를 낸 기물과 함께 호출합니다(적·자동 아군은 행동 차례에 `TurnControl`이 행동하는 `AutoPiece`와 함께 호출). 이전 상태(`effectApplied` 등)를 초기화하고, `card.UseEffects`를 카드 시전자를 기록한 사본(`CardEffect.caster`)으로 `pendingEffects` 큐에 채운 뒤 `ProcessNextCardEffect()`를 시작합니다. 조준 카드는 이어서 시전자 확정(`ConfirmCasterOnDrop`)과 드롭 칸 클릭(`ButtonClicked`)으로 첫 조준 효과까지 실행됩니다. 효과마다 이 시전자의 현재 위치를 시전자 칸으로 쓰므로, 앞 효과로 이동했으면 다음 효과는 새 위치 기준으로 처리됩니다.
+1. **카드 잡기 → 사용 가능 검사 → 사용 대기**: 손패에서 카드를 드래그해 사용 영역에 들이면 `CardCanvas.UseCard(handnum)`이 사용 가능 검사(`UseBlockReason`)를 합니다 — 사용 불가 → 기절 → 이동 불가(첫 효과가 이동인 카드만) → 코스트 → 무덤 → 이동 후 사용 불가 순이고, 실패하면 안내 문구와 함께 카드는 손패로 돌아갑니다. 통과하면 `CommitNowUsingCard()`가 `Board.ShowUseEligibilityPreview`로 범위만 미리 보여줍니다(**효과 큐는 아직 비어 있음**). 조준 카드(`Card.NeedsTargeting` — 처음 나오는 self가 아닌 효과가 조준 효과, `Card.AimEffectIndex`)는 NowUsing 자리로 가고 화살표가 뜹니다.
+2. **놓음 → 대상 지정 검사 → 사용 확정(`Board.UseCard`)**: 사용 대기 중인 카드를 놓으면 `CardCanvas.OnDragCardReleased`가 대상 지정 검사를 합니다 — 보드 밖 → 사거리 → 드롭 대상의 종류 → 이동공격 불가 → 도발 순이고(대상이 필요 없는 Self 카드는 보드 밖 검사만), 실패하면 카드는 손패로 돌아갑니다. 통과하면 `Board.UseCard(Card card, Piece caster, Vector2Int? targetPos)`를 호출하며 이때부터 취소할 수 없습니다(적·자동 아군은 행동 차례에 `TurnControl`이 행동하는 `AutoPiece`와 함께 호출). `UseCard`는 ① 카드 사용 시 유물 효과를 큐에 넣고 ② 카드의 `effects`를 시전자를 기록한 사본(`CardEffect.caster`)으로 그 뒤에 넣고 ③ 코스트만큼 에너지를 차감한 뒤 ④ `ProcessNextCardEffect()`를 시작합니다. 조준 카드는 이어서 시전자 확정(`ConfirmCasterOnDrop` — 조준 효과 앞의 self 효과는 여기서 실행)과 드롭 칸 클릭(`ButtonClicked`)으로 조준 효과까지 실행됩니다. 효과마다 이 시전자의 현재 위치를 시전자 칸으로 쓰므로, 앞 효과로 이동했으면 다음 효과는 새 위치 기준으로 처리됩니다. 사용 불가 카드(`Card.IsUnplayable`)는 어떤 경로로 사용해도 큐에 효과(`effects`)를 넣지 않습니다 — 버려졌을 때 효과(`Card.onDiscardEffects`)는 사용이 아니라 반응 효과라 그대로 발동합니다. 예외: 기물 선택 효과(`pieceSelectCount`)로 시작하는 카드는 보드에서 기물을 다 고른 순간(`ApplyPieceSelectionEffect` → `CommitHandCardUse`)에 사용 확정되며, 그 전에는 우클릭·다른 카드 잡기·턴 종료로 취소됩니다. 사용 확정 뒤 다음 대상을 기다리는 카드가 있으면 다른 카드를 잡거나 우클릭할 때 "사용 중인 카드의 대상을 먼저 지정하세요."를 띄웁니다.
 3. **`ProcessNextCardEffect`**: 큐의 다음 효과(`Peek`)를 보고 진행 방식을 분기합니다.
-   - **AutoPiece(적·자동 아군)가 쓴 카드**: `ProcessEnemyCardEffect`가 `TargetLogic`(`NearestEnemy` / `LowestHP` / `self` / `AllXInRange` 등)에 따라 대상을 자동으로 계산해 즉시 실행합니다.
+   - 먼저 공통 규칙을 봅니다: 승리했으면(소환수가 아닌 적이 없음) 큐에 남은 효과를 모두 버리고, 시전자가 보드에 없으면 그 효과를 건너뛰며, 카드 효과의 시전자가 기절 상태면 그 카드의 남은 효과 대신 기절 연출만 하는 기절 효과 하나로 처리합니다(턴 효과·유물 등 카드 밖 효과는 기절과 무관).
+   - **AutoPiece(적·자동 아군)가 쓴 카드**: `ProcessEnemyCardEffect`가 `TargetLogic`(`NearestEnemy` / `LowestHP` / `self` / `AllXInRange` 등)에 따라 대상을 자동으로 계산해 즉시 실행합니다. 사거리 안에 올바른 대상이 없으면 이동 효과만 가장 가까운 상대 쪽으로 다가가고 그 외 효과는 무시됩니다. 거리가 같으면 진영 방향(`Board.TeamDirection`) 기준으로 고릅니다(`Board.IsCloser`).
    - **손패 카드(그 외 기물이 쓴 카드)**: 효과 내용에 따라
      - 카드 선택 효과(`SelectAnd*` — `CardEffect.IsCardSelection`) → 카드 선택 패널(핸드/덱/버림 더미 등에서 카드 고르기)을 띄우고 플레이어의 확정을 기다립니다.
      - `pieceSelectCount > 0` → 보드에서 기물을 직접 클릭해 고르게 합니다(`RequestPieceSelection`).
-     - 그 외 → 첫 효과는 드롭으로 시전자가 확정되고 대상을 고를 때까지 대기합니다(`targetlogic`이 `self`인 Self 카드의 효과는 시전자 확정 즉시 실행). 두 번째 이후 효과는 카드를 쓴 기물을 현재 위치에서 다시 선택한 것처럼 처리해, `self`면 바로 실행하고 아니면 그 효과의 사거리를 띄워 클릭을 기다립니다. 사거리 안이면 빈 칸을 클릭해도 실행됩니다(이동·소환·범위 중심).
+     - 그 외 → 첫 효과는 드롭으로 시전자가 확정되고 대상을 고를 때까지 대기합니다(`targetlogic`이 `self`인 Self 카드의 효과는 시전자 확정 즉시 실행). 두 번째 이후 효과는 카드를 쓴 기물을 현재 위치에서 다시 선택한 것처럼 처리해, `self`면 바로 실행하고 아니면 그 효과의 사거리를 띄워 클릭을 기다립니다. 사거리 안이면 빈 칸을 클릭해도 실행됩니다(이동·소환·범위 중심). 사거리 안에 도발 기물이 있으면 공격·이동 효과는 그 기물만 대상으로 고를 수 있습니다.
      - 드로우·코스트 감소처럼 대상 칸이 필요 없는 효과도 `targetlogic = self`로 써서 이 흐름을 탑니다. 첫 효과가 이런 효과면 카드를 `DragDropTarget.Self`로 둡니다.
-4. **효과 실행**: 대상이 정해지면 `ExecuteEffect(cardEffect, targetPos)` → `ApplyCardEffectNow`가 실제로 게임 상태를 변경합니다.
-5. **다음 효과로 진행**: `ScheduleNextCardEffect()`가 곧바로 `ProcessNextCardEffect()`를 다시 호출합니다. `ApplyCardEffectNow`가 게임 상태를 동기적으로 확정하고 연출만 `motionQueue`에 넣으므로, 다음 효과의 로직은 앞 효과의 애니메이션을 기다리지 않습니다. 연출은 `motionQueue`에서 등록 순서대로 하나씩 끝까지 재생되므로, **화면에는 각 `CardEffect`의 연출이 리스트 순서대로, 앞 연출이 끝난 뒤에 나옵니다**. 연출이 재생되는 동안에도 다음 카드를 사용할 수 있습니다.
+4. **효과 실행**: 대상이 정해지면 `ExecuteEffect(cardEffect, targetPos)` → `ApplyCardEffectNow`가 실제로 게임 상태를 변경합니다. 기물이 대상인 단일 대상 효과는 대상 칸에 살아 있는 기물이 없으면 연출 없이 무시됩니다(`IsTargetMissing` — `useLastTarget`이면 직전 효과의 대상과 같은 기물이어야 함).
+5. **다음 효과로 진행**: `ScheduleNextCardEffect()`가 곧바로 `ProcessNextCardEffect()`를 다시 호출합니다. `ApplyCardEffectNow`가 게임 상태를 동기적으로 확정하고 연출만 `motionQueue`에 넣으므로, 다음 효과의 로직은 앞 효과의 애니메이션을 기다리지 않습니다. 연출은 `motionQueue`에서 등록 순서대로 끝까지 재생되므로, **화면에는 각 `CardEffect`의 연출이 리스트 순서대로, 앞 연출이 끝난 뒤에 나옵니다**(같은 종류의 강화·텍스트·사망 연출이 이어지면 묶여 재생 — 아래 "연출 큐의 묶음 재생"). 연출이 재생되는 동안에도 다음 카드를 사용할 수 있습니다.
 6. **카드 종료**: 카드를 쓰는 중에 `pendingEffects`가 비면 `FinishCardUsage()`가 호출되어 (필요 시) 시전자의 이번 턴 이동을 막고, `CardCanvas.FinishUseCard()`와 `ResetBoardAfterCardUse()`로 보드 상태를 정리한 뒤 `currentActiveCard`를 비웁니다.
 
 ### 효과 큐 하나로 모든 효과를 처리한다
@@ -76,31 +77,52 @@ Assets/
 카드 효과뿐 아니라 턴 효과(`TurnEffect`), 유물, 상태이상 틱(독·화상·재생), 처치 시 효과(`onKillEffect`), 소환 시 효과(`Piece.onSpawnCards`), 기물 선택 결과까지 **모든 `CardEffect`가 같은 `pendingEffects` 큐**로 실행됩니다. 공용 진입점은 [Board.ScheduledEffects.cs](Assets/Scripts/Board.ScheduledEffects.cs)에 있습니다.
 
 - **타이밍 효과** — 턴 시작/종료·전투 시작처럼 정해진 타이밍에 발동하는 효과는 `EnqueueEffect(effect, caster)`로 큐 **뒤**에 넣고, `ResolveEffects()`로 큐가 빌 때까지 처리한 뒤 다음 타이밍으로 넘어갑니다(아래 "턴 진행 상태 머신").
-- **반응 효과** — 처치 시·피격 시·소환 시·카드 사용 시·드로우 시처럼 효과 처리 도중에 유발되는 효과는 `InsertEffectNext(effect, caster)`로 큐 **앞**에 넣습니다. 유발한 효과 직후, 다음 효과보다 먼저(같은 효과가 여러 반응을 유발하면 유발 순서대로) 실행됩니다.
-- 카드 밖에서 넣는 효과는 모두 `executeOnCaster`라 입력 모드를 보지 않고 **시전자 칸에서** 바로 실행되며, 카드 사용 확정(에너지 차감·카드 사용 시 유물)을 하지 않습니다. 큐 안의 `!executeOnCaster` 항목은 항상 지금 쓰는 카드의 효과입니다(카드 취소·이동 불가는 이 항목만 지움).
-- 시전자가 앞 효과로 죽어 보드에 없으면 그 효과는 건너뜁니다.
+- **반응 효과** — 처치 시·피격 시·소환 시·카드 사용 시·드로우 시·버림 시처럼 효과 처리 도중에 유발되는 효과는 `InsertEffectNext(effect, caster)`로 큐 **앞**에 넣습니다. 유발한 효과 직후, 다음 효과보다 먼저(같은 효과가 여러 반응을 유발하면 유발 순서대로) 실행됩니다.
+- 카드 밖에서 넣는 효과는 모두 `executeOnCaster`라 입력 모드를 보지 않고 **시전자 칸에서** 바로 실행됩니다. 큐 안의 `!executeOnCaster` 항목은 항상 지금 쓰는 카드의 효과입니다(카드 취소·이동 불가는 이 항목만 지움).
+- 시전자가 앞 효과로 죽어 보드에 없거나 대상이 더 이상 존재하지 않으면 그 효과는 건너뜁니다. 처리 중 승리하면 큐에 남은 효과는 모두 무시됩니다.
+- 타이밍 효과는 유물 → 기물이 가진 효과(상태·턴 효과, 전투 시작이면 소환 시 효과) 순으로 한 번에 모읍니다.
 - **소환 시 효과는 자기 대상만** 가능합니다 — 소환된 기물 칸에서 실행되며 `TargetLogic`으로 대상을 고르지 않습니다.
 - 독·화상 틱은 `SelfDamage`, 재생 틱은 `Heal`(self) 효과로 실행됩니다. 자해(`SelfDamage`)·자기 대상 턴 효과의 `Damage`·독·화상·가시 반격·이벤트 피해(대화 선택지 `DamageAllAllies`)는 **비공격 피해**(`GetDamage(isAttack: false)`)라 피격 시(`OnHit`) 유물과 타격음이 없습니다(가시 반격은 반격 효과음만 재생).
 - 드로우 시 타이밍은 훅(`Board.OnCardDrawn`)만 있고 아직 발동하는 효과는 없습니다.
+- 버림 시 타이밍(`Board.OnCardDiscarded`)은 카드가 카드 효과(`DiscardHand`·`SelectAndDiscard`)로 버려질 때만 발생합니다 — 두 효과 모두 `CardCanvas.DiscardCards`로 버리고, 버려진 카드의 `Card.onDiscardEffects`가 카드 주인 기물을 시전자로 실행됩니다. 턴 종료 손패 정리와 사용을 마친 카드가 버린 카드 더미로 가는 것은 버리기가 아니라 발동하지 않습니다.
 
 ### 상태(상태이상·버프·턴 효과)는 한 가지 방식으로 처리한다
 
 기물에 걸리는 모든 상태는 `StatusEffect`([StatusEffect.cs](Assets/Scripts/StatusEffect.cs))이고 `Piece.activeEffects`에 들어갑니다. 카드가 정의한 턴 효과(`TurnEffect`)도 그중 한 종류입니다.
 
 - **거는 방법**: `EffectType.ApplyStatus` + `statusEffectType` 하나뿐입니다(`Board.CreateStatusEffect`). 턴 효과는 `StatusEffectType.TurnEffect`에 `onTurnEffect`(실행할 효과)·`turnPhase`(자기 턴 시작/종료)·`statusDuration`을 채웁니다. 단일 대상·범위(`ExecuteAreaEffect`)·공격 적중 시 부여(`Damage`/`Move`의 `statusEffectType`)가 모든 종류에 똑같이 됩니다.
-- **턴 타이밍 처리**: `Board.EnqueueTeamStatusEffects(team, phase)`([Board.TurnEffects.cs](Assets/Scripts/Board.TurnEffects.cs))가 모든 상태에 같은 규칙을 씁니다. 걸린 순서대로 각 상태의 `TurnEffectAt(phase)`를 그 기물을 시전자로 큐 뒤에 넣고(`SumsTurnEffect`인 독·화상·재생은 같은 종류끼리 합산해 한 번), `TickPhase == phase`인 상태의 지속시간을 줄입니다(독 등은 자기 턴 종료, 턴 효과는 자기 `turnPhase`). 음수 지속은 영구입니다.
+- **턴 타이밍 처리**: `Board.EnqueueTeamStatusEffects(team, phase)`([Board.TurnEffects.cs](Assets/Scripts/Board.TurnEffects.cs))가 모든 상태에 같은 규칙을 씁니다. 걸린 순서대로 각 상태의 `TurnEffectAt(phase)`를 그 기물을 시전자로 큐 뒤에 넣습니다(`SumsTurnEffect`인 독·화상·재생은 같은 종류끼리 합산해 한 번). 지속시간은 효과가 적용된 뒤에 줄어듭니다 — 턴 코루틴이 `ResolveEffects` 뒤에 `TickStatusDurations`로 `TickPhase == phase`인 상태를 줄입니다(독 등은 자기 턴 종료, 턴 효과는 자기 `turnPhase`). 음수 지속은 영구입니다.
 - **만료·정화**: `Piece.RemoveStatusEffect`가 목록에서 뺀 뒤 `OnRemove`를 부릅니다. 기본 `OnRemove`는 "… 해제" 텍스트입니다. 강화·약화는 해제 때 스탯을 되돌리지만, 턴 효과가 발동하며 올린 스탯(힘·무덤 등)은 누적형이라 되돌리지 않습니다.
 
 ### `CardEffect` 하나의 처리 순서 (`ExecuteEffect` → `ApplyCardEffectNow`)
 
-1. **카드 사용 확정 — 카드당 단 한 번**: 카드 자신의 첫 효과가 실행되는 시점(`effectApplied`가 처음 `true`로 바뀌는 순간)에 에너지를 차감하고, `TriggerRelicsOnCardUsed`가 "카드 사용 시" 유물 효과를 반응 효과로 큐 앞에 넣습니다 — 이 첫 효과 직후, 카드의 두 번째 효과보다 먼저 실행됩니다. 이 지점부터는 카드 취소가 불가능해집니다.
+1. **카드 사용 확정은 이미 끝나 있다**: 에너지 차감과 "카드 사용 시" 유물 효과 추가는 `Board.UseCard`(대상 지정 검사를 통과한 시점)에서 카드당 한 번 끝났습니다 — 유물 효과는 카드의 첫 효과보다 먼저 실행되고, 그때부터 카드 취소가 불가능합니다(`effectApplied`). `ExecuteEffect`는 대상이 없는 효과를 걸러내고(`IsTargetMissing`) 무덤 비용을 낸 뒤 효과를 적용합니다.
 2. **`ApplyCardEffectNow`로 실제 적용**:
-   - `targetlogic`이 `AllEnemiesInRange` / `AllAlliesInRange` / `AllPiecesInRange`면 `ExecuteAreaEffect`로 분기해, `effectRange` 오프셋(필요 시 `Directional4` / `Directional8`로 회전)으로 대상 목록을 모은 뒤 타입별 광역 함수(`AreaAttackPiece` / `AreaShieldPiece` / `AreaHealPiece`)를 적용합니다.
+   - `targetlogic`이 `AllEnemiesInRange` / `AllAlliesInRange` / `AllPiecesInRange`면 `ExecuteAreaEffect`로 분기해, `effectRange` 오프셋(방향성 `facingMode == TowardTarget`이면 시전자가 바라보는 방향 `Piece.facing`으로 회전)으로 대상 목록을 모은 뒤 타입별 광역 함수(`AreaAttackPiece` / `AreaShieldPiece` / `AreaHealPiece`)를 적용합니다.
    - 그 외에는 `EffectType`(`Move`, `Damage`, `Heal`, `Shield`, `SelfDamage`, `Draw`, `ApplyStatus`, `ColDamageUp`, `Summon` 등)에 따라 분기해 처리합니다.
    - `Damage` / `Heal` / `Shield`는 각각 `ResolveDamageWithColDamage` / `ResolveShieldWithBonus`로 시전자의 영구 강화 스탯(콜대미지·방어막 보너스)을 더한 뒤 적용하고, 이어서 `statusEffectType`이 설정돼 있으면 `ApplyStatusToTarget`으로 상태 효과(중독·화상·기절 등)를 함께 부여합니다.
-   - **이동공격**: `Move`로 적 칸에 부딪히는 경우와 `Damage`에 `countsAsMoveAttack`이 켜진 경우(이동공격 판정) 모두 [Board.Combat.cs](Assets/Scripts/Board.Combat.cs)의 `ResolveMoveAttackHit` 하나를 거칩니다. 다음 이동공격 버프(`NextMoveAttackEffect`) 소모, 기물의 이동공격 스플래시(`MoveAttackRangeInfoSO`), 연쇄(`Piece.OnMoveAttackPerformed`), 가시 반격이 똑같이 적용되고 `hitCount`도 반영됩니다. 실제 이동공격만 대상 앞 칸까지 다가가고 처치 시 그 칸으로 전진하며, 이동공격 판정은 제자리에서 대상 바로 앞의 가상 도착 칸을 기준으로 스플래시를 펼칩니다.
+   - **이동공격**: `Move`로 적 칸에 부딪히는 경우와 `Damage`에 `countsAsMoveAttack`이 켜진 경우(이동공격 판정) 모두 [Board.Combat.cs](Assets/Scripts/Board.Combat.cs)의 `ResolveMoveAttackHit` 하나를 거칩니다. 다음 이동공격 버프(`NextMoveAttackEffect`) 소모, 기물의 이동공격 스플래시(`MoveAttackRangeInfoSO`), 가시 반격, 연쇄 이동공격(`ChainMoveAttackEffect` — 이동 범위 안의 가장 가까운 다른 상대, 없으면 첫 대상에게 같은 피해로 이동공격 판정 공격을 한 번 더, 연쇄로 나간 공격은 다시 연쇄하지 않음)이 똑같이 적용되고 `hitCount`도 반영됩니다. 실제 이동공격만 대상 앞 칸까지 다가가고 처치 시 그 칸으로 전진하며, 이동공격 판정은 제자리에서 대상 바로 앞의 가상 도착 칸을 기준으로 스플래시를 펼칩니다.
 3. **처치 시 연쇄 효과(`onKillEffect`)**: `Damage` 효과로 대상이 처치되면 `Board.Combat.cs`가 처치 시 유물과 `cardEffect.onKillEffect`(시전자 자신 대상)를 반응 효과로 큐 앞에 넣어, 이 효과 직후에 실행합니다(예: `ExecutionerCard`는 처치 시 영구 콜대미지 증가, `LethalChargeCard`는 처치 시 코스트 회복).
 4. 적용이 끝나면 다시 상위 큐 루프(`ScheduleNextCardEffect`)로 돌아가 다음 `CardEffect`를 처리합니다.
+
+### 바라보는 방향 (`Piece.facing`)
+
+기물은 바라보는 방향을 논리 상태로 가집니다(`Piece.facing` — 위·오른쪽·아래·왼쪽 4방향 또는 없음, `facingLocked`). 방향이 바뀌는 규칙은 [Board.HoverRange.cs](Assets/Scripts/Board.HoverRange.cs)의 `FacingToward`(계산)·`TurnToward`(적용) 두 함수가 전부입니다. `TurnToward`는 `facing`을 즉시 바꾸고 모델 회전은 `motionQueue`에 넣습니다(효과 큐가 모션 큐를 기다리지 않으므로 논리 시점에 모델을 돌리면 앞선 연출보다 먼저 돕니다). 연출 코루틴은 `facing`을 읽지 않습니다.
+
+- **계산**: 목표 방향에서 x·y 중 더 먼 축을 봅니다(같으면 현재 방향과 같은 축으로 목표 쪽).
+- **행동할 때**: `CardEffect.facingMode == TowardTarget`이면 시전자가 목표를 바라봅니다(`ApplyCardEffectNow`, 이동·이동공격은 `MovePiece`). `AutoPiece`는 효과를 실행할 때가 아니라 다음 행동으로 정해질 때(`PlanNextMove` → `Board.PlanFacing`) 가장 가까운 상대를 바라봅니다.
+- **공격받을 때**: 공격 피해를 받으면 공격자 쪽을 바라봅니다(가시·이벤트 같은 비공격 피해 제외).
+- **방향 고정**: `Card.LocksFacing`인 카드가 다음 행동이면 `PlanNextMove`가 `facingLocked`를 켜서, 그 행동을 마칠 때까지 위 두 경우로 방향이 바뀌지 않습니다(상태이상이 아님). 고정이 아닌 행동으로 바뀌면 바로 풀립니다.
+- **범위·예고**: 방향성 범위 효과의 `effectRange`는 `CardEffect.GetRangeOffsets`가 `facing`으로 회전해 돌려줍니다. 행동 예고와 정보창 범위는 `facing`만 읽습니다. 바라보는 방향의 범위에 대상이 없으면 `AutoPiece`는 건너뛰지 않고 헛스윙합니다.
+
+### 연출 큐의 묶음 재생
+
+`motionQueue`의 항목은 대부분 코루틴 하나지만, 세 종류는 묶음 정보(`MotionItem` — 종류·기물·애니메이션 트리거·텍스트 반응)를 달고 들어가 **같은 종류가 큐에서 바로 이어지면** `ProcessQueue`가 한꺼번에 꺼내 함께 재생합니다(`PlayMotionGroup`, [Board.Animation.cs](Assets/Scripts/Board.Animation.cs)).
+
+- **시전자 강화류**(`EnqueueCasterReaction` — 시전자 자신이 대상이고 공격 이펙트가 없는 스탯 증가·상태 부여·방어도·소환 보너스·정화·연쇄 버프): 같은 기물 + 같은 트리거면 애니메이션은 한 번만 재생하고 텍스트를 0.4초 간격으로 차례로 띄웁니다.
+- **텍스트 연출**(`EnqueueTextAnimation` — "무덤 ±N", "… 소모", 결속, 격노, "이동 불가!"): 같은 기물이면 간격을 두고 차례로 띄웁니다.
+- **사망**(`motionQueue.EnqueueDeath`): 여럿이면 동시에 처리합니다.
+- 서로 다른 기물의 연출은 동시에 재생합니다. 공격·이동·소환·피격 반응은 묶지 않으며, 사이에 다른 종류의 연출이 끼면 묶음이 끊깁니다(카드 사이에는 `SignalCardAnimationsDone`이 있어 카드를 넘어 묶이지 않음).
 
 ### 연출: 타격 시점과 공격 이펙트
 
@@ -119,10 +141,10 @@ Assets/
 
 각 턴 경계는 **타이밍의 연속**입니다. 타이밍마다 발동할 효과를 효과 큐에 넣고 `ResolveEffects()`로 큐가 빌 때까지 처리한 뒤 다음 타이밍으로 넘어가므로, 앞 타이밍의 결과(사망, 새로 걸린 턴 효과 등)가 다음 타이밍에 반영됩니다. 효과로 승패가 정해지면(`IsCombatDecided` — 보드에 소환수가 아닌 아군 또는 적이 남지 않음) 다음 타이밍으로 넘어가지 않습니다. `ResolveEffects`는 로직만 기다리고, 연출 대기는 `TurnManager`의 `WaitUntil(!queuecoroutineworking)` 지점이 맡습니다.
 
-1. **`StartPlayerTurnCoroutine`**: 입력을 잠그고(`PlayerInputLocked`) "전투 시작"(최초 1회) / "플레이어 턴" 안내 후 `currentState = Player`로 두고 `Board.PlayerTurnStartCoroutine()`을 실행합니다 — 턴 시작 유물 → 아군 상태의 `OwnTurnStart` 처리(턴 시작 턴 효과 발동·지속시간 감소) → 플래그 초기화·전원 5장 드로우(드로우 시 훅)·에너지 회복 → 적 예고 잠금·사거리 표시. 이 처리가 끝나야 입력과 턴 종료가 열립니다.
-2. **플레이어 턴 종료**: `EndTurnButton` → `EndPlayerTurnCoroutine` → `Board.AllyTurnEndCoroutine()`(쓰던 카드 정리 — 확정 전이면 손패로 되돌림 → 아군 상태의 `OwnTurnEnd` 처리(턴 효과·독·화상·재생을 건 순서대로 발동, 지속시간 감소) → 턴 종료 유물 → 적 방어도 초기화 → 임시 코스트 복구·손패 버림) → 연출 대기 → `PlayAutoAllyTurnCoroutine`(자동행동 아군을 한 명씩 `GetNextMove()`로 행동시킴) → 적 턴 시작.
+1. **`StartPlayerTurnCoroutine`**: 입력을 잠그고(`PlayerInputLocked`) "전투 시작"(최초 1회) / "플레이어 턴" 안내 후 `currentState = Player`로 두고 `Board.PlayerTurnStartCoroutine()`을 실행합니다 — 턴 시작 시 효과(유물 → 아군 상태의 `OwnTurnStart` 효과를 한 번에 모아 처리) → 지속시간 감소 → 플래그 초기화·전원 5장 드로우(드로우 시 훅)·에너지 회복 → 적 예고 잠금·사거리 표시. 이 처리가 끝나야 입력과 턴 종료가 열립니다.
+2. **플레이어 턴 종료**: `EndTurnButton` → `EndPlayerTurnCoroutine` → `Board.PrepareAllyTurnEnd()`(쓰던 카드 정리 — 확정 전이면 손패로 되돌림) → `PlayAutoAllyTurnCoroutine`(아군 소환수를 소환된 순서대로 한 명씩 `GetNextMove()`로 행동시킴) → `Board.AllyTurnEndCoroutine()`(턴 종료 시 효과 — 유물 → 아군 상태의 `OwnTurnEnd` 효과(턴 효과·독·화상·재생)를 한 번에 모아 처리 → 지속시간 감소 → 적 방어도 초기화 → 임시 코스트 복구·손패 버림) → 연출 대기 → 적 턴 시작.
 3. **`StartEnemyTurnCoroutine`**: "적 턴" 안내 후 `currentState = Enemy`, `Board.PlayEnemyTurnCoroutine()`이 적 상태의 `OwnTurnStart` 처리를 한 뒤 살아있는 적을 순서대로 `GetNextMove()`(예고된 카드, 기절 상태면 스턴 카드로 대체)로 행동시킵니다 — 각 적의 행동은 효과 큐가 완전히 비고(`!IsResolvingEffects`) 애니메이션이 끝날 때까지 기다린 뒤에야 다음 적으로 넘어갑니다.
-4. **턴 순환**: 적이 모두 행동하면 `Board.EnemyTurnEndCoroutine()`(적 상태의 `OwnTurnEnd` 처리 → 아군 방어도 초기화) → 다시 `StartPlayerTurn()`으로 돌아갑니다.
+4. **턴 순환**: 적이 모두 행동하면 `Board.EnemyTurnEndCoroutine()`(적 상태의 `OwnTurnEnd` 효과 → 지속시간 감소 → 아군 방어도 초기화) → 다시 `StartPlayerTurn()`으로 돌아갑니다.
 5. `TurnStateProcessing()` / `RollbackStateProcessing()`으로 카드 처리 중처럼 "턴 상태를 잠시 감춰야 하는" 구간을 표시하고 되돌릴 수 있습니다.
 
 이벤트 레벨(상점 · 휴식 · 이벤트 노드)에서는 `Board.IsEventLevel`이 `true`라 턴 코루틴이 아예 호출되지 않아 턴이 흐르지 않습니다(소환 시 효과도 발동하지 않음).
@@ -135,10 +157,10 @@ Assets/
 
 | Timing | 트리거 시점 | 효과 대상 |
 |---|---|---|
-| `CombatStart` | 전투 시작 시(보드 초기화, 소환 시 효과 다음) — 타이밍 효과 | 각 아군 기물 자신 |
+| `CombatStart` | 전투 시작 시(보드 초기화, 배치된 기물의 소환 시 효과보다 먼저) — 타이밍 효과 | 각 아군 기물 자신 |
 | `TurnStart` | 플레이어 턴 시작의 첫 타이밍 — 타이밍 효과 | 각 아군 기물 자신 |
-| `TurnEnd` | 플레이어 턴 종료, 아군 상태의 턴 종료 처리 다음 — 타이밍 효과 | 각 아군 기물 자신 |
-| `CardUsed` | 카드의 첫 `CardEffect`가 실제로 실행된 직후 — 반응 효과 | `TargetsCardTarget`에 따라 카드를 낸 기물 또는 그 카드가 겨냥한 칸의 기물(칸이 비면 발동 안 함) |
+| `TurnEnd` | 플레이어 턴 종료(아군 소환수 행동 뒤), 아군 상태의 턴 종료 효과보다 먼저 — 타이밍 효과 | 각 아군 기물 자신 |
+| `CardUsed` | 카드 사용 확정 시(`Board.UseCard`), 카드의 첫 `CardEffect`보다 먼저 | `TargetsCardTarget`에 따라 카드를 낸 기물 또는 그 카드가 겨냥한 칸의 기물(칸이 비면 발동 안 함) |
 | `OnHit` | 아군이 공격 피해를 받은 효과 직후(독·화상·자해·자기 대상 턴 효과 피해·가시 반격·이벤트 피해 등 비공격 피해 제외) — 반응 효과 | 맞은 대상 기물 |
 | `OnKill` | 아군이 적을 처치한 효과 직후 — 반응 효과 | 처치를 확정한 기물 |
 

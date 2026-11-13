@@ -1957,6 +1957,7 @@ GameObject:
   m_Component:
   - component: {fileID: 381135497}
   - component: {fileID: 381135498}
+  - component: {fileID: 381135499}
   m_Layer: 0
   m_Name: Camera
   m_TagString: Untagged
@@ -2000,6 +2001,27 @@ MonoBehaviour:
   edgeSize: 0.1
   panSpeed: 8
   rotateSmoothTime: 0.25
+--- !u!114 &381135499
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 381135496}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9ffe8dd542f5bd458f1c79d70224c31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraDirector
+  blendTime: 0.6
+  ignoreTimeScale: 0
+  soloDistanceOffset: -2
+  pairDistanceOffset: -2.7
+  distanceOffsetPerUnit: 0.7
+  followSmoothTime: 0.1
+  sameFocusDistance: 0.3
+  sameFocusOffset: 0.5
+  settleTimeout: 2
 --- !u!1 &401622693
 GameObject:
   m_ObjectHideFlags: 0

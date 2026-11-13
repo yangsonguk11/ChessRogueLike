@@ -13,6 +13,10 @@ public partial class Board
         GetButtonScript(pos).SetPiece(piece);
         if (IsEventLevel) return;
         Piece p = piece.GetComponent<Piece>();
+        // 전투에 들어온 기물은 자기 진영 방향을 바라본다(설계서 9.1) — 논리 방향(facing)과 모델 회전을 함께 맞춘다.
+        p.facing = TeamDirection(p.teamID);
+        Vector3 worldDir = WorldDirection(pos, p.facing);
+        if (worldDir.sqrMagnitude > 0.0001f) piece.transform.rotation = Quaternion.LookRotation(worldDir);
         foreach (CardEffect effect in p.onSpawnCards.Where(c => c != null).SelectMany(c => c.effects))
             InsertEffectNext(effect, p);
     }

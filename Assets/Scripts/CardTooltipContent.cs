@@ -70,13 +70,14 @@ public static class CardTooltipContent
         var seen = new HashSet<(RangeInfoSO, string)>();
         bool moveRangeAdded = false;
 
-        void AddGrid(string title, RangeInfoSO so, RangeGrid.Cell center, string body = null)
+        // offsets: 범위를 회전해 보여줄 때(방향성 범위 효과 — 시전자의 facing) 회전한 오프셋. 없으면 so 그대로.
+        void AddGrid(string title, RangeInfoSO so, RangeGrid.Cell center, string body = null, List<Vector2Int> offsets = null)
         {
             if (so == null || !seen.Add((so, title))) return;
             result.Add(new TooltipEntry
             {
                 kind = TooltipEntry.Kind.Range, title = title, body = body,
-                grid = RangeGrid.FromOffsets(so.GetAbleRange(), center),
+                grid = RangeGrid.FromOffsets(offsets ?? so.GetAbleRange(), center),
             });
         }
 
@@ -131,10 +132,15 @@ public static class CardTooltipContent
                 continue;
             }
 
-            if (effect.areaTargetMode == AreaTargetMode.Directional4 || effect.areaTargetMode == AreaTargetMode.Directional8)
+            if (effect.RotatesRangeWithFacing)
             {
-                string dirs = effect.areaTargetMode == AreaTargetMode.Directional4 ? "4방향" : "8방향";
-                AddGrid("효과 범위", effect.effectRange, RangeGrid.Cell.Caster, $"{dirs} 중 고른 방향으로 회전합니다.");
+                // 적·자동 아군은 다음 행동으로 정해질 때 바라보는 방향이 정해져 있다 — 그 방향(facing)으로 회전한 범위를 보여 준다.
+                // 그 외(플레이어 카드·방향이 아직 없음)는 회전 전 범위와 안내 문구.
+                if (owner is AutoPiece && owner.facing != Vector2Int.zero)
+                    AddGrid("효과 범위", effect.effectRange, RangeGrid.Cell.Caster, null,
+                        Board.RotateOffsets(effect.effectRange.GetAbleRange(), owner.facing));
+                else
+                    AddGrid("효과 범위", effect.effectRange, RangeGrid.Cell.Caster, "목표 쪽을 바라보는 방향으로 회전합니다.");
                 continue;
             }
 

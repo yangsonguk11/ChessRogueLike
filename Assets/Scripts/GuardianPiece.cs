@@ -23,6 +23,6 @@ public class GuardianPiece : AutoPiece
         if (enraged || livingTeammates > 0 || hp <= 0) return;
         enraged = true;
         SwitchActionCards(enragedActionCards);
-        Board.instance?.EnqueueBoardAnimation(StatusTextReaction("격노", true, new Color(1f, 0.27f, 0.27f)));
+        Board.instance?.EnqueueTextAnimation(this, StatusTextReaction("격노", true, new Color(1f, 0.27f, 0.27f)));
     }
 }

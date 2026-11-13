@@ -10,7 +10,7 @@ public class BondPiece : AutoPiece
     public override void Awake()
     {
         base.Awake();
-        AddStatusEffect(new BondEffect());
+        AddStatusEffect(new BondEffect(colDamageGain));
     }
 
     public override void OnTeammateDied(int livingTeammates)
@@ -23,8 +23,9 @@ public class BondPiece : AutoPiece
 
         Board board = Board.instance;
         if (board == null) return;
-        board.EnqueueBoardAnimation(StatusTextReaction("결속", true, new Color(1f, 0.55f, 0.2f)));
-        if (healed > 0) board.EnqueueBoardAnimation(HealText(healed));
-        board.EnqueueBoardAnimation(ColDamageUpReaction(colDamageGain));
+        // 텍스트 연출이라 연출 큐가 묶어서 간격을 두고 차례로 띄운다(Board.EnqueueTextAnimation).
+        board.EnqueueTextAnimation(this, StatusTextReaction("결속", true, new Color(1f, 0.55f, 0.2f)));
+        if (healed > 0) board.EnqueueTextAnimation(this, HealText(healed));
+        board.EnqueueTextAnimation(this, ColDamageUpReaction(colDamageGain));
     }
 }

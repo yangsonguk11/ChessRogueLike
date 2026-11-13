@@ -174,7 +174,7 @@ public partial class Board
 
         if (currentEffect != null &&
             currentEffect.effectRange != null &&
-            currentEffect.areaTargetMode != AreaTargetMode.Fixed)
+            (currentEffect.areaTargetMode != AreaTargetMode.Fixed || currentEffect.RotatesRangeWithFacing))
         {
             if (currentEffect.targetingUsesMovement)
             {
@@ -299,29 +299,48 @@ public partial class Board
     // ShopCanvas.Show()에서 호출: 상점 캔버스가 대신 나타나므로 ButtonInfo(호버 정보창)는 숨긴다.
     public void HideButtonInfoForShop() => HideButtonInfo();
 
-    // 기준 위치에서 가장 가까운 targetTeam 소속 기물 위치 반환
+    // 진영 방향(설계서 9.1): 아군/적이 전투 시작 시 바라보는 방향. 서로 마주 보며 전투 중 바뀌지 않는다.
+    // 보드 좌표(x=행, y=열) 기준 아군은 -x(RangeInfoSO 인스펙터의 위쪽 = RotateOffsets의 기준 방향), 적은 +x다.
+    public static Vector2Int TeamDirection(int teamID) => teamID == 0 ? new Vector2Int(-1, 0) : new Vector2Int(1, 0);
+
+    // 거리 비교(설계서 9.3): from에서 볼 때 a가 b보다 가까운지. b가 (-1,-1)(아직 후보 없음)이면 항상 true.
+    // 유클리드 거리 → 같으면 진영 방향의 직선(from을 지나는 teamDir 축)과 더 가까운 칸 → 그것도 같으면 진영 방향 앞쪽
+    // → 진영 방향 기준 오른쪽 칸. 완전히 같은 칸이면 false라 먼저 본 후보가 유지된다.
+    static bool IsCloser(Vector2Int from, Vector2Int a, Vector2Int b, Vector2Int teamDir)
+    {
+        if (b.x < 0) return true;
+        Vector2Int da = a - from;
+        Vector2Int db = b - from;
+        if (da.sqrMagnitude != db.sqrMagnitude) return da.sqrMagnitude < db.sqrMagnitude;
+
+        Vector2Int right = new Vector2Int(teamDir.y, -teamDir.x); // 진영 방향을 바라볼 때의 오른쪽
+        int sideA = da.x * right.x + da.y * right.y;
+        int sideB = db.x * right.x + db.y * right.y;
+        if (Mathf.Abs(sideA) != Mathf.Abs(sideB)) return Mathf.Abs(sideA) < Mathf.Abs(sideB);
+
+        int forwardA = da.x * teamDir.x + da.y * teamDir.y;
+        int forwardB = db.x * teamDir.x + db.y * teamDir.y;
+        if (forwardA != forwardB) return forwardA > forwardB;
+        return sideA > sideB;
+    }
+
+    // 기준 위치에서 가장 가까운 targetTeam 소속 기물 위치 반환(거리 동률은 IsCloser 규칙). 없으면 기준 위치 그대로.
     Vector2Int GetNearestPlayerPos(Vector2Int enemyPos, int targetTeam)
     {
-        Vector2Int nearest = enemyPos;
-        float minDistance = float.MaxValue;
+        Vector2Int teamDir = TeamDirection(targetTeam == 0 ? 1 : 0); // 찾는 쪽(상대 진영의 반대편)의 진영 방향
+        Vector2Int nearest = new Vector2Int(-1, -1);
 
         for (int x = 0; x < N; x++)
         {
             for (int y = 0; y < M; y++)
             {
-                Piece p = GetButtonScript(new Vector2Int(x, y)).GetPiece()?.GetComponent<Piece>();
-                if (p != null && p.teamID == targetTeam)
-                {
-                    float dist = Vector2.Distance(enemyPos, new Vector2Int(x, y));
-                    if (dist < minDistance)
-                    {
-                        minDistance = dist;
-                        nearest = new Vector2Int(x, y);
-                    }
-                }
+                var pos = new Vector2Int(x, y);
+                Piece p = GetPieceAt(pos);
+                if (p != null && p.teamID == targetTeam && IsCloser(enemyPos, pos, nearest, teamDir))
+                    nearest = pos;
             }
         }
-        return nearest;
+        return nearest.x >= 0 ? nearest : enemyPos;
     }
 
     // 이동공격 도착 위치 결정: location1(공격자) → location2(피격자).

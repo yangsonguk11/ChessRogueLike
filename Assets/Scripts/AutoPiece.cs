@@ -89,6 +89,7 @@ public class AutoPiece : Piece
     {
         if (actionCards == null || actionCards.Count == 0) return;
         nextMove = ChooseNextMove(out plannedEntry);
+        Board.instance?.PlanFacing(this, nextMove); // 바라보는 방향·방향 고정을 이 행동에 맞춘다(예고 범위가 facing대로 그려지므로 ActionText 전에)
         ActionText();
     }
 

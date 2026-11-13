@@ -300,13 +300,12 @@ public partial class Board : MonoBehaviour
 
         FinishCardUsage();
         ClearSelectedButton();
-        CardCanvas.instance.ResetAllAllyHands(GetAllAllyPieces());
 
         LoadOwnedRelics(); // 이벤트 레벨에서도 보유 유물 아이콘은 보여준다
         if (!IsEventLevel)
         {
-            TriggerRelicsOnCombatStart(); // 배치하며 모아둔 스폰 시 효과 뒤에 유물 전투 시작 효과를 넣고
-            RunEffects();                 // 전투 시작 효과를 한 번에 처리
+            EnqueueCombatStartRelicsFirst(); // 전투 시작 시 효과는 유물 → 기물(배치하며 모아둔 스폰 시 효과) 순
+            RunEffects();                    // 전투 시작 효과를 한 번에 처리
             PlanAllAutoPieces();          // 배치가 모두 끝난 보드로 적·자동 아군의 첫 행동을 정한다(조건부 행동 판정)
         }
     }

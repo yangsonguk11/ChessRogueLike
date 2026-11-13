@@ -25,8 +25,7 @@ public class GraveAttackCard : Card
             dmg = 5,
             targetlogic = TargetLogic.LowestHP,
             effectRange = effectRange[0],
-            useLastTarget = true, // 같은 대상에게 추가 타격 — 다시 클릭하지 않음
-            skipIfTargetGone = true, // 1타로 대상이 죽었으면 추가 타격·무덤 소모 없이 스킵
+            useLastTarget = true, // 같은 대상에게 추가 타격 — 다시 클릭하지 않음(1타로 대상이 죽었으면 추가 타격·무덤 소모 없이 무시된다)
             graveCost = 1,
             animTrigger = "Attack",
         });

@@ -5,8 +5,45 @@ using UnityEngine;
 
 public partial class Board
 {
-    Queue<IEnumerator> motionQueue = new Queue<IEnumerator>();
+    // ── 연출 큐 ───────────────────────────────────────────────
+    // 효과 큐가 처리한 효과의 연출을 순서대로 재생한다. 항목 하나는 "끝나야 다음으로 넘어가는 연출 한 덩어리"다.
+    // 대부분의 항목은 코루틴 하나(Single)지만, 아래 세 종류는 묶음 정보를 달아 넣어 같은 종류가 바로 이어지면 함께 재생한다
+    // (ProcessQueue → PlayMotionGroup):
+    // - CasterBuff: 시전자가 자기 자신에게 쓰는 강화류 효과(스탯 증가·상태 부여·방어도·소환 보너스 등, 이펙트 없음).
+    //   같은 기물 + 같은 애니메이션 트리거면 애니메이션은 한 번만 재생하고 텍스트를 차례로 띄운다.
+    // - TextOnly: 애니메이션 없이 텍스트만 뜨는 연출("무덤 +1", "… 소모", 결속 등). 같은 기물이면 차례로 띄운다.
+    // - Death: 사망 연출. 여럿이면 동시에 처리한다.
+    // 서로 다른 기물의 연출은 동시에 재생한다. 공격·이동·소환처럼 하나씩 보여야 하는 연출은 Single이라 묶이지 않고,
+    // 사이에 다른 종류가 끼면 묶음이 끊긴다(카드 경계인 SignalCardAnimationsDone도 Single이다).
+    enum MotionKind { Single, CasterBuff, TextOnly, Death }
+
+    class MotionItem
+    {
+        public MotionKind kind;
+        public IEnumerator cor;      // 혼자 재생될 때의 연출 전체
+        public Piece actor;          // 묶음 기준 기물(CasterBuff: 시전자, TextOnly: 텍스트가 뜨는 기물)
+        public string trigger;       // CasterBuff: 시전자 애니메이션 트리거
+        public CardEffect effect;    // CasterBuff: 원래 효과(묶어 재생할 때 시전자 연출에 넘긴다)
+        public IEnumerator reaction; // 묶어 재생할 때 쓰는 텍스트 반응(cor 안에 든 것과 같은 인스턴스 — 둘 중 하나만 실행된다)
+    }
+
+    class MotionQueue
+    {
+        readonly Queue<MotionItem> items = new Queue<MotionItem>();
+        public int Count => items.Count;
+        public void Enqueue(IEnumerator cor) => items.Enqueue(new MotionItem { kind = MotionKind.Single, cor = cor });
+        public void Enqueue(MotionItem item) => items.Enqueue(item);
+        public void EnqueueDeath(IEnumerator cor) => items.Enqueue(new MotionItem { kind = MotionKind.Death, cor = cor });
+        public MotionItem Dequeue() => items.Dequeue();
+        public MotionItem Peek() => items.Peek();
+    }
+
+    MotionQueue motionQueue = new MotionQueue();
     public bool queuecoroutineworking;
+
+    // 묶어 재생할 때 같은 기물의 텍스트 사이 간격(초). 상태 텍스트는 같은 자리에서 생겨 위로 떠오르므로, 앞 텍스트가 조금
+    // 올라가고 흐려진 뒤에 다음 텍스트를 띄워 겹쳐 보이지 않게 한다.
+    const float MergedTextInterval = 0.4f;
 
     // 이미 처리 중이면 새로 시작하지 않음 — 한 프레임 안에서 여러 기물의 효과를 연달아
     // motionQueue에 넣어도(예: 턴 효과·상태이상 틱이 연달아 실행될 때) 큐 소비자가 중복 실행되지 않게 함.
@@ -31,6 +68,29 @@ public partial class Board
         StartMotionQueue();
     }
 
+    // 텍스트만 뜨는 연출(Piece.StatusTextReaction 등)을 actor의 TextOnly 항목으로 넣는다 — 같은 종류가 이어지면 묶여 재생된다.
+    public void EnqueueTextAnimation(Piece actor, IEnumerator cor)
+    {
+        motionQueue.Enqueue(new MotionItem { kind = MotionKind.TextOnly, cor = cor, actor = actor, reaction = cor });
+        StartMotionQueue();
+    }
+
+    // 시전자 애니메이션 + 대상 반응 하나를 큐에 넣는다(PlayCasterAndTargetReaction). 시전자 자신이 대상이고 공격 이펙트가 없으면
+    // 시전자 강화류(CasterBuff)로 표시해, 같은 종류가 이어질 때 묶여 재생되게 한다.
+    void EnqueueCasterReaction(Piece caster, Piece target, CardEffect cardEffect, IEnumerator reaction, IEnumerator cor = null)
+    {
+        cor ??= PlayCasterAndTargetReaction(caster, cardEffect?.animTrigger, reaction, cardEffect);
+        if (caster != null && caster == target && string.IsNullOrEmpty(cardEffect?.vfx))
+            motionQueue.Enqueue(new MotionItem
+            {
+                kind = MotionKind.CasterBuff, cor = cor, actor = caster, trigger = cardEffect?.animTrigger,
+                effect = cardEffect, reaction = reaction,
+            });
+        else
+            motionQueue.Enqueue(cor);
+        StartMotionQueue();
+    }
+
     // 큐가 도는 동안은 범위 표시 2순위 "행동"이 켜진 상태다(RefreshRangeDisplay) — 시작/끝에서 다시 그린다.
     IEnumerator ProcessQueue()
     {
@@ -39,13 +99,95 @@ public partial class Board
         RefreshRangeDisplay();
         while (motionQueue.Count > 0)
         {
-            IEnumerator nextAction = motionQueue.Dequeue();
-            yield return StartCoroutine(nextAction);
+            MotionItem item = motionQueue.Dequeue();
+            if (item.kind == MotionKind.Single)
+            {
+                yield return StartCoroutine(item.cor);
+                continue;
+            }
+
+            // 꺼낸 항목 뒤를 살펴 같은 종류가 이어지는 동안 모으고, 다른 종류가 나오거나 큐가 비면 모은 연출을 함께 재생한다.
+            var group = new List<MotionItem> { item };
+            while (motionQueue.Count > 0 && motionQueue.Peek().kind == item.kind)
+                group.Add(motionQueue.Dequeue());
+            yield return StartCoroutine(PlayMotionGroup(group));
         }
         queuecoroutineworking = false;
+        // 연출이 모두 끝났으니 사용자가 맞춰둔 시점으로 돌아간다. 항목 사이에는 풀지 않아 연속 연출에서 카메라가 왔다 갔다 하지 않는다.
+        CameraDirector.instance?.Release();
         TurnManager.instance.RollbackStateProcessing();
         currentActionDisplay = null;
         RefreshRangeDisplay();
+    }
+
+    // 같은 종류의 연출 묶음을 함께 재생한다. 하나뿐이면 그 연출 그대로다.
+    // - 사망: 모두 동시에.
+    // - 그 외: 기물별로 나눠 서로 다른 기물은 동시에, 같은 기물은 넣은 순서대로 재생한다(PlayActorMotions).
+    IEnumerator PlayMotionGroup(List<MotionItem> group)
+    {
+        if (group.Count == 1) return group[0].cor;
+
+        if (group[0].kind == MotionKind.Death)
+        {
+            var deaths = new IEnumerator[group.Count];
+            for (int i = 0; i < group.Count; i++) deaths[i] = group[i].cor;
+            return Parallel(deaths);
+        }
+
+        var byActor = new List<List<MotionItem>>();
+        foreach (MotionItem item in group)
+        {
+            List<MotionItem> lane = byActor.Find(l => l[0].actor == item.actor);
+            if (lane == null) byActor.Add(lane = new List<MotionItem>());
+            lane.Add(item);
+        }
+
+        // 연출 카메라는 한 기물만 재생할 때만 그 기물을 비춘다 — 여러 기물이 동시에 재생되면 한곳을 비출 수 없다.
+        bool focusCamera = byActor.Count == 1;
+        var lanes = new IEnumerator[byActor.Count];
+        for (int i = 0; i < byActor.Count; i++) lanes[i] = PlayActorMotions(byActor[i], focusCamera);
+        return lanes.Length == 1 ? lanes[0] : Parallel(lanes);
+    }
+
+    // 한 기물의 같은 종류 연출들. 텍스트 연출은 간격을 두고 차례로 띄운다. 시전자 강화류는 같은 트리거가 이어지는 구간마다
+    // 애니메이션을 한 번만 재생하고 그 타격 시점에 텍스트를 차례로 띄운다(트리거가 바뀌면 다음 구간으로 이어서 재생).
+    IEnumerator PlayActorMotions(List<MotionItem> items, bool focusCamera)
+    {
+        if (items[0].kind == MotionKind.TextOnly)
+            return StaggerCor(items.ConvertAll(i => i.reaction));
+
+        var segments = new List<IEnumerator>();
+        int start = 0;
+        while (start < items.Count)
+        {
+            int end = start + 1;
+            while (end < items.Count && items[end].trigger == items[start].trigger) end++;
+
+            MotionItem first = items[start];
+            // 자기 자신 대상이라 범위 표시가 없다 — 원래 효과의 targetlogic과 상관없이 표시하지 않게 self로 넘긴다.
+            CardEffect effect = first.effect != null ? first.effect with { targetlogic = TargetLogic.self } : null;
+            ActionImpact impact = CreateImpact(first.actor, effect);
+            impact.common.Add(StaggerCor(items.GetRange(start, end - start).ConvertAll(i => i.reaction)));
+            IEnumerator action = Parallel(
+                TriggerAnimCor(first.actor, first.trigger, cardEffect: effect, holdDisplayFor: impact),
+                RunImpactCor(impact));
+            segments.Add(focusCamera ? RunSequentially(new List<IEnumerator> { CameraFocusCor(impact, null), action }) : action);
+            start = end;
+        }
+        return segments.Count == 1 ? segments[0] : RunSequentially(segments);
+    }
+
+    // 반응들을 MergedTextInterval 간격으로 차례로 시작하고, 전부 끝날 때까지 기다린다.
+    IEnumerator StaggerCor(List<IEnumerator> reactions)
+    {
+        var running = new List<Coroutine>();
+        for (int i = 0; i < reactions.Count; i++)
+        {
+            if (i > 0) yield return new WaitForSeconds(MergedTextInterval);
+            running.Add(StartCoroutine(reactions[i]));
+        }
+        foreach (Coroutine c in running)
+            yield return c;
     }
 
     // moveDuration을 "칸당 기준 시간"으로 해석 — 이동 거리(체비셰프)에 비례해 늘리되
@@ -111,6 +253,10 @@ public partial class Board
 
     const float AnimationEventFallbackTimeout = 1.2f; // 이벤트가 아직 안 심어진 클립을 위한 안전장치
 
+    // 트리거를 건 뒤 그 상태로 가는 전환이 시작되길 기다리는 최대 시간(초). 직전 연출의 전환(0.1초 크로스페이드)이 끝난 뒤에야
+    // 시작되는 경우까지 덮는다. 넘기면 그 상태로 가는 전환이 없는 것으로 보고 폴백 시간만 기다린다.
+    const float TriggerStateWaitTimeout = 0.3f;
+
     const float CueTimeoutMargin = 1f; // 이펙트가 예상 시간(AttackVfxCue.EstimateDuration)보다 이만큼 더 걸리면 멈춘 것으로 보고 행동을 끝낸다
 
     // 시전자(caster) 애니메이션을 재생하면서, 시전자 클립에 심어둔 Animation Event(OnAnimationEvent)가
@@ -119,27 +265,54 @@ public partial class Board
     // 이 시그니처는 대상 구분 없는 반응 하나를 ActionImpact.common으로 감싼다 — 대상별 피격 타이밍이 필요한 공격은
     // ActionImpact를 직접 받는 아래 오버로드를 쓴다.
     // originPos/directionOverride는 TriggerAnimCor의 범위 표시 기준 — 시전자 칸이 아닌 곳을 기준으로 보여줄 때만 넘긴다
-    // (이동공격의 도착 칸, MouseCentered 범위의 중심 칸 등). 안 넘기면 호출 시점의 시전자 위치·currentHoverDirection.
+    // (이동공격의 도착 칸, MouseCentered 범위의 중심 칸 등). 안 넘기면 호출 시점의 시전자 위치·시전자의 facing(directionOverride는 이동공격 스플래시처럼 facing 대신 다른 방향으로 보여줄 때만).
     // iterator가 아닌 일반 메서드인 이유: 본문이 바로 실행돼야 TriggerAnimCor가 범위 칸을 "효과 처리(enqueue) 시점"에
     // 계산한다 — iterator로 두면 본문이 motionQueue 재생 시점까지 미뤄져 그 사이 바뀐 위치/방향을 읽는다.
+    // focusTargets: 피격 반응은 없지만 연출 카메라가 시전자와 함께 비출 대상(힐·실드를 받는 기물). 안 넘기면 시전자만 비춘다.
     IEnumerator PlayCasterAndTargetReaction(Piece caster, string casterTrigger, IEnumerator targetReaction, CardEffect cardEffect = null,
-        Vector2Int? originPos = null, Vector2Int? directionOverride = null)
+        Vector2Int? originPos = null, Vector2Int? directionOverride = null, IEnumerable<Piece> focusTargets = null)
     {
         ActionImpact impact = CreateImpact(caster, cardEffect, originPos, directionOverride);
         impact.common.Add(targetReaction);
+        if (focusTargets != null) impact.focusTargets.AddRange(focusTargets);
         return PlayCasterAndTargetReaction(caster, casterTrigger, impact, cardEffect, originPos, directionOverride);
     }
 
     // 시전자 애니메이션 + 행동 연출 컨텍스트(대상별 반응·이펙트) 재생. attackTargetPos는 헛스윙처럼 회전 없이 호출되는
     // 공격의 펀치 폴백 방향(TriggerAnimCor 참고).
+    // 카메라가 시전자·대상을 비추러 이동을 끝낸 뒤(CameraFocusCor) 애니메이션과 이펙트가 시작된다. 카메라는 큐 항목이 아니라
+    // 이 행동 연출의 첫 단계라서 재생 시점에 위치를 읽는다. 범위 표시(TriggerAnimCor)는 위 설명대로 지금 만들어 둔다.
     IEnumerator PlayCasterAndTargetReaction(Piece caster, string casterTrigger, ActionImpact impact, CardEffect cardEffect = null,
         Vector2Int? originPos = null, Vector2Int? directionOverride = null, Vector2Int? attackTargetPos = null)
     {
-        return Parallel(
+        IEnumerator action = Parallel(
             TriggerAnimCor(caster, casterTrigger, cardEffect: cardEffect, attackTargetPos: attackTargetPos, originPos: originPos,
                 directionOverride: directionOverride, holdDisplayFor: impact),
             RunImpactCor(impact));
+        return RunSequentially(new List<IEnumerator> { CameraFocusCor(impact, attackTargetPos), action });
     }
+
+    // 행동 연출 전에 카메라를 시전자·대상 쪽으로 옮기고 도착을 기다린다. 시전자와 대상이 같으면(자기 자신·대상 없음)
+    // 시전자를, 다르면 둘의 중간을 비춘다(CameraDirector.FocusBetween). 카메라 리그가 없는 씬이면 바로 넘어간다.
+    IEnumerator CameraFocusCor(ActionImpact impact, Vector2Int? attackTargetPos)
+    {
+        CameraDirector director = CameraDirector.instance;
+        if (director == null) yield break;
+
+        Vector3? casterPos = impact.caster != null ? impact.caster.transform.position : (Vector3?)null;
+        var targetPositions = new List<Vector3>();
+        foreach (HitReaction hit in impact.hits)
+            if (IsCellInBoard(hit.cell)) targetPositions.Add(CellWorldPosition(hit.cell));
+        foreach (Piece target in impact.focusTargets)
+            if (target != null) targetPositions.Add(target.transform.position);
+        if (attackTargetPos.HasValue && IsCellInBoard(attackTargetPos.Value))
+            targetPositions.Add(CellWorldPosition(attackTargetPos.Value));
+
+        director.FocusBetween(casterPos, targetPositions);
+        yield return director.WaitUntilSettled();
+    }
+
+    bool IsCellInBoard(Vector2Int cell) => cell.x >= 0 && cell.y >= 0 && cell.x < N && cell.y < M;
 
     // 행동 연출 컨텍스트를 만든다(효과 처리 시점). 카드 효과에 이펙트(CardEffect.vfx)가 있으면 Cue와 이펙트가 쓸 범위 칸을 채운다 —
     // 범위 칸은 범위 표시와 같은 값(ResolveAnimRangeCells)이라 같은 이유로 지금 계산해 둔다.
@@ -156,8 +329,11 @@ public partial class Board
     }
 
     // 시전자의 타격 시점(caster.OnAnimationEvent)까지 기다렸다가 반응을 시작하고 완료까지 대기.
-    // 이벤트가 아직 안 심어진 클립이면 AnimationEventFallbackTimeout만큼만 기다리다 강제로 넘어간다
-    // (기존과 비슷하게 "곧바로 시작"하는 타이밍으로 자연히 폴백됨 — 클립별로 점진적으로 이벤트를 추가해도 안전).
+    // 대기 시간은 시전자 애니메이션이 실제로 시작된 뒤부터 센다 — 트리거를 건 순간부터 세면, 직전 연출의 전환(이동이 끝나며
+    // 거는 Idle 크로스페이드 등) 때문에 애니메이션이 늦게 시작될 때 이벤트보다 시간 제한이 먼저 와서 반응이 일찍 나온다.
+    // 시간 제한은 PlayTriggerAnimCor가 정한다(ActionImpact.casterEventTimeout): 타격 이벤트가 심어진 클립이면 클립 길이
+    // (이벤트가 늦게 오는 긴 클립도 끝까지 기다린다), 이벤트가 없는 클립이면 AnimationEventFallbackTimeout만큼만 기다리다
+    // 강제로 넘어간다(클립별로 점진적으로 이벤트를 추가해도 안전).
     // 타격 시점에 이펙트가 없으면 모든 반응을 한꺼번에 시작하고, 있으면 이펙트를 시작해 대상별 피격을 이펙트에 맡긴다
     // (번개가 떨어진 칸만 피격 등). 이펙트가 끝나면(또는 멈춰서 시간 제한에 걸리면) 남은 반응을 전부 시작한다.
     IEnumerator RunImpactCor(ActionImpact impact)
@@ -168,9 +344,15 @@ public partial class Board
         {
             caster.animationEventFired = false;
             float t = 0f;
-            while (!caster.animationEventFired && t < AnimationEventFallbackTimeout)
+            while (caster != null && !caster.animationEventFired)
             {
-                t += Time.deltaTime;
+                // 트리거는 걸었지만 그 상태로 아직 들어가지 않았으면 시간을 세지 않는다.
+                if (!impact.casterAnimStarting)
+                {
+                    float limit = impact.casterEventTimeout > 0f ? impact.casterEventTimeout : AnimationEventFallbackTimeout;
+                    if (t >= limit) break;
+                    t += Time.deltaTime;
+                }
                 yield return null;
             }
         }
@@ -285,16 +467,18 @@ public partial class Board
     {
         var targetCoroutines = new List<IEnumerator>();
         if (extra != null) targetCoroutines.AddRange(extra);
-        return PlayCasterAndTargetReaction(caster, cardEffect?.animTrigger, Parallel(targetCoroutines.ToArray()), cardEffect);
+        return PlayCasterAndTargetReaction(caster, cardEffect?.animTrigger, Parallel(targetCoroutines.ToArray()), cardEffect,
+            focusTargets: new[] { target });
     }
 
     // 힐은 시전자만 애니메이터 트리거를 갖는다 — 대상은 HealText(텍스트+PlayHealEffect)만 반응.
-    // target은 이제 트리거 재생에 안 쓰이지만 호출부 시그니처를 유지하기 위해 남겨둔다.
+    // target은 이제 트리거 재생에는 안 쓰이고, 연출 카메라가 시전자와 함께 비추는 대상으로만 쓰인다.
     IEnumerator PieceHealCor(Piece healer, Piece target, CardEffect cardEffect = null, List<IEnumerator> extra = null)
     {
         var targetCoroutines = new List<IEnumerator>();
         if (extra != null) targetCoroutines.AddRange(extra);
-        return PlayCasterAndTargetReaction(healer, cardEffect?.animTrigger, Parallel(targetCoroutines.ToArray()), cardEffect);
+        return PlayCasterAndTargetReaction(healer, cardEffect?.animTrigger, Parallel(targetCoroutines.ToArray()), cardEffect,
+            focusTargets: new[] { target });
     }
 
     // 시전자 + 여러 대상의 TriggerAnim을 대상별 extra(데미지·상태이상 텍스트)와 함께 재생. 이펙트가 없으면 타격 시점에 한꺼번에,
@@ -316,22 +500,24 @@ public partial class Board
         return PlayCasterAndTargetReaction(caster, attackTrigger, impact, cardEffect, originPos: rangeOrigin);
     }
 
-    // targets는 이제 트리거 재생에 쓰이지 않지만(힐도 대상이 애니메이터 트리거를 갖지 않음),
-    // 호출부 시그니처를 유지하기 위해 남겨둔다 — 실제 반응은 전부 extra(HealText)로 넘어온다.
+    // targets는 트리거 재생에는 쓰이지 않고(힐도 대상이 애니메이터 트리거를 갖지 않음) 연출 카메라가 함께 비추는 대상으로만 쓰인다.
+    // 실제 반응은 전부 extra(HealText)로 넘어온다.
     IEnumerator PieceAreaHealCor(Piece caster, List<Piece> targets, string healTrigger, CardEffect cardEffect = null, List<IEnumerator> extra = null, Vector2Int? rangeOrigin = null)
     {
         var targetCoroutines = new List<IEnumerator>();
         if (extra != null) targetCoroutines.AddRange(extra);
-        return PlayCasterAndTargetReaction(caster, healTrigger, Parallel(targetCoroutines.ToArray()), cardEffect, originPos: rangeOrigin);
+        return PlayCasterAndTargetReaction(caster, healTrigger, Parallel(targetCoroutines.ToArray()), cardEffect, originPos: rangeOrigin,
+            focusTargets: targets);
     }
 
-    // targets는 이제 트리거 재생에 쓰이지 않지만(실드는 대상이 애니메이터 트리거를 갖지 않음),
-    // 호출부 시그니처를 유지하기 위해 남겨둔다 — 실제 반응은 전부 extra로 넘어온다.
+    // targets는 트리거 재생에는 쓰이지 않고(실드는 대상이 애니메이터 트리거를 갖지 않음) 연출 카메라가 함께 비추는 대상으로만 쓰인다.
+    // 실제 반응은 전부 extra로 넘어온다.
     IEnumerator PieceAreaShieldCor(Piece caster, List<Piece> targets, string shieldTrigger, CardEffect cardEffect = null, List<IEnumerator> extra = null, Vector2Int? rangeOrigin = null)
     {
         var targetCoroutines = new List<IEnumerator>();
         if (extra != null) targetCoroutines.AddRange(extra);
-        return PlayCasterAndTargetReaction(caster, shieldTrigger, Parallel(targetCoroutines.ToArray()), cardEffect, originPos: rangeOrigin);
+        return PlayCasterAndTargetReaction(caster, shieldTrigger, Parallel(targetCoroutines.ToArray()), cardEffect, originPos: rangeOrigin,
+            focusTargets: targets);
     }
 
     // 위치 이동(PieceMoveCor)과 이동 트리거 애니메이션(+범위 표시)을 동시에 재생.
@@ -350,7 +536,26 @@ public partial class Board
             PieceMoveCor(piece, button1, button2, moveDuration, bumpOnArrival),
             TriggerAnimCor(piece.GetComponent<Piece>(), animTrigger, actualDuration, cardEffect: cardEffect,
                 originPos: button1.GetLocation(), casterCell: button1.GetLocation()));
-        return RunSequentially(new List<IEnumerator> { move, EndMoveAnimCor(piece, animTrigger) });
+        return RunSequentially(new List<IEnumerator> { CameraFollowMoveCor(piece, move), EndMoveAnimCor(piece, animTrigger) });
+    }
+
+    // 이동 연출 전에 카메라를 움직일 기물에게 옮기고(도착을 기다림), 이동하는 동안 그 기물을 가운데에 두고 따라간다.
+    // move는 아직 시작하지 않은 이동 연출 — 카메라가 도착한 뒤에 시작해야 하므로 여기서 실행한다.
+    // 카메라 리그가 없는 씬이면 move만 실행한다. 포커스 해제는 큐가 끝날 때(ProcessQueue) 한 번에 한다.
+    IEnumerator CameraFollowMoveCor(GameObject piece, IEnumerator move)
+    {
+        CameraDirector director = CameraDirector.instance;
+        if (director == null || piece == null)
+        {
+            yield return move;
+            yield break;
+        }
+
+        director.FocusBetween(piece.transform.position, null);
+        yield return director.WaitUntilSettled();
+        director.Follow(piece.transform);
+        yield return move;
+        director.StopFollow();
     }
 
     // 이동 거리에 따라 이동 시간(1~1.6초)이 클립 길이와 달라, Move 상태는 반복 재생하다가 도착하는 순간 여기서 Idle로 돌린다.
@@ -396,7 +601,7 @@ public partial class Board
     // 트리거 발동 + 애니메이션 길이만큼 행동 범위 표시(showRange == false인 맞는 쪽 반응은 표시 없음).
     // 표시는 이 함수를 부른 시점 — 효과가 처리되어 motionQueue에 들어가는 시점 — 에 만들어 두고, 켜고 끄는 것만
     // 재생 시점에 한다. 연출은 큐에서 나중에 재생되므로 재생 시점에 다시 읽으면, 그 사이 예약된 다음 카드가 기물을
-    // 옮겼거나(위치) 다음 Directional 카드를 겨누는 중이면(currentHoverDirection) 실제로 처리된 범위와 어긋난다.
+    // 옮겼거나(위치) 시전자의 방향(facing)이 바뀌면 실제로 처리된 범위와 어긋난다.
     // 그래서 이 함수와 이를 감싸는 PlayCasterAndTargetReaction/Piece*Cor는 iterator가 아니라 일반 메서드다.
     // 범위 칸 규칙은 ResolveAnimRangeCells 참고. originPos/directionOverride는 시전자 칸·현재 방향이 아닌 기준을 쓸 때,
     // casterCell은 초록 칸을 시전자의 현재(논리) 칸이 아닌 곳에 둘 때(이동 — 출발 칸) 넘긴다.
@@ -420,7 +625,7 @@ public partial class Board
     // - 아군 위치 고정 공격: 시전자 기준 오프셋이 아니라 잠가둔 절대 좌표.
     // - targetlogic이 self(Shield/Heal/Buff처럼 자기 자신 대상이라 범위 개념이 없는 효과): 표시하지 않음.
     // - 그 외: 기준 칸(originPos, 없으면 시전자 현재 칸) + 효과 범위(CardEffect.GetRangeOffsets — effectRange, 비어 있으면
-    //   이동 범위. Directional4/8이면 directionOverride, 없으면 currentHoverDirection으로 회전). 단 effectRange 없는
+    //   이동 범위. 방향성 범위 효과는 시전자의 facing, directionOverride가 있으면 그 방향으로 회전). 단 effectRange 없는
     //   noRangeLimit 카드(보드 전체가 대상)는 표시하지 않는다. 효과가 없으면 기물의 표시용 범위(GetMoveableButton).
     List<Vector2Int> ResolveAnimRangeCells(Piece piece, CardEffect cardEffect, Vector2Int? originPos, Vector2Int? directionOverride)
     {
@@ -439,11 +644,8 @@ public partial class Board
         if (cardEffect == null) return CellsInBoard(piecePos, piece.GetMoveableButton());
         if (cardEffect.effectRange == null && cardEffect.noRangeLimit) return cells;
 
-        List<Vector2Int> offsets = cardEffect.GetRangeOffsets(piece);
-        if (cardEffect.areaTargetMode == AreaTargetMode.Directional4 || cardEffect.areaTargetMode == AreaTargetMode.Directional8)
-            offsets = RotateOffsets(offsets, directionOverride ?? currentHoverDirection);
-
-        return CellsInBoard(piecePos, offsets);
+        // 방향성 범위 효과는 시전자의 facing(없으면 directionOverride)으로 회전한 범위다 — GetRangeOffsets가 처리한다.
+        return CellsInBoard(piecePos, cardEffect.GetRangeOffsets(piece, directionOverride));
     }
 
     IEnumerator PlayTriggerAnimCor(Piece piece, string triggerName, float fallbackDuration, ActionRangeDisplay display, Vector2Int? attackTargetPos, ActionImpact holdDisplayFor = null)
@@ -472,29 +674,53 @@ public partial class Board
         if (hasAnimationState)
         {
             animator.SetTrigger(triggerName);
+            // 타격 시점을 기다리는 쪽(RunImpactCor)에 "아직 애니메이션이 시작되지 않았다"고 알린다 — 아래에서 시작을 확인하면 푼다.
+            if (holdDisplayFor != null) holdDisplayFor.casterAnimStarting = true;
 
-            // 전환이 시작될 때까지 대기 (같은 프레임엔 아직 안 반영될 수 있음)
-            int safety = 0;
-            while (!animator.IsInTransition(0) && safety++ < 5)
-                yield return null;
-
+            // 이 트리거의 상태로 가는 전환이 시작될(또는 그 상태에 들어설) 때까지 대기한다 — 같은 프레임엔 아직 안 반영될 수 있다.
+            // "아무 전환"이 아니라 목적지가 이 트리거의 상태인지를 본다: 직전 연출이 건 다른 전환(이동이 끝나며 거는 Move → Idle
+            // 크로스페이드 — EndMoveAnimCor)이 진행 중이면 그 전환을 이 트리거의 것으로 착각해 클립 길이를 못 읽고, 폴백 시간만
+            // 기다린 채 끝나 다음 연출이 이 애니메이션을 끊고 들어온다.
+            // 전환 "완료"는 기다리지 않고 목적지 상태 정보를 바로 읽는다 — 클립이 짧으면 전환이 끝나기 전에 이미 다음 상태(Idle 등)로
+            // 빠져나가 GetCurrentAnimatorStateInfo로는 못 잡는 경우가 있다.
             float length = 0f;
-            if (animator.IsInTransition(0))
+            float waited = 0f;
+            bool hasHitEvent = false;
+            while (waited < TriggerStateWaitTimeout)
             {
-                // 전환 "완료"를 기다리지 않고 목적지 상태 정보를 바로 읽음 — 클립이 짧으면
-                // 전환이 끝나기 전에 이미 다음 상태(Idle 등)로 빠져나가 버려서 GetCurrentAnimatorStateInfo로는
-                // 못 잡는 경우가 있었음.
-                AnimatorStateInfo nextInfo = animator.GetNextAnimatorStateInfo(0);
-                if (nextInfo.IsName(triggerName))
-                    length = nextInfo.length;
-            }
-            if (length <= 0.01f)
-            {
+                if (piece == null || animator == null) // 기다리는 동안 파괴된 경우
+                {
+                    if (holdDisplayFor != null) holdDisplayFor.casterAnimStarting = false;
+                    yield break;
+                }
+                if (animator.IsInTransition(0))
+                {
+                    AnimatorStateInfo nextInfo = animator.GetNextAnimatorStateInfo(0);
+                    if (nextInfo.IsName(triggerName))
+                    {
+                        length = nextInfo.length;
+                        hasHitEvent = HasHitEvent(animator.GetNextAnimatorClipInfo(0));
+                        break;
+                    }
+                }
                 AnimatorStateInfo curInfo = animator.GetCurrentAnimatorStateInfo(0);
                 if (curInfo.IsName(triggerName))
+                {
                     length = curInfo.length;
+                    hasHitEvent = HasHitEvent(animator.GetCurrentAnimatorClipInfo(0));
+                    break;
+                }
+                yield return null;
+                waited += Time.deltaTime;
             }
             waitTime = length > 0.01f ? length : fallbackDuration;
+            if (holdDisplayFor != null)
+            {
+                // 애니메이션이 시작됐다(또는 시작을 확인하지 못했다) — 여기부터 타격 시점 대기 시간을 센다.
+                // 타격 이벤트가 있는 클립은 클립이 끝날 때까지 기다리고, 없는 클립은 기본 시간 제한을 쓴다.
+                holdDisplayFor.casterEventTimeout = hasHitEvent && length > 0.01f ? length : 0f;
+                holdDisplayFor.casterAnimStarting = false;
+            }
         }
 
         // Attack/AreaAttack인데 실제 애니메이션이 없으면(Animator 자체가 없는 기물이 대부분) DOPunch
@@ -515,6 +741,18 @@ public partial class Board
             currentActionDisplay = null;
             RefreshRangeDisplay();
         }
+    }
+
+    // 재생할 클립에 타격 시점 이벤트(Piece.OnAnimationEvent)가 심어져 있는지.
+    static bool HasHitEvent(AnimatorClipInfo[] clips)
+    {
+        foreach (AnimatorClipInfo info in clips)
+        {
+            if (info.clip == null) continue;
+            foreach (AnimationEvent e in info.clip.events)
+                if (e.functionName == nameof(Piece.OnAnimationEvent)) return true;
+        }
+        return false;
     }
 
     const float AttackPunchDistance = 0.3f;  // transform.forward로 뻗는 거리(월드 유닛) — 보드 셀 크기 대비 플레이테스트로 튜닝

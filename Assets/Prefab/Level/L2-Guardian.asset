@@ -22,9 +22,9 @@ MonoBehaviour:
   - position: {x: 2, y: 3}
     name: Enemy-Guardian
   - position: {x: 2, y: 1}
-    name: Enemy-Broom
+    name: Enemy-Mob
   - position: {x: 2, y: 5}
-    name: Enemy-Broom
+    name: Enemy-Mob
   levelType: 0
   eventType: 0
   eventObjectPosition: {x: 0, y: 0}
